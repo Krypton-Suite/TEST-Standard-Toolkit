@@ -24,8 +24,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/Standard-Toolkit') {
-            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/Standard-Toolkit"
+          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/TEST-Standard-Toolkit') {
+            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/TEST-Standard-Toolkit"
             exit 1
           }
           Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
@@ -343,8 +343,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/Standard-Toolkit') {
-            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/Standard-Toolkit"
+          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/TEST-Standard-Toolkit') {
+            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/TEST-Standard-Toolkit"
             exit 1
           }
           Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
@@ -545,8 +545,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/Standard-Toolkit') {
-            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/Standard-Toolkit"
+          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/TEST-Standard-Toolkit') {
+            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/TEST-Standard-Toolkit"
             exit 1
           }
           Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
@@ -756,8 +756,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/Standard-Toolkit') {
-            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/Standard-Toolkit"
+          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/TEST-Standard-Toolkit') {
+            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/TEST-Standard-Toolkit"
             exit 1
           }
           Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
