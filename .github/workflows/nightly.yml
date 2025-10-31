@@ -251,17 +251,12 @@ jobs:
                   }
                   @{
                     name = "📦 NuGet Packages"
-                    value = "- Krypton.Toolkit.TEST.Nightly`n- Krypton.Ribbon.TEST.Nightly`n- Krypton.Navigator.TEST.Nightly`n- Krypton.Workspace.TEST.Nightly`n- Krypton.Docking.TEST.Nightly"
+                    value = "• [Toolkit](https://www.nuget.org/packages/Krypton.Toolkit.TEST.Nightly)`n• [Ribbon](https://www.nuget.org/packages/Krypton.Ribbon.TEST.Nightly)`n• [Navigator](https://www.nuget.org/packages/Krypton.Navigator.TEST.Nightly)`n• [Workspace](https://www.nuget.org/packages/Krypton.Workspace.TEST.Nightly)`n• [Docking](https://www.nuget.org/packages/Krypton.Docking.TEST.Nightly)"
                     inline = $false
                   }
                   @{
                     name = "🎯 Target Frameworks"
                     value = "• .NET Framework 4.7.2`n• .NET Framework 4.8`n• .NET Framework 4.8.1`n• .NET 8.0`n• .NET 9.0`n• .NET 10.0"
-                    inline = $false
-                  }
-                  @{
-                    name = "🔗 NuGet Packages"
-                    value = "• [Toolkit](https://www.nuget.org/packages/Krypton.Toolkit.TEST.Nightly)`n• [Ribbon](https://www.nuget.org/packages/Krypton.Ribbon.TEST.Nightly)`n• [Navigator](https://www.nuget.org/packages/Krypton.Navigator.TEST.Nightly)`n• [Workspace](https://www.nuget.org/packages/Krypton.Workspace.TEST.Nightly)`n• [Docking](https://www.nuget.org/packages/Krypton.Docking.TEST.Nightly)"
                     inline = $false
                   }
                 )
