@@ -67,7 +67,7 @@ jobs:
       - name: Note .NET 11 Status
         if: steps.setup_dotnet_11.outcome == 'failure'
         run: |
-          Write-Host "::warning::.NET 11 is not yet available - this is expected and can be ignored"
+          Write-Host "::notice::.NET 11 is not yet available - falling back to .NET 10 (this is expected)"
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
@@ -584,7 +584,7 @@ jobs:
       - name: Note .NET 11 Status
         if: steps.setup_dotnet_11.outcome == 'failure'
         run: |
-          Write-Host "::warning::.NET 11 is not yet available - this is expected and can be ignored"
+          Write-Host "::notice::.NET 11 is not yet available - falling back to .NET 10 (this is expected)"
 
       # global.json dynamically generate (use latest SDK available)
       - name: Force .NET 10 SDK via global.json
@@ -807,7 +807,7 @@ jobs:
       - name: Note .NET 11 Status
         if: steps.setup_dotnet_11.outcome == 'failure'
         run: |
-          Write-Host "::warning::.NET 11 is not yet available - this is expected and can be ignored"
+          Write-Host "::notice::.NET 11 is not yet available - falling back to .NET 10 (this is expected)"
 
       # global.json dynamically generate (use latest SDK available)
       - name: Force .NET 10 SDK via global.json
@@ -1236,7 +1236,7 @@ jobs:
       - name: Note .NET 11 Status
         if: steps.setup_dotnet_11.outcome == 'failure'
         run: |
-          Write-Host "::warning::.NET 11 is not yet available - this is expected and can be ignored"
+          Write-Host "::notice::.NET 11 is not yet available - falling back to .NET 10 (this is expected)"
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
