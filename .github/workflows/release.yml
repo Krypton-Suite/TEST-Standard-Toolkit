@@ -58,10 +58,16 @@ jobs:
 
       # .NET 11 (will auto-upgrade from preview to GA when available)
       - name: Setup .NET 11
+        id: setup_dotnet_11
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 11.0.x
         continue-on-error: true
+      
+      - name: Note .NET 11 Status
+        if: steps.setup_dotnet_11.outcome == 'failure'
+        run: |
+          Write-Host "::warning::.NET 11 is not yet available - this is expected and can be ignored"
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
@@ -569,10 +575,16 @@ jobs:
 
       # .NET 11 (will auto-upgrade from preview to GA when available)
       - name: Setup .NET 11
+        id: setup_dotnet_11
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 11.0.x
         continue-on-error: true
+      
+      - name: Note .NET 11 Status
+        if: steps.setup_dotnet_11.outcome == 'failure'
+        run: |
+          Write-Host "::warning::.NET 11 is not yet available - this is expected and can be ignored"
 
       # global.json dynamically generate (use latest SDK available)
       - name: Force .NET 10 SDK via global.json
@@ -786,10 +798,16 @@ jobs:
 
       # .NET 11 (will auto-upgrade from preview to GA when available)
       - name: Setup .NET 11
+        id: setup_dotnet_11
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 11.0.x
         continue-on-error: true
+      
+      - name: Note .NET 11 Status
+        if: steps.setup_dotnet_11.outcome == 'failure'
+        run: |
+          Write-Host "::warning::.NET 11 is not yet available - this is expected and can be ignored"
 
       # global.json dynamically generate (use latest SDK available)
       - name: Force .NET 10 SDK via global.json
@@ -1209,10 +1227,16 @@ jobs:
 
       # .NET 11 (will auto-upgrade from preview to GA when available)
       - name: Setup .NET 11
+        id: setup_dotnet_11
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 11.0.x
         continue-on-error: true
+      
+      - name: Note .NET 11 Status
+        if: steps.setup_dotnet_11.outcome == 'failure'
+        run: |
+          Write-Host "::warning::.NET 11 is not yet available - this is expected and can be ignored"
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
