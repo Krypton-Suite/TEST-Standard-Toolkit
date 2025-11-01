@@ -28,7 +28,6 @@ public class KryptonContextMenu : Component
 
     private readonly PaletteRedirectContextMenu _redirectorImages;
     private readonly PaletteRedirect _redirector;
-	private bool _trigger;
 
     #endregion
 
