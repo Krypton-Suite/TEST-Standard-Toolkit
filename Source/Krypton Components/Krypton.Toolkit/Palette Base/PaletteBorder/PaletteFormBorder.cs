@@ -34,6 +34,7 @@ public class PaletteFormBorder : PaletteBorder
 
     #region Width
     internal bool UseThemeFormChromeBorderWidth { get; set; } = true;
+    private FormBorderStyle _lastFormFormBorderStyle = FormBorderStyle.Sizable;
 
     /// <summary>
     /// Gets and sets the border width.
@@ -72,7 +73,7 @@ public class PaletteFormBorder : PaletteBorder
     /// <returns>Border rounding.</returns>
     public override float GetBorderRounding(PaletteState state)
     {
-        if (Draw == InheritBool.False || Rounding == -1F)
+        if (Draw == InheritBool.False)
         {
             return 0;
         }
@@ -85,11 +86,12 @@ public class PaletteFormBorder : PaletteBorder
     /// </summary>
     [KryptonPersist(false)]
     [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     [DefaultValue(PaletteGraphicsHint.None)]
     public override PaletteGraphicsHint GraphicsHint
     {
-        // #1757: Make sure that the little transparency elements on the curves do not show up for Form Borders
+        // #1757
         get => PaletteGraphicsHint.None;
 
         set
@@ -108,48 +110,54 @@ public class PaletteFormBorder : PaletteBorder
     /// https://github.com/Krypton-Suite/Standard-Toolkit/issues/139
     internal (int xBorder, int yBorder) BorderWidths(FormBorderStyle formFormBorderStyle)
     {
-        int xBorder;
-        int yBorder;
-
-        if (UseThemeFormChromeBorderWidth)
+        var xBorder = base.Width;   // do not call GetBorderWidth(PaletteState.Normal); as it will get lost in the stack recursion !
+        var yBorder = base.Width;
+        if (Draw == InheritBool.False)
         {
             xBorder = 0;
             yBorder = 0;
         }
-        else
+        else if (!UseThemeFormChromeBorderWidth)
         {
+            _lastFormFormBorderStyle = formFormBorderStyle;
             switch (formFormBorderStyle)
             {
                 case FormBorderStyle.None:
                     xBorder = 0;
                     yBorder = 0;
                     break;
-
                 case FormBorderStyle.FixedSingle:
                 case FormBorderStyle.FixedToolWindow:
                     xBorder = PI.GetSystemMetrics(PI.SM_.CXFIXEDFRAME);
                     yBorder = PI.GetSystemMetrics(PI.SM_.CYFIXEDFRAME);
                     break;
-
                 case FormBorderStyle.Fixed3D:
                     xBorder = PI.GetSystemMetrics(PI.SM_.CXEDGE);
                     yBorder = PI.GetSystemMetrics(PI.SM_.CYEDGE);
                     break;
-
                 case FormBorderStyle.FixedDialog:
                     xBorder = PI.GetSystemMetrics(PI.SM_.CXDLGFRAME);
                     yBorder = PI.GetSystemMetrics(PI.SM_.CYDLGFRAME);
                     break;
-
                 case FormBorderStyle.Sizable:
                 case FormBorderStyle.SizableToolWindow:
                     xBorder = PI.GetSystemMetrics(PI.SM_.CXSIZEFRAME);
                     yBorder = PI.GetSystemMetrics(PI.SM_.CYSIZEFRAME);
                     break;
-
                 default:
                     throw new ArgumentOutOfRangeException(nameof(formFormBorderStyle), formFormBorderStyle, null);
             }
+        }
+        else if (xBorder == -1)
+        {
+            var rect = new PI.RECT
+            {
+                // Start with a zero sized rectangle
+            };
+            // Adjust rectangle to add on the borders required
+            PI.AdjustWindowRect(ref rect, PI.WS_.SIZEFRAME, false);
+            xBorder = -rect.left;
+            yBorder = rect.bottom;
         }
 
         return (xBorder, yBorder);

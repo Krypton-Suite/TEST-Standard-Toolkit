@@ -818,8 +818,7 @@ public class KryptonForm : VisualForm,
     /// <summary>
     /// Access to the Internal KryptonPanel.
     /// </summary>
-    [Browsable(true)]
-    [EditorBrowsable(EditorBrowsableState.Always)]
+    [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public KryptonPanel InternalPanel => _internalKryptonPanel;
 

@@ -17,10 +17,10 @@
   </Folder>
   <Folder Name="/Solution Items/Build System/CMD Files/" />
   <Folder Name="/Solution Items/Build System/CMD Files/Build Scripts/">
-    <File Path="../../Scripts/build-canary-2026.cmd" />
-    <File Path="../../Scripts/build-installer-2026.cmd" />
-    <File Path="../../Scripts/build-nightly-2026.cmd" />
-    <File Path="../../Scripts/build-stable-2026.cmd" />
+    <File Path="../../Scripts/build-canary-2022.cmd" />
+    <File Path="../../Scripts/build-installer-2022.cmd" />
+    <File Path="../../Scripts/build-nightly-2022.cmd" />
+    <File Path="../../Scripts/build-stable-2022.cmd" />
   </Folder>
   <Folder Name="/Solution Items/Build System/CMD Files/Miscellaneous Scripts/">
     <File Path="../../debug.cmd" />
@@ -45,7 +45,7 @@
     <File Path="../../.gitattributes" />
     <File Path="../../.gitignore" />
     <File Path="../.editorconfig" />
-    <File Path="Krypton Toolkit Suite 2026 - VS2026.sln.DotSettings" />
+    <File Path="Krypton Toolkit Suite 2022 - VS2022.sln.DotSettings" />
   </Folder>
   <Folder Name="/Solution Items/dictionary-en-gb/">
     <File Path="../../dictionary-en-gb/index.aff" />
@@ -87,11 +87,11 @@
     <File Path="../../LICENSE" />
   </Folder>
   <Folder Name="/Source/">
-    <Project Path="Krypton.Docking/Krypton.Docking 2026.csproj" />
-    <Project Path="Krypton.Navigator/Krypton.Navigator 2026.csproj" />
-    <Project Path="Krypton.Ribbon/Krypton.Ribbon 2026.csproj" />
-    <Project Path="Krypton.Toolkit/Krypton.Toolkit 2026.csproj" />
-    <Project Path="Krypton.Workspace/Krypton.Workspace 2026.csproj" />
+    <Project Path="Krypton.Docking/Krypton.Docking 2022.csproj" />
+    <Project Path="Krypton.Navigator/Krypton.Navigator 2022.csproj" />
+    <Project Path="Krypton.Ribbon/Krypton.Ribbon 2022.csproj" />
+    <Project Path="Krypton.Toolkit/Krypton.Toolkit 2022.csproj" />
+    <Project Path="Krypton.Workspace/Krypton.Workspace 2022.csproj" />
   </Folder>
   <Project Path="../TestHarnesses/ThemeSwapRepro/ThemeSwapRepro.csproj">
     <BuildType Solution="Canary|*" Project="Release" />
@@ -99,7 +99,7 @@
     <BuildType Solution="Nightly|*" Project="Release" />
   </Project>
   <Project Path="TestForm/TestForm.csproj">
-    <BuildDependency Project="Krypton.Navigator/Krypton.Navigator 2026.csproj" />
+    <BuildDependency Project="Krypton.Navigator/Krypton.Navigator 2022.csproj" />
     <BuildType Solution="Canary|*" Project="Debug" />
     <BuildType Solution="Installer|*" Project="Debug" />
     <BuildType Solution="Nightly|*" Project="Debug" />

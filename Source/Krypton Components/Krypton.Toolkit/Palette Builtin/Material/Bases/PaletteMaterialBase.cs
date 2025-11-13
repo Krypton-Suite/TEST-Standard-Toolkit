@@ -328,7 +328,11 @@ public abstract class PaletteMaterialBase : PaletteMicrosoft365Base
         switch (metric)
         {
             case PaletteMetricPadding.HeaderButtonPaddingForm:
-                return new Padding(0);
+                if (owningForm == null)
+                {
+                    return new Padding();
+                }
+                return new Padding(0, owningForm!.RealWindowBorders.Right, 0, 0);
             case PaletteMetricPadding.PageButtonPadding:
                 return _metricPaddingPageButtons;
             case PaletteMetricPadding.BarPaddingTabs:
