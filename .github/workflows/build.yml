@@ -38,7 +38,6 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-        continue-on-error: true
 
       # .NET 11 (will auto-upgrade from preview to GA when available)
       - name: Setup .NET 11
@@ -109,7 +108,6 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
-        continue-on-error: true
 
       # .NET 11 (will auto-upgrade from preview to GA when available)
       - name: Setup .NET 11
