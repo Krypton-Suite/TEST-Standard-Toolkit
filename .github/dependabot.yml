@@ -13,3 +13,4 @@ updates:
       - "Krypton-Suite/reviewers"
     labels:
       - "workflow:dependancies"
+      
