@@ -95,6 +95,7 @@
     <Project Path="Krypton.Docking/Krypton.Docking 2026.csproj" />
     <Project Path="Krypton.Navigator/Krypton.Navigator 2026.csproj" />
     <Project Path="Krypton.Ribbon/Krypton.Ribbon 2026.csproj" />
+    <Project Path="Krypton.Standard.Toolkit/Krypton.Standard.Toolkit 2026.csproj" />
     <Project Path="Krypton.Toolkit/Krypton.Toolkit 2026.csproj" />
     <Project Path="Krypton.Workspace/Krypton.Workspace 2026.csproj" />
   </Folder>
