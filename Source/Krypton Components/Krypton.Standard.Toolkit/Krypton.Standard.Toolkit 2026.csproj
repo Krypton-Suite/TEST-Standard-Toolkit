@@ -30,51 +30,18 @@
     <ProjectReference Include="..\Krypton.Workspace\Krypton.Workspace 2026.csproj" />
   </ItemGroup>
 
-  <Target Name="IncludeKryptonAssemblies">
+  <Target Name="IncludeKryptonAssemblies" DependsOnTargets="ResolveReferences">
     <ItemGroup>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.dll')">
+      <TfmSpecificPackageFile Include="@(ReferenceCopyLocalPaths)"
+                              Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and '%(ReferenceCopyLocalPaths.FileName)' != 'Krypton.Standard.Toolkit'">
         <PackagePath>lib\$(TargetFramework)\</PackagePath>
       </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.pdb" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.pdb')">
+      <TfmSpecificPackageFile Include="@(ReferenceCopyLocalPaths->'%(RootDir)%(Directory)%(Filename).pdb')"
+                              Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and '%(ReferenceCopyLocalPaths.FileName)' != 'Krypton.Standard.Toolkit' and Exists('%(RootDir)%(Directory)%(Filename).pdb')">
         <PackagePath>lib\$(TargetFramework)\</PackagePath>
       </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.xml" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.xml')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.dll')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.pdb" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.pdb')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.xml" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.xml')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.dll')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.pdb" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.pdb')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.xml" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.xml')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.dll')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.pdb" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.pdb')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.xml" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.xml')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.dll')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.pdb" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.pdb')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.xml" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.xml')">
+      <TfmSpecificPackageFile Include="@(ReferenceCopyLocalPaths->'%(RootDir)%(Directory)%(Filename).xml')"
+                              Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and '%(ReferenceCopyLocalPaths.FileName)' != 'Krypton.Standard.Toolkit' and Exists('%(RootDir)%(Directory)%(Filename).xml')">
         <PackagePath>lib\$(TargetFramework)\</PackagePath>
       </TfmSpecificPackageFile>
     </ItemGroup>
