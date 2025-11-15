@@ -279,7 +279,7 @@ jobs:
                   }
                   @{
                     name = "📦 NuGet Packages"
-                    value = "• [Toolkit](https://www.nuget.org/packages/Krypton.Toolkit.TEST.Nightly)`n• [Ribbon](https://www.nuget.org/packages/Krypton.Ribbon.TEST.Nightly)`n• [Navigator](https://www.nuget.org/packages/Krypton.Navigator.TEST.Nightly)`n• [Workspace](https://www.nuget.org/packages/Krypton.Workspace.TEST.Nightly)`n• [Docking](https://www.nuget.org/packages/Krypton.Docking.TEST.Nightly)"
+                    value = "• [Toolkit](https://www.nuget.org/packages/Krypton.Toolkit.TEST.Nightly)`n• [Ribbon](https://www.nuget.org/packages/Krypton.Ribbon.TEST.Nightly)`n• [Navigator](https://www.nuget.org/packages/Krypton.Navigator.TEST.Nightly)`n• [Workspace](https://www.nuget.org/packages/Krypton.Workspace.TEST.Nightly)`n• [Docking](https://www.nuget.org/packages/Krypton.Docking.TEST.Nightly)`n• [Standard Toolkit](https://www.nuget.org/packages/Krypton.Standard.Toolkit.TEST.Nightly)"
                     inline = $false
                   }
                   @{
