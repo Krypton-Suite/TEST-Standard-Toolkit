@@ -1,0 +1,117 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Choose>
+	<When Condition="'$(Configuration)' == 'Nightly' Or '$(Configuration)' == 'Canary' Or '$(Configuration)' == 'Debug'">
+	  <PropertyGroup>
+		<TargetFrameworks>net472;net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+	  </PropertyGroup>
+	</When>
+	<Otherwise>
+	  <PropertyGroup>
+		<TargetFrameworks>net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+
+		<TargetFrameworks Condition="'$(TFMs)' == 'all'">net472;net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+	  </PropertyGroup>
+	</Otherwise>
+  </Choose>
+
+  <PropertyGroup>
+	<OutputType>Library</OutputType>
+	<RootNamespace>Krypton.Standard.Toolkit</RootNamespace>
+	<AssemblyName>Krypton.Standard.Toolkit</AssemblyName>
+	<!-- Set the CheckEolTargetFramework property to false to fix the warning -->
+	<CheckEolTargetFramework>false</CheckEolTargetFramework>
+	<SignAssembly>True</SignAssembly>
+	<AssemblyOriginatorKeyFile>..\Krypton.Toolkit\StrongKrypton.snk</AssemblyOriginatorKeyFile>
+	<ApplicationIcon>..\Krypton.Toolkit\Krypton.ico</ApplicationIcon>
+	<DelaySign>false</DelaySign>
+	<UseWindowsForms>true</UseWindowsForms>
+	<PlatformTarget>AnyCPU</PlatformTarget>
+	<EnableNETAnalyzers>true</EnableNETAnalyzers>
+	<NeutralLanguage>en</NeutralLanguage>
+	<DisableImplicitNamespaceImports>true</DisableImplicitNamespaceImports>
+	<Configurations>Debug;Release;Installer;Nightly;Canary</Configurations>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	<Nullable>enable</Nullable>
+	<!--https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-messages/warning-waves-->
+	<WarningLevel>8</WarningLevel>
+	<AnalysisLevel>latest</AnalysisLevel>
+	<AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+	<!--https://learn.microsoft.com/en-us/visualstudio/designers/disable-dpi-awareness?view=vs-2022-->
+	<ForceDesignerDPIUnaware>true</ForceDesignerDPIUnaware>
+	<ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+	<OutputPath>..\..\..\Bin\$(Configuration)\</OutputPath>
+	<NoWarn>1701;1702</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+	<PackageId>Krypton.Standard.Toolkit</PackageId>
+	<Description>Combined package containing Krypton.Docking, Krypton.Navigator, Krypton.Ribbon, Krypton.Toolkit, and Krypton.Workspace with all reference binaries included.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<Reference Include="System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="$(TargetFramework.StartsWith('net4'))">
+	  <SpecificVersion>True</SpecificVersion>
+	  <Version>4.0.0.0</Version>
+	  <!-- Designers for the `TFMs != net4` are "Pulled in" via Visual studios ".nuget\packages\microsoft.windowsdesktop.app.ref" -->
+	</Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+	<Reference Include="System.Net.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<ProjectReference Include="..\Krypton.Docking\Krypton.Docking 2026.csproj" />
+	<ProjectReference Include="..\Krypton.Navigator\Krypton.Navigator 2026.csproj" />
+	<ProjectReference Include="..\Krypton.Ribbon\Krypton.Ribbon 2026.csproj" />
+	<ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit 2026.csproj" />
+	<ProjectReference Include="..\Krypton.Workspace\Krypton.Workspace 2026.csproj" />
+  </ItemGroup>
+
+  <!-- Ensure referenced projects are built before packaging -->
+  <Target Name="EnsureReferencedProjectsBuilt" BeforeTargets="Pack">
+	<MSBuild Projects="@(ProjectReference)" 
+			 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)"
+			 Targets="Build" />
+  </Target>
+
+  <!-- Include DLLs and XML IntelliSense files from referenced projects in the NuGet package -->
+  <Target Name="IncludeReferencedDlls" BeforeTargets="GenerateNuspec" DependsOnTargets="EnsureReferencedProjectsBuilt">
+	<ItemGroup>
+	  <!-- Get the output paths of referenced projects (DLLs) -->
+	  <_ReferencedProjectOutputs Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.dll" />
+	  <_ReferencedProjectOutputs Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.dll" />
+	  <_ReferencedProjectOutputs Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.dll" />
+	  <_ReferencedProjectOutputs Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.dll" />
+	  <_ReferencedProjectOutputs Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.dll" />
+	  
+	  <!-- Get the XML IntelliSense files -->
+	  <_ReferencedProjectXml Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.xml" />
+	  <_ReferencedProjectXml Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.xml" />
+	  <_ReferencedProjectXml Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.xml" />
+	  <_ReferencedProjectXml Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.xml" />
+	  <_ReferencedProjectXml Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.xml" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <!-- Add DLLs to package files if they exist -->
+	  <_PackageFiles Include="@(_ReferencedProjectOutputs)" Condition="Exists('%(Identity)')">
+		<PackagePath>lib\$(TargetFramework)\%(Filename)%(Extension)</PackagePath>
+		<BuildAction>None</BuildAction>
+	  </_PackageFiles>
+	  
+	  <!-- Add XML IntelliSense files to package files if they exist -->
+	  <_PackageFiles Include="@(_ReferencedProjectXml)" Condition="Exists('%(Identity)')">
+		<PackagePath>lib\$(TargetFramework)\%(Filename)%(Extension)</PackagePath>
+		<BuildAction>None</BuildAction>
+	  </_PackageFiles>
+	</ItemGroup>
+  </Target>
+
+  <PropertyGroup Condition="'$(Configuration)'!='Debug'">
+	<Optimize>True</Optimize>
+  </PropertyGroup>
+
+</Project>
+
