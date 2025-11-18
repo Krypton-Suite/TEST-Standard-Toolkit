@@ -45,6 +45,7 @@
     <File Path="../../.gitattributes" />
     <File Path="../../.gitignore" />
     <File Path="../.editorconfig" />
+    <File Path="Krypton Toolkit Suite 2022 - VS2022.sln.DotSettings" />
   </Folder>
   <Folder Name="/Solution Items/dictionary-en-gb/">
     <File Path="../../dictionary-en-gb/index.aff" />
@@ -67,7 +68,10 @@
     <File Path="../../Documents/Development/How-to-Build.md" />
     <File Path="Themed-System-Menu.md" />
   </Folder>
-  <Folder Name="/Solution Items/Documentation/GitHub/" />
+  <Folder Name="/Solution Items/Documentation/GitHub/">
+    <File Path="../../.github/CODEOWNERS" />
+    <File Path="../../.github/dependabot.yml" />
+  </Folder>
   <Folder Name="/Solution Items/Documentation/GitHub/Issue Templates/">
     <File Path="../../.github/ISSUE_TEMPLATE/bug_report.md" />
     <File Path="../../.github/ISSUE_TEMPLATE/feature_request.md" />
@@ -85,17 +89,10 @@
     <File Path="../../Documents/License/License.md" />
     <File Path="../../LICENSE" />
   </Folder>
-  <Folder Name="/Solution Items/GitHub/" />
-  <Folder Name="/Solution Items/GitHub/Workflows/">
-    <File Path="../../.github/workflows/build.yml" />
-    <File Path="../../.github/workflows/nightly.yml" />
-    <File Path="../../.github/workflows/release.yml" />
-  </Folder>
   <Folder Name="/Source/">
     <Project Path="Krypton.Docking/Krypton.Docking 2026.csproj" />
     <Project Path="Krypton.Navigator/Krypton.Navigator 2026.csproj" />
     <Project Path="Krypton.Ribbon/Krypton.Ribbon 2026.csproj" />
-    <Project Path="Krypton.Standard.Toolkit/Krypton.Standard.Toolkit 2026.csproj" />
     <Project Path="Krypton.Toolkit/Krypton.Toolkit 2026.csproj" />
     <Project Path="Krypton.Workspace/Krypton.Workspace 2026.csproj" />
   </Folder>
