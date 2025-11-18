@@ -22,8 +22,8 @@
 	<!-- Set the CheckEolTargetFramework property to false to fix the warning -->
 	<CheckEolTargetFramework>false</CheckEolTargetFramework>
 	<SignAssembly>True</SignAssembly>
-	<AssemblyOriginatorKeyFile>..\Krypton.Toolkit\StrongKrypton.snk</AssemblyOriginatorKeyFile>
-	<ApplicationIcon>..\Krypton.Toolkit\Krypton.ico</ApplicationIcon>
+	<AssemblyOriginatorKeyFile>StrongKrypton.snk</AssemblyOriginatorKeyFile>
+	<ApplicationIcon>Krypton.ico</ApplicationIcon>
 	<DelaySign>false</DelaySign>
 	<UseWindowsForms>true</UseWindowsForms>
 	<PlatformTarget>AnyCPU</PlatformTarget>
