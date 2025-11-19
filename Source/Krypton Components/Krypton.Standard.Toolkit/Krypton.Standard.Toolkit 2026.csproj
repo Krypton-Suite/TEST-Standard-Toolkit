@@ -1,84 +1,122 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Choose>
+	<When Condition="'$(Configuration)' == 'Nightly' Or '$(Configuration)' == 'Canary' Or '$(Configuration)' == 'Debug'">
+	  <PropertyGroup>
+		<TargetFrameworks>net472;net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+	  </PropertyGroup>
+	</When>
+	<When Condition="'$(SkipNetFramework)' == 'true'">
+	  <PropertyGroup>
+		<TargetFrameworks>net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+	  </PropertyGroup>
+	</When>
+	<Otherwise>
+	  <PropertyGroup>
+		<TargetFrameworks>net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+
+		<TargetFrameworks Condition="'$(TFMs)' == 'all'">net472;net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+	  </PropertyGroup>
+	</Otherwise>
+  </Choose>
+
   <PropertyGroup>
-    <TargetFrameworks>$(KryptonTargetFrameworks)</TargetFrameworks>
-    <OutputType>Library</OutputType>
-    <RootNamespace>Krypton.Standard.Toolkit</RootNamespace>
-    <AssemblyName>Krypton.Standard.Toolkit</AssemblyName>
-    <UseWindowsForms>true</UseWindowsForms>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <DisableImplicitNamespaceImports>true</DisableImplicitNamespaceImports>
-    <Nullable>enable</Nullable>
-    <NoWarn>1701;1702</NoWarn>
-    <Configurations>Debug;Release;Installer;Nightly;Canary</Configurations>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <OutputPath>..\..\..\Bin\$(Configuration)\</OutputPath>
-    <PackageId>Krypton.Standard.Toolkit</PackageId>
-    <Description>Aggregates Krypton.Toolkit, Krypton.Ribbon, Krypton.Navigator, Krypton.Docking and Krypton.Workspace into a single toolkit distribution.</Description>
-    <IncludeBuildOutput>false</IncludeBuildOutput>
+	<OutputType>Library</OutputType>
+	<RootNamespace>Krypton.Standard.Toolkit</RootNamespace>
+	<AssemblyName>Krypton.Standard.Toolkit</AssemblyName>
+	<!-- Set the CheckEolTargetFramework property to false to fix the warning -->
+	<CheckEolTargetFramework>false</CheckEolTargetFramework>
+	<SignAssembly>True</SignAssembly>
+	<AssemblyOriginatorKeyFile>StrongKrypton.snk</AssemblyOriginatorKeyFile>
+	<ApplicationIcon>Krypton.ico</ApplicationIcon>
+	<DelaySign>false</DelaySign>
+	<UseWindowsForms>true</UseWindowsForms>
+	<PlatformTarget>AnyCPU</PlatformTarget>
+	<EnableNETAnalyzers>true</EnableNETAnalyzers>
+	<NeutralLanguage>en</NeutralLanguage>
+	<DisableImplicitNamespaceImports>true</DisableImplicitNamespaceImports>
+	<Configurations>Debug;Release;Installer;Nightly;Canary</Configurations>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	<Nullable>enable</Nullable>
+	<!--https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-messages/warning-waves-->
+	<WarningLevel>8</WarningLevel>
+	<AnalysisLevel>latest</AnalysisLevel>
+	<AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+	<!--https://learn.microsoft.com/en-us/visualstudio/designers/disable-dpi-awareness?view=vs-2022-->
+	<ForceDesignerDPIUnaware>true</ForceDesignerDPIUnaware>
+	<ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+	<OutputPath>..\..\..\Bin\$(Configuration)\</OutputPath>
+	<NoWarn>1701;1702</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeKryptonAssemblies</TargetsForTfmSpecificBuildOutput>
+	<PackageId>Krypton.Standard.Toolkit</PackageId>
+	<Description>Combined package containing Krypton.Docking, Krypton.Navigator, Krypton.Ribbon, Krypton.Toolkit, and Krypton.Workspace with all reference binaries included.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Krypton.Docking\Krypton.Docking 2026.csproj" />
-    <ProjectReference Include="..\Krypton.Navigator\Krypton.Navigator 2026.csproj" />
-    <ProjectReference Include="..\Krypton.Ribbon\Krypton.Ribbon 2026.csproj" />
-    <ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit 2026.csproj" />
-    <ProjectReference Include="..\Krypton.Workspace\Krypton.Workspace 2026.csproj" />
+	<Reference Include="System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="$(TargetFramework.StartsWith('net4'))">
+	  <SpecificVersion>True</SpecificVersion>
+	  <Version>4.0.0.0</Version>
+	  <!-- Designers for the `TFMs != net4` are "Pulled in" via Visual studios ".nuget\packages\microsoft.windowsdesktop.app.ref" -->
+	</Reference>
   </ItemGroup>
 
-  <Target Name="IncludeKryptonAssemblies">
-    <ItemGroup>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.dll')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.pdb" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.pdb')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.xml" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.xml')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.dll')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.pdb" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.pdb')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.xml" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.xml')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.dll')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.pdb" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.pdb')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.xml" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.xml')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.dll')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.pdb" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.pdb')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.xml" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.xml')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.dll" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.dll')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.pdb" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.pdb')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-      <TfmSpecificPackageFile Include="$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.xml" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.xml')">
-        <PackagePath>lib\$(TargetFramework)\</PackagePath>
-      </TfmSpecificPackageFile>
-    </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+	<Reference Include="System.Net.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<ProjectReference Include="..\Krypton.Docking\Krypton.Docking 2026.csproj" />
+	<ProjectReference Include="..\Krypton.Navigator\Krypton.Navigator 2026.csproj" />
+	<ProjectReference Include="..\Krypton.Ribbon\Krypton.Ribbon 2026.csproj" />
+	<ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit 2026.csproj" />
+	<ProjectReference Include="..\Krypton.Workspace\Krypton.Workspace 2026.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+	<TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);AddReferencedAssemblies</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target Name="AddReferencedAssemblies">
+	<ItemGroup>
+	  <TfmSpecificPackageFile Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.dll" Condition="Exists('..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.dll')">
+		<PackagePath>lib\$(TargetFramework)\</PackagePath>
+	  </TfmSpecificPackageFile>
+	  <TfmSpecificPackageFile Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.dll" Condition="Exists('..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.dll')">
+		<PackagePath>lib\$(TargetFramework)\</PackagePath>
+	  </TfmSpecificPackageFile>
+	  <TfmSpecificPackageFile Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.dll" Condition="Exists('..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.dll')">
+		<PackagePath>lib\$(TargetFramework)\</PackagePath>
+	  </TfmSpecificPackageFile>
+	  <TfmSpecificPackageFile Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.dll" Condition="Exists('..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.dll')">
+		<PackagePath>lib\$(TargetFramework)\</PackagePath>
+	  </TfmSpecificPackageFile>
+	  <TfmSpecificPackageFile Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.dll" Condition="Exists('..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.dll')">
+		<PackagePath>lib\$(TargetFramework)\</PackagePath>
+	  </TfmSpecificPackageFile>
+
+	  <TfmSpecificPackageFile Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.xml" Condition="Exists('..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Docking.xml')">
+		<PackagePath>lib\$(TargetFramework)\</PackagePath>
+	  </TfmSpecificPackageFile>
+	  <TfmSpecificPackageFile Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.xml" Condition="Exists('..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Navigator.xml')">
+		<PackagePath>lib\$(TargetFramework)\</PackagePath>
+	  </TfmSpecificPackageFile>
+	  <TfmSpecificPackageFile Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.xml" Condition="Exists('..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Ribbon.xml')">
+		<PackagePath>lib\$(TargetFramework)\</PackagePath>
+	  </TfmSpecificPackageFile>
+	  <TfmSpecificPackageFile Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.xml" Condition="Exists('..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Toolkit.xml')">
+		<PackagePath>lib\$(TargetFramework)\</PackagePath>
+	  </TfmSpecificPackageFile>
+	  <TfmSpecificPackageFile Include="..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.xml" Condition="Exists('..\..\..\Bin\$(Configuration)\$(TargetFramework)\Krypton.Workspace.xml')">
+		<PackagePath>lib\$(TargetFramework)\</PackagePath>
+	  </TfmSpecificPackageFile>
+	</ItemGroup>
   </Target>
+
+  <PropertyGroup Condition="'$(Configuration)'!='Debug'">
+	<Optimize>True</Optimize>
+  </PropertyGroup>
 
 </Project>
 
