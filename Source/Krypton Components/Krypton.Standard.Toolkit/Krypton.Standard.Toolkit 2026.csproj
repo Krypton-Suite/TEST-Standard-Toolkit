@@ -6,6 +6,11 @@
 		<TargetFrameworks>net472;net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
 	  </PropertyGroup>
 	</When>
+	<When Condition="'$(SkipNetFramework)' == 'true'">
+	  <PropertyGroup>
+		<TargetFrameworks>net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+	  </PropertyGroup>
+	</When>
 	<Otherwise>
 	  <PropertyGroup>
 		<TargetFrameworks>net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
@@ -73,7 +78,8 @@
   <Target Name="EnsureReferencedProjectsBuilt" BeforeTargets="Pack">
 	<MSBuild Projects="@(ProjectReference)" 
 			 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)"
-			 Targets="Build" />
+			 Targets="Build"
+			 ContinueOnError="ErrorAndContinue" />
   </Target>
 
   <!-- Include DLLs and XML IntelliSense files from referenced projects in the NuGet package -->
