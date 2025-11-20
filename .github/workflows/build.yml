@@ -85,7 +85,7 @@ jobs:
         run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
 
       - name: Build
-        run: msbuild "Scripts/nightly.proj" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Project-Files/nightly.proj" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU"
 
   release:
     runs-on: windows-latest
@@ -155,13 +155,13 @@ jobs:
         run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
 
       - name: Build Release
-        run: msbuild "Scripts/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Project-Files/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Pack Release
-        run: msbuild "Scripts/build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Project-Files/build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Create Release Archives
-        run: msbuild "Scripts/build.proj" /t:CreateAllReleaseArchives /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Project-Files/build.proj" /t:CreateAllReleaseArchives /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Get Version
         id: get_version
