@@ -37,8 +37,8 @@
             this.kwlblExceptionOutline = new Krypton.Toolkit.KryptonWrapLabel();
             this.kwlblExceptionDetails = new Krypton.Toolkit.KryptonWrapLabel();
             this.kryptonSeparator1 = new Krypton.Toolkit.KryptonSeparator();
-            this.rtbExceptionDetails = new System.Windows.Forms.RichTextBox();
             this.isbSearchArea = new Krypton.Toolkit.InternalSearchableExceptionWinFormsTreeView();
+            this.krtbExceptionDetails = new Krypton.Toolkit.KryptonRichTextBox();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel1)).BeginInit();
             this.kryptonPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel2)).BeginInit();
@@ -110,8 +110,8 @@
             this.tableLayoutPanel1.Controls.Add(this.kwlblExceptionOutline, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.kwlblExceptionDetails, 2, 0);
             this.tableLayoutPanel1.Controls.Add(this.kryptonSeparator1, 1, 1);
-            this.tableLayoutPanel1.Controls.Add(this.rtbExceptionDetails, 2, 1);
             this.tableLayoutPanel1.Controls.Add(this.isbSearchArea, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.krtbExceptionDetails, 2, 1);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -152,20 +152,6 @@
             this.kryptonSeparator1.Size = new System.Drawing.Size(5, 446);
             this.kryptonSeparator1.TabIndex = 2;
             // 
-            // rtbExceptionDetails
-            // 
-            this.rtbExceptionDetails.BackColor = System.Drawing.SystemColors.Control;
-            this.rtbExceptionDetails.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.rtbExceptionDetails.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.rtbExceptionDetails.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.rtbExceptionDetails.Location = new System.Drawing.Point(259, 38);
-            this.rtbExceptionDetails.Name = "rtbExceptionDetails";
-            this.rtbExceptionDetails.ReadOnly = true;
-            this.rtbExceptionDetails.Size = new System.Drawing.Size(875, 450);
-            this.rtbExceptionDetails.TabIndex = 4;
-            this.rtbExceptionDetails.Text = "";
-            this.rtbExceptionDetails.TextChanged += new System.EventHandler(this.rtbExceptionDetails_TextChanged);
-            // 
             // isbSearchArea
             // 
             this.isbSearchArea.BackColor = System.Drawing.Color.Transparent;
@@ -175,6 +161,18 @@
             this.isbSearchArea.Size = new System.Drawing.Size(235, 450);
             this.isbSearchArea.TabIndex = 5;
             this.isbSearchArea.NodeSelected += new System.Windows.Forms.TreeViewEventHandler(this.isbSearchArea_NodeSelected);
+            // 
+            // krtbExceptionDetails
+            // 
+            this.krtbExceptionDetails.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.krtbExceptionDetails.InputControlStyle = Krypton.Toolkit.InputControlStyle.PanelClient;
+            this.krtbExceptionDetails.Location = new System.Drawing.Point(259, 38);
+            this.krtbExceptionDetails.Name = "krtbExceptionDetails";
+            this.krtbExceptionDetails.ReadOnly = true;
+            this.krtbExceptionDetails.Size = new System.Drawing.Size(875, 450);
+            this.krtbExceptionDetails.TabIndex = 6;
+            this.krtbExceptionDetails.Text = "kryptonRichTextBox1";
+            this.krtbExceptionDetails.TextChanged += new System.EventHandler(this.krtbExceptionDetails_TextChanged);
             // 
             // VisualExceptionDialogForm
             // 
@@ -214,7 +212,7 @@
         private KryptonWrapLabel kwlblExceptionOutline;
         private KryptonWrapLabel kwlblExceptionDetails;
         private KryptonSeparator kryptonSeparator1;
-        private RichTextBox rtbExceptionDetails;
         private InternalSearchableExceptionWinFormsTreeView isbSearchArea;
+        private KryptonRichTextBox krtbExceptionDetails;
     }
 }
