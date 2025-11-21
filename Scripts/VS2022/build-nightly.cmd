@@ -67,4 +67,6 @@ if %answer%==n exit
 @echo Invalid input, please try again.
 
 :run
-call "%SCRIPT_DIR%main-menu.cmd"
+cd ..
+
+main-menu.cmd
