@@ -17,7 +17,7 @@ body:
     id: feature-title
     attributes:
       label: "Feature Title"
-      placeholder: "[Feature Request]: A brief title for the feature request"
+      placeholder: "A brief title for the feature request"
     validations:
       required: true
 
