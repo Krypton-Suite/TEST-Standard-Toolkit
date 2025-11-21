@@ -21,6 +21,59 @@ jobs:
             const { owner, repo } = context.repo;
             const issue = context.payload.issue;
             const issueBody = issue.body || '';
+            const issueTitle = issue.title || '';
+            
+            // Extract labels once for reuse
+            const labels = (issue.labels || []).map(
+              label => typeof label === 'string' ? label : label.name
+            );
+            
+            // Auto-prefix issue titles based on template type
+            // Only do this for newly opened issues (not edits)
+            if (context.payload.action === 'opened') {
+              
+              let titlePrefix = null;
+              
+              // Check for Bug Report template
+              const hasBugLabel = labels.includes('bug');
+              const hasBugReportFields = issueBody.includes('### Steps to Reproduce');
+              if ((hasBugLabel || hasBugReportFields) && !issueTitle.startsWith('[Bug]: ')) {
+                titlePrefix = '[Bug]: ';
+              }
+              // Check for Feature Request template
+              else if ((labels.includes('enhancement') || labels.includes('new feature') || labels.includes('suggestion') || 
+                       issueBody.includes('### Feature Description')) && 
+                       !issueTitle.startsWith('[Feature Request]: ')) {
+                titlePrefix = '[Feature Request]: ';
+              }
+              // Check for Other Issues template
+              else if ((labels.includes('discussion') || labels.includes('other') || 
+                       issueBody.includes('### Please describe your issue')) && 
+                       !issueTitle.startsWith('[Other Issues]: ')) {
+                titlePrefix = '[Other Issues]: ';
+              }
+              // Check for Post a Question template
+              else if ((labels.includes('question') || 
+                       issueBody.includes('### What do you want to ask?')) && 
+                       !issueTitle.startsWith('[Question]: ')) {
+                titlePrefix = '[Question]: ';
+              }
+              
+              if (titlePrefix) {
+                const newTitle = `${titlePrefix}${issueTitle}`;
+                try {
+                  await github.rest.issues.update({
+                    owner,
+                    repo,
+                    issue_number: issue.number,
+                    title: newTitle,
+                  });
+                  console.log(`Updated issue title to: ${newTitle}`);
+                } catch (error) {
+                  console.warn(`Failed to update issue title: ${error.message}`);
+                }
+              }
+            }
             
             // Map area names to label names
             const areaToLabel = {
@@ -31,9 +84,16 @@ jobs:
               'Workspace': 'area:workspace'
             };
             
-            // Extract "Areas Affected" field from issue body
+            // Extract "Areas Affected" field from issue body (only for bug reports)
             // GitHub issue forms store dropdown selections as markdown lists
             // Pattern matches: ### Areas Affected followed by bulleted list items
+            const isBugReport = labels.includes('bug') || issueBody.includes('### Steps to Reproduce');
+            
+            if (!isBugReport) {
+              console.log('Not a bug report - skipping area label assignment.');
+              return;
+            }
+            
             const areasAffectedMatch = issueBody.match(/###\s+Areas Affected\s*\n+([\s\S]*?)(?=\n###|\n*$)/i);
             
             if (!areasAffectedMatch) {
@@ -64,10 +124,8 @@ jobs:
               return;
             }
             
-            // Get existing labels on the issue
-            const existingLabels = (issue.labels || [])
-              .map(label => typeof label === 'string' ? label : label.name)
-              .filter(name => name);
+            // Get existing labels on the issue (reuse already extracted labels)
+            const existingLabels = labels;
             
             // Only add labels that aren't already present
             const newLabels = labelsToAdd.filter(label => !existingLabels.includes(label));
