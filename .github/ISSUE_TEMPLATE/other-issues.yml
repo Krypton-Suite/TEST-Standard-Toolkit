@@ -1,0 +1,18 @@
+name: "Other Issues"
+description: Any other issues that do not fall into one of the current categories.
+labels:
+  - discussion
+  - other
+body:
+  - type: textarea
+    attributes:
+      label: Describe the issue
+      placeholder: "[Other Issues]: How do I..."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Please describe your issue
+      placeholder: I need help with...
+    validations:
+      required: true
