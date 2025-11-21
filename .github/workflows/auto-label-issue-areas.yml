@@ -95,38 +95,65 @@ jobs:
             }
             
             // Try multiple patterns to find "Areas Affected" field
-            // GitHub may format this differently depending on how many items are selected
-            let areasAffectedMatch = issueBody.match(/###\s+Areas Affected\s*\n+([\s\S]*?)(?=\n###|\n*$)/i);
+            // GitHub formats dropdowns differently - try various patterns
+            let areasAffectedMatch = null;
+            const patterns = [
+              /###\s+Areas Affected\s*\n+([\s\S]*?)(?=\n###|$)/i,
+              /###\s+Areas Affected\s*([\s\S]*?)(?=\n###|$)/i,
+              /Areas Affected\s*\n+([\s\S]*?)(?=\n###|$)/i,
+              /Areas Affected\s*([\s\S]*?)(?=\n###|$)/i
+            ];
             
-            // If first pattern doesn't match, try a more flexible pattern
-            if (!areasAffectedMatch) {
-              areasAffectedMatch = issueBody.match(/###\s+Areas Affected\s*([\s\S]*?)(?=\n###|$)/i);
+            for (const pattern of patterns) {
+              areasAffectedMatch = issueBody.match(pattern);
+              if (areasAffectedMatch) {
+                console.log(`Matched pattern: ${pattern}`);
+                break;
+              }
             }
             
             if (!areasAffectedMatch) {
               console.log('No "Areas Affected" field found in issue body.');
+              console.log('Issue body preview:', issueBody.substring(0, 500));
               return;
             }
             
             const areasText = areasAffectedMatch[1].trim();
             console.log(`Raw areas text: "${areasText}"`);
             
+            // Check if field is empty or indicates no selection
+            if (!areasText || 
+                areasText.toLowerCase() === 'no selection' || 
+                areasText.toLowerCase() === 'none' ||
+                areasText === '_No response_' ||
+                areasText === '') {
+              console.log('No areas selected (field is empty).');
+              return;
+            }
+            
             // Extract bullet list items (lines starting with - or *)
             // Handle both single and multiple selections
             let selectedAreas = [];
             
             // First, try splitting by newlines (for multiple selections)
-            const lines = areasText.split('\n');
+            const lines = areasText.split(/\r?\n/);
+            console.log(`Split into ${lines.length} lines`);
             
             for (const line of lines) {
-              // Remove bullet markers (- or *) and trim
-              const cleaned = line.replace(/^[-*•]\s*/, '').trim();
+              // Remove bullet markers (-, *, •) and trim
+              let cleaned = line.replace(/^[-*•]\s*/, '').trim();
+              
+              // Also handle cases where there might be extra whitespace or formatting
+              cleaned = cleaned.replace(/^-\s*/, '').trim();
+              
+              console.log(`Processing line: "${line}" -> "${cleaned}"`);
               
               // Check if this is a valid area
               if (cleaned.length > 0 && 
                   !cleaned.match(/^<!--/) && 
                   !cleaned.match(/^###/) &&
                   areaToLabel[cleaned] !== undefined) {
+                console.log(`Found valid area: ${cleaned}`);
                 selectedAreas.push(cleaned);
               }
             }
@@ -134,7 +161,9 @@ jobs:
             // If no areas found from splitting, check if the whole text is a single area
             if (selectedAreas.length === 0) {
               const trimmed = areasText.trim();
+              console.log(`No areas from splitting, checking whole text: "${trimmed}"`);
               if (areaToLabel[trimmed] !== undefined) {
+                console.log(`Found single area: ${trimmed}`);
                 selectedAreas.push(trimmed);
               }
             }
