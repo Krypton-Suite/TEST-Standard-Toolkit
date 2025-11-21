@@ -94,7 +94,14 @@ jobs:
               return;
             }
             
-            const areasAffectedMatch = issueBody.match(/###\s+Areas Affected\s*\n+([\s\S]*?)(?=\n###|\n*$)/i);
+            // Try multiple patterns to find "Areas Affected" field
+            // GitHub may format this differently depending on how many items are selected
+            let areasAffectedMatch = issueBody.match(/###\s+Areas Affected\s*\n+([\s\S]*?)(?=\n###|\n*$)/i);
+            
+            // If first pattern doesn't match, try a more flexible pattern
+            if (!areasAffectedMatch) {
+              areasAffectedMatch = issueBody.match(/###\s+Areas Affected\s*([\s\S]*?)(?=\n###|$)/i);
+            }
             
             if (!areasAffectedMatch) {
               console.log('No "Areas Affected" field found in issue body.');
@@ -102,10 +109,35 @@ jobs:
             }
             
             const areasText = areasAffectedMatch[1].trim();
+            console.log(`Raw areas text: "${areasText}"`);
+            
             // Extract bullet list items (lines starting with - or *)
-            const selectedAreas = areasText.split('\n')
-              .map(line => line.replace(/^[-*]\s+/, '').trim())
-              .filter(area => area.length > 0 && !area.match(/^<!--/)); // Filter out HTML comments
+            // Handle both single and multiple selections
+            let selectedAreas = [];
+            
+            // First, try splitting by newlines (for multiple selections)
+            const lines = areasText.split('\n');
+            
+            for (const line of lines) {
+              // Remove bullet markers (- or *) and trim
+              const cleaned = line.replace(/^[-*•]\s*/, '').trim();
+              
+              // Check if this is a valid area
+              if (cleaned.length > 0 && 
+                  !cleaned.match(/^<!--/) && 
+                  !cleaned.match(/^###/) &&
+                  areaToLabel[cleaned] !== undefined) {
+                selectedAreas.push(cleaned);
+              }
+            }
+            
+            // If no areas found from splitting, check if the whole text is a single area
+            if (selectedAreas.length === 0) {
+              const trimmed = areasText.trim();
+              if (areaToLabel[trimmed] !== undefined) {
+                selectedAreas.push(trimmed);
+              }
+            }
             
             if (!selectedAreas.length) {
               console.log('No areas selected.');
