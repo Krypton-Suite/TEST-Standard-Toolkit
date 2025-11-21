@@ -13,7 +13,7 @@ body:
     attributes:
       label: "Title"
       description: "A brief summary of the bug."
-      placeholder: "[Bug]: 'Crash when clicking the save button'"
+      placeholder: "Crash when clicking the save button"
     validations:
       required: true
 
@@ -62,10 +62,11 @@ body:
     attributes:
       label: "Environment"
       description: "Details about your environment (e.g., OS, version, etc.)."
-      placeholder: "- OS: [e.g. Windows 11]
-                    - Version: [e.g. 10.0.26200]
-                    - Framework/.NET Version: [e.g. 4.7.2 - 4.8.1 or 8 - 10]
-                    - Toolkit Version: [e.g. 100.25.12.365]"
+      placeholder: |
+       - OS: [e.g. Windows 11]
+       - Version: [e.g. 10.0.26200]
+       - Framework/.NET Version: [e.g. 4.7.2 - 4.8.1 or 8 - 10]
+       - Toolkit Version: [e.g. 100.25.12.365]
     validations:
       required: false
 
