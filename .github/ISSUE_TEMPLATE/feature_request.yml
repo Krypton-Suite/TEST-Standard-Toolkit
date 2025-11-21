@@ -1,5 +1,6 @@
-name: "Feature Request"
+name: "✨ Feature Request"
 description: "Template for submitting a feature request"
+type: Feature
 labels:
   - enhancement
   - new feature
