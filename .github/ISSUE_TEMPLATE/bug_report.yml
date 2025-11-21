@@ -80,6 +80,7 @@ body:
       required: false
 
   - type: dropdown
+    id: areas_affected
     attributes:
       label: Areas Affected
       description: Select all that apply.
