@@ -1,0 +1,91 @@
+name: "🪲 Bug Report"
+description: "Create a report to help us improve the project."
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue! Please fill out the template below to help us understand and address the problem.
+
+  - type: input
+    id: title
+    attributes:
+      label: "Title"
+      description: "A brief summary of the bug."
+      placeholder: "[Bug]: 'Crash when clicking the save button'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "Describe the bug in detail."
+      placeholder: "e.g., 'When I click the save button, the application crashes with an error message.'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: "Steps to Reproduce"
+      description: "List the steps to reproduce the bug."
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: "Expected Behavior"
+      description: "What you expected to happen."
+      placeholder: "e.g., 'The application should save my changes without crashing.'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: "Actual Behavior"
+      description: "What actually happened."
+      placeholder: "e.g., 'The application crashes and shows an error message.'"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: "Environment"
+      description: "Details about your environment (e.g., OS, version, etc.)."
+      placeholder: "- OS: [e.g. Windows 11]
+                    - Version: [e.g. 10.0.26200]
+                    - Framework/.NET Version: [e.g. 4.7.2 - 4.8.1 or 8 - 10]
+                    - Toolkit Version: [e.g. 100.25.12.365]"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_information
+    attributes:
+      label: "Additional Information"
+      description: "Any other information that might be helpful."
+      placeholder: "e.g., 'Screenshots, logs, or other context.'"
+    validations:
+      required: false
+
+  - type: dropdown
+    attributes:
+      label: Areas Affected
+      description: Select all that apply.
+      multiple: true
+      options:
+        - Docking
+        - Navigator
+        - Ribbon
+        - Toolkit
+        - Workspace
