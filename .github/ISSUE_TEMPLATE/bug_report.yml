@@ -9,9 +9,9 @@ body:
         Thanks for taking the time to report an issue! Please fill out the template below to help us understand and address the problem. Please make sure to [search for existing issues](https://github.com/Krypton-Suite/Standard-Toolkit/issues) before filing a new one!
 
   - type: input
-    id: title
+    id: summary
     attributes:
-      label: "Title"
+      label: "Summary"
       description: "A brief summary of the bug."
       placeholder: "Crash when clicking the save button"
     validations:
