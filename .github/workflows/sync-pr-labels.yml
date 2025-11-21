@@ -1,0 +1,70 @@
+name: Sync PR labels from issues
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  sync-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy labels from linked issues
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const closingRegex = /\b(?:close[sd]?|fix(?:es|ed)?|resolve[sd]?)\s+#(\d+)/gi;
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const issueNumbers = new Set();
+            let match;
+
+            while ((match = closingRegex.exec(pr.body || '')) !== null) {
+              issueNumbers.add(Number(match[1]));
+            }
+
+            if (!issueNumbers.size) {
+              console.log('No linked issues found in PR body.');
+              return;
+            }
+
+            const labelNames = new Set();
+
+            for (const issue_number of issueNumbers) {
+              try {
+                const { data: issue } = await github.rest.issues.get({ owner, repo, issue_number });
+                if (!issue.labels?.length) {
+                  continue;
+                }
+
+                for (const label of issue.labels) {
+                  if (typeof label === 'string') {
+                    labelNames.add(label);
+                  } else if (label?.name) {
+                    labelNames.add(label.name);
+                  }
+                }
+              } catch (error) {
+                console.warn(`Skipping issue #${issue_number}: ${error.message}`);
+              }
+            }
+
+            if (!labelNames.size) {
+              console.log('No labels collected from linked issues.');
+              return;
+            }
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: pr.number,
+              labels: [...labelNames],
+            });
+
