@@ -1,0 +1,107 @@
+name: Auto-label issue areas
+
+on:
+  issues:
+    types:
+      - opened
+      - edited
+
+permissions:
+  issues: write
+
+jobs:
+  label-areas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract and apply area labels
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const issue = context.payload.issue;
+            const issueBody = issue.body || '';
+            
+            // Map area names to label names
+            const areaToLabel = {
+              'Docking': 'area:docking',
+              'Navigator': 'area:navigator',
+              'Ribbon': 'area:ribbon',
+              'Toolkit': 'area:toolkit',
+              'Workspace': 'area:workspace'
+            };
+            
+            // Extract "Areas Affected" field from issue body
+            // GitHub issue forms store dropdown selections as markdown lists
+            // Pattern matches: ### Areas Affected followed by bulleted list items
+            const areasAffectedMatch = issueBody.match(/###\s+Areas Affected\s*\n+([\s\S]*?)(?=\n###|\n*$)/i);
+            
+            if (!areasAffectedMatch) {
+              console.log('No "Areas Affected" field found in issue body.');
+              return;
+            }
+            
+            const areasText = areasAffectedMatch[1].trim();
+            // Extract bullet list items (lines starting with - or *)
+            const selectedAreas = areasText.split('\n')
+              .map(line => line.replace(/^[-*]\s+/, '').trim())
+              .filter(area => area.length > 0 && !area.match(/^<!--/)); // Filter out HTML comments
+            
+            if (!selectedAreas.length) {
+              console.log('No areas selected.');
+              return;
+            }
+            
+            console.log(`Found selected areas: ${selectedAreas.join(', ')}`);
+            
+            // Map areas to labels
+            const labelsToAdd = selectedAreas
+              .map(area => areaToLabel[area] || area)
+              .filter(label => label); // Remove any undefined/null values
+            
+            if (!labelsToAdd.length) {
+              console.log('No valid labels to add.');
+              return;
+            }
+            
+            // Get existing labels on the issue
+            const existingLabels = (issue.labels || [])
+              .map(label => typeof label === 'string' ? label : label.name)
+              .filter(name => name);
+            
+            // Only add labels that aren't already present
+            const newLabels = labelsToAdd.filter(label => !existingLabels.includes(label));
+            
+            if (!newLabels.length) {
+              console.log('All area labels are already present on the issue.');
+              return;
+            }
+            
+            console.log(`Adding labels: ${newLabels.join(', ')}`);
+            
+            try {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: issue.number,
+                labels: newLabels,
+              });
+              console.log(`Successfully added ${newLabels.length} label(s) to issue #${issue.number}`);
+            } catch (error) {
+              console.error(`Failed to add labels: ${error.message}`);
+              // If some labels don't exist, try adding them one by one
+              for (const label of newLabels) {
+                try {
+                  await github.rest.issues.addLabels({
+                    owner,
+                    repo,
+                    issue_number: issue.number,
+                    labels: [label],
+                  });
+                  console.log(`Added label: ${label}`);
+                } catch (labelError) {
+                  console.warn(`Failed to add label "${label}": ${labelError.message}`);
+                }
+              }
+            }
+
