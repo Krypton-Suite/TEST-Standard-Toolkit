@@ -61,4 +61,6 @@ if %answer%==n exit
 @echo Invalid input, please try again.
 
 :run
+cd ..
+
 main-menu.cmd
