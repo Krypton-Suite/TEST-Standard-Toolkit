@@ -47,7 +47,7 @@ public class KryptonSplitButton : KryptonDropButton
     {
         // Ensure split button is always enabled
         Splitter = true;
-        DropDown = true;
+        _drawButton.DropDown = true;
 
         // Hook into the DropDown event to raise DropDownClick
         base.DropDown += OnBaseDropDown;
@@ -88,13 +88,13 @@ public class KryptonSplitButton : KryptonDropButton
     [DefaultValue(true)]
     public new bool DropDown
     {
-        get => base.DropDown;
+        get => _drawButton.DropDown;
         set
         {
             // Split button always has dropdown enabled
             if (!value)
             {
-                base.DropDown = true;
+                _drawButton.DropDown = true;
             }
         }
     }

@@ -281,7 +281,6 @@ public class KryptonToolStripContainer : ToolStripContainer
                 // Get background colors from palette
                 var backColor1 = paletteBack.GetBackColor1(paletteState);
                 var backColor2 = paletteBack.GetBackColor2(paletteState);
-                var backStyle = paletteBack.GetBackStyle(paletteState);
 
                 // Draw the background based on style
                 if (backColor1 != Color.Empty && backColor2 != Color.Empty && backColor1 != backColor2)
