@@ -1,5 +1,6 @@
 name: "🪲 Bug Report"
 description: "Create a report to help us improve the project."
+type: Bug
 labels:
   - bug
 body:
