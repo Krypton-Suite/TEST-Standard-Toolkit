@@ -209,10 +209,6 @@ public class KryptonErrorProvider : Component, IExtenderProvider
             if (_iconAlignment != value)
             {
                 _iconAlignment = value;
-                if (_errorProvider != null)
-                {
-                    _errorProvider.IconAlignment = ConvertIconAlignment(value);
-                }
             }
         }
     }
@@ -232,10 +228,6 @@ public class KryptonErrorProvider : Component, IExtenderProvider
             if (_iconPadding != value)
             {
                 _iconPadding = value;
-                if (_errorProvider != null)
-                {
-                    _errorProvider.IconPadding = value;
-                }
             }
         }
     }
@@ -321,7 +313,7 @@ public class KryptonErrorProvider : Component, IExtenderProvider
     {
         if (_errorProvider != null)
         {
-            _errorProvider.IconAlignment = ConvertIconAlignment(alignment);
+            _errorProvider.SetIconAlignment(control, ConvertIconAlignment(alignment));
             _errorProvider.SetError(control, value);
         }
     }

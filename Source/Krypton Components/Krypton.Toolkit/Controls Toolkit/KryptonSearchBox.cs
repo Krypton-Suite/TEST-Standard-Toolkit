@@ -286,14 +286,14 @@ public class KryptonSearchBox : UserControl
     [Category(@"Visuals")]
     [Description(@"Sets the custom palette to be used.")]
     [DefaultValue(null)]
-    public PaletteBase? Palette
+    public KryptonCustomPaletteBase? Palette
     {
-        get => _textBox?.Palette;
+        get => _textBox?.LocalCustomPalette;
         set
         {
             if (_textBox != null)
             {
-                _textBox.Palette = value;
+                _textBox.LocalCustomPalette = value;
             }
         }
     }
@@ -465,7 +465,7 @@ public class KryptonSearchBox : UserControl
     {
         try
         {
-            var icon = GraphicsExtensions.ExtractIconFromImageres(ImageresIconID.ActionSearch, IconSize.Small);
+            var icon = GraphicsExtensions.ExtractIconFromImageres((int)ImageresIconID.ActionSearch, IconSize.Small);
             return icon?.ToBitmap();
         }
         catch
@@ -479,7 +479,7 @@ public class KryptonSearchBox : UserControl
     {
         try
         {
-            var icon = GraphicsExtensions.ExtractIconFromImageres(ImageresIconID.ActionClear, IconSize.Small);
+            var icon = GraphicsExtensions.ExtractIconFromImageres((int)ImageresIconID.ActionClear, IconSize.Small);
             return icon?.ToBitmap();
         }
         catch
