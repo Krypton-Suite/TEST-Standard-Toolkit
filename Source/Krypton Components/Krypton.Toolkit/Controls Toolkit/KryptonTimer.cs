@@ -10,6 +10,8 @@
  */
 #endregion
 
+using Timer = System.Windows.Forms.Timer;
+
 namespace Krypton.Toolkit;
 
 /// <summary>

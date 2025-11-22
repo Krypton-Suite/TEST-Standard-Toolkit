@@ -2440,6 +2440,26 @@ internal enum InformationBoxIconType
 
 #endregion
 
+#region Enum ToolTipDrawMode
+
+/// <summary>
+/// Specifies how ToolTips are drawn.
+/// </summary>
+public enum ToolTipDrawMode
+{
+    /// <summary>
+    /// The operating system draws the ToolTip.
+    /// </summary>
+    Normal,
+
+    /// <summary>
+    /// The ToolTip is drawn by the application code.
+    /// </summary>
+    OwnerDraw
+}
+
+#endregion
+
 #region Enum InformationBoxAutoSizeMode
 
 /// <summary>

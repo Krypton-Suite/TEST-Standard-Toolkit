@@ -73,9 +73,6 @@ public class KryptonTabControl : TabControl
         _tabStateTracking = new PaletteTriple(_tabStateCommon, OnNeedPaint);
         _tabStatePressed = new PaletteTriple(_tabStateCommon, OnNeedPaint);
         _tabStateSelected = new PaletteTriple(_tabStateCommon, OnNeedPaint);
-        
-        // Hook into tab state property changes
-        _tabStateCommon.PropertyChanged += OnTabStatePropertyChanged;
 
         // Initialize renderer
         UpdateRenderer();
@@ -116,12 +113,6 @@ public class KryptonTabControl : TabControl
             MouseLeave -= OnMouseLeave;
             MouseDown -= OnMouseDown;
             MouseUp -= OnMouseUp;
-
-            // Unhook from tab state property changes
-            if (_tabStateCommon != null)
-            {
-                _tabStateCommon.PropertyChanged -= OnTabStatePropertyChanged;
-            }
 
             // Clean up palette objects
             _tabStateSelected = null;
@@ -559,12 +550,6 @@ public class KryptonTabControl : TabControl
     private void OnNeedPaint(object? sender, NeedLayoutEventArgs e)
     {
         UpdateAppearance();
-        Invalidate();
-    }
-
-    private void OnTabStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // Invalidate all tabs when tab state properties change
         Invalidate();
     }
 
