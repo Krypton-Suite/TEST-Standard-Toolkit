@@ -108,7 +108,7 @@ body:
     attributes:
       label: Areas Affected
       description: Select all that apply.
-      multiple: true
+      multiple: false
       options:
         - Docking
         - Navigator
