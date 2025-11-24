@@ -5,7 +5,7 @@
  *  © Component Factory Pty Ltd, 2006 - 2016, (Version 4.5.0.0) All rights reserved.
  * 
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
- *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac & Ahmed Abdelhameed et al. 2017 - 2025. All rights reserved.
+ *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac & Ahmed Abdelhameed et al. 2017 - 2026. All rights reserved.
  *  
  */
 #endregion
@@ -422,7 +422,7 @@ public class KryptonRichTextBox : VisualControlBase,
     public KryptonRichTextBox()
     {
         // Contains another control and needs marking as such for validation to work
-        SetStyle(ControlStyles.ContainerControl, true);
+        SetStyle(ControlStyles.ContainerControl | ControlStyles.SupportsTransparentBackColor, true);
 
         // Cannot select this control, only the child TextBox
         SetStyle(ControlStyles.Selectable, false);
@@ -432,6 +432,8 @@ public class KryptonRichTextBox : VisualControlBase,
         _alwaysActive = true;
         _firstPaint = true;
         _inputControlStyle = InputControlStyle.Standalone;
+
+        BackColor = Color.Transparent;
 
         // Create the palette storage
         StateCommon = new PaletteInputControlTripleRedirect(Redirector, PaletteBackStyle.InputControlStandalone, PaletteBorderStyle.InputControlStandalone, PaletteContentStyle.InputControlStandalone, NeedPaintDelegate);

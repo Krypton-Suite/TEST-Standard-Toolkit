@@ -49,8 +49,7 @@ public class KryptonTabControl : TabControl
     /// </summary>
     public KryptonTabControl()
     {
-        SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
-        SetStyle(ControlStyles.SupportsTransparentBackColor, false);
+        SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
 
         // Set initial palette mode
         _paletteMode = PaletteMode.Global;
@@ -73,9 +72,6 @@ public class KryptonTabControl : TabControl
         _tabStateTracking = new PaletteTriple(_tabStateCommon, OnNeedPaint);
         _tabStatePressed = new PaletteTriple(_tabStateCommon, OnNeedPaint);
         _tabStateSelected = new PaletteTriple(_tabStateCommon, OnNeedPaint);
-        
-        // Hook into tab state property changes
-        _tabStateCommon.PropertyChanged += OnTabStatePropertyChanged;
 
         // Initialize renderer
         UpdateRenderer();
@@ -116,12 +112,6 @@ public class KryptonTabControl : TabControl
             MouseLeave -= OnMouseLeave;
             MouseDown -= OnMouseDown;
             MouseUp -= OnMouseUp;
-
-            // Unhook from tab state property changes
-            if (_tabStateCommon != null)
-            {
-                _tabStateCommon.PropertyChanged -= OnTabStatePropertyChanged;
-            }
 
             // Clean up palette objects
             _tabStateSelected = null;
@@ -407,6 +397,26 @@ public class KryptonTabControl : TabControl
 
     #region Protected Overrides
     /// <summary>
+    /// Raises the PaintBackground event.
+    /// </summary>
+    /// <param name="e">A PaintEventArgs that contains the event data.</param>
+    protected override void OnPaintBackground(PaintEventArgs e)
+    {
+        // Paint parent background for transparency
+        if (Parent != null)
+        {
+            using var brush = new SolidBrush(Parent.BackColor);
+            e.Graphics.FillRectangle(brush, e.ClipRectangle);
+        }
+        else
+        {
+            // Use system color as fallback
+            using var brush = new SolidBrush(SystemColors.Control);
+            e.Graphics.FillRectangle(brush, e.ClipRectangle);
+        }
+    }
+
+    /// <summary>
     /// Raises the EnabledChanged event.
     /// </summary>
     /// <param name="e">An EventArgs that contains the event data.</param>
@@ -455,6 +465,8 @@ public class KryptonTabControl : TabControl
     {
         var currentPalette = _palette ?? KryptonManager.CurrentGlobalPalette;
         _renderer = currentPalette?.GetRenderer();
+
+        //Backcolor = Color.Transparent;
     }
 
     private PaletteBackStyle GetTabBackStyle()
@@ -515,18 +527,8 @@ public class KryptonTabControl : TabControl
             return;
         }
 
-        var paletteState = Enabled ? PaletteState.Normal : PaletteState.Disabled;
-        var paletteBack = Enabled ? _stateNormal.Back : _stateDisabled.Back;
-
-        // Get background color from palette
-        if (paletteBack.GetBackDraw(paletteState) == InheritBool.True)
-        {
-            var backColor1 = paletteBack.GetBackColor1(paletteState);
-            if (backColor1 != Color.Empty)
-            {
-                base.BackColor = backColor1;
-            }
-        }
+        // Set background to transparent so the content area shows through
+        base.BackColor = Color.Transparent;
     }
 
     private void UpdateTabPagesPalette()
@@ -559,12 +561,6 @@ public class KryptonTabControl : TabControl
     private void OnNeedPaint(object? sender, NeedLayoutEventArgs e)
     {
         UpdateAppearance();
-        Invalidate();
-    }
-
-    private void OnTabStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // Invalidate all tabs when tab state properties change
         Invalidate();
     }
 

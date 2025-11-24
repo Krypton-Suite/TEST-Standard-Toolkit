@@ -5,7 +5,7 @@
  *  © Component Factory Pty Ltd, 2006 - 2016, (Version 4.5.0.0) All rights reserved.
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
- *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac & Ahmed Abdelhameed et al. 2017 - 2025. All rights reserved.
+ *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac & Ahmed Abdelhameed et al. 2017 - 2026. All rights reserved.
  *
  */
 #endregion
@@ -22,10 +22,9 @@ namespace Krypton.Toolkit;
 [DefaultBindingProperty(nameof(Text))]
 [DesignerCategory(@"code")]
 [Description(@"Provides a modern search input control with search icon and clear button.")]
-public class KryptonSearchBox : UserControl
+public class KryptonSearchBox : KryptonTextBox
 {
     #region Instance Fields
-    private KryptonTextBox? _textBox;
     private ButtonSpecAny? _searchButton;
     private ButtonSpecAny? _clearButton;
     private bool _showSearchButton;
@@ -54,28 +53,17 @@ public class KryptonSearchBox : UserControl
     /// </summary>
     public KryptonSearchBox()
     {
-        SetStyle(ControlStyles.AllPaintingInWmPaint |
-                 ControlStyles.UserPaint |
-                 ControlStyles.OptimizedDoubleBuffer |
-                 ControlStyles.ResizeRedraw |
-                 ControlStyles.SupportsTransparentBackColor, true);
-
         // Defaults
         _showSearchButton = true;
         _showClearButton = true;
         _clearOnEscape = true;
 
-        // Create the internal text box
-        _textBox = new KryptonTextBox
-        {
-            Dock = DockStyle.Fill
-        };
+        // Enable button spec tooltips
+        AllowButtonSpecToolTips = true;
 
         // Hook into text box events
-        _textBox.TextChanged += OnTextBoxTextChanged;
-        _textBox.KeyDown += OnTextBoxKeyDown;
-        _textBox.Enter += OnTextBoxEnter;
-        _textBox.Leave += OnTextBoxLeave;
+        TextChanged += OnTextChangedInternal;
+        KeyDown += OnKeyDownInternal;
 
         // Create search button (positioned on the right, first)
         _searchButton = new ButtonSpecAny
@@ -103,11 +91,8 @@ public class KryptonSearchBox : UserControl
         _clearButton.Click += OnClearButtonClick;
 
         // Add buttons to text box
-        _textBox.ButtonSpecs.Add(_searchButton);
-        _textBox.ButtonSpecs.Add(_clearButton);
-
-        // Add text box to controls
-        Controls.Add(_textBox);
+        ButtonSpecs.Add(_searchButton);
+        ButtonSpecs.Add(_clearButton);
 
         // Update clear button visibility
         UpdateClearButtonVisibility();
@@ -121,13 +106,8 @@ public class KryptonSearchBox : UserControl
     {
         if (disposing)
         {
-            if (_textBox != null)
-            {
-                _textBox.TextChanged -= OnTextBoxTextChanged;
-                _textBox.KeyDown -= OnTextBoxKeyDown;
-                _textBox.Enter -= OnTextBoxEnter;
-                _textBox.Leave -= OnTextBoxLeave;
-            }
+            TextChanged -= OnTextChangedInternal;
+            KeyDown -= OnKeyDownInternal;
 
             if (_searchButton != null)
             {
@@ -145,25 +125,6 @@ public class KryptonSearchBox : UserControl
     #endregion
 
     #region Public
-    /// <summary>
-    /// Gets or sets the text associated with this control.
-    /// </summary>
-    [Browsable(true)]
-    [EditorBrowsable(EditorBrowsableState.Always)]
-    [Bindable(true)]
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
-    public override string Text
-    {
-        get => _textBox?.Text ?? string.Empty;
-        set
-        {
-            if (_textBox != null && _textBox.Text != value)
-            {
-                _textBox.Text = value;
-                UpdateClearButtonVisibility();
-            }
-        }
-    }
 
     /// <summary>
     /// Gets or sets a value indicating whether the search button is displayed.
@@ -227,22 +188,9 @@ public class KryptonSearchBox : UserControl
     [Localizable(true)]
     public string PlaceholderText
     {
-        get => _textBox?.CueHint.CueHintText ?? string.Empty;
-        set
-        {
-            if (_textBox != null)
-            {
-                _textBox.CueHint.CueHintText = value;
-            }
-        }
+        get => CueHint.CueHintText;
+        set => CueHint.CueHintText = value;
     }
-
-    /// <summary>
-    /// Gets access to the underlying KryptonTextBox control.
-    /// </summary>
-    [Browsable(false)]
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public KryptonTextBox? TextBox => _textBox;
 
     /// <summary>
     /// Gets access to the search button specification.
@@ -258,93 +206,15 @@ public class KryptonSearchBox : UserControl
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ButtonSpecAny? ClearButton => _clearButton;
 
-    /// <summary>
-    /// Gets or sets the palette mode.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Sets the palette mode.")]
-    [DefaultValue(PaletteMode.Global)]
-    public PaletteMode PaletteMode
-    {
-        get => _textBox?.PaletteMode ?? PaletteMode.Global;
-        set
-        {
-            if (_textBox != null)
-            {
-                _textBox.PaletteMode = value;
-            }
-        }
-    }
-
-    private bool ShouldSerializePaletteMode() => PaletteMode != PaletteMode.Global;
-
-    private void ResetPaletteMode() => PaletteMode = PaletteMode.Global;
-
-    /// <summary>
-    /// Gets and sets the custom palette.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Sets the custom palette to be used.")]
-    [DefaultValue(null)]
-    public PaletteBase? Palette
-    {
-        get => _textBox?.Palette;
-        set
-        {
-            if (_textBox != null)
-            {
-                _textBox.Palette = value;
-            }
-        }
-    }
-
-    private bool ShouldSerializePalette() => PaletteMode == PaletteMode.Custom && Palette != null;
-
-    private void ResetPalette()
-    {
-        PaletteMode = PaletteMode.Global;
-        Palette = null;
-    }
-
-    /// <summary>
-    /// Gets access to the common textbox appearance entries that other states can override.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Overrides for defining common textbox appearance that other states can override.")]
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteInputControlTripleRedirect? StateCommon => _textBox?.StateCommon;
-
-    /// <summary>
-    /// Gets access to the disabled textbox appearance entries.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Overrides for defining disabled textbox appearance.")]
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteInputControlTripleStates? StateDisabled => _textBox?.StateDisabled;
-
-    /// <summary>
-    /// Gets access to the normal textbox appearance entries.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Overrides for defining normal textbox appearance.")]
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteInputControlTripleStates? StateNormal => _textBox?.StateNormal;
-
-    /// <summary>
-    /// Gets access to the active textbox appearance entries.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Overrides for defining active textbox appearance.")]
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteInputControlTripleStates? StateActive => _textBox?.StateActive;
 
     /// <summary>
     /// Clears the search text.
     /// </summary>
-    public void Clear()
+    public new void Clear()
     {
-        Text = string.Empty;
-        _textBox?.Focus();
+        base.Clear();
+        Focus();
+        UpdateClearButtonVisibility();
     }
 
     /// <summary>
@@ -356,68 +226,13 @@ public class KryptonSearchBox : UserControl
     }
     #endregion
 
-    #region Protected Overrides
-    /// <summary>
-    /// Raises the EnabledChanged event.
-    /// </summary>
-    /// <param name="e">An EventArgs that contains the event data.</param>
-    protected override void OnEnabledChanged(EventArgs e)
-    {
-        base.OnEnabledChanged(e);
-        if (_textBox != null)
-        {
-            _textBox.Enabled = Enabled;
-        }
-    }
-
-    /// <summary>
-    /// Raises the FontChanged event.
-    /// </summary>
-    /// <param name="e">An EventArgs that contains the event data.</param>
-    protected override void OnFontChanged(EventArgs e)
-    {
-        base.OnFontChanged(e);
-        if (_textBox != null)
-        {
-            _textBox.Font = Font;
-        }
-    }
-
-    /// <summary>
-    /// Raises the BackColorChanged event.
-    /// </summary>
-    /// <param name="e">An EventArgs that contains the event data.</param>
-    protected override void OnBackColorChanged(EventArgs e)
-    {
-        base.OnBackColorChanged(e);
-        if (_textBox != null)
-        {
-            _textBox.BackColor = BackColor;
-        }
-    }
-
-    /// <summary>
-    /// Raises the ForeColorChanged event.
-    /// </summary>
-    /// <param name="e">An EventArgs that contains the event data.</param>
-    protected override void OnForeColorChanged(EventArgs e)
-    {
-        base.OnForeColorChanged(e);
-        if (_textBox != null)
-        {
-            _textBox.ForeColor = ForeColor;
-        }
-    }
-    #endregion
-
     #region Implementation
-    private void OnTextBoxTextChanged(object? sender, EventArgs e)
+    private void OnTextChangedInternal(object? sender, EventArgs e)
     {
         UpdateClearButtonVisibility();
-        OnTextChanged(e);
     }
 
-    private void OnTextBoxKeyDown(object? sender, KeyEventArgs e)
+    private void OnKeyDownInternal(object? sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Enter)
         {
@@ -433,16 +248,6 @@ public class KryptonSearchBox : UserControl
         }
     }
 
-    private void OnTextBoxEnter(object? sender, EventArgs e)
-    {
-        OnEnter(e);
-    }
-
-    private void OnTextBoxLeave(object? sender, EventArgs e)
-    {
-        OnLeave(e);
-    }
-
     private void OnSearchButtonClick(object? sender, EventArgs e)
     {
         PerformSearch();
@@ -455,9 +260,9 @@ public class KryptonSearchBox : UserControl
 
     private void UpdateClearButtonVisibility()
     {
-        if (_clearButton != null && _textBox != null)
+        if (_clearButton != null)
         {
-            _clearButton.Visible = _showClearButton && !string.IsNullOrEmpty(_textBox.Text);
+            _clearButton.Visible = _showClearButton && !string.IsNullOrEmpty(Text);
         }
     }
 
@@ -465,7 +270,7 @@ public class KryptonSearchBox : UserControl
     {
         try
         {
-            var icon = GraphicsExtensions.ExtractIconFromImageres(ImageresIconID.ActionSearch, IconSize.Small);
+            var icon = GraphicsExtensions.ExtractIconFromImageres((int)ImageresIconID.ApplicationCalendar, IconSize.Small);
             return icon?.ToBitmap();
         }
         catch
@@ -479,7 +284,7 @@ public class KryptonSearchBox : UserControl
     {
         try
         {
-            var icon = GraphicsExtensions.ExtractIconFromImageres(ImageresIconID.ActionClear, IconSize.Small);
+            var icon = GraphicsExtensions.ExtractIconFromImageres((int)ImageresIconID.ActionClear, IconSize.Small);
             return icon?.ToBitmap();
         }
         catch
