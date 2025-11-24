@@ -15,7 +15,7 @@ on:
 jobs:
   release-master:
     runs-on: windows-latest
-    environment: production  # Requires approval before publishing
+    # environment: production  # Requires approval before publishing - DISABLED for automatic publishing
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
@@ -40,7 +40,7 @@ jobs:
           Write-Host "✓ Branch verified: $env:GITHUB_REF"
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # .NET 9 (GA)
       - name: Setup .NET 9
@@ -359,7 +359,7 @@ jobs:
           Write-Host "✓ Branch verified: $env:GITHUB_REF"
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # .NET 6 (LTS) - needed for net6.0-windows target
       - name: Setup .NET 6
@@ -556,7 +556,7 @@ jobs:
           Write-Host "✓ Branch verified: $env:GITHUB_REF"
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # .NET 9 (GA)
       - name: Setup .NET 9
@@ -778,7 +778,7 @@ jobs:
           Write-Host "✓ Branch verified: $env:GITHUB_REF"
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # .NET 9 (GA)
       - name: Setup .NET 9
@@ -983,7 +983,7 @@ jobs:
           Write-Host "✓ Branch verified: $env:GITHUB_REF"
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # .NET 9 (GA)
       - name: Setup .NET 9
