@@ -5,7 +5,7 @@
  *  © Component Factory Pty Ltd, 2006 - 2016, (Version 4.5.0.0) All rights reserved.
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
- *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac & Ahmed Abdelhameed et al. 2017 - 2025. All rights reserved.
+ *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac & Ahmed Abdelhameed et al. 2017 - 2026. All rights reserved.
  *
  */
 #endregion
@@ -47,7 +47,7 @@ public class KryptonSplitButton : KryptonDropButton
     {
         // Ensure split button is always enabled
         Splitter = true;
-        DropDown = true;
+        _drawButton.DropDown = true;
 
         // Hook into the DropDown event to raise DropDownClick
         base.DropDown += OnBaseDropDown;
@@ -88,13 +88,13 @@ public class KryptonSplitButton : KryptonDropButton
     [DefaultValue(true)]
     public new bool DropDown
     {
-        get => base.DropDown;
+        get => _drawButton.DropDown;
         set
         {
             // Split button always has dropdown enabled
             if (!value)
             {
-                base.DropDown = true;
+                _drawButton.DropDown = true;
             }
         }
     }

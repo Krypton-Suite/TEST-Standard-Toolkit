@@ -35,6 +35,8 @@ public class KryptonToolTip : Component, IExtenderProvider
     private Control? _currentControl;
     private System.Windows.Forms.Timer? _hideTimer;
     private readonly Dictionary<Control, EventHandler> _mouseLeaveHandlers;
+    private ToolTipDrawMode _drawMode;
+    private Color _stripColor;
     #endregion
 
     #region Events
@@ -64,6 +66,8 @@ public class KryptonToolTip : Component, IExtenderProvider
         _mouseLeaveHandlers = new Dictionary<Control, EventHandler>();
         _paletteMode = PaletteMode.Global;
         _palette = KryptonManager.CurrentGlobalPalette;
+        _drawMode = ToolTipDrawMode.Normal;
+        _stripColor = Color.Empty;
 
         // Create the underlying ToolTip
         _toolTip = new ToolTip();
@@ -337,14 +341,8 @@ public class KryptonToolTip : Component, IExtenderProvider
     [DefaultValue(ToolTipDrawMode.Normal)]
     public ToolTipDrawMode DrawMode
     {
-        get => _toolTip?.DrawMode ?? ToolTipDrawMode.Normal;
-        set
-        {
-            if (_toolTip != null)
-            {
-                _toolTip.DrawMode = value;
-            }
-        }
+        get => _drawMode;
+        set => _drawMode = value;
     }
 
     /// <summary>
@@ -409,14 +407,8 @@ public class KryptonToolTip : Component, IExtenderProvider
     [DefaultValue(typeof(Color), "Empty")]
     public Color StripColor
     {
-        get => _toolTip?.StripColor ?? Color.Empty;
-        set
-        {
-            if (_toolTip != null)
-            {
-                _toolTip.StripColor = value;
-            }
-        }
+        get => _stripColor;
+        set => _stripColor = value;
     }
 
     /// <summary>
@@ -590,7 +582,7 @@ public class KryptonToolTip : Component, IExtenderProvider
         e.Cancel = true;
 
         // Raise the Popup event
-        var popupArgs = new PopupEventArgs(e.AssociatedControl, e.AssociatedWindow, e.IsBalloon, e.ToolTipSize, e.ToolTipText);
+        var popupArgs = new PopupEventArgs(e.AssociatedWindow, e.AssociatedControl, e.IsBalloon, e.ToolTipSize);
         Popup?.Invoke(this, popupArgs);
 
         // If the event handler cancelled, don't show tooltip

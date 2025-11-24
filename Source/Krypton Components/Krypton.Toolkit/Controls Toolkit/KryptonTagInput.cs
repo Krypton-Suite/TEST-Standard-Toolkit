@@ -5,7 +5,7 @@
  *  © Component Factory Pty Ltd, 2006 - 2016, (Version 4.5.0.0) All rights reserved.
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
- *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac & Ahmed Abdelhameed et al. 2017 - 2025. All rights reserved.
+ *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac & Ahmed Abdelhameed et al. 2017 - 2026. All rights reserved.
  *
  */
 #endregion
@@ -294,12 +294,12 @@ public class KryptonTagInput : UserControl
     [DefaultValue(null)]
     public PaletteBase? Palette
     {
-        get => _textBox?.Palette;
+        get => _textBox?.LocalCustomPalette;
         set
         {
             if (_textBox != null)
             {
-                _textBox.Palette = value;
+                _textBox.LocalCustomPalette = value as KryptonCustomPaletteBase;
             }
         }
     }
@@ -586,7 +586,7 @@ public class KryptonTagInput : UserControl
                 int tagWidth = (int)textSize.Width + TagPadding * 2 + RemoveButtonSize + TagPadding;
 
                 // Check if tag fits on current line
-                if (x + tagWidth > ClientWidth - Padding.Right)
+                if (x + tagWidth > ClientSize.Width - Padding.Right)
                 {
                     // Move to next line (if multiline support is added)
                     x = Padding.Left;
@@ -610,7 +610,7 @@ public class KryptonTagInput : UserControl
 
         int textBoxX = Padding.Left;
         int textBoxY = Padding.Top + (Height - _textBox.Height - Padding.Top - Padding.Bottom) / 2;
-        int textBoxWidth = ClientWidth - Padding.Left - Padding.Right;
+        int textBoxWidth = ClientSize.Width - Padding.Left - Padding.Right;
         int textBoxHeight = _textBox.Height;
 
         // If there are tags, position textbox after the last tag
@@ -620,13 +620,13 @@ public class KryptonTagInput : UserControl
             textBoxX = lastTag.Right + TagSpacing;
 
             // Adjust width to fit remaining space
-            textBoxWidth = ClientWidth - textBoxX - Padding.Right;
+            textBoxWidth = ClientSize.Width - textBoxX - Padding.Right;
             if (textBoxWidth < 50)
             {
                 // Not enough space, move to new line
                 textBoxX = Padding.Left;
                 textBoxY = lastTag.Bottom + TagSpacing;
-                textBoxWidth = ClientWidth - Padding.Left - Padding.Right;
+                textBoxWidth = ClientSize.Width - Padding.Left - Padding.Right;
             }
         }
 
