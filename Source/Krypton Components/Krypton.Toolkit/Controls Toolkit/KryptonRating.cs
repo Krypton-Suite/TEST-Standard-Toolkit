@@ -32,6 +32,13 @@ public class KryptonRating : Control
     private Color _emptyStarColor;
     private Size _starSize;
     private int _starSpacing;
+    private PaletteBase? _palette;
+    private PaletteMode _paletteMode;
+    private PaletteRedirect? _redirector;
+    private PaletteDoubleRedirect? _stateCommon;
+    private PaletteDouble? _stateDisabled;
+    private PaletteDouble? _stateNormal;
+    private PaletteDouble? _stateTracking;
     #endregion
 
     #region Events
@@ -58,6 +65,7 @@ public class KryptonRating : Control
                  ControlStyles.UserPaint |
                  ControlStyles.OptimizedDoubleBuffer |
                  ControlStyles.ResizeRedraw |
+                 ControlStyles.SupportsTransparentBackColor |
                  ControlStyles.Selectable, true);
 
         _value = 0;
@@ -68,6 +76,25 @@ public class KryptonRating : Control
         _emptyStarColor = Color.LightGray;
         _starSize = new Size(20, 20);
         _starSpacing = 4;
+
+        // Set transparent background by default
+        BackColor = Color.Transparent;
+
+        // Set initial palette mode
+        _paletteMode = PaletteMode.Global;
+        _palette = KryptonManager.CurrentGlobalPalette;
+
+        // Create redirector to access the global palette
+        _redirector = new PaletteRedirect(_palette);
+
+        // Create the palette storage
+        _stateCommon = new PaletteDoubleRedirect(_redirector, PaletteBackStyle.InputControlStandalone, PaletteBorderStyle.InputControlStandalone, OnNeedPaint);
+        _stateDisabled = new PaletteDouble(_stateCommon, OnNeedPaint);
+        _stateNormal = new PaletteDouble(_stateCommon, OnNeedPaint);
+        _stateTracking = new PaletteDouble(_stateCommon, OnNeedPaint);
+
+        // Hook into global palette changes
+        KryptonManager.GlobalPaletteChanged += OnGlobalPaletteChanged;
 
         // Set default size
         Size = new Size(_maximum * (_starSize.Width + _starSpacing) - _starSpacing + 4, _starSize.Height + 4);
@@ -237,6 +264,153 @@ public class KryptonRating : Control
     }
     #endregion
 
+    #region Palette Properties
+    /// <summary>
+    /// Clean up any resources being used.
+    /// </summary>
+    /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            // Unhook from events
+            KryptonManager.GlobalPaletteChanged -= OnGlobalPaletteChanged;
+
+            // Clean up palette objects
+            _stateTracking = null;
+            _stateNormal = null;
+            _stateDisabled = null;
+            _stateCommon = null;
+            _redirector = null;
+            _palette = null;
+        }
+
+        base.Dispose(disposing);
+    }
+    #endregion
+
+    #region Palette Properties
+    /// <summary>
+    /// Gets and sets the palette mode.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Sets the palette mode.")]
+    [DefaultValue(PaletteMode.Global)]
+    public PaletteMode PaletteMode
+    {
+        get => _paletteMode;
+
+        set
+        {
+            if (_paletteMode != value)
+            {
+                // Action depends on new value
+                switch (value)
+                {
+                    case PaletteMode.Custom:
+                        // Do nothing, you must have a palette to set
+                        break;
+                    default:
+                        // Use the one of the built in palettes
+                        _paletteMode = value;
+                        _palette = KryptonManager.GetPaletteForMode(_paletteMode);
+                        UpdateRedirector();
+                        Invalidate();
+                        break;
+                }
+            }
+        }
+    }
+
+    private bool ShouldSerializePaletteMode() => PaletteMode != PaletteMode.Global;
+
+    private void ResetPaletteMode() => PaletteMode = PaletteMode.Global;
+
+    /// <summary>
+    /// Gets and sets the custom palette.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Sets the custom palette to be used.")]
+    [DefaultValue(null)]
+    public PaletteBase? Palette
+    {
+        get => _paletteMode == PaletteMode.Custom ? _palette : null;
+
+        set
+        {
+            // Only interested in changes of value
+            if (_palette != value)
+            {
+                // Remember new palette
+                _palette = value;
+
+                // If no custom palette provided, then must be using a built in palette
+                if (value == null)
+                {
+                    _paletteMode = PaletteMode.Global;
+                    _palette = KryptonManager.CurrentGlobalPalette;
+                }
+                else
+                {
+                    // No longer using a built in palette
+                    _paletteMode = PaletteMode.Custom;
+                }
+
+                UpdateRedirector();
+                Invalidate();
+            }
+        }
+    }
+
+    private bool ShouldSerializePalette() => PaletteMode == PaletteMode.Custom && _palette != null;
+
+    private void ResetPalette()
+    {
+        PaletteMode = PaletteMode.Global;
+        _palette = null;
+    }
+
+    /// <summary>
+    /// Gets access to the common rating appearance that other states can override.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining common rating appearance that other states can override.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteBack StateCommon => _stateCommon?.Back ?? throw new ObjectDisposedException(nameof(KryptonRating));
+
+    private bool ShouldSerializeStateCommon() => _stateCommon != null && !_stateCommon.Back.IsDefault;
+
+    /// <summary>
+    /// Gets access to the disabled rating appearance.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining disabled rating appearance.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteBack StateDisabled => _stateDisabled?.Back ?? throw new ObjectDisposedException(nameof(KryptonRating));
+
+    private bool ShouldSerializeStateDisabled() => _stateDisabled != null && !_stateDisabled.Back.IsDefault;
+
+    /// <summary>
+    /// Gets access to the normal rating appearance.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining normal rating appearance.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteBack StateNormal => _stateNormal?.Back ?? throw new ObjectDisposedException(nameof(KryptonRating));
+
+    private bool ShouldSerializeStateNormal() => _stateNormal != null && !_stateNormal.Back.IsDefault;
+
+    /// <summary>
+    /// Gets access to the tracking (hover) rating appearance.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining tracking (hover) rating appearance.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteBack StateTracking => _stateTracking?.Back ?? throw new ObjectDisposedException(nameof(KryptonRating));
+
+    private bool ShouldSerializeStateTracking() => _stateTracking != null && !_stateTracking.Back.IsDefault;
+    #endregion
+
     #region Protected Overrides
     /// <summary>
     /// Raises the Paint event.
@@ -247,6 +421,15 @@ public class KryptonRating : Control
 
         Graphics g = e.Graphics;
         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+        // Draw background if not transparent
+        if (BackColor != Color.Transparent)
+        {
+            using (var brush = new SolidBrush(BackColor))
+            {
+                g.FillRectangle(brush, ClientRectangle);
+            }
+        }
 
         int startX = 2;
         int startY = (Height - _starSize.Height) / 2;
@@ -262,7 +445,7 @@ public class KryptonRating : Control
                 _starSize.Height);
 
             bool isFilled = i < displayValue;
-            Color starFillColor = isFilled ? _starColor : _emptyStarColor;
+            Color starFillColor = GetStarColor(isFilled, i < _value);
 
             DrawStar(g, starRect, starFillColor);
         }
@@ -333,6 +516,91 @@ public class KryptonRating : Control
     #endregion
 
     #region Implementation
+    private void UpdateRedirector()
+    {
+        var currentPalette = _palette ?? KryptonManager.CurrentGlobalPalette;
+        if (_redirector != null)
+        {
+            _redirector.Target = currentPalette;
+        }
+        else
+        {
+            _redirector = new PaletteRedirect(currentPalette);
+            if (_stateCommon != null)
+            {
+                _stateCommon.SetRedirector(_redirector);
+            }
+        }
+    }
+
+    private Color GetStarColor(bool isFilled, bool isSelected)
+    {
+        // Determine the palette state
+        PaletteState paletteState;
+        PaletteBack? paletteBack = null;
+
+        if (!Enabled)
+        {
+            paletteState = PaletteState.Disabled;
+            paletteBack = _stateDisabled?.Back;
+        }
+        else if (_hoveredValue >= 0 && !_readOnly)
+        {
+            paletteState = PaletteState.Tracking;
+            paletteBack = _stateTracking?.Back;
+        }
+        else
+        {
+            paletteState = PaletteState.Normal;
+            paletteBack = _stateNormal?.Back;
+        }
+
+        // Try to get color from palette
+        Color? paletteColor = null;
+        if (paletteBack != null)
+        {
+            if (isFilled)
+            {
+                // For filled stars, try Color1 first, then Color2
+                var color1 = paletteBack.GetBackColor1(paletteState);
+                var color2 = paletteBack.GetBackColor2(paletteState);
+                paletteColor = color1 != Color.Empty ? color1 : (color2 != Color.Empty ? color2 : null);
+            }
+            else
+            {
+                // For empty stars, try Color2 first, then a lighter version of Color1
+                var color2 = paletteBack.GetBackColor2(paletteState);
+                var color1 = paletteBack.GetBackColor1(paletteState);
+                paletteColor = color2 != Color.Empty ? color2 : (color1 != Color.Empty ? ControlPaint.Light(color1, 0.7f) : null);
+            }
+        }
+
+        // Fall back to direct color properties if palette doesn't provide colors
+        if (paletteColor.HasValue && paletteColor.Value != Color.Empty)
+        {
+            return paletteColor.Value;
+        }
+
+        // Use direct color properties as fallback
+        return isFilled ? _starColor : _emptyStarColor;
+    }
+
+    private void OnNeedPaint(object? sender, NeedLayoutEventArgs e)
+    {
+        Invalidate();
+    }
+
+    private void OnGlobalPaletteChanged(object? sender, EventArgs e)
+    {
+        // Only update if we're using the global palette
+        if (_paletteMode == PaletteMode.Global)
+        {
+            _palette = KryptonManager.CurrentGlobalPalette;
+            UpdateRedirector();
+            Invalidate();
+        }
+    }
+
     private int GetStarIndexFromPoint(Point point)
     {
         int startX = 2;

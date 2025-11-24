@@ -248,10 +248,7 @@ public class KryptonErrorProvider : Component, IExtenderProvider
             {
                 _icon?.Dispose();
                 _icon = value;
-                if (_errorProvider != null)
-                {
-                    _errorProvider.Icon = value;
-                }
+                _errorProvider?.Icon = value;
             }
         }
     }
@@ -322,7 +319,6 @@ public class KryptonErrorProvider : Component, IExtenderProvider
     /// Sets the Error, ErrorText, and ErrorIconAlignment for the specified control to the specified values at design time.
     /// </summary>
     /// <param name="control">The control to set the error description string for.</param>
-    /// <param name="value">The error description string, or null or empty string to remove the error.</param>
     /// <param name="alignment">The alignment of the error icon relative to the control.</param>
     public void SetIconAlignment(Control control, KryptonErrorIconAlignment alignment)
     {
