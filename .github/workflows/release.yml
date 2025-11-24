@@ -15,7 +15,7 @@ on:
 jobs:
   release-master:
     runs-on: windows-latest
-    environment: production  # Requires approval before publishing
+    # environment: production  # Requires approval before publishing - DISABLED for automatic publishing
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
