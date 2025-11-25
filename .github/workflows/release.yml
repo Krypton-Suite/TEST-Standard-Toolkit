@@ -37,13 +37,13 @@ jobs:
 
       - name: Checkout
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
       # .NET 9 (GA)
       - name: Setup .NET 9
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.0.x
@@ -51,7 +51,7 @@ jobs:
       # .NET 10
       - name: Setup .NET 10
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -59,7 +59,7 @@ jobs:
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         run: |
           $sdkVersion = (dotnet --list-sdks | Select-String "10.0").ToString().Split(" ")[0]
           Write-Output "Using SDK $sdkVersion"
@@ -74,19 +74,19 @@ jobs:
 
       - name: Setup MSBuild
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: microsoft/setup-msbuild@v2
         with:
           msbuild-architecture: x64
 
       - name: Setup 
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: NuGet/setup-nuget@v2.0.1
 
       - name: Cache NuGet
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
@@ -96,22 +96,22 @@ jobs:
 
       - name: Restore
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
 
       - name: Build Release
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         run: msbuild "Scripts/Build/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Pack Release
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         run: msbuild "Scripts/Build/build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         id: push_nuget
         shell: pwsh
         run: |
@@ -152,7 +152,7 @@ jobs:
 
       - name: Get Version
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         id: get_version
         shell: pwsh
         run: |
@@ -196,7 +196,7 @@ jobs:
 
       - name: Announce Release on Discord
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
         shell: pwsh
         run: |
           if (-not $env:DISCORD_WEBHOOK_MASTER) {
@@ -268,13 +268,13 @@ jobs:
 
       - name: Checkout
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
       # .NET 9 (GA)
       - name: Setup .NET 9
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.0.x
@@ -282,7 +282,7 @@ jobs:
       # .NET 10
       - name: Setup .NET 10
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -290,7 +290,7 @@ jobs:
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         run: |
           $sdkVersion = (dotnet --list-sdks | Select-String "10.0").ToString().Split(" ")[0]
           Write-Output "Using SDK $sdkVersion"
@@ -305,19 +305,19 @@ jobs:
 
       - name: Setup MSBuild
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: microsoft/setup-msbuild@v2
         with:
           msbuild-architecture: x64
 
       - name: Setup NuGet
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: NuGet/setup-nuget@v2.0.1
 
       - name: Cache NuGet
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
@@ -327,22 +327,22 @@ jobs:
 
       - name: Restore
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
 
       - name: Build Release
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         run: msbuild "Scripts/Build/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Pack Release
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         run: msbuild "Scripts/Build/build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         id: push_nuget
         shell: pwsh
         run: |
@@ -383,7 +383,7 @@ jobs:
 
       - name: Get Version
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         id: get_version
         shell: pwsh
         run: |
@@ -427,7 +427,7 @@ jobs:
 
       - name: Announce Release on Discord
         # Kill switch check
-        if: steps.release_kill_switch.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
         shell: pwsh
         run: |
           if (-not $env:DISCORD_WEBHOOK_MASTER) {
@@ -499,13 +499,13 @@ jobs:
 
       - name: Checkout
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
       # .NET 6 (LTS) - needed for net6.0-windows target
       - name: Setup .NET 6
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 6.0.x
@@ -513,7 +513,7 @@ jobs:
       # .NET 7 - needed for net7.0-windows target
       - name: Setup .NET 7
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 7.0.x
@@ -521,26 +521,26 @@ jobs:
       # .NET 8 (LTS) - needed for net8.0-windows target and to build all framework targets
       - name: Setup .NET 8
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
 
       - name: Setup MSBuild
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         uses: microsoft/setup-msbuild@v2
         with:
           msbuild-architecture: x64
 
       - name: Setup NuGet
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         uses: NuGet/setup-nuget@v2.0.1
 
       - name: Cache NuGet
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
@@ -550,22 +550,22 @@ jobs:
 
       - name: Restore
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
 
       - name: Build LTS Release
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         run: msbuild "Scripts/Build/longtermstable.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Pack LTS Release
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         run: msbuild "Scripts/Build/longtermstable.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         id: push_nuget
         shell: pwsh
         run: |
@@ -606,7 +606,7 @@ jobs:
 
       - name: Get Version
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         id: get_version
         shell: pwsh
         run: |
@@ -650,7 +650,7 @@ jobs:
 
       - name: Announce LTS Release on Discord
         # Kill switch check
-        if: steps.lts_release_kill_switch.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        if: steps.lts_release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
         shell: pwsh
         run: |
           if (-not $env:DISCORD_WEBHOOK_LTS) {
@@ -722,13 +722,13 @@ jobs:
 
       - name: Checkout
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
       # .NET 9 (GA)
       - name: Setup .NET 9
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.0.x
@@ -736,7 +736,7 @@ jobs:
       # .NET 10 (GA)
       - name: Setup .NET 10
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -744,7 +744,7 @@ jobs:
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         run: |
           $sdkVersion = (dotnet --list-sdks | Select-String "10.0").ToString().Split(" ")[0]
           Write-Output "Using SDK $sdkVersion"
@@ -759,19 +759,19 @@ jobs:
 
       - name: Setup MSBuild
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         uses: microsoft/setup-msbuild@v2
         with:
           msbuild-architecture: x64
 
       - name: Setup NuGet
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         uses: NuGet/setup-nuget@v2.0.1
 
       - name: Cache NuGet
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
@@ -781,22 +781,22 @@ jobs:
 
       - name: Restore
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
 
       - name: Build Canary
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         run: msbuild "Scripts/Build/canary.proj" /t:Build /p:Configuration=Canary /p:Platform="Any CPU"
 
       - name: Pack Canary
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         run: msbuild "Scripts/Build/canary.proj" /t:Pack /p:Configuration=Canary /p:Platform="Any CPU"
 
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         id: push_nuget
         shell: pwsh
         run: |
@@ -837,7 +837,7 @@ jobs:
 
       - name: Get Version
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         id: get_version
         shell: pwsh
         run: |
@@ -881,7 +881,7 @@ jobs:
 
       - name: Announce Canary Release on Discord
         # Kill switch check
-        if: steps.canary_release_kill_switch.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
         shell: pwsh
         run: |
           if (-not $env:DISCORD_WEBHOOK_CANARY) {
@@ -953,13 +953,13 @@ jobs:
 
       - name: Checkout
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
       # .NET 9 (GA)
       - name: Setup .NET 9
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.0.x
@@ -967,7 +967,7 @@ jobs:
       # .NET 10 (GA)
       - name: Setup .NET 10
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
@@ -975,7 +975,7 @@ jobs:
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         run: |
           $sdkVersion = (dotnet --list-sdks | Select-String "10.0").ToString().Split(" ")[0]
           Write-Output "Using SDK $sdkVersion"
@@ -990,19 +990,19 @@ jobs:
 
       - name: Setup MSBuild
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         uses: microsoft/setup-msbuild@v2
         with:
           msbuild-architecture: x64
 
       - name: Setup NuGet
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         uses: NuGet/setup-nuget@v2.0.1
 
       - name: Cache NuGet
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
@@ -1012,22 +1012,22 @@ jobs:
 
       - name: Restore
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
 
       - name: Build Alpha
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         run: msbuild "Scripts/Build/nightly.proj" /t:Build /p:Configuration=Nightly /p:Platform="Any CPU"
 
       - name: Pack Alpha
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         run: msbuild "Scripts/Build/nightly.proj" /t:Pack /p:Configuration=Nightly /p:Platform="Any CPU"
 
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         id: push_nuget
         shell: pwsh
         run: |
@@ -1068,7 +1068,7 @@ jobs:
 
       - name: Get Version
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         id: get_version
         shell: pwsh
         run: |
@@ -1112,7 +1112,7 @@ jobs:
 
       - name: Announce Nightly Release on Discord
         # Kill switch check
-        if: steps.nightly_release_kill_switch.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
         shell: pwsh
         run: |
           if (-not $env:DISCORD_WEBHOOK_NIGHTLY) {
