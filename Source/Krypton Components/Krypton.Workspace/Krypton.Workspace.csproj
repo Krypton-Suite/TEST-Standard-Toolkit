@@ -65,8 +65,8 @@
     <EmbeddedResource Include="ToolboxBitmaps\KryptonWorkspace.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Krypton.Navigator\Krypton.Navigator 2026.csproj" />
-    <ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit 2026.csproj" />
+    <ProjectReference Include="..\Krypton.Navigator\Krypton.Navigator.csproj" />
+    <ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Palette Demo\WorkspacePageMenuBase.cs" />
