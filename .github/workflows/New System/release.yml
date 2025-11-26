@@ -19,7 +19,26 @@ jobs:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
+      # Release kill switch
+      - name: Release Kill Switch Check
+        id: release_kill_switch
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $disabled = '${{ vars.RELEASE_DISABLED }}'
+
+          if ($disabled -eq 'true') {
+            Write-Host "::warning:: Release workflow is currently DISABLED via kill switch (RELEASE_DISABLED=true)"
+            Write-Host "To re-enable: Go to Repository Settings -> Secrets and Variables -> Actions -> Variables -> Set RELEASE_DISABLED to 'false'."
+            echo "enabled=false" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "Release kill switch check has passed, continuing..."
+            echo "enabled=true" >> $env:GITHUB_OUTPUT
+          }
+
       - name: Security - Verify Repository
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -30,6 +49,8 @@ jobs:
           Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
 
       - name: Security - Verify Branch
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -40,6 +61,8 @@ jobs:
           Write-Host "✓ Branch verified: $env:GITHUB_REF"
 
       - name: Checkout
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
       # .NET 9 (GA)
@@ -98,7 +121,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
 
       - name: Build Release
         run: msbuild "Scripts/Build/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
@@ -165,7 +188,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2026.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -215,7 +238,7 @@ jobs:
               @{
                 title = "🎉 Krypton Toolkit Stable Release"
                 description = "A new stable release is now available!"
-                color = 3447003
+                color = 77DD76
                 fields = @(
                   @{
                     name = "📌 Version"
@@ -309,7 +332,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
 
       - name: Build LTS Release
         run: msbuild "Scripts/Build/longtermstable.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
@@ -376,7 +399,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2026.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -412,7 +435,7 @@ jobs:
               @{
                 title = "🛡️ Krypton Toolkit LTS Release"
                 description = "A new Long-Term Support release is now available!"
-                color = 15105570
+                color = 0094FF
                 fields = @(
                   @{
                     name = "📌 Version"
@@ -531,7 +554,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
 
       - name: Build LTS Release
         run: msbuild "Scripts/Build/longtermstable.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
@@ -598,7 +621,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2026.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -736,7 +759,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
 
       - name: Build Canary
         run: msbuild "Scripts/Build/canary.proj" /t:Build /p:Configuration=Canary /p:Platform="Any CPU"
@@ -803,7 +826,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2026.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -954,7 +977,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
 
       - name: Build Alpha
         run: msbuild "Scripts/Build/nightly.proj" /t:Build /p:Configuration=Nightly /p:Platform="Any CPU"

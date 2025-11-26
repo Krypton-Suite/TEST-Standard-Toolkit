@@ -1,5 +1,5 @@
 # New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
-# Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac, tobitege et al. 2025 - 2025. All rights reserved.
+# Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac, tobitege et al. 2026 - 2026. All rights reserved.
 #
 # KILL-SWITCH: To disable this workflow, set repository variable NIGHTLY_DISABLED=true
 # Location: Repository Settings → Secrets and variables → Actions → Variables tab
@@ -163,7 +163,7 @@ jobs:
 
       - name: Restore
         if: steps.kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
 
       - name: Build Nightly
         if: steps.kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
@@ -234,7 +234,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2026.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -279,12 +279,17 @@ jobs:
                   }
                   @{
                     name = "📦 NuGet Packages"
-                    value = "• [Toolkit](https://www.nuget.org/packages/Krypton.Toolkit.TEST.Nightly)`n• [Ribbon](https://www.nuget.org/packages/Krypton.Ribbon.TEST.Nightly)`n• [Navigator](https://www.nuget.org/packages/Krypton.Navigator.TEST.Nightly)`n• [Workspace](https://www.nuget.org/packages/Krypton.Workspace.TEST.Nightly)`n• [Docking](https://www.nuget.org/packages/Krypton.Docking.TEST.Nightly)`n• [Standard Toolkit](https://www.nuget.org/packages/Krypton.Standard.Toolkit.TEST.Nightly)"
+                    value = "• [Krypton.Toolkit.Nightly](https://www.nuget.org/packages/Krypton.Toolkit.TEST.Nightly)`n• [Krypton.Ribbon.Nightly](https://www.nuget.org/packages/Krypton.Ribbon.TEST.Nightly)`n• [Krypton.Navigator.Nightly](https://www.nuget.org/packages/Krypton.Navigator.TEST.Nightly)`n• [Krypton.Workspace.Nightly](https://www.nuget.org/packages/Krypton.Workspace.TEST.Nightly)`n• [Krypton.Docking.Nightly](https://www.nuget.org/packages/Krypton.Docking.TEST.Nightly)`n• [Krypton.Standard.Toolkit.Nightly](https://www.nuget.org/packages/Krypton.Standard.Toolkit.TEST.Nightly)"
                     inline = $false
                   }
                   @{
                     name = "🎯 Target Frameworks"
                     value = "• .NET Framework 4.7.2`n• .NET Framework 4.8`n• .NET Framework 4.8.1`n• .NET 8.0`n• .NET 9.0`n• .NET 10.0"
+                    inline = $false
+                  }
+                  @ {
+                    name = "📄 Changelog"
+                    value = "• [Latest Changelog](https://github.com/Krypton-Suite/Standard-Toolkit/blob/alpha/Documents/Changelog/Changelog.md)"
                     inline = $false
                   }
                 )
