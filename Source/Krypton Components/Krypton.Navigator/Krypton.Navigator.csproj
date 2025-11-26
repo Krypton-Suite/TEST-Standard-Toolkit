@@ -88,7 +88,7 @@
     <Compile Remove="Palette\PaletteNavigatorOtherOverride.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit 2026.csproj" />
+    <ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit.csproj" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Resources\CursorResources.resx">
