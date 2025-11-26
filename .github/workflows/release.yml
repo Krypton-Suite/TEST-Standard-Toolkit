@@ -14,7 +14,7 @@ on:
 
 jobs:
   release-master:
-    runs-on: windows-2025
+    runs-on: windows-latest
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
@@ -40,21 +40,15 @@ jobs:
         if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
-      # .NET 9 (GA)
-      - name: Setup .NET 9
+      # .NET 9 and 10
+      - name: Setup .NET
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.0.x
-
-      # .NET 10
-      - name: Setup .NET 10
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
@@ -97,17 +91,17 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.sln"
 
       - name: Build Release
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build/.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Pack Release
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build//build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
@@ -172,7 +166,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2026.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -245,7 +239,7 @@ jobs:
           DISCORD_WEBHOOK_MASTER: ${{ secrets.DISCORD_WEBHOOK_MASTER }}
 
   release-v105-lts:
-    runs-on: windows-2025
+    runs-on: windows-latest
     if: github.ref == 'refs/heads/V105-LTS' && github.event_name == 'push'
 
     steps:
@@ -271,21 +265,15 @@ jobs:
         if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
-      # .NET 9 (GA)
-      - name: Setup .NET 9
+      # .NET 9 and 10
+      - name: Setup .NET
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.0.x
-
-      # .NET 10
-      - name: Setup .NET 10
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
@@ -328,17 +316,17 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.sln"
 
       - name: Build Release
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build//build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Pack Release
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build//build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
@@ -403,7 +391,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2026.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -476,7 +464,7 @@ jobs:
           DISCORD_WEBHOOK_MASTER: ${{ secrets.DISCORD_WEBHOOK_MASTER }}
 
   release-v85-lts:
-    runs-on: windows-2025
+    runs-on: windows-latest
     if: github.ref == 'refs/heads/V85-LTS' && github.event_name == 'push'
 
     steps:
@@ -502,29 +490,16 @@ jobs:
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
-      # .NET 6 (LTS) - needed for net6.0-windows target
-      - name: Setup .NET 6
+      # .NET 6, 7 and 8 - needed for net6.0-windows, net7.0-windows and net8.0-windows targets
+      - name: Setup .NET 6, 7 and 8
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 6.0.x
-
-      # .NET 7 - needed for net7.0-windows target
-      - name: Setup .NET 7
-        # Kill switch check
-        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 7.0.x
-
-      # .NET 8 (LTS) - needed for net8.0-windows target and to build all framework targets
-      - name: Setup .NET 8
-        # Kill switch check
-        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            6.0.x
+            7.0.x
+            8.0.x
 
       - name: Setup MSBuild
         # Kill switch check
@@ -551,17 +526,17 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.sln"
 
       - name: Build LTS Release
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/longtermstable.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build//longtermstable.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Pack LTS Release
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/longtermstable.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build//longtermstable.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
@@ -626,7 +601,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2026.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -699,7 +674,7 @@ jobs:
           DISCORD_WEBHOOK_LTS: ${{ secrets.DISCORD_WEBHOOK_LTS }}
 
   release-canary:
-    runs-on: windows-2025
+    runs-on: windows-latest
     if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
 
     steps:
@@ -713,7 +688,7 @@ jobs:
 
           if ($disabled -eq 'true') {
             Write-Host "::warning:: Canary Release workflow is currently DISABLED via kill switch (CANARY_DISABLED=true)"
-            Write-Host "To re-enable: Go to Repository Settings -> Secrets and Variables -> Actions -> Variables -> Set LTS_DISABLED to 'false'."
+            Write-Host "To re-enable: Go to Repository Settings -> Secrets and Variables -> Actions -> Variables -> Set CANARY_DISABLED to 'false'."
             echo "enabled=false" >> $env:GITHUB_OUTPUT
           } else {
             Write-Host "Canary Release kill switch check has passed, continuing..."
@@ -725,21 +700,15 @@ jobs:
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
-      # .NET 9 (GA)
-      - name: Setup .NET 9
+      # .NET 9 and 10
+      - name: Setup .NET
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.0.x
-
-      # .NET 10 (GA)
-      - name: Setup .NET 10
-        # Kill switch check
-        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
@@ -782,17 +751,17 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Standard Toolkit.slnx"
 
       - name: Build Canary
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/canary.proj" /t:Build /p:Configuration=Canary /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build//canary.proj" /t:Build /p:Configuration=Canary /p:Platform="Any CPU"
 
       - name: Pack Canary
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/canary.proj" /t:Pack /p:Configuration=Canary /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build//canary.proj" /t:Pack /p:Configuration=Canary /p:Platform="Any CPU"
 
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
@@ -857,7 +826,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2026.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -892,7 +861,7 @@ jobs:
           $payload = @{
             embeds = @(
               @{
-                title = "🐤 Krypton Toolkit Canary Release"
+                title = "🐤 Krypton Toolkit Canary Release (Standard)"
                 description = "A new canary pre-release is now available for early testing!"
                 color = 16776960
                 fields = @(
@@ -930,7 +899,7 @@ jobs:
           DISCORD_WEBHOOK_CANARY: ${{ secrets.DISCORD_WEBHOOK_CANARY }}
 
   release-alpha:
-    runs-on: windows-2025
+    runs-on: windows-latest
     if: github.ref == 'refs/heads/alpha' && github.event_name == 'push'
 
     steps:
@@ -956,21 +925,15 @@ jobs:
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v6
 
-      # .NET 9 (GA)
-      - name: Setup .NET 9
+      # .NET 9 and 10
+      - name: Setup .NET
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.0.x
-
-      # .NET 10 (GA)
-      - name: Setup .NET 10
-        # Kill switch check
-        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
@@ -1013,17 +976,17 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2026 - VS2026.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Standard Toolkit.slnx"
 
       - name: Build Alpha
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/nightly.proj" /t:Build /p:Configuration=Nightly /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build//nightly.proj" /t:Build /p:Configuration=Nightly /p:Platform="Any CPU"
 
       - name: Pack Alpha
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/nightly.proj" /t:Pack /p:Configuration=Nightly /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build/Build/Build/nightly.proj" /t:Pack /p:Configuration=Nightly /p:Platform="Any CPU"
 
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
@@ -1088,7 +1051,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2026.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -1123,7 +1086,7 @@ jobs:
           $payload = @{
             embeds = @(
               @{
-                title = "🌙 Krypton Toolkit Nightly Release"
+                title = "🌙 Krypton Toolkit Nightly Release (Standard)"
                 description = "A new nightly build is now available for bleeding-edge testing!"
                 color = 10181046
                 fields = @(
