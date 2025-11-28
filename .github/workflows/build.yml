@@ -82,7 +82,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Standard Toolkit.slnx"
 
       - name: Build
         run: msbuild "Scripts/Build/nightly.proj" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU"

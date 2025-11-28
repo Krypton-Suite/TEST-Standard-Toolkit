@@ -132,7 +132,7 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Standard Toolkit.slnx"
 
       - name: Build Release
         # Kill switch check
@@ -414,7 +414,7 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Standard Toolkit.slnx"
 
       - name: Build Release
         # Kill switch check
@@ -665,7 +665,7 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Standard Toolkit.slnx"
 
       - name: Build LTS Release
         # Kill switch check
@@ -915,7 +915,7 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Standard Toolkit.slnx"
 
       - name: Build Canary
         # Kill switch check
@@ -1181,7 +1181,7 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Standard Toolkit.slnx"
 
       - name: Build Alpha
         # Kill switch check
