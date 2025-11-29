@@ -9,7 +9,7 @@
   <Folder Name="/Solution Items/" />
   <Folder Name="/Solution Items/Build System/">
     <File Path="../.editorconfig" />
-    <Project Path="Z:/Development/Krypton/TEST-Standard-Toolkit/Scripts/ModernBuild/ModernBuild.csproj">
+    <Project Path="../../Scripts/ModernBuild/ModernBuild.csproj">
       <BuildType Solution="Canary|*" Project="Release" />
       <BuildType Solution="Installer|*" Project="Debug" />
       <BuildType Solution="Nightly|*" Project="Release" />
@@ -90,20 +90,20 @@
     <File Path="../../LICENSE" />
   </Folder>
   <Folder Name="/Source/">
-    <Project Path="Z:/Development/Krypton/TEST-Standard-Toolkit/Source/Krypton Components/Krypton.Docking/Krypton.Docking.csproj" />
-    <Project Path="Z:/Development/Krypton/TEST-Standard-Toolkit/Source/Krypton Components/Krypton.Navigator/Krypton.Navigator.csproj" />
-    <Project Path="Z:/Development/Krypton/TEST-Standard-Toolkit/Source/Krypton Components/Krypton.Ribbon/Krypton.Ribbon.csproj" />
-    <Project Path="Z:/Development/Krypton/TEST-Standard-Toolkit/Source/Krypton Components/Krypton.Standard.Toolkit/Krypton.Standard.Toolkit.csproj" />
-    <Project Path="Z:/Development/Krypton/TEST-Standard-Toolkit/Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj" />
-    <Project Path="Z:/Development/Krypton/TEST-Standard-Toolkit/Source/Krypton Components/Krypton.Workspace/Krypton.Workspace.csproj" />
+    <Project Path="Krypton.Docking/Krypton.Docking 2022.csproj" />
+    <Project Path="Krypton.Navigator/Krypton.Navigator 2022.csproj" />
+    <Project Path="Krypton.Ribbon/Krypton.Ribbon 2022.csproj" />
+    <Project Path="Krypton.Standard.Toolkit/Krypton.Standard.Toolkit 2022.csproj" />
+    <Project Path="Krypton.Toolkit/Krypton.Toolkit 2022.csproj" />
+    <Project Path="Krypton.Workspace/Krypton.Workspace 2022.csproj" />
   </Folder>
-  <Project Path="Z:/Development/Krypton/TEST-Standard-Toolkit/Source/Krypton Components/TestForm/TestForm.csproj">
-    <BuildDependency Project="Z:/Development/Krypton/TEST-Standard-Toolkit/Source/Krypton Components/Krypton.Navigator/Krypton.Navigator.csproj" />
+  <Project Path="TestForm/TestForm.csproj">
+    <BuildDependency Project="Krypton.Navigator/Krypton.Navigator 2022.csproj" />
     <BuildType Solution="Canary|*" Project="Debug" />
     <BuildType Solution="Installer|*" Project="Debug" />
     <BuildType Solution="Nightly|*" Project="Debug" />
   </Project>
-  <Project Path="Z:/Development/Krypton/TEST-Standard-Toolkit/Source/TestHarnesses/ThemeSwapRepro/ThemeSwapRepro.csproj">
+  <Project Path="../TestHarnesses/ThemeSwapRepro/ThemeSwapRepro.csproj">
     <BuildType Solution="Canary|*" Project="Release" />
     <BuildType Solution="Installer|*" Project="Debug" />
     <BuildType Solution="Nightly|*" Project="Release" />

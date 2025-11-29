@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.3.11206.111 d18.3
+VisualStudioVersion = 18.3.11206.111
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{56F1A41E-584B-4F91-9E98-7D8BF678210C}"
 EndProject
@@ -37,17 +37,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configurat
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{950EE50E-C0E8-4A28-96D3-4735F5313610}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Workspace 2026", "Krypton.Workspace\Krypton.Workspace.csproj", "{E653EA23-58F4-45C7-B258-0843B1AE92A9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Workspace 2022", "Krypton.Workspace\Krypton.Workspace 2022.csproj", "{E653EA23-58F4-45C7-B258-0843B1AE92A9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Toolkit 2026", "Krypton.Toolkit\Krypton.Toolkit.csproj", "{CCCEFACF-9B84-4649-BCFF-33C8A0FC8F55}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Toolkit 2022", "Krypton.Toolkit\Krypton.Toolkit 2022.csproj", "{CCCEFACF-9B84-4649-BCFF-33C8A0FC8F55}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Ribbon 2026", "Krypton.Ribbon\Krypton.Ribbon.csproj", "{37664E81-FE79-4EAD-8B04-A77C443FB181}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Ribbon 2022", "Krypton.Ribbon\Krypton.Ribbon 2022.csproj", "{37664E81-FE79-4EAD-8B04-A77C443FB181}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Navigator 2026", "Krypton.Navigator\Krypton.Navigator.csproj", "{F9E31BD7-42BE-48E8-92CC-74CA1871B4E6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Navigator 2022", "Krypton.Navigator\Krypton.Navigator 2022.csproj", "{F9E31BD7-42BE-48E8-92CC-74CA1871B4E6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Docking 2026", "Krypton.Docking\Krypton.Docking.csproj", "{44D3FB26-8CF6-45E1-8036-93F111EC3287}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Docking 2022", "Krypton.Docking\Krypton.Docking 2022.csproj", "{44D3FB26-8CF6-45E1-8036-93F111EC3287}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Standard.Toolkit 2026", "Krypton.Standard.Toolkit\Krypton.Standard.Toolkit.csproj", "{2F018F09-8929-4D51-B7FE-FE98F866F279}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Krypton.Standard.Toolkit 2022", "Krypton.Standard.Toolkit\Krypton.Standard.Toolkit 2022.csproj", "{2F018F09-8929-4D51-B7FE-FE98F866F279}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PROJ Files", "PROJ Files", "{9AE36C6C-9EAE-4B63-B326-70680262884B}"
 	ProjectSection(SolutionItems) = preProject
