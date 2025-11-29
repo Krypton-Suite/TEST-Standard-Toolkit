@@ -13,7 +13,6 @@ on:
       - alpha
       - canary
       - gold
-      - V100-LTS
       - V105-LTS
       - V85-LTS
     paths-ignore: ['.git*', '.vscode']
@@ -25,27 +24,28 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
-      # .NET 9 (GA)
-      - name: Setup .NET 9
+      # .NET 9 and 10
+      - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.0.x
-
-      # .NET 10 (GA)
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
-        continue-on-error: true
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       # .NET 11 (will auto-upgrade from preview to GA when available)
       - name: Setup .NET 11
+        id: setup_dotnet_11
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 11.0.x
         continue-on-error: true
+      
+      - name: Note .NET 11 Status
+        if: steps.setup_dotnet_11.outcome == 'failure'
+        run: |
+          Write-Host "::notice::.NET 11 is not yet available - falling back to .NET 10 (this is expected)"
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
@@ -78,10 +78,10 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.sln"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
 
       - name: Build
-        run: msbuild "Scripts/nightly.proj" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build/nightly.proj" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU"
 
   release:
     runs-on: windows-latest
@@ -90,27 +90,28 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
-      # .NET 9 (GA)
-      - name: Setup .NET 9
+      # .NET 9 and 10
+      - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.0.x
-
-      # .NET 10 (GA)
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
-        continue-on-error: true
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       # .NET 11 (will auto-upgrade from preview to GA when available)
       - name: Setup .NET 11
+        id: setup_dotnet_11
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 11.0.x
         continue-on-error: true
+      
+      - name: Note .NET 11 Status
+        if: steps.setup_dotnet_11.outcome == 'failure'
+        run: |
+          Write-Host "::notice::.NET 11 is not yet available - falling back to .NET 10 (this is expected)"
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
@@ -143,16 +144,13 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.sln"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
 
       - name: Build Release
-        run: msbuild "Scripts/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Pack Release
-        run: msbuild "Scripts/build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
-
-      - name: Create Release Archives
-        run: msbuild "Scripts/build.proj" /t:CreateAllReleaseArchives /p:Configuration=Release /p:Platform="Any CPU"
+        run: msbuild "Scripts/Build/build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
 
       - name: Get Version
         id: get_version
@@ -163,47 +161,4 @@ jobs:
           }
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "tag=v$version" >> $env:GITHUB_OUTPUT
-
-      - name: Create Release
-        run: |
-          $releaseBody = @"
-          ## Krypton Toolkit Suite Release ${{ steps.get_version.outputs.version }}
           
-          This release includes:
-          - All Krypton Toolkit components
-          - NuGet packages for multiple target frameworks
-          - Release archives (ZIP and TAR.GZ formats)
-          
-          ### Downloads
-          - **ZIP Archive**: `Krypton-Release_*.zip`
-          - **TAR.GZ Archive**: `Krypton-Release_*.tar.gz`
-          
-          ### Target Frameworks
-          - .NET Framework 4.7.2
-          - .NET Framework 4.8
-          - .NET Framework 4.8.1
-          - .NET 8.0 Windows
-          - .NET 9.0 Windows
-          - .NET 10.0 Windows
-          "@
-          
-          gh release create ${{ steps.get_version.outputs.tag }} `
-            --title "Release ${{ steps.get_version.outputs.version }}" `
-            --notes "$releaseBody" `
-            --latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Release Assets
-        run: |
-          $zipFile = Get-ChildItem "Bin/Release/Zips/Krypton-Release_*.zip" | Select-Object -First 1
-          $tarFile = Get-ChildItem "Bin/Release/Zips/Krypton-Release_*.tar.gz" | Select-Object -First 1
-          
-          if ($zipFile) {
-            gh release upload ${{ steps.get_version.outputs.tag }} "$($zipFile.FullName)" --clobber
-          }
-          if ($tarFile) {
-            gh release upload ${{ steps.get_version.outputs.tag }} "$($tarFile.FullName)" --clobber
-          }
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

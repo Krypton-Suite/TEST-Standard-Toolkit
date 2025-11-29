@@ -2,7 +2,7 @@
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
- *  Modifications by Peter Wagner(aka Wagnerp), Simon Coghlan(aka Smurf-IV), Giduac, et al. 2024 - 2025. All rights reserved.
+ *  Modifications by Peter Wagner(aka Wagnerp), Simon Coghlan(aka Smurf-IV), Giduac, et al. 2024 - 2026. All rights reserved.
  *
  */
 #endregion
@@ -17,6 +17,8 @@ public partial class VisualExceptionDialogForm : KryptonForm
 
     private readonly bool? _showSearchBox;
 
+    private readonly Color? _highlightColor;
+
     private readonly Exception? _exception;
 
     private List<TreeNode> _originalNodes = new List<TreeNode>();
@@ -25,17 +27,22 @@ public partial class VisualExceptionDialogForm : KryptonForm
 
     #region Identity
 
-    public VisualExceptionDialogForm(bool? showCopyButton, bool? showSearchBox, Exception exception)
+    public VisualExceptionDialogForm(bool? showCopyButton, bool? showSearchBox, Color? highlightColor, Exception exception)
     {
         InitializeComponent();
 
         SetInheritedControlOverride();
 
-        _showCopyButton = showCopyButton;
+        _showCopyButton = showCopyButton ?? false;
 
-        _showSearchBox = showSearchBox;
+        _showSearchBox = showSearchBox ?? false;
+
+        _highlightColor = highlightColor ?? Color.LightYellow;
 
         _exception = exception;
+
+        // Set highlight color
+        isbSearchArea.HighlightColor = (Color)_highlightColor;
 
         SetupUI();
     }
@@ -81,19 +88,17 @@ public partial class VisualExceptionDialogForm : KryptonForm
         $"{KryptonManager.Strings.ExceptionDialogStrings.StackTrace}:\n{exception.StackTrace}\n\n" +
         $"{KryptonManager.Strings.ExceptionDialogStrings.InnerException}:\n{(exception.InnerException != null ? exception.InnerException.Message : $"{KryptonManager.Strings.ExceptionDialogStrings.None}")}\n";
 
-    private void kbtnCopy_Click(object sender, EventArgs e) => Clipboard.SetText(rtbExceptionDetails.Text);
+    private void kbtnCopy_Click(object sender, EventArgs e) => Clipboard.SetText(krtbExceptionDetails.Text);
 
     private void kbtnOk_Click(object sender, EventArgs e) => DialogResult = DialogResult.OK;
-
-    private void rtbExceptionDetails_TextChanged(object sender, EventArgs e) => kbtnCopy.Enabled = !string.IsNullOrEmpty(rtbExceptionDetails.Text);
 
     #endregion
 
     #region Show
 
-    internal static void Show(Exception exception, bool? showCopyButton, bool? showSearchBox)
+    internal static void Show(Exception exception, Color? highlightColor, bool? showCopyButton, bool? showSearchBox)
     {
-        using var ved = new VisualExceptionDialogForm(showCopyButton, showSearchBox, exception);
+        using var ved = new VisualExceptionDialogForm(showCopyButton, showSearchBox, highlightColor, exception);
 
         ved.ShowDialog();
     }
@@ -107,13 +112,18 @@ public partial class VisualExceptionDialogForm : KryptonForm
         if (e.Node!.Text == KryptonManager.Strings.ExceptionDialogStrings.InnerException ||
             e.Node.Text == KryptonManager.Strings.ExceptionDialogStrings.StackTrace)
         {
-            rtbExceptionDetails.Text = KryptonManager.Strings.ExceptionDialogStrings.MoreDetails;
+            krtbExceptionDetails.Text = KryptonManager.Strings.ExceptionDialogStrings.MoreDetails;
         }
         else
         {
-            rtbExceptionDetails.Text = selectedException != null
+            krtbExceptionDetails.Text = selectedException != null
                 ? FormatExceptionDetails(selectedException)
                 : e.Node.Text;
         }
+    }
+
+    private void krtbExceptionDetails_TextChanged(object sender, EventArgs e)
+    {
+        kbtnCopy.Enabled = !string.IsNullOrEmpty(krtbExceptionDetails.Text);
     }
 }

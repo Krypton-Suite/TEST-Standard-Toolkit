@@ -1,0 +1,116 @@
+name: Auto-assign PR author
+
+on:
+  pull_request_target:
+    types:
+      - opened
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  assign-author:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign PR author
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const branch = pr.head.ref;
+            let assignee = context.actor;
+
+            if (branch.startsWith('dependabot/')) {
+              assignee = owner;
+            }
+
+            if (!pr.assignees?.length) {
+              await github.rest.issues.addAssignees({
+                owner,
+                repo,
+                issue_number: pr.number,
+                assignees: [assignee],
+              });
+            }
+
+            const match = branch.match(/^V(\d+)-(\d+)/i);
+
+            if (match) {
+              const versionLabel = `V${match[1]}`;
+              const issueNumber = Number(match[2]);
+              const milestoneTitle = versionLabel;
+
+              try {
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  labels: [versionLabel],
+                });
+              } catch (error) {
+                console.log(`Skipped adding version label ${versionLabel}: ${error.message}`);
+              }
+
+              try {
+                const milestones = await github.rest.issues.listMilestones({
+                  owner,
+                  repo,
+                  per_page: 100,
+                  state: 'all',
+                });
+
+                const milestone = milestones.data.find(item => {
+                  if (!item.title) {
+                    return false;
+                  }
+
+                  const normalizedTitle = item.title.toLowerCase();
+
+                  if (normalizedTitle === milestoneTitle.toLowerCase()) {
+                    return true;
+                  }
+
+                  const digits = item.title.match(/\d+/);
+                  return digits && digits[0] === match[1];
+                });
+
+                if (milestone) {
+                  await github.rest.issues.update({
+                    owner,
+                    repo,
+                    issue_number: pr.number,
+                    milestone: milestone.number,
+                  });
+                } else {
+                  console.log(`No matching milestone found for ${milestoneTitle}`);
+                }
+              } catch (error) {
+                console.log(`Failed to assign milestone ${milestoneTitle}: ${error.message}`);
+              }
+
+              try {
+                const issue = await github.rest.issues.get({
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                });
+
+                const issueLabels = issue.data.labels
+                  .map(label => label.name)
+                  .filter(name => ![null, undefined, ''].includes(name));
+
+                if (issueLabels.length) {
+                  await github.rest.issues.addLabels({
+                    owner,
+                    repo,
+                    issue_number: pr.number,
+                    labels: issueLabels,
+                  });
+                }
+              } catch (error) {
+                console.log(`No linked issue ${issueNumber}: ${error.message}`);
+              }
+            }

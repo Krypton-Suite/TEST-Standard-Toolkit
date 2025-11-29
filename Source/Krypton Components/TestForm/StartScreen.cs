@@ -2,10 +2,13 @@
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
- *  Modifications by Peter Wagner(aka Wagnerp) & Simon Coghlan(aka Smurf-IV), tobitege et al. 2024 - 2025. All rights reserved.
+ *  Modifications by Peter Wagner(aka Wagnerp) & Simon Coghlan(aka Smurf-IV), tobitege et al. 2024 - 2026. All rights reserved.
  *
  */
 #endregion
+
+using System.Reflection;
+using System.Windows.Forms;
 
 namespace TestForm;
 
@@ -38,6 +41,7 @@ public partial class StartScreen : KryptonForm
         btnRestoreSize.Click += OnBtnRestoreSizeClick;
 
         SetupFilterBox();
+        SetupExitButton();
         SetupTableLayoutPanel();
         AddButtons();
         SortButtons();
@@ -58,7 +62,6 @@ public partial class StartScreen : KryptonForm
         CreateButton("FormBorder Test", string.Empty, typeof(FormBorderTest));
         CreateButton("Header Examples", string.Empty, typeof(HeaderExamples));
         CreateButton("Menu/Tool/Status Strips", string.Empty, typeof(MenuToolBarStatusStripTest));
-        //CreateButton("Powered By Button", string.Empty, typeof(PoweredByButtonForm));
         CreateButton("ProgressBar", "Checkout if progress has been made.", typeof(ProgressBarTest));
         CreateButton("Ribbon / Navigator / Workspace", string.Empty, typeof(RibbonNavigatorWorkspaceTest));
         CreateButton("Splash Screen", string.Empty, typeof(SplashScreenExample));
@@ -146,6 +149,12 @@ public partial class StartScreen : KryptonForm
         _buttons.Add(button);
     }
 
+    private void SetupExitButton()
+    {
+        FontFamily family = KryptonManager.CurrentGlobalPalette.GetContentShortTextFont(PaletteContentStyle.InputControlStandalone, PaletteState.Normal)!.FontFamily;
+        kbtnExit.StateCommon.Content.ShortText.Font = new Font(family, 14F, FontStyle.Regular);
+    }
+
     private void SetupFilterBox()
     {
         tbFilter.Clear();
@@ -192,12 +201,11 @@ public partial class StartScreen : KryptonForm
 
     private void SetupTableLayoutPanel()
     {
+        SetTableLayoutPanelDoubleBuffered(true);
         tlpMain.RowCount = 0;
         tlpMain.ColumnCount = 1;
 
         tlpMain.AutoSize     = false;
-        tlpMain.MaximumSize  = new Size(_panelWidth, 0);
-        tlpMain.MinimumSize  = new Size(_panelWidth, 464);
         tlpMain.BackColor    = Color.Transparent;
         tlpMain.Padding      = new Padding(0);
         tlpMain.Margin       = new Padding(0);
@@ -206,6 +214,19 @@ public partial class StartScreen : KryptonForm
         tlpMain.RowStyles.Clear();
         tlpMain.ColumnStyles.Clear();
         tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+    }
+    
+    private void SetTableLayoutPanelDoubleBuffered(bool enableDoubleBuffering)
+    {
+        PropertyInfo? propertyInfo = typeof(TableLayoutPanel).GetProperty("DoubleBuffered", BindingFlags.Instance | BindingFlags.NonPublic);
+        if (propertyInfo is not null)
+        {
+            propertyInfo.SetValue(tlpMain, enableDoubleBuffering);
+        }
+        else
+        {
+            throw new NullReferenceException(nameof(propertyInfo));
+        }
     }
 
     private void AddButtonsToTlpMain()

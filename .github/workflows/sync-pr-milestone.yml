@@ -1,0 +1,68 @@
+name: Sync PR milestone from issues
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  sync-milestone:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy milestone from linked issues
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const closingRegex = /\b(?:close[sd]?|fix(?:es|ed)?|resolve[sd]?)\s+#(\d+)/gi;
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const issueNumbers = new Set();
+            let match;
+
+            while ((match = closingRegex.exec(pr.body || '')) !== null) {
+              issueNumbers.add(Number(match[1]));
+            }
+
+            if (!issueNumbers.size) {
+              console.log('No linked issues found in PR body.');
+              return;
+            }
+
+            let milestoneNumber = null;
+
+            for (const issue_number of issueNumbers) {
+              try {
+                const { data: issue } = await github.rest.issues.get({ owner, repo, issue_number });
+                if (issue.milestone?.number) {
+                  milestoneNumber = issue.milestone.number;
+                  break;
+                }
+              } catch (error) {
+                console.warn(`Skipping issue #${issue_number}: ${error.message}`);
+              }
+            }
+
+            if (!milestoneNumber) {
+              console.log('No milestone found on linked issues.');
+              return;
+            }
+
+            if (pr.milestone?.number === milestoneNumber) {
+              console.log('PR already has the desired milestone.');
+              return;
+            }
+
+            await github.rest.issues.update({
+              owner,
+              repo,
+              issue_number: pr.number,
+              milestone: milestoneNumber,
+            });
+
