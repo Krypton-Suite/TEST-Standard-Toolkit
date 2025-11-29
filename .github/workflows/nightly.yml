@@ -287,7 +287,7 @@ jobs:
                     value = "• .NET Framework 4.7.2`n• .NET Framework 4.8`n• .NET Framework 4.8.1`n• .NET 8.0`n• .NET 9.0`n• .NET 10.0"
                     inline = $false
                   }
-                  @ {
+                  @{
                     name = "📄 Changelog"
                     value = "• [Latest Changelog](https://github.com/Krypton-Suite/Standard-Toolkit/blob/alpha/Documents/Changelog/Changelog.md)"
                     inline = $false
