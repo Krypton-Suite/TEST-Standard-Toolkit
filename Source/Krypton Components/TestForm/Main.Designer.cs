@@ -948,16 +948,16 @@ namespace TestForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ButtonSpecs.Add(this.buttonSpecAny1);
-            this.ButtonSpecs.Add(this.buttonSpecAny2);
-            this.ButtonSpecs.Add(this.buttonSpecAny3);
-            this.ButtonSpecs.Add(this.buttonSpecAny4);
-            this.ButtonSpecs.Add(this.buttonSpecAny5);
-            this.ButtonSpecs.Add(this.buttonSpecAny6);
-            this.ButtonSpecs.Add(this.buttonSpecAny7);
-            this.ButtonSpecs.Add(this.buttonSpecAny8);
-            this.ButtonSpecs.Add(this.buttonSpecAny9);
-            this.ButtonSpecs.Add(this.buttonSpecAny10);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny1);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny2);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny3);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny4);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny5);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny6);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny7);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny8);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny9);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny10);
             this.ClientSize = new System.Drawing.Size(1320, 740);
             this.Controls.Add(this.kryptonPanel1);
             this.Location = new System.Drawing.Point(0, 0);

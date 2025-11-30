@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Krypton Components\Krypton.Toolkit\Krypton.Toolkit.csproj" />
+    <ProjectReference Include="..\..\Krypton Components\Krypton.Toolkit\Krypton.Toolkit 2022.csproj" />
   </ItemGroup>
 
   <ItemGroup>

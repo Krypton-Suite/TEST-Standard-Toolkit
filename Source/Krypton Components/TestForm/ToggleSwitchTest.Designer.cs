@@ -184,7 +184,7 @@
             this.Controls.Add(this.kryptonPanel2);
             this.Controls.Add(this.kryptonPanel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
-            this.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
+            this.FormValues.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
             this.MaximizeBox = false;
             this.Name = "ToggleSwitchTest";
             this.Text = "ToggleSwitch Test";
