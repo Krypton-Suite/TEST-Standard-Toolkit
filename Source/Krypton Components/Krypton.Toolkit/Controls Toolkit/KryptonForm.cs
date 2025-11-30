@@ -48,8 +48,8 @@ public class KryptonForm : VisualForm,
                 or PaletteContentStyle.HeaderSecondary
                 or PaletteContentStyle.HeaderCustom1
                 or PaletteContentStyle.HeaderCustom2
-                or PaletteContentStyle.HeaderCustom3 => _kryptonForm._formTitleAlign != PaletteRelativeAlign.Inherit
-                    ? _kryptonForm._formTitleAlign
+                or PaletteContentStyle.HeaderCustom3 => _kryptonForm.FormValues.FormTitleAlign != PaletteRelativeAlign.Inherit
+                    ? _kryptonForm.FormValues.FormTitleAlign
                     : base.GetContentShortTextH(style, state),
             _ => base.GetContentShortTextH(style, state)
         };
@@ -140,6 +140,8 @@ public class KryptonForm : VisualForm,
     private KryptonSystemMenu? _kryptonSystemMenu;
     // SystemMenu context menu components
     private KryptonContextMenu _systemMenuContextMenu;
+    private KryptonFormValues _formValues;
+
     #endregion
 
     #region Identity
@@ -165,14 +167,14 @@ public class KryptonForm : VisualForm,
         base.DoubleBuffered = true;
 
         // Create storage objects
-        ButtonSpecs = new FormButtonSpecCollection(this);
+        FormValues.ButtonSpecs = new FormButtonSpecCollection(this);
         var buttonSpecsFixed = new FormFixedButtonSpecCollection(this);
 
         // Add the fixed set of window form buttons
-        ButtonSpecMin = new ButtonSpecFormWindowMin(this);
-        ButtonSpecMax = new ButtonSpecFormWindowMax(this);
-        ButtonSpecClose = new ButtonSpecFormWindowClose(this);
-        buttonSpecsFixed.AddRange([ButtonSpecMin, ButtonSpecMax, ButtonSpecClose]);
+        FormValues.ButtonSpecMin = new ButtonSpecFormWindowMin(this);
+        FormValues.ButtonSpecMax = new ButtonSpecFormWindowMax(this);
+        FormValues.ButtonSpecClose = new ButtonSpecFormWindowClose(this);
+        buttonSpecsFixed.AddRange([FormValues.ButtonSpecMin, FormValues.ButtonSpecMax, FormValues.ButtonSpecClose]);
 
         // Create the palette storage
         StateCommon = new PaletteFormRedirect(Redirector, NeedPaintDelegate, this);
@@ -224,7 +226,7 @@ public class KryptonForm : VisualForm,
         };
 
         // Create button specification collection manager
-        _buttonManager = new ButtonSpecManagerDraw(this, Redirector, ButtonSpecs, buttonSpecsFixed,
+        _buttonManager = new ButtonSpecManagerDraw(this, Redirector, FormValues.ButtonSpecs, buttonSpecsFixed,
             [_drawHeading],
             [StateCommon.Header],
             [PaletteMetricInt.HeaderButtonEdgeInsetForm],
@@ -267,6 +269,8 @@ public class KryptonForm : VisualForm,
 
         // Init only here. Must instantiate in OnHandleCreated
         _kryptonSystemMenu = null;
+
+        _formValues = new KryptonFormValues(this);
     }
     #endregion
 
@@ -521,9 +525,9 @@ public class KryptonForm : VisualForm,
             // Dispose of the system menu, which will in turn release any open handle in the listener
             _kryptonSystemMenu?.Dispose();
 
-            ButtonSpecMin.Dispose();
-            ButtonSpecMax.Dispose();
-            ButtonSpecClose.Dispose();
+            FormValues.ButtonSpecMin.Dispose();
+            FormValues.ButtonSpecMax.Dispose();
+            FormValues.ButtonSpecClose.Dispose();
 
             // Dispose the click timer
             _clickTimer?.Dispose();
@@ -924,6 +928,7 @@ public class KryptonForm : VisualForm,
     [Description(@"The Form Title position, relative to available space")]
     [RefreshProperties(RefreshProperties.All)]
     [DefaultValue(PaletteRelativeAlign.Near)]
+    [Obsolete("Deprecated - Use FormValues.FormTitleAlign instead. Will be removed in V120.")]
     public PaletteRelativeAlign FormTitleAlign
     {
         get => _formTitleAlign;
@@ -986,7 +991,7 @@ public class KryptonForm : VisualForm,
     [Category(@"Visuals")]
     [Description(@"Allows the use of drop shadow around the form.")]
     [DefaultValue(false)]
-    [Obsolete("Deprecated - Only use if you are using Windows 7, 8 or 8.1.")]
+    [Obsolete("Deprecated - Only use if you are using Windows 7, 8 or 8.1. Use FormValues.UseDropShadow if required, will be removed in V120.")]
     public bool UseDropShadow
     {
         get => _useDropShadow;
@@ -1008,6 +1013,7 @@ public class KryptonForm : VisualForm,
     [Category(@"Appearance")]
     [Description(@"Is the user currently an administrator.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [Obsolete("Deprecated - Use FormValues.IsInAdministratorMode instead. Will be removed in V120.")]
     public bool IsInAdministratorMode
     {
         get => _isInAdministratorMode;
@@ -1050,6 +1056,7 @@ public class KryptonForm : VisualForm,
     [Category(@"Visuals")]
     [Description(@"Collection of button specifications.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Obsolete("Deprecated - Use FormValues.ButtonSpecs instead. Will be removed in V120.")]
     public FormButtonSpecCollection ButtonSpecs { get; }
 
     /// <summary>
@@ -1058,6 +1065,7 @@ public class KryptonForm : VisualForm,
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [Obsolete("Deprecated - Use FormValues.ButtonSpecMin instead. Will be removed in V120.")]
     public ButtonSpecFormWindowMin ButtonSpecMin { get; }
 
     /// <summary>
@@ -1066,6 +1074,7 @@ public class KryptonForm : VisualForm,
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [Obsolete("Deprecated - Use FormValues.ButtonSpecMax instead. Will be removed in V120.")]
     public ButtonSpecFormWindowMax ButtonSpecMax { get; }
 
     /// <summary>
@@ -1074,6 +1083,7 @@ public class KryptonForm : VisualForm,
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [Obsolete("Deprecated - Use FormValues.ButtonSpecClose instead. Will be removed in V120.")]
     public ButtonSpecFormWindowClose ButtonSpecClose { get; }
 
     /// <summary>
@@ -1082,7 +1092,14 @@ public class KryptonForm : VisualForm,
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [Obsolete("Deprecated - Use FormValues.InertForm instead. Will be removed in V120.")]
     public bool InertForm { get; set; }
+
+    public KryptonFormValues FormValues => _formValues;
+
+    private bool ShouldSerializeFormValues() => !_formValues.IsDefault;
+
+    private void ResetFormValues() => _formValues.Reset();
 
     /// <summary>
     /// Allow an extra view element to be injected into the caption area.
@@ -1215,6 +1232,7 @@ public class KryptonForm : VisualForm,
     [Category(@"Appearance")]
     [DefaultValue(KryptonFormTitleStyle.Inherit),
      Description(@"Arranges the current window title alignment.")]
+    [Obsolete("Deprecated - Use the 'KryptonForm.FormValues.TitleStyle' property instead. Will be removed in V120.")]
     public KryptonFormTitleStyle TitleStyle
     {
         get => _titleStyle;
@@ -1252,21 +1270,21 @@ public class KryptonForm : VisualForm,
     /// </summary>
     /// <param name="pt">Window relative point to test.</param>
     /// <returns>True if inside the button; otherwise false.</returns>
-    public bool HitTestMinButton(Point pt) => _buttonManager.GetButtonRectangle(ButtonSpecMin).Contains(pt);
+    public bool HitTestMinButton(Point pt) => _buttonManager.GetButtonRectangle(FormValues.ButtonSpecMin).Contains(pt);
 
     /// <summary>
     /// Gets a value indicating if the provided point is inside the maximize button.
     /// </summary>
     /// <param name="pt">Window relative point to test.</param>
     /// <returns>True if inside the button; otherwise false.</returns>
-    public bool HitTestMaxButton(Point pt) => _buttonManager.GetButtonRectangle(ButtonSpecMax).Contains(pt);
+    public bool HitTestMaxButton(Point pt) => _buttonManager.GetButtonRectangle(FormValues.ButtonSpecMax).Contains(pt);
 
     /// <summary>
     /// Gets a value indicating if the provided point is inside the close button.
     /// </summary>
     /// <param name="pt">Window relative point to test.</param>
     /// <returns>True if inside the button; otherwise false.</returns>
-    public bool HitTestCloseButton(Point pt) => _buttonManager.GetButtonRectangle(ButtonSpecClose).Contains(pt);
+    public bool HitTestCloseButton(Point pt) => _buttonManager.GetButtonRectangle(FormValues.ButtonSpecClose).Contains(pt);
 
     /// <summary>
     /// Gets and sets a rectangle to treat as a custom caption area.
@@ -1367,7 +1385,7 @@ public class KryptonForm : VisualForm,
         string titleText = Text;
 
         // Append administrator suffix if enabled and running with elevated privileges
-        if (KryptonManager.UseAdministratorSuffix && IsInAdministratorMode)
+        if (KryptonManager.UseAdministratorSuffix && FormValues.IsInAdministratorMode)
         {
             titleText += $" ({KryptonManager.Strings.GeneralStrings.Administrator})";
         }
@@ -1391,9 +1409,9 @@ public class KryptonForm : VisualForm,
         var windowPoint = ScreenToWindow(screenPoint);
 
         // Check if the point is over any of the control buttons
-        return _buttonManager.GetButtonRectangle(ButtonSpecMin).Contains(windowPoint) ||
-               _buttonManager.GetButtonRectangle(ButtonSpecMax).Contains(windowPoint) ||
-               _buttonManager.GetButtonRectangle(ButtonSpecClose).Contains(windowPoint);
+        return _buttonManager.GetButtonRectangle(FormValues.ButtonSpecMin).Contains(windowPoint) ||
+               _buttonManager.GetButtonRectangle(FormValues.ButtonSpecMax).Contains(windowPoint) ||
+               _buttonManager.GetButtonRectangle(FormValues.ButtonSpecClose).Contains(windowPoint);
     }
 
     /// <inheritdoc/>
@@ -1824,16 +1842,16 @@ public class KryptonForm : VisualForm,
         }
 
         // Is the mouse over any of the min/max/close buttons?
-        if (_buttonManager.GetButtonRectangle(ButtonSpecMin).Contains(pt)
-            || _buttonManager.GetButtonRectangle(ButtonSpecMax).Contains(pt)
-            || _buttonManager.GetButtonRectangle(ButtonSpecClose).Contains(pt))
+        if (_buttonManager.GetButtonRectangle(FormValues.ButtonSpecMin).Contains(pt)
+            || _buttonManager.GetButtonRectangle(FormValues.ButtonSpecMax).Contains(pt)
+            || _buttonManager.GetButtonRectangle(FormValues.ButtonSpecClose).Contains(pt))
         {
             // Get the mouse controller for this button
             ViewBase? viewBase = ViewManager?.Root.ViewFromPoint(pt);
             IMouseController? controller = viewBase?.FindMouseController();
 
             // Display snap layouts on Windows 11
-            if (OSUtilities.IsAtLeastWindowsEleven && _buttonManager.GetButtonRectangle(ButtonSpecMax).Contains(pt))
+            if (OSUtilities.IsAtLeastWindowsEleven && _buttonManager.GetButtonRectangle(FormValues.ButtonSpecMax).Contains(pt))
             {
                 return new IntPtr(PI.HT.MAXBUTTON);
             }
@@ -1846,7 +1864,7 @@ public class KryptonForm : VisualForm,
         }
 
         // Do not allow the caption to be moved or the border resized
-        if (InertForm)
+        if (FormValues.InertForm)
         {
             return new IntPtr(PI.HT.CLIENT);
         }
@@ -2175,19 +2193,19 @@ public class KryptonForm : VisualForm,
             if (ViewManager != null)
             {
                 // Make sure the max/restore setting is correct
-                ButtonSpecMax.ButtonSpecType = WindowState == FormWindowState.Maximized
+                FormValues.ButtonSpecMax.ButtonSpecType = WindowState == FormWindowState.Maximized
                     ? PaletteButtonSpecStyle.FormRestore
                     : PaletteButtonSpecStyle.FormMax;
 
                 // Make sure the min/restore setting is correct
                 if (WindowState == FormWindowState.Minimized)
                 {
-                    ButtonSpecMin.ButtonSpecType = PaletteButtonSpecStyle.FormRestore;
+                    FormValues.ButtonSpecMin.ButtonSpecType = PaletteButtonSpecStyle.FormRestore;
                     _drawDocker.StatusStrip = null;
                 }
                 else
                 {
-                    ButtonSpecMin.ButtonSpecType = PaletteButtonSpecStyle.FormMin;
+                    FormValues.ButtonSpecMin.ButtonSpecType = PaletteButtonSpecStyle.FormMin;
                     // Make sure the top level form docker has the status strip being merged
                     _drawDocker.StatusStrip = StatusStripMerging ? _statusStrip : null;
                 }
@@ -2535,9 +2553,9 @@ public class KryptonForm : VisualForm,
     {
         if (Renderer is RenderMaterial)
         {
-            if (FormTitleAlign is PaletteRelativeAlign.Near or PaletteRelativeAlign.Inherit)
+            if (FormValues.FormTitleAlign is PaletteRelativeAlign.Near or PaletteRelativeAlign.Inherit)
             {
-                FormTitleAlign = PaletteRelativeAlign.Center;
+                FormValues.FormTitleAlign = PaletteRelativeAlign.Center;
             }
 
             // Hide the form icon by default for a cleaner Material header (user can still re-enable later)
@@ -2589,13 +2607,13 @@ public class KryptonForm : VisualForm,
         switch (titleStyle)
         {
             case KryptonFormTitleStyle.Inherit:
-                FormTitleAlign = PaletteRelativeAlign.Inherit;
+                FormValues.FormTitleAlign = PaletteRelativeAlign.Inherit;
                 break;
             case KryptonFormTitleStyle.Classic:
-                FormTitleAlign = PaletteRelativeAlign.Near;
+                FormValues.FormTitleAlign = PaletteRelativeAlign.Near;
                 break;
             case KryptonFormTitleStyle.Modern:
-                FormTitleAlign = PaletteRelativeAlign.Center;
+                FormValues.FormTitleAlign = PaletteRelativeAlign.Center;
                 break;
         }
     }
@@ -2753,7 +2771,7 @@ public class KryptonForm : VisualForm,
     /// Test code
     /// </summary>
     /// <returns>The overrides</returns>
-    private CreateParams GetCreateParams()
+    internal CreateParams GetCreateParams()
     {
         CreateParams cp = base.CreateParams;
 

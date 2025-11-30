@@ -65,7 +65,7 @@
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.toolStripContainer1);
             this.Controls.Add(this.kryptonToolStripContainer1);
-            this.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
+            this.FormValues.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
             this.Name = "AdditionalControlsForm";
             this.Text = "AdditionalControlsForm";
             this.kryptonToolStripContainer1.ResumeLayout(false);

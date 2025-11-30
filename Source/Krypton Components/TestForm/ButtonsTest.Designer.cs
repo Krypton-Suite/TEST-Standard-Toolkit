@@ -358,7 +358,7 @@ namespace TestForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ButtonSpecs.Add(this.buttonSpecAny1);
+            this.FormValues.ButtonSpecs.Add(this.buttonSpecAny1);
             this.ClientSize = new System.Drawing.Size(562, 318);
             this.Controls.Add(this.kryptonPanel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;

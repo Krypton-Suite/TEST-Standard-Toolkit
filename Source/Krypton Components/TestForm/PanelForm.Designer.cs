@@ -117,7 +117,7 @@
             this.Controls.Add(this.kryptonPropertyGrid1);
             this.Controls.Add(this.kryptonDataGridView1);
             this.Controls.Add(this.kryptonButton1);
-            this.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
+            this.FormValues.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
             this.GroupBackStyle = Krypton.Toolkit.PaletteBackStyle.PanelClient;
             this.ImageStyle = Krypton.Toolkit.PaletteImageStyle.TopLeft;
             this.Margin = new System.Windows.Forms.Padding(2);

@@ -134,8 +134,8 @@ public class KryptonTaskDialogFormProperties
         /// </summary>
         public PaletteRelativeAlign FormTitleAlign 
         {
-            get => _form.FormTitleAlign;
-            set => _form.FormTitleAlign = value;
+            get => _form.FormValues.FormTitleAlign;
+            set => _form.FormValues.FormTitleAlign = value;
         }
 
         /// <summary>
