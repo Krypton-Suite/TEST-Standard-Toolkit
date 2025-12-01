@@ -494,6 +494,15 @@ public class KryptonSearchBox : KryptonTextBox
         // Position the popup below the search box
         var screenPoint = PointToScreen(new Point(0, Height));
         _suggestionPopup.Show(screenPoint, Width);
+        
+        // Explicitly maintain focus on the search box
+        BeginInvoke(new Action(() =>
+        {
+            if (!Focused && CanFocus)
+            {
+                Focus();
+            }
+        }));
     }
 
     private void HideSuggestions()
@@ -625,6 +634,9 @@ public class KryptonSearchBox : KryptonTextBox
             
             // Prevent the form from stealing focus
             SetStyle(ControlStyles.Selectable, false);
+            
+            // Prevent activation
+            SetStyle(ControlStyles.UserPaint, true);
 
             _listBox = new KryptonListBox
             {
@@ -698,8 +710,50 @@ public class KryptonSearchBox : KryptonTextBox
             Size = new Size(width, height);
             Location = location;
 
+            // Create handle if needed
+            if (!IsHandleCreated)
+            {
+                CreateHandle();
+            }
+
             // Show the form without activating it (doesn't steal focus)
             PI.ShowWindow(Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
+        }
+
+        protected override void SetVisibleCore(bool value)
+        {
+            base.SetVisibleCore(value);
+            if (value)
+            {
+                // Ensure we don't activate when made visible
+                if (IsHandleCreated)
+                {
+                    PI.ShowWindow(Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
+                }
+            }
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            // Prevent activation messages from stealing focus
+            const int WM_ACTIVATE = 0x0006;
+            const int WM_MOUSEACTIVATE = 0x0021;
+            const int MA_NOACTIVATE = 0x0003;
+
+            if (m.Msg == WM_ACTIVATE)
+            {
+                // Don't process activation
+                return;
+            }
+
+            if (m.Msg == WM_MOUSEACTIVATE)
+            {
+                // Return MA_NOACTIVATE to prevent activation on mouse click
+                m.Result = (IntPtr)MA_NOACTIVATE;
+                return;
+            }
+
+            base.WndProc(ref m);
         }
 
         private void OnListBoxMouseClick(object? sender, MouseEventArgs e)
