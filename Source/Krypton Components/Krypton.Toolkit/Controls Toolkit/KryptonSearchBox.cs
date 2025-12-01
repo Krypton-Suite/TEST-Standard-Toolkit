@@ -29,6 +29,63 @@ public enum SuggestionDisplayType
 }
 
 /// <summary>
+/// Represents a column definition for DataGridView suggestion display.
+/// </summary>
+public class SuggestionColumnDefinition
+{
+    /// <summary>
+    /// Gets or sets the column name.
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the data property name (for binding).
+    /// </summary>
+    public string DataPropertyName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the header text.
+    /// </summary>
+    public string HeaderText { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the column width (0 = auto-size).
+    /// </summary>
+    public int Width { get; set; }
+
+    /// <summary>
+    /// Gets or sets the auto-size mode.
+    /// </summary>
+    public DataGridViewAutoSizeColumnMode AutoSizeMode { get; set; } = DataGridViewAutoSizeColumnMode.Fill;
+
+    /// <summary>
+    /// Gets or sets a function to extract the column value from a suggestion object.
+    /// </summary>
+    public Func<object, object?>? ValueExtractor { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the SuggestionColumnDefinition class.
+    /// </summary>
+    public SuggestionColumnDefinition()
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the SuggestionColumnDefinition class.
+    /// </summary>
+    /// <param name="name">The column name.</param>
+    /// <param name="headerText">The header text.</param>
+    /// <param name="valueExtractor">Function to extract the column value.</param>
+    public SuggestionColumnDefinition(string name, string headerText, Func<object, object?>? valueExtractor = null)
+    {
+        Name = name;
+        DataPropertyName = name;
+        HeaderText = headerText;
+        ValueExtractor = valueExtractor;
+    }
+}
+
+/// <summary>
 /// Provides a modern search input control with search icon and clear button.
 /// </summary>
 [ToolboxItem(true)]
@@ -59,6 +116,7 @@ public class KryptonSearchBox : KryptonTextBox
     private readonly List<string> _searchHistory;
     private Func<string, IEnumerable<object>, IEnumerable<object>>? _customFilter;
     private int _minimumSearchLength;
+    private readonly List<SuggestionColumnDefinition> _dataGridViewColumns;
     #endregion
 
     #region Events
@@ -122,6 +180,11 @@ public class KryptonSearchBox : KryptonTextBox
         _searchHistoryMaxCount = 10;
         _searchHistory = new List<string>();
         _minimumSearchLength = 0;
+        _dataGridViewColumns = new List<SuggestionColumnDefinition>();
+        
+        // Default column for DataGridView (single "Suggestion" column)
+        _dataGridViewColumns.Add(new SuggestionColumnDefinition("Suggestion", "Suggestion", 
+            obj => obj is IContentValues cv ? cv.GetShortText() : obj?.ToString()));
 
         // Disable standard auto-complete
         base.AutoCompleteMode = AutoCompleteMode.None;
@@ -416,6 +479,36 @@ public class KryptonSearchBox : KryptonTextBox
     {
         get => _customFilter;
         set => _customFilter = value;
+    }
+
+    /// <summary>
+    /// Gets the collection of column definitions for DataGridView suggestion display.
+    /// </summary>
+    [Category(@"Data")]
+    [Description(@"Column definitions for DataGridView suggestion display. Only used when SuggestionDisplayType is DataGridView.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public List<SuggestionColumnDefinition> DataGridViewColumns => _dataGridViewColumns;
+
+    /// <summary>
+    /// Sets the column definitions for DataGridView suggestion display.
+    /// </summary>
+    /// <param name="columns">The column definitions.</param>
+    public void SetDataGridViewColumns(IEnumerable<SuggestionColumnDefinition> columns)
+    {
+        if (columns == null)
+        {
+            throw new ArgumentNullException(nameof(columns));
+        }
+
+        _dataGridViewColumns.Clear();
+        _dataGridViewColumns.AddRange(columns);
+        
+        // Recreate popup if it exists to apply new columns
+        if (_suggestionPopup != null)
+        {
+            _suggestionPopup.Dispose();
+            _suggestionPopup = null;
+        }
     }
 
     /// <summary>
@@ -883,10 +976,11 @@ public class KryptonSearchBox : KryptonTextBox
     {
         private KryptonListBox? _listBox;
         private KryptonDataGridView? _dataGridView;
-        private readonly List<string> _suggestions;
+        private readonly List<object> _suggestions;
         private int _highlightedIndex;
         private DataTable? _dataTable;
         private readonly SuggestionDisplayType _displayType;
+        private readonly KryptonSearchBox _owner;
 
         public event EventHandler<SuggestionSelectedEventArgs>? SuggestionSelected;
 
@@ -897,6 +991,7 @@ public class KryptonSearchBox : KryptonTextBox
             _suggestions = new List<object>();
             _highlightedIndex = -1;
             _displayType = owner.SuggestionDisplayType;
+            _owner = owner;
 
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
@@ -914,9 +1009,14 @@ public class KryptonSearchBox : KryptonTextBox
             // Create the appropriate control based on display type
             if (_displayType == SuggestionDisplayType.DataGridView)
             {
-                // Create DataTable for suggestions
+                // Create DataTable for suggestions with columns from definitions
                 _dataTable = new DataTable();
-                _dataTable.Columns.Add("Suggestion", typeof(string));
+                
+                // Add columns based on owner's column definitions
+                foreach (var colDef in _owner.DataGridViewColumns)
+                {
+                    _dataTable.Columns.Add(colDef.DataPropertyName, typeof(object));
+                }
 
                 _dataGridView = new KryptonDataGridView
                 {
@@ -926,7 +1026,7 @@ public class KryptonSearchBox : KryptonTextBox
                     AllowUserToAddRows = false,
                     AllowUserToDeleteRows = false,
                     AllowUserToResizeRows = false,
-                    ColumnHeadersVisible = false,
+                    ColumnHeadersVisible = _owner.DataGridViewColumns.Count > 1, // Show headers if multiple columns
                     RowHeadersVisible = false,
                     SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                     MultiSelect = false,
@@ -935,15 +1035,26 @@ public class KryptonSearchBox : KryptonTextBox
                     TabStop = false
                 };
 
-                // Add column for suggestions
-                var column = new DataGridViewTextBoxColumn
+                // Add columns based on definitions
+                foreach (var colDef in _owner.DataGridViewColumns)
                 {
-                    Name = "Suggestion",
-                    DataPropertyName = "Suggestion",
-                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
-                    ReadOnly = true
-                };
-                _dataGridView.Columns.Add(column);
+                    var column = new DataGridViewTextBoxColumn
+                    {
+                        Name = colDef.Name,
+                        DataPropertyName = colDef.DataPropertyName,
+                        HeaderText = colDef.HeaderText,
+                        AutoSizeMode = colDef.AutoSizeMode,
+                        ReadOnly = true
+                    };
+                    
+                    if (colDef.Width > 0)
+                    {
+                        column.Width = colDef.Width;
+                    }
+                    
+                    _dataGridView.Columns.Add(column);
+                }
+                
                 _dataGridView.DataSource = _dataTable;
 
                 // Hide outer borders - KryptonDataGridView already sets BorderStyle.None in constructor
@@ -997,8 +1108,22 @@ public class KryptonSearchBox : KryptonTextBox
                     _dataTable.Rows.Clear();
                     foreach (var suggestion in suggestions)
                     {
-                        string text = GetSuggestionText(suggestion);
-                        _dataTable.Rows.Add(text);
+                        // Create row with values for each column
+                        var rowValues = new object[_owner.DataGridViewColumns.Count];
+                        for (int i = 0; i < _owner.DataGridViewColumns.Count; i++)
+                        {
+                            var colDef = _owner.DataGridViewColumns[i];
+                            if (colDef.ValueExtractor != null)
+                            {
+                                rowValues[i] = colDef.ValueExtractor(suggestion) ?? string.Empty;
+                            }
+                            else
+                            {
+                                // Default: extract text
+                                rowValues[i] = GetSuggestionText(suggestion);
+                            }
+                        }
+                        _dataTable.Rows.Add(rowValues);
                     }
                 }
             }
