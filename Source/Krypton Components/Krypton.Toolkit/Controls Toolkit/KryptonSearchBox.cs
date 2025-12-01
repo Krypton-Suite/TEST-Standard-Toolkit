@@ -644,6 +644,7 @@ public class KryptonSearchBox : KryptonTextBox
             };
             // Set border to not draw - use DrawBorders property instead
             _listBox.StateCommon.Border.DrawBorders = PaletteDrawBorders.None;
+            _listBox.MouseDown += OnListBoxMouseDown;
             _listBox.MouseClick += OnListBoxMouseClick;
             _listBox.DoubleClick += OnListBoxDoubleClick;
 
@@ -756,8 +757,22 @@ public class KryptonSearchBox : KryptonTextBox
             base.WndProc(ref m);
         }
 
+        private void OnListBoxMouseDown(object? sender, MouseEventArgs e)
+        {
+            if (_listBox != null && e.Button == MouseButtons.Left)
+            {
+                var index = _listBox.IndexFromPoint(e.Location);
+                if (index >= 0)
+                {
+                    // Single click selects the suggestion immediately
+                    OnSuggestionSelected(index);
+                }
+            }
+        }
+
         private void OnListBoxMouseClick(object? sender, MouseEventArgs e)
         {
+            // Also handle MouseClick as a fallback
             if (_listBox != null && e.Button == MouseButtons.Left)
             {
                 var index = _listBox.IndexFromPoint(e.Location);
@@ -770,6 +785,7 @@ public class KryptonSearchBox : KryptonTextBox
 
         private void OnListBoxDoubleClick(object? sender, EventArgs e)
         {
+            // Also handle double click for consistency
             if (_listBox != null && _listBox.SelectedIndex >= 0)
             {
                 OnSuggestionSelected(_listBox.SelectedIndex);
@@ -801,6 +817,7 @@ public class KryptonSearchBox : KryptonTextBox
             {
                 if (_listBox != null)
                 {
+                    _listBox.MouseDown -= OnListBoxMouseDown;
                     _listBox.MouseClick -= OnListBoxMouseClick;
                     _listBox.DoubleClick -= OnListBoxDoubleClick;
                     _listBox.Dispose();
