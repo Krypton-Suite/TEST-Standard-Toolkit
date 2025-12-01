@@ -50,9 +50,15 @@ public class KryptonSearchBox : KryptonTextBox
     private int _suggestionMaxCount;
     private SuggestionDisplayType _suggestionDisplayType;
     private readonly List<string> _suggestions;
+    private readonly List<object> _richSuggestions; // For IContentValues support
     private SuggestionPopup? _suggestionPopup;
     private int _selectedSuggestionIndex;
     private bool _isNavigatingSuggestions;
+    private bool _enableSearchHistory;
+    private int _searchHistoryMaxCount;
+    private readonly List<string> _searchHistory;
+    private Func<string, IEnumerable<object>, IEnumerable<object>>? _customFilter;
+    private int _minimumSearchLength;
     #endregion
 
     #region Events
@@ -110,7 +116,12 @@ public class KryptonSearchBox : KryptonTextBox
         _suggestionMaxCount = 10;
         _suggestionDisplayType = SuggestionDisplayType.ListBox;
         _suggestions = new List<string>();
+        _richSuggestions = new List<object>();
         _selectedSuggestionIndex = -1;
+        _enableSearchHistory = false;
+        _searchHistoryMaxCount = 10;
+        _searchHistory = new List<string>();
+        _minimumSearchLength = 0;
 
         // Disable standard auto-complete
         base.AutoCompleteMode = AutoCompleteMode.None;
@@ -332,6 +343,82 @@ public class KryptonSearchBox : KryptonTextBox
     public List<string> Suggestions => _suggestions;
 
     /// <summary>
+    /// Gets or sets a value indicating whether search history is enabled.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Indicates whether search history is enabled.")]
+    [DefaultValue(false)]
+    public bool EnableSearchHistory
+    {
+        get => _enableSearchHistory;
+        set => _enableSearchHistory = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum number of search history items to remember.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"The maximum number of search history items to remember.")]
+    [DefaultValue(10)]
+    public int SearchHistoryMaxCount
+    {
+        get => _searchHistoryMaxCount;
+        set
+        {
+            if (value < 1)
+            {
+                value = 1;
+            }
+            _searchHistoryMaxCount = value;
+            
+            // Trim history if needed
+            while (_searchHistory.Count > _searchHistoryMaxCount)
+            {
+                _searchHistory.RemoveAt(_searchHistory.Count - 1);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the collection of search history items.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public IReadOnlyList<string> SearchHistory => _searchHistory.AsReadOnly();
+
+    /// <summary>
+    /// Gets or sets the minimum number of characters required before showing suggestions.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"The minimum number of characters required before showing suggestions.")]
+    [DefaultValue(0)]
+    public int MinimumSearchLength
+    {
+        get => _minimumSearchLength;
+        set
+        {
+            if (value < 0)
+            {
+                value = 0;
+            }
+            _minimumSearchLength = value;
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a custom filter function for suggestions.
+    /// If set, this function will be used instead of the default filtering logic.
+    /// The function receives the search text and the collection of suggestion objects, and returns the filtered collection.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<string, IEnumerable<object>, IEnumerable<object>>? CustomFilter
+    {
+        get => _customFilter;
+        set => _customFilter = value;
+    }
+
+    /// <summary>
     /// Gets access to the search button specification.
     /// </summary>
     [Browsable(false)]
@@ -362,6 +449,15 @@ public class KryptonSearchBox : KryptonTextBox
     /// </summary>
     public void PerformSearch()
     {
+        if (!string.IsNullOrEmpty(Text))
+        {
+            // Add to search history if enabled
+            if (_enableSearchHistory)
+            {
+                AddToSearchHistory(Text);
+            }
+        }
+        
         HideSuggestions();
         OnSearch(new SearchEventArgs(Text));
     }
@@ -379,6 +475,73 @@ public class KryptonSearchBox : KryptonTextBox
 
         _suggestions.Clear();
         _suggestions.AddRange(suggestions);
+    }
+
+    /// <summary>
+    /// Adds a search term to the search history.
+    /// </summary>
+    /// <param name="searchText">The search text to add.</param>
+    public void AddToSearchHistory(string searchText)
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return;
+        }
+
+        // Remove if already exists (to move to top)
+        _searchHistory.Remove(searchText);
+
+        // Add to beginning
+        _searchHistory.Insert(0, searchText);
+
+        // Trim to max count
+        while (_searchHistory.Count > _searchHistoryMaxCount)
+        {
+            _searchHistory.RemoveAt(_searchHistory.Count - 1);
+        }
+    }
+
+    /// <summary>
+    /// Clears the search history.
+    /// </summary>
+    public void ClearSearchHistory()
+    {
+        _searchHistory.Clear();
+    }
+
+    /// <summary>
+    /// Sets rich suggestions that support IContentValues (icons, descriptions, etc.).
+    /// </summary>
+    /// <param name="suggestions">Collection of suggestion objects (can be strings or IContentValues).</param>
+    public void SetRichSuggestions(IEnumerable<object> suggestions)
+    {
+        if (suggestions == null)
+        {
+            throw new ArgumentNullException(nameof(suggestions));
+        }
+
+        _richSuggestions.Clear();
+        _richSuggestions.AddRange(suggestions);
+    }
+
+    /// <summary>
+    /// Adds a rich suggestion item.
+    /// </summary>
+    /// <param name="suggestion">The suggestion object (string or IContentValues).</param>
+    public void AddRichSuggestion(object suggestion)
+    {
+        if (suggestion != null)
+        {
+            _richSuggestions.Add(suggestion);
+        }
+    }
+
+    /// <summary>
+    /// Clears all rich suggestions.
+    /// </summary>
+    public void ClearRichSuggestions()
+    {
+        _richSuggestions.Clear();
     }
     #endregion
 
@@ -509,11 +672,67 @@ public class KryptonSearchBox : KryptonTextBox
             return;
         }
 
+        // Check minimum search length
+        if (Text.Length < _minimumSearchLength)
+        {
+            HideSuggestions();
+            return;
+        }
+
         var searchText = Text.ToLower();
-        var filtered = _suggestions
-            .Where(s => !string.IsNullOrEmpty(s) && s.ToLower().IndexOf(searchText) >= 0)
-            .Take(_suggestionMaxCount)
-            .ToList();
+        List<object> filtered;
+
+        // Use custom filter if provided
+        if (_customFilter != null)
+        {
+            // Combine string suggestions and rich suggestions
+            var allSuggestions = new List<object>();
+            allSuggestions.AddRange(_suggestions);
+            allSuggestions.AddRange(_richSuggestions);
+            
+            filtered = _customFilter(searchText, allSuggestions)
+                .Take(_suggestionMaxCount)
+                .ToList();
+        }
+        else
+        {
+            // Default filtering logic
+            var stringFiltered = _suggestions
+                .Where(s => !string.IsNullOrEmpty(s) && s.ToLower().IndexOf(searchText) >= 0)
+                .Take(_suggestionMaxCount)
+                .Cast<object>()
+                .ToList();
+
+            // Also filter rich suggestions (IContentValues)
+            var richFiltered = _richSuggestions
+                .Where(item =>
+                {
+                    if (item is IContentValues contentValues)
+                    {
+                        var shortText = contentValues.GetShortText() ?? string.Empty;
+                        var longText = contentValues.GetLongText() ?? string.Empty;
+                        return shortText.ToLower().IndexOf(searchText) >= 0 ||
+                               longText.ToLower().IndexOf(searchText) >= 0;
+                    }
+                    return item.ToString()?.ToLower().IndexOf(searchText) >= 0;
+                })
+                .Take(_suggestionMaxCount - stringFiltered.Count)
+                .ToList();
+
+            filtered = new List<object>();
+            filtered.AddRange(stringFiltered);
+            filtered.AddRange(richFiltered);
+        }
+
+        // Add search history if enabled and no other suggestions
+        if (filtered.Count == 0 && _enableSearchHistory && _searchHistory.Count > 0)
+        {
+            filtered = _searchHistory
+                .Where(h => !string.IsNullOrEmpty(h) && h.ToLower().IndexOf(searchText) >= 0)
+                .Take(_suggestionMaxCount)
+                .Cast<object>()
+                .ToList();
+        }
 
         if (filtered.Count == 0)
         {
@@ -524,7 +743,7 @@ public class KryptonSearchBox : KryptonTextBox
         ShowSuggestions(filtered);
     }
 
-    private void ShowSuggestions(List<string> suggestions)
+    private void ShowSuggestions(List<object> suggestions)
     {
         if (_suggestionPopup == null)
         {
@@ -594,17 +813,23 @@ public class KryptonSearchBox : KryptonTextBox
                 return;
             }
 
-            var suggestion = _suggestionPopup.GetSuggestion(index);
-            if (suggestion != null)
+            var suggestionObject = _suggestionPopup.GetSuggestion(index);
+            var suggestionText = _suggestionPopup.GetSuggestionText(index);
+            
+            if (!string.IsNullOrEmpty(suggestionText))
             {
                 _isNavigatingSuggestions = true;
-                Text = suggestion;
+                Text = suggestionText;
                 SelectionStart = Text.Length;
                 SelectionLength = 0;
                 _isNavigatingSuggestions = false;
 
                 HideSuggestions();
-                var args = new SuggestionSelectedEventArgs(index) { Suggestion = suggestion };
+                var args = new SuggestionSelectedEventArgs(index)
+                {
+                    Suggestion = suggestionText,
+                    SuggestionObject = suggestionObject
+                };
                 OnSuggestionSelected(args);
             }
         }
@@ -669,7 +894,7 @@ public class KryptonSearchBox : KryptonTextBox
 
         public SuggestionPopup(KryptonSearchBox owner)
         {
-            _suggestions = new List<string>();
+            _suggestions = new List<object>();
             _highlightedIndex = -1;
             _displayType = owner.SuggestionDisplayType;
 
@@ -760,7 +985,7 @@ public class KryptonSearchBox : KryptonTextBox
             }
         }
 
-        public void SetSuggestions(List<string> suggestions)
+        public void SetSuggestions(List<object> suggestions)
         {
             _suggestions.Clear();
             _suggestions.AddRange(suggestions);
@@ -772,7 +997,8 @@ public class KryptonSearchBox : KryptonTextBox
                     _dataTable.Rows.Clear();
                     foreach (var suggestion in suggestions)
                     {
-                        _dataTable.Rows.Add(suggestion);
+                        string text = GetSuggestionText(suggestion);
+                        _dataTable.Rows.Add(text);
                     }
                 }
             }
@@ -782,12 +1008,25 @@ public class KryptonSearchBox : KryptonTextBox
                 {
                     _listBox.BeginUpdate();
                     _listBox.Items.Clear();
-                    _listBox.Items.AddRange(suggestions.ToArray());
+                    // Add items - can be strings or IContentValues
+                    foreach (var suggestion in suggestions)
+                    {
+                        _listBox.Items.Add(suggestion);
+                    }
                     _listBox.EndUpdate();
                 }
             }
 
             _highlightedIndex = -1;
+        }
+
+        private string GetSuggestionText(object suggestion)
+        {
+            if (suggestion is IContentValues contentValues)
+            {
+                return contentValues.GetShortText() ?? string.Empty;
+            }
+            return suggestion.ToString() ?? string.Empty;
         }
 
         public void HighlightIndex(int index)
@@ -814,13 +1053,28 @@ public class KryptonSearchBox : KryptonTextBox
             }
         }
 
-        public string? GetSuggestion(int index)
+        public object? GetSuggestion(int index)
         {
             if (index >= 0 && index < _suggestions.Count)
             {
                 return _suggestions[index];
             }
             return null;
+        }
+
+        public string? GetSuggestionText(int index)
+        {
+            var suggestion = GetSuggestion(index);
+            if (suggestion == null)
+            {
+                return null;
+            }
+
+            if (suggestion is IContentValues contentValues)
+            {
+                return contentValues.GetShortText();
+            }
+            return suggestion.ToString();
         }
 
         public void Show(Point location, int width)
@@ -968,8 +1222,13 @@ public class KryptonSearchBox : KryptonTextBox
 
         private void OnSuggestionSelected(int index)
         {
-            var suggestion = GetSuggestion(index);
-            var args = new SuggestionSelectedEventArgs(index) { Suggestion = suggestion };
+            var suggestionObject = GetSuggestion(index);
+            var suggestionText = GetSuggestionText(index);
+            var args = new SuggestionSelectedEventArgs(index)
+            {
+                Suggestion = suggestionText,
+                SuggestionObject = suggestionObject
+            };
             SuggestionSelected?.Invoke(this, args);
             Hide();
         }
@@ -1067,7 +1326,12 @@ public class SuggestionSelectedEventArgs : EventArgs
     public int Index { get; }
 
     /// <summary>
-    /// Gets the selected suggestion text.
+    /// Gets the selected suggestion text (for backward compatibility).
     /// </summary>
     public string? Suggestion { get; set; }
+
+    /// <summary>
+    /// Gets the selected suggestion object (can be string or IContentValues).
+    /// </summary>
+    public object? SuggestionObject { get; set; }
 }
