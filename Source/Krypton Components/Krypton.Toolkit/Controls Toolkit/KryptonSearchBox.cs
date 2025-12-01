@@ -416,7 +416,7 @@ public class KryptonSearchBox : KryptonTextBox
         if (_suggestionPopup != null && _suggestionPopup.Visible)
         {
             // Check if focus is going to the popup or its child controls
-            if (_suggestionPopup.ContainsFocus())
+            if (_suggestionPopup.HasFocus())
             {
                 // Focus is going to the popup, don't hide
                 return;
@@ -430,7 +430,7 @@ public class KryptonSearchBox : KryptonTextBox
                 timer.Dispose();
                 
                 // Double-check that focus hasn't moved to the popup
-                if (_suggestionPopup != null && !_suggestionPopup.ContainsFocus())
+                if (_suggestionPopup != null && !_suggestionPopup.HasFocus())
                 {
                     HideSuggestions();
                 }
@@ -730,7 +730,7 @@ public class KryptonSearchBox : KryptonTextBox
             Hide();
         }
 
-        public bool ContainsFocus()
+        public bool HasFocus()
         {
             if (ContainsFocus)
             {
