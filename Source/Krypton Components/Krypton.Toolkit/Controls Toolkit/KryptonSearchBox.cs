@@ -616,10 +616,10 @@ public class KryptonSearchBox : KryptonTextBox
 
             _listBox = new KryptonListBox
             {
-                Dock = DockStyle.Fill,
-                BorderStyle = BorderStyle.None,
-                IntegralHeight = false
+                Dock = DockStyle.Fill
             };
+            // Set border to not draw - use DrawBorders property instead
+            _listBox.StateCommon.Border.DrawBorders = PaletteDrawBorders.None;
             _listBox.MouseClick += OnListBoxMouseClick;
             _listBox.DoubleClick += OnListBoxDoubleClick;
 
@@ -630,9 +630,9 @@ public class KryptonSearchBox : KryptonTextBox
             {
                 PaletteMode = owner.PaletteMode;
             }
-            else if (owner.Palette != null)
+            else if (owner.LocalCustomPalette != null)
             {
-                Palette = owner.Palette;
+                LocalCustomPalette = owner.LocalCustomPalette;
             }
         }
 
@@ -678,7 +678,8 @@ public class KryptonSearchBox : KryptonTextBox
             }
 
             // Calculate height based on item count (max 8 items visible)
-            var itemHeight = _listBox.ItemHeight;
+            // Use GetItemHeight(0) to get the height of the first item, or default to 20 if no items
+            var itemHeight = _suggestions.Count > 0 ? _listBox.GetItemHeight(0) : 20;
             var itemCount = Math.Min(_suggestions.Count, 8);
             var height = (itemCount * itemHeight) + 2;
 

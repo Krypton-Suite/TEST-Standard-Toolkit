@@ -18,17 +18,32 @@ namespace TestForm
         {
             InitializeComponent();
             InitializeListBox();
-            
+            InitializeSearchBox();
+        }
+
+        private void InitializeSearchBox()
+        {
+            // Configure search box properties
+            kryptonSearchBox1.PlaceholderText = "Search fruits...";
+            kryptonSearchBox1.ShowSearchButton = true;
+            kryptonSearchBox1.ShowClearButton = true;
+            kryptonSearchBox1.ClearOnEscape = true;
+            kryptonSearchBox1.EnableSuggestions = true;
+            kryptonSearchBox1.SuggestionMaxCount = 10;
+
             // Set up custom suggestions from the listbox items
             kryptonSearchBox1.SetSuggestions(_allItems);
-            
-            // Also filter on text change for real-time filtering
+
+            // Handle text change for real-time filtering
             kryptonSearchBox1.TextChanged += KryptonSearchBox1_TextChanged;
-            
-            // Handle clear event
+
+            // Handle search event (Enter key or search button click)
+            kryptonSearchBox1.Search += KryptonSearchBox_Search;
+
+            // Handle clear event (clear button, Escape key, or programmatic clear)
             kryptonSearchBox1.Cleared += KryptonSearchBox1_Cleared;
-            
-            // Handle suggestion selected event
+
+            // Handle suggestion selected event (when user selects from dropdown)
             kryptonSearchBox1.SuggestionSelected += KryptonSearchBox1_SuggestionSelected;
         }
 
@@ -128,10 +143,33 @@ namespace TestForm
 
         private void KryptonSearchBox1_SuggestionSelected(object? sender, Krypton.Toolkit.SuggestionSelectedEventArgs e)
         {
-            // Example: Handle suggestion selection
-            // The text is already set, but we can perform additional actions
-            kryptonLabel1.Text = $"Selected suggestion: {kryptonSearchBox1.Text}";
+            // Example: Handle suggestion selection from the dropdown
+            // The text is already set in the search box, but we can perform additional actions
+            kryptonLabel1.Text = $"Selected suggestion: {e.Suggestion ?? kryptonSearchBox1.Text}";
             FilterListBox(kryptonSearchBox1.Text);
+        }
+
+        // Example: You can also configure the search box programmatically
+        private void ConfigureSearchBoxExample()
+        {
+            // Disable suggestions if needed
+            // kryptonSearchBox1.EnableSuggestions = false;
+
+            // Change maximum suggestion count
+            // kryptonSearchBox1.SuggestionMaxCount = 5;
+
+            // Hide search button (search still works with Enter key)
+            // kryptonSearchBox1.ShowSearchButton = false;
+
+            // Hide clear button
+            // kryptonSearchBox1.ShowClearButton = false;
+
+            // Disable clearing on Escape
+            // kryptonSearchBox1.ClearOnEscape = false;
+
+            // Update suggestions dynamically
+            // var newSuggestions = new List<string> { "New", "Items" };
+            // kryptonSearchBox1.SetSuggestions(newSuggestions);
         }
     }
 }
