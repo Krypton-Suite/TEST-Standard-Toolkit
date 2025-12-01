@@ -20,6 +20,8 @@ public class KryptonMenuStrip : MenuStrip
 {
     #region Instance Fields
     private PaletteBase? _palette;
+    private PaletteBase? _hookedPalette;
+    private PaletteBase? _hookedGlobalPalette;
     private PaletteMode _paletteMode;
     private PaletteBackInheritMenuStrip? _inherit;
     private readonly PaletteBack _stateCommon;
@@ -48,6 +50,15 @@ public class KryptonMenuStrip : MenuStrip
 
         // Hook into global palette changes
         KryptonManager.GlobalPaletteChanged += OnGlobalPaletteChanged;
+        
+        // Hook into palette paint events to update font
+        HookPaletteEvents();
+        
+        // Always listen to global palette for BaseFont changes
+        HookGlobalPaletteEvents();
+        
+        // Set initial font from palette
+        UpdateFont();
     }
 
     /// <summary>
@@ -60,6 +71,18 @@ public class KryptonMenuStrip : MenuStrip
         {
             // Unhook from events
             KryptonManager.GlobalPaletteChanged -= OnGlobalPaletteChanged;
+            
+            // Unhook from palette events
+            if (_hookedPalette != null)
+            {
+                _hookedPalette.PalettePaintInternal -= OnPalettePaint;
+            }
+            
+            // Unhook from global palette events
+            if (_hookedGlobalPalette != null)
+            {
+                _hookedGlobalPalette.PalettePaintInternal -= OnGlobalPalettePaint;
+            }
         }
 
         base.Dispose(disposing);
@@ -75,6 +98,44 @@ public class KryptonMenuStrip : MenuStrip
     {
         base.OnRendererChanged(e);
         Invalidate();
+    }
+
+    /// <summary>
+    /// Gets or sets the font of the text displayed by the control.
+    /// </summary>
+    [Browsable(false)]
+    [Bindable(false)]
+    [AmbientValue(null)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [AllowNull]
+    public override Font Font
+    {
+        get
+        {
+            // Directly return KryptonManager.BaseFont for instant reflection
+            try
+            {
+                return KryptonManager.BaseFont;
+            }
+            catch
+            {
+                // Fallback to base font if BaseFont is not available
+                return base.Font;
+            }
+        }
+        set
+        {
+            // Allow setting, but it will be overridden by BaseFont changes
+            base.Font = value;
+            // Also update all items when font is set
+            if (value != null)
+            {
+                foreach (ToolStripItem item in Items)
+                {
+                    item.Font = value;
+                }
+            }
+        }
     }
     #endregion
 
@@ -103,8 +164,10 @@ public class KryptonMenuStrip : MenuStrip
                         // Use the one of the built in palettes
                         _paletteMode = value;
                         _palette = KryptonManager.GetPaletteForMode(_paletteMode);
+                        HookPaletteEvents();
                         UpdateInherit();
                         UpdateAppearance();
+                        UpdateFont();
                         break;
                 }
             }
@@ -145,8 +208,10 @@ public class KryptonMenuStrip : MenuStrip
                     _paletteMode = PaletteMode.Custom;
                 }
 
+                HookPaletteEvents();
                 UpdateInherit();
                 UpdateAppearance();
+                UpdateFont();
             }
         }
     }
@@ -192,7 +257,6 @@ public class KryptonMenuStrip : MenuStrip
     private bool ShouldSerializeStateNormal() => !_stateNormal.IsDefault;
     #endregion
 
-    #region Implementation
     private void UpdateInherit()
     {
         var currentPalette = _palette ?? KryptonManager.CurrentGlobalPalette;
@@ -203,6 +267,56 @@ public class KryptonMenuStrip : MenuStrip
         else
         {
             _inherit = new PaletteBackInheritMenuStrip(currentPalette);
+        }
+    }
+
+    private void HookPaletteEvents()
+    {
+        // Get current palette
+        var currentPalette = _palette ?? KryptonManager.CurrentGlobalPalette;
+        
+        // Only unhook/hook if palette has changed
+        if (_hookedPalette != currentPalette)
+        {
+            // Unhook from old palette events (if any)
+            if (_hookedPalette != null)
+            {
+                _hookedPalette.PalettePaintInternal -= OnPalettePaint;
+            }
+            
+            // Hook into new palette events
+            if (currentPalette != null)
+            {
+                currentPalette.PalettePaintInternal += OnPalettePaint;
+            }
+            
+            // Remember the currently hooked palette
+            _hookedPalette = currentPalette;
+        }
+    }
+
+    private void HookGlobalPaletteEvents()
+    {
+        // Always listen to CurrentGlobalPalette for BaseFont changes
+        var currentGlobalPalette = KryptonManager.CurrentGlobalPalette;
+        
+        // Only unhook/hook if global palette has changed
+        if (_hookedGlobalPalette != currentGlobalPalette)
+        {
+            // Unhook from old global palette events (if any)
+            if (_hookedGlobalPalette != null)
+            {
+                _hookedGlobalPalette.PalettePaintInternal -= OnGlobalPalettePaint;
+            }
+            
+            // Hook into new global palette events
+            if (currentGlobalPalette != null)
+            {
+                currentGlobalPalette.PalettePaintInternal += OnGlobalPalettePaint;
+            }
+            
+            // Remember the currently hooked global palette
+            _hookedGlobalPalette = currentGlobalPalette;
         }
     }
 
@@ -226,12 +340,102 @@ public class KryptonMenuStrip : MenuStrip
 
     private void OnGlobalPaletteChanged(object? sender, EventArgs e)
     {
+        // Re-hook global palette events in case the global palette instance changed
+        HookGlobalPaletteEvents();
+        
         // Only update if we're using the global palette
         if (_paletteMode == PaletteMode.Global)
         {
             _palette = KryptonManager.CurrentGlobalPalette;
+            HookPaletteEvents();
             UpdateInherit();
             UpdateAppearance();
+            UpdateFont();
+        }
+        else
+        {
+            // Even if not using global palette, BaseFont changes might affect us
+            // Update font to ensure it reflects any BaseFont changes
+            UpdateFont();
+        }
+    }
+
+    private void OnPalettePaint(object? sender, PaletteLayoutEventArgs e)
+    {
+        // Update font when palette changes (e.g., BaseFont changes)
+        if (!IsDisposed)
+        {
+            UpdateFont();
+        }
+    }
+
+    private void OnGlobalPalettePaint(object? sender, PaletteLayoutEventArgs e)
+    {
+        // Update font immediately when global palette BaseFont changes
+        if (!IsDisposed)
+        {
+            UpdateFont();
+            
+            // Force ColorTable invalidation via reflection so it rebuilds
+            // Note: ColorTable.MenuStripFont uses static _menuToolFont that doesn't reflect BaseFont
+            // This is a workaround until ColorTable is updated to use BaseFont
+            try
+            {
+                var currentPalette = KryptonManager.CurrentGlobalPalette;
+                if (currentPalette != null)
+                {
+                    // Use reflection to invalidate ColorTable cache
+                    var tableField = currentPalette.GetType().GetField("_table", 
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?? currentPalette.GetType().GetField("Table", 
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    tableField?.SetValue(currentPalette, null);
+                    
+                    // Force ToolStripManager to refresh by recreating renderer
+                    // This will rebuild ColorTable and pick up any font changes
+                    var renderer = currentPalette.GetRenderer()?.RenderToolStrip(currentPalette);
+                    if (renderer != null)
+                    {
+                        ToolStripManager.Renderer = renderer;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore errors - fallback to simple refresh
+            }
+            
+            // Force control refresh to ensure visual update
+            Invalidate();
+            Refresh();
+        }
+    }
+
+    private void UpdateFont()
+    {
+        if (!IsDisposed)
+        {
+            try
+            {
+                // Directly use KryptonManager.BaseFont for instant updates
+                var baseFont = KryptonManager.BaseFont;
+                if (baseFont != null)
+                {
+                    // Set the font property directly
+                    base.Font = baseFont;
+                    // Force immediate update by invalidating and refreshing
+                    Invalidate();
+                    // Also update all items in the menu strip
+                    foreach (ToolStripItem item in Items)
+                    {
+                        item.Font = baseFont;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore errors accessing BaseFont (may not be initialized yet)
+            }
         }
     }
     #endregion
