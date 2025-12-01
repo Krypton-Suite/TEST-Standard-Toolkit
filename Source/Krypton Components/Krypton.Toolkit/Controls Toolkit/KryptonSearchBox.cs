@@ -709,9 +709,6 @@ public class KryptonSearchBox : KryptonTextBox
                     ScrollBars = ScrollBars.None,
                     TabStop = false
                 };
-                
-                // Prevent DataGridView from stealing focus
-                _dataGridView.SetStyle(ControlStyles.Selectable, false);
 
                 // Add column for suggestions
                 var column = new DataGridViewTextBoxColumn
@@ -724,8 +721,9 @@ public class KryptonSearchBox : KryptonTextBox
                 _dataGridView.Columns.Add(column);
                 _dataGridView.DataSource = _dataTable;
 
-                // Set border to not draw
-                _dataGridView.StateCommon.Border.DrawBorders = PaletteDrawBorders.None;
+                // Hide outer borders - KryptonDataGridView already sets BorderStyle.None in constructor
+                // We can use HideOuterBorders to hide cell borders if needed
+                _dataGridView.HideOuterBorders = true;
 
                 // Handle mouse events
                 _dataGridView.CellMouseDown += OnDataGridViewCellMouseDown;
