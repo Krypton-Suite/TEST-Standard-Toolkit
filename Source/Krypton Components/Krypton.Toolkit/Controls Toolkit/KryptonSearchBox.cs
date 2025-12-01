@@ -415,13 +415,22 @@ public class KryptonSearchBox : KryptonTextBox
         // Hide suggestions when focus is lost (with a small delay to allow clicking on suggestions)
         if (_suggestionPopup != null && _suggestionPopup.Visible)
         {
+            // Check if focus is going to the popup or its child controls
+            if (_suggestionPopup.ContainsFocus())
+            {
+                // Focus is going to the popup, don't hide
+                return;
+            }
+
             // Use a timer to delay hiding, allowing click events to process
             var timer = new System.Windows.Forms.Timer { Interval = 200 };
             timer.Tick += (s, args) =>
             {
                 timer.Stop();
                 timer.Dispose();
-                if (_suggestionPopup != null && !_suggestionPopup.ContainsFocus)
+                
+                // Double-check that focus hasn't moved to the popup
+                if (_suggestionPopup != null && !_suggestionPopup.ContainsFocus())
                 {
                     HideSuggestions();
                 }
@@ -613,6 +622,9 @@ public class KryptonSearchBox : KryptonTextBox
             TopMost = true;
             BackColor = Color.White;
             Padding = new Padding(1);
+            
+            // Prevent the form from stealing focus
+            SetStyle(ControlStyles.Selectable, false);
 
             _listBox = new KryptonListBox
             {
@@ -686,7 +698,8 @@ public class KryptonSearchBox : KryptonTextBox
             Size = new Size(width, height);
             Location = location;
 
-            base.Show();
+            // Show the form without activating it (doesn't steal focus)
+            PI.ShowWindow(Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
         }
 
         private void OnListBoxMouseClick(object? sender, MouseEventArgs e)
@@ -715,6 +728,17 @@ public class KryptonSearchBox : KryptonTextBox
             var args = new SuggestionSelectedEventArgs(index) { Suggestion = suggestion };
             SuggestionSelected?.Invoke(this, args);
             Hide();
+        }
+
+        public bool ContainsFocus()
+        {
+            if (ContainsFocus)
+            {
+                return true;
+            }
+
+            // Check if any child control has focus
+            return _listBox != null && _listBox.Focused;
         }
 
         protected override void Dispose(bool disposing)
