@@ -13,6 +13,22 @@
 namespace Krypton.Toolkit;
 
 /// <summary>
+/// Specifies the type of control used to display suggestions.
+/// </summary>
+public enum SuggestionDisplayType
+{
+    /// <summary>
+    /// Display suggestions using a KryptonListBox.
+    /// </summary>
+    ListBox,
+
+    /// <summary>
+    /// Display suggestions using a KryptonDataGridView.
+    /// </summary>
+    DataGridView
+}
+
+/// <summary>
 /// Provides a modern search input control with search icon and clear button.
 /// </summary>
 [ToolboxItem(true)]
@@ -32,6 +48,7 @@ public class KryptonSearchBox : KryptonTextBox
     private bool _clearOnEscape;
     private bool _enableSuggestions;
     private int _suggestionMaxCount;
+    private SuggestionDisplayType _suggestionDisplayType;
     private readonly List<string> _suggestions;
     private SuggestionPopup? _suggestionPopup;
     private int _selectedSuggestionIndex;
@@ -91,6 +108,7 @@ public class KryptonSearchBox : KryptonTextBox
         _clearOnEscape = true;
         _enableSuggestions = true;
         _suggestionMaxCount = 10;
+        _suggestionDisplayType = SuggestionDisplayType.ListBox;
         _suggestions = new List<string>();
         _selectedSuggestionIndex = -1;
 
@@ -276,6 +294,32 @@ public class KryptonSearchBox : KryptonTextBox
                 value = 1;
             }
             _suggestionMaxCount = value;
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the type of control used to display suggestions.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"The type of control used to display suggestions (ListBox or DataGridView).")]
+    [DefaultValue(SuggestionDisplayType.ListBox)]
+    public SuggestionDisplayType SuggestionDisplayType
+    {
+        get => _suggestionDisplayType;
+
+        set
+        {
+            if (_suggestionDisplayType != value)
+            {
+                _suggestionDisplayType = value;
+                
+                // Dispose existing popup if it exists to recreate with new display type
+                if (_suggestionPopup != null)
+                {
+                    _suggestionPopup.Dispose();
+                    _suggestionPopup = null;
+                }
+            }
         }
     }
 
@@ -613,8 +657,11 @@ public class KryptonSearchBox : KryptonTextBox
     private class SuggestionPopup : KryptonForm
     {
         private KryptonListBox? _listBox;
+        private KryptonDataGridView? _dataGridView;
         private readonly List<string> _suggestions;
         private int _highlightedIndex;
+        private DataTable? _dataTable;
+        private readonly SuggestionDisplayType _displayType;
 
         public event EventHandler<SuggestionSelectedEventArgs>? SuggestionSelected;
 
@@ -624,6 +671,7 @@ public class KryptonSearchBox : KryptonTextBox
         {
             _suggestions = new List<string>();
             _highlightedIndex = -1;
+            _displayType = owner.SuggestionDisplayType;
 
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
@@ -638,17 +686,70 @@ public class KryptonSearchBox : KryptonTextBox
             // Prevent activation
             SetStyle(ControlStyles.UserPaint, true);
 
-            _listBox = new KryptonListBox
+            // Create the appropriate control based on display type
+            if (_displayType == SuggestionDisplayType.DataGridView)
             {
-                Dock = DockStyle.Fill
-            };
-            // Set border to not draw - use DrawBorders property instead
-            _listBox.StateCommon.Border.DrawBorders = PaletteDrawBorders.None;
-            _listBox.MouseDown += OnListBoxMouseDown;
-            _listBox.MouseClick += OnListBoxMouseClick;
-            _listBox.DoubleClick += OnListBoxDoubleClick;
+                // Create DataTable for suggestions
+                _dataTable = new DataTable();
+                _dataTable.Columns.Add("Suggestion", typeof(string));
 
-            Controls.Add(_listBox);
+                _dataGridView = new KryptonDataGridView
+                {
+                    Dock = DockStyle.Fill,
+                    AutoGenerateColumns = false,
+                    ReadOnly = true,
+                    AllowUserToAddRows = false,
+                    AllowUserToDeleteRows = false,
+                    AllowUserToResizeRows = false,
+                    ColumnHeadersVisible = false,
+                    RowHeadersVisible = false,
+                    SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                    MultiSelect = false,
+                    ShowCellToolTips = false,
+                    ScrollBars = ScrollBars.None,
+                    TabStop = false
+                };
+                
+                // Prevent DataGridView from stealing focus
+                _dataGridView.SetStyle(ControlStyles.Selectable, false);
+
+                // Add column for suggestions
+                var column = new DataGridViewTextBoxColumn
+                {
+                    Name = "Suggestion",
+                    DataPropertyName = "Suggestion",
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                    ReadOnly = true
+                };
+                _dataGridView.Columns.Add(column);
+                _dataGridView.DataSource = _dataTable;
+
+                // Set border to not draw
+                _dataGridView.StateCommon.Border.DrawBorders = PaletteDrawBorders.None;
+
+                // Handle mouse events
+                _dataGridView.CellMouseDown += OnDataGridViewCellMouseDown;
+                _dataGridView.CellMouseClick += OnDataGridViewCellMouseClick;
+                _dataGridView.CellDoubleClick += OnDataGridViewCellDoubleClick;
+                _dataGridView.KeyDown += OnDataGridViewKeyDown;
+
+                Controls.Add(_dataGridView);
+            }
+            else
+            {
+                // Use ListBox
+                _listBox = new KryptonListBox
+                {
+                    Dock = DockStyle.Fill
+                };
+                // Set border to not draw - use DrawBorders property instead
+                _listBox.StateCommon.Border.DrawBorders = PaletteDrawBorders.None;
+                _listBox.MouseDown += OnListBoxMouseDown;
+                _listBox.MouseClick += OnListBoxMouseClick;
+                _listBox.DoubleClick += OnListBoxDoubleClick;
+
+                Controls.Add(_listBox);
+            }
 
             // Inherit palette from owner
             if (owner.PaletteMode != PaletteMode.Custom)
@@ -666,12 +767,26 @@ public class KryptonSearchBox : KryptonTextBox
             _suggestions.Clear();
             _suggestions.AddRange(suggestions);
 
-            if (_listBox != null)
+            if (_displayType == SuggestionDisplayType.DataGridView)
             {
-                _listBox.BeginUpdate();
-                _listBox.Items.Clear();
-                _listBox.Items.AddRange(suggestions.ToArray());
-                _listBox.EndUpdate();
+                if (_dataTable != null && _dataGridView != null)
+                {
+                    _dataTable.Rows.Clear();
+                    foreach (var suggestion in suggestions)
+                    {
+                        _dataTable.Rows.Add(suggestion);
+                    }
+                }
+            }
+            else
+            {
+                if (_listBox != null)
+                {
+                    _listBox.BeginUpdate();
+                    _listBox.Items.Clear();
+                    _listBox.Items.AddRange(suggestions.ToArray());
+                    _listBox.EndUpdate();
+                }
             }
 
             _highlightedIndex = -1;
@@ -679,10 +794,25 @@ public class KryptonSearchBox : KryptonTextBox
 
         public void HighlightIndex(int index)
         {
-            if (_listBox != null && index >= 0 && index < _listBox.Items.Count)
+            if (_displayType == SuggestionDisplayType.DataGridView)
             {
-                _listBox.SelectedIndex = index;
-                _listBox.TopIndex = Math.Max(0, index - 2);
+                if (_dataGridView != null && index >= 0 && index < _dataGridView.Rows.Count)
+                {
+                    _dataGridView.ClearSelection();
+                    _dataGridView.Rows[index].Selected = true;
+                    _dataGridView.CurrentCell = _dataGridView.Rows[index].Cells[0];
+                    
+                    // Scroll to make the selected row visible
+                    _dataGridView.FirstDisplayedScrollingRowIndex = Math.Max(0, Math.Min(index, _dataGridView.RowCount - 1));
+                }
+            }
+            else
+            {
+                if (_listBox != null && index >= 0 && index < _listBox.Items.Count)
+                {
+                    _listBox.SelectedIndex = index;
+                    _listBox.TopIndex = Math.Max(0, index - 2);
+                }
             }
         }
 
@@ -697,16 +827,32 @@ public class KryptonSearchBox : KryptonTextBox
 
         public void Show(Point location, int width)
         {
-            if (_listBox == null)
-            {
-                return;
-            }
+            int height;
 
-            // Calculate height based on item count (max 8 items visible)
-            // Use GetItemHeight(0) to get the height of the first item, or default to 20 if no items
-            var itemHeight = _suggestions.Count > 0 ? _listBox.GetItemHeight(0) : 20;
-            var itemCount = Math.Min(_suggestions.Count, 8);
-            var height = (itemCount * itemHeight) + 2;
+            if (_displayType == SuggestionDisplayType.DataGridView)
+            {
+                if (_dataGridView == null)
+                {
+                    return;
+                }
+
+                // Calculate height based on row count (max 8 rows visible)
+                var rowHeight = _dataGridView.Rows.Count > 0 ? _dataGridView.Rows[0].Height : 22;
+                var rowCount = Math.Min(_suggestions.Count, 8);
+                height = (rowCount * rowHeight) + 2;
+            }
+            else
+            {
+                if (_listBox == null)
+                {
+                    return;
+                }
+
+                // Calculate height based on item count (max 8 items visible)
+                var itemHeight = _suggestions.Count > 0 ? _listBox.GetItemHeight(0) : 20;
+                var itemCount = Math.Min(_suggestions.Count, 8);
+                height = (itemCount * itemHeight) + 2;
+            }
 
             Size = new Size(width, height);
             Location = location;
@@ -718,39 +864,32 @@ public class KryptonSearchBox : KryptonTextBox
             }
 
             // Show the form without activating it (doesn't steal focus)
-            PI.ShowWindow(Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
+            if (Handle != IntPtr.Zero)
+            {
+                PI.ShowWindow(Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
+            }
         }
 
         protected override void SetVisibleCore(bool value)
         {
-            base.SetVisibleCore(value);
-            if (value)
+            if (!IsDisposed && value)
             {
-                // Ensure we don't activate when made visible
-                if (IsHandleCreated)
+                // Prevent the form from activating when it becomes visible
+                if (IsHandleCreated && Handle != IntPtr.Zero)
                 {
                     PI.ShowWindow(Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
                 }
+                return;
             }
+            base.SetVisibleCore(value);
         }
 
         protected override void WndProc(ref Message m)
         {
             // Prevent activation messages from stealing focus
-            const int WM_ACTIVATE = 0x0006;
-            const int WM_MOUSEACTIVATE = 0x0021;
-            const int MA_NOACTIVATE = 0x0003;
-
-            if (m.Msg == WM_ACTIVATE)
+            if (m.Msg == PI.WM_.ACTIVATE || m.Msg == PI.WM_.MOUSEACTIVATE)
             {
-                // Don't process activation
-                return;
-            }
-
-            if (m.Msg == WM_MOUSEACTIVATE)
-            {
-                // Return MA_NOACTIVATE to prevent activation on mouse click
-                m.Result = (IntPtr)MA_NOACTIVATE;
+                m.Result = IntPtr.Zero;
                 return;
             }
 
@@ -792,6 +931,43 @@ public class KryptonSearchBox : KryptonTextBox
             }
         }
 
+        private void OnDataGridViewCellMouseDown(object? sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (_dataGridView != null && e.Button == MouseButtons.Left && e.RowIndex >= 0)
+            {
+                // Single click selects the suggestion immediately
+                OnSuggestionSelected(e.RowIndex);
+            }
+        }
+
+        private void OnDataGridViewCellMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+        {
+            // Also handle MouseClick as a fallback
+            if (_dataGridView != null && e.Button == MouseButtons.Left && e.RowIndex >= 0)
+            {
+                OnSuggestionSelected(e.RowIndex);
+            }
+        }
+
+        private void OnDataGridViewCellDoubleClick(object? sender, DataGridViewCellEventArgs e)
+        {
+            // Also handle double click for consistency
+            if (_dataGridView != null && e.RowIndex >= 0)
+            {
+                OnSuggestionSelected(e.RowIndex);
+            }
+        }
+
+        private void OnDataGridViewKeyDown(object? sender, KeyEventArgs e)
+        {
+            // Handle Enter key to select the current row
+            if (e.KeyCode == Keys.Enter && _dataGridView != null && _dataGridView.CurrentRow != null)
+            {
+                OnSuggestionSelected(_dataGridView.CurrentRow.Index);
+                e.Handled = true;
+            }
+        }
+
         private void OnSuggestionSelected(int index)
         {
             var suggestion = GetSuggestion(index);
@@ -808,7 +984,14 @@ public class KryptonSearchBox : KryptonTextBox
             }
 
             // Check if any child control has focus
-            return _listBox != null && _listBox.Focused;
+            if (_displayType == SuggestionDisplayType.DataGridView)
+            {
+                return _dataGridView != null && _dataGridView.Focused;
+            }
+            else
+            {
+                return _listBox != null && _listBox.Focused;
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -822,6 +1005,22 @@ public class KryptonSearchBox : KryptonTextBox
                     _listBox.DoubleClick -= OnListBoxDoubleClick;
                     _listBox.Dispose();
                     _listBox = null;
+                }
+
+                if (_dataGridView != null)
+                {
+                    _dataGridView.CellMouseDown -= OnDataGridViewCellMouseDown;
+                    _dataGridView.CellMouseClick -= OnDataGridViewCellMouseClick;
+                    _dataGridView.CellDoubleClick -= OnDataGridViewCellDoubleClick;
+                    _dataGridView.KeyDown -= OnDataGridViewKeyDown;
+                    _dataGridView.Dispose();
+                    _dataGridView = null;
+                }
+
+                if (_dataTable != null)
+                {
+                    _dataTable.Dispose();
+                    _dataTable = null;
                 }
             }
             base.Dispose(disposing);

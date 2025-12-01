@@ -31,6 +31,7 @@
             this.kryptonToolStripContainer1 = new Krypton.Toolkit.KryptonToolStripContainer();
             this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
             this.kryptonPanel1 = new Krypton.Toolkit.KryptonPanel();
+            this.kryptonDataGridView1 = new Krypton.Toolkit.KryptonDataGridView();
             this.kryptonListBox1 = new Krypton.Toolkit.KryptonListBox();
             this.kryptonLabel4 = new Krypton.Toolkit.KryptonLabel();
             this.kryptonButton2 = new Krypton.Toolkit.KryptonButton();
@@ -75,6 +76,7 @@
             // 
             // kryptonPanel1
             // 
+            this.kryptonPanel1.Controls.Add(this.kryptonDataGridView1);
             this.kryptonPanel1.Controls.Add(this.kryptonListBox1);
             this.kryptonPanel1.Controls.Add(this.kryptonLabel4);
             this.kryptonPanel1.Controls.Add(this.kryptonButton2);
@@ -90,11 +92,20 @@
             this.kryptonPanel1.Size = new System.Drawing.Size(800, 450);
             this.kryptonPanel1.TabIndex = 10;
             // 
+            // kryptonDataGridView1
+            // 
+            this.kryptonDataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.kryptonDataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.kryptonDataGridView1.Location = new System.Drawing.Point(360, 240);
+            this.kryptonDataGridView1.Name = "kryptonDataGridView1";
+            this.kryptonDataGridView1.Size = new System.Drawing.Size(300, 198);
+            this.kryptonDataGridView1.TabIndex = 9;
+            // 
             // kryptonListBox1
             // 
-            this.kryptonListBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.kryptonListBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.kryptonListBox1.Location = new System.Drawing.Point(30, 240);
             this.kryptonListBox1.Name = "kryptonListBox1";
             this.kryptonListBox1.Size = new System.Drawing.Size(300, 198);
@@ -128,7 +139,7 @@
             // 
             // kryptonLabel3
             // 
-            this.kryptonLabel3.Location = new System.Drawing.Point(30, 95);
+            this.kryptonLabel3.Location = new System.Drawing.Point(360, 170);
             this.kryptonLabel3.Name = "kryptonLabel3";
             this.kryptonLabel3.Size = new System.Drawing.Size(12, 20);
             this.kryptonLabel3.TabIndex = 4;
@@ -152,10 +163,8 @@
             // 
             // kryptonSearchBox2
             // 
-            this.kryptonSearchBox2.Location = new System.Drawing.Point(30, 200);
+            this.kryptonSearchBox2.Location = new System.Drawing.Point(360, 200);
             this.kryptonSearchBox2.Name = "kryptonSearchBox2";
-            this.kryptonSearchBox2.PlaceholderText = "Advanced search (no clear button)...";
-            this.kryptonSearchBox2.ShowClearButton = false;
             this.kryptonSearchBox2.Size = new System.Drawing.Size(300, 25);
             this.kryptonSearchBox2.TabIndex = 1;
             this.kryptonSearchBox2.Search += new System.EventHandler<Krypton.Toolkit.SearchEventArgs>(this.KryptonSearchBox2_Search);
@@ -222,6 +231,7 @@
         private KryptonButton kryptonButton1;
         private KryptonButton kryptonButton2;
         private KryptonListBox kryptonListBox1;
+        private KryptonDataGridView kryptonDataGridView1;
         private KryptonHeaderGroup kryptonHeaderGroup1;
     }
 }

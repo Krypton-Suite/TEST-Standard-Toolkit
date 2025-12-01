@@ -13,12 +13,51 @@ namespace TestForm
     public partial class AdditionalControlsForm : KryptonForm
     {
         private readonly List<string> _allItems = new();
+        private DataTable? _dataTable;
 
         public AdditionalControlsForm()
         {
             InitializeComponent();
             InitializeListBox();
+            InitializeDataGridView();
             InitializeSearchBox();
+        }
+
+        private void InitializeDataGridView()
+        {
+            // Create a DataTable with sample fruit data
+            _dataTable = new DataTable();
+            _dataTable.Columns.Add("Name", typeof(string));
+            _dataTable.Columns.Add("Color", typeof(string));
+            _dataTable.Columns.Add("Season", typeof(string));
+
+            // Populate with sample data
+            _dataTable.Rows.Add("Apple", "Red/Green", "Fall");
+            _dataTable.Rows.Add("Banana", "Yellow", "Year-round");
+            _dataTable.Rows.Add("Cherry", "Red", "Summer");
+            _dataTable.Rows.Add("Date", "Brown", "Fall");
+            _dataTable.Rows.Add("Elderberry", "Purple", "Summer");
+            _dataTable.Rows.Add("Fig", "Purple/Green", "Summer");
+            _dataTable.Rows.Add("Grape", "Purple/Green", "Fall");
+            _dataTable.Rows.Add("Honeydew", "Green", "Summer");
+            _dataTable.Rows.Add("Kiwi", "Brown/Green", "Year-round");
+            _dataTable.Rows.Add("Lemon", "Yellow", "Year-round");
+            _dataTable.Rows.Add("Mango", "Orange/Yellow", "Summer");
+            _dataTable.Rows.Add("Orange", "Orange", "Winter");
+            _dataTable.Rows.Add("Papaya", "Orange", "Year-round");
+            _dataTable.Rows.Add("Quince", "Yellow", "Fall");
+            _dataTable.Rows.Add("Raspberry", "Red", "Summer");
+            _dataTable.Rows.Add("Strawberry", "Red", "Spring");
+            _dataTable.Rows.Add("Tangerine", "Orange", "Winter");
+            _dataTable.Rows.Add("Watermelon", "Green/Red", "Summer");
+            _dataTable.Rows.Add("Apricot", "Orange", "Summer");
+            _dataTable.Rows.Add("Blueberry", "Blue", "Summer");
+
+            // Bind to DataGridView
+            kryptonDataGridView1.DataSource = _dataTable;
+            kryptonDataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            kryptonDataGridView1.ReadOnly = true;
+            kryptonDataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         }
 
         private void InitializeSearchBox()
@@ -45,6 +84,18 @@ namespace TestForm
 
             // Handle suggestion selected event (when user selects from dropdown)
             kryptonSearchBox1.SuggestionSelected += KryptonSearchBox1_SuggestionSelected;
+
+            // Configure second search box for DataGridView highlighting
+            kryptonSearchBox2.PlaceholderText = "Search DataGridView (highlights matches)...";
+            kryptonSearchBox2.ShowSearchButton = true;
+            kryptonSearchBox2.ShowClearButton = true;
+            kryptonSearchBox2.ClearOnEscape = true;
+            kryptonSearchBox2.EnableSuggestions = false; // Disable suggestions for this one
+
+            // Handle text change for real-time highlighting
+            kryptonSearchBox2.TextChanged += KryptonSearchBox2_TextChanged;
+            kryptonSearchBox2.Search += KryptonSearchBox2_Search;
+            kryptonSearchBox2.Cleared += KryptonSearchBox2_Cleared;
         }
 
         private void InitializeListBox()
@@ -114,10 +165,36 @@ namespace TestForm
             }
         }
 
+        private void KryptonSearchBox2_TextChanged(object? sender, EventArgs e)
+        {
+            // Real-time highlighting in DataGridView as user types
+            HighlightDataGridView(kryptonSearchBox2.Text);
+        }
+
         private void KryptonSearchBox2_Search(object? sender, Krypton.Toolkit.SearchEventArgs e)
         {
-            // Example: Different search box with different behavior
-            kryptonLabel3.Text = $"Advanced search: {e.SearchText}";
+            // Highlight search results in DataGridView
+            HighlightDataGridView(e.SearchText);
+            kryptonLabel3.Text = string.IsNullOrEmpty(e.SearchText) 
+                ? "DataGridView search cleared" 
+                : $"Highlighting: {e.SearchText}";
+        }
+
+        private void KryptonSearchBox2_Cleared(object? sender, EventArgs e)
+        {
+            // Clear highlighting when search is cleared
+            HighlightDataGridView(string.Empty);
+            kryptonLabel3.Text = "DataGridView search cleared";
+        }
+
+        private void HighlightDataGridView(string searchText)
+        {
+            if (kryptonDataGridView1 != null)
+            {
+                // Use KryptonDataGridView's built-in HighlightSearch method
+                // Empty string clears the highlighting
+                kryptonDataGridView1.HighlightSearch(searchText);
+            }
         }
 
         private void KryptonButton1_Click(object? sender, EventArgs e)
