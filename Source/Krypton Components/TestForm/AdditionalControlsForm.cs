@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Krypton.Toolkit;
 
 namespace TestForm
 {
@@ -14,13 +15,14 @@ namespace TestForm
     {
         private readonly List<string> _allItems = new();
         private DataTable? _dataTable;
+        private readonly List<object> _richSuggestions = new();
 
         public AdditionalControlsForm()
         {
             InitializeComponent();
             InitializeListBox();
             InitializeDataGridView();
-            InitializeSearchBox();
+            InitializeSearchBoxes();
         }
 
         private void InitializeDataGridView()
@@ -60,42 +62,221 @@ namespace TestForm
             kryptonDataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         }
 
-        private void InitializeSearchBox()
+        private void InitializeSearchBoxes()
         {
-            // Configure search box properties
-            kryptonSearchBox1.PlaceholderText = "Search fruits...";
+            // ============================================
+            // SearchBox 1: Basic ListBox suggestions with search history
+            // ============================================
+            kryptonSearchBox1.PlaceholderText = "Search fruits (ListBox, with history)...";
             kryptonSearchBox1.ShowSearchButton = true;
             kryptonSearchBox1.ShowClearButton = true;
             kryptonSearchBox1.ClearOnEscape = true;
             kryptonSearchBox1.EnableSuggestions = true;
-            kryptonSearchBox1.SuggestionMaxCount = 10;
+            kryptonSearchBox1.SuggestionMaxCount = 8;
+            kryptonSearchBox1.SuggestionDisplayType = SuggestionDisplayType.ListBox;
+            
+            // Enable search history
+            kryptonSearchBox1.EnableSearchHistory = true;
+            kryptonSearchBox1.SearchHistoryMaxCount = 10;
+            
+            // Set minimum search length (show suggestions after 1 character)
+            kryptonSearchBox1.MinimumSearchLength = 1;
 
             // Set up custom suggestions from the listbox items
             kryptonSearchBox1.SetSuggestions(_allItems);
 
-            // Handle text change for real-time filtering
+            // Handle events
             kryptonSearchBox1.TextChanged += KryptonSearchBox1_TextChanged;
-
-            // Handle search event (Enter key or search button click)
             kryptonSearchBox1.Search += KryptonSearchBox_Search;
-
-            // Handle clear event (clear button, Escape key, or programmatic clear)
             kryptonSearchBox1.Cleared += KryptonSearchBox1_Cleared;
-
-            // Handle suggestion selected event (when user selects from dropdown)
             kryptonSearchBox1.SuggestionSelected += KryptonSearchBox1_SuggestionSelected;
 
-            // Configure second search box for DataGridView highlighting
+            // ============================================
+            // SearchBox 2: DataGridView highlighting (no suggestions)
+            // ============================================
             kryptonSearchBox2.PlaceholderText = "Search DataGridView (highlights matches)...";
             kryptonSearchBox2.ShowSearchButton = true;
             kryptonSearchBox2.ShowClearButton = true;
             kryptonSearchBox2.ClearOnEscape = true;
-            kryptonSearchBox2.EnableSuggestions = false; // Disable suggestions for this one
+            kryptonSearchBox2.EnableSuggestions = false;
 
-            // Handle text change for real-time highlighting
             kryptonSearchBox2.TextChanged += KryptonSearchBox2_TextChanged;
             kryptonSearchBox2.Search += KryptonSearchBox2_Search;
             kryptonSearchBox2.Cleared += KryptonSearchBox2_Cleared;
+
+            // ============================================
+            // SearchBox 3: Rich suggestions with icons (ListBox)
+            // ============================================
+            InitializeRichSuggestions();
+            kryptonSearchBox3.PlaceholderText = "Rich suggestions (icons, descriptions)...";
+            kryptonSearchBox3.ShowSearchButton = true;
+            kryptonSearchBox3.ShowClearButton = true;
+            kryptonSearchBox3.EnableSuggestions = true;
+            kryptonSearchBox3.SuggestionMaxCount = 8;
+            kryptonSearchBox3.SuggestionDisplayType = SuggestionDisplayType.ListBox;
+            kryptonSearchBox3.MinimumSearchLength = 1;
+            
+            // Set rich suggestions (with icons and descriptions)
+            kryptonSearchBox3.SetRichSuggestions(_richSuggestions);
+            
+            kryptonSearchBox3.SuggestionSelected += KryptonSearchBox3_SuggestionSelected;
+
+            // ============================================
+            // SearchBox 4: DataGridView with multiple columns
+            // ============================================
+            InitializeDataGridViewSuggestions();
+            kryptonSearchBox4.PlaceholderText = "Multi-column DataGridView suggestions...";
+            kryptonSearchBox4.ShowSearchButton = true;
+            kryptonSearchBox4.ShowClearButton = true;
+            kryptonSearchBox4.EnableSuggestions = true;
+            kryptonSearchBox4.SuggestionMaxCount = 8;
+            kryptonSearchBox4.SuggestionDisplayType = SuggestionDisplayType.DataGridView;
+            kryptonSearchBox4.MinimumSearchLength = 1;
+            
+            // Set up multi-column DataGridView
+            var columns = new List<SuggestionColumnDefinition>
+            {
+                new SuggestionColumnDefinition("Name", "Name", 
+                    obj => obj is FruitItem fi ? fi.Name : (obj is IContentValues cv ? cv.GetShortText() : obj?.ToString())),
+                new SuggestionColumnDefinition("Color", "Color", 
+                    obj => obj is FruitItem fi ? fi.Color : string.Empty)
+                {
+                    Width = 100,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+                },
+                new SuggestionColumnDefinition("Season", "Season", 
+                    obj => obj is FruitItem fi ? fi.Season : string.Empty)
+                {
+                    Width = 80,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+                }
+            };
+            kryptonSearchBox4.SetDataGridViewColumns(columns);
+            
+            // Set rich suggestions for DataGridView (with icons and descriptions)
+            kryptonSearchBox4.SetRichSuggestions(_richSuggestions);
+            
+            kryptonSearchBox4.SuggestionSelected += KryptonSearchBox4_SuggestionSelected;
+
+            // ============================================
+            // SearchBox 5: Custom filtering
+            // ============================================
+            kryptonSearchBox5.PlaceholderText = "Custom filter (starts with only)...";
+            kryptonSearchBox5.ShowSearchButton = true;
+            kryptonSearchBox5.ShowClearButton = true;
+            kryptonSearchBox5.EnableSuggestions = true;
+            kryptonSearchBox5.SuggestionMaxCount = 8;
+            kryptonSearchBox5.SuggestionDisplayType = SuggestionDisplayType.ListBox;
+            kryptonSearchBox5.MinimumSearchLength = 1;
+            
+            // Set custom filter (only show items that start with search text)
+            kryptonSearchBox5.CustomFilter = (searchText, suggestions) =>
+            {
+                var searchLower = searchText.ToLower();
+                return suggestions.Where(s =>
+                {
+                    string? text = null;
+                    if (s is IContentValues cv)
+                    {
+                        text = cv.GetShortText();
+                    }
+                    else
+                    {
+                        text = s?.ToString();
+                    }
+                    return !string.IsNullOrEmpty(text) && text.ToLower().StartsWith(searchLower);
+                });
+            };
+            
+            kryptonSearchBox5.SetSuggestions(_allItems);
+            kryptonSearchBox5.SuggestionSelected += KryptonSearchBox5_SuggestionSelected;
+        }
+
+        private void InitializeRichSuggestions()
+        {
+            // Create rich suggestions with icons and descriptions
+            // Using fruit data from DataGridView
+            var fruitData = new[]
+            {
+                new { Name = "Apple", Color = "Red/Green", Season = "Fall", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Banana", Color = "Yellow", Season = "Year-round", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Cherry", Color = "Red", Season = "Summer", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Date", Color = "Brown", Season = "Fall", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Elderberry", Color = "Purple", Season = "Summer", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Fig", Color = "Purple/Green", Season = "Summer", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Grape", Color = "Purple/Green", Season = "Fall", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Honeydew", Color = "Green", Season = "Summer", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Kiwi", Color = "Brown/Green", Season = "Year-round", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Lemon", Color = "Yellow", Season = "Year-round", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Mango", Color = "Orange/Yellow", Season = "Summer", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Orange", Color = "Orange", Season = "Winter", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Papaya", Color = "Orange", Season = "Year-round", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Quince", Color = "Yellow", Season = "Fall", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Raspberry", Color = "Red", Season = "Summer", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Strawberry", Color = "Red", Season = "Spring", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Tangerine", Color = "Orange", Season = "Winter", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Watermelon", Color = "Green/Red", Season = "Summer", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Apricot", Color = "Orange", Season = "Summer", Icon = ImageresIconID.ApplicationCalendar },
+                new { Name = "Blueberry", Color = "Blue", Season = "Summer", Icon = ImageresIconID.ApplicationCalendar }
+            };
+
+            foreach (var fruit in fruitData)
+            {
+                try
+                {
+                    // Try to get an icon (using a simple approach - you can use actual fruit icons if available)
+                    Image? icon = null;
+                    try
+                    {
+                        var iconObj = GraphicsExtensions.ExtractIconFromImageres((int)fruit.Icon, IconSize.Small);
+                        if (iconObj != null)
+                        {
+                            icon = iconObj.ToBitmap();
+                            iconObj.Dispose();
+                        }
+                    }
+                    catch
+                    {
+                        // Fallback if icon extraction fails
+                    }
+
+                    // Create KryptonListItem with icon and description
+                    var item = new KryptonListItem(
+                        fruit.Name,
+                        $"{fruit.Color} - {fruit.Season}",
+                        icon
+                    );
+                    
+                    // Store additional data in Tag
+                    item.Tag = new FruitItem { Name = fruit.Name, Color = fruit.Color, Season = fruit.Season };
+                    
+                    _richSuggestions.Add(item);
+                }
+                catch
+                {
+                    // Fallback to simple string if icon creation fails
+                    _richSuggestions.Add(new FruitItem { Name = fruit.Name, Color = fruit.Color, Season = fruit.Season });
+                }
+            }
+        }
+
+        private void InitializeDataGridViewSuggestions()
+        {
+            // This is already done in InitializeRichSuggestions
+            // The same rich suggestions are used for DataGridView
+        }
+
+        // Helper class for fruit data
+        private class FruitItem : IContentValues
+        {
+            public string Name { get; set; } = string.Empty;
+            public string Color { get; set; } = string.Empty;
+            public string Season { get; set; } = string.Empty;
+
+            public string GetShortText() => Name;
+            public string GetLongText() => $"{Color} - {Season}";
+            public Image? GetImage(PaletteState state) => null;
+            public Color GetImageTransparentColor(PaletteState state) => Color.Empty;
         }
 
         private void InitializeListBox()
@@ -222,31 +403,51 @@ namespace TestForm
         {
             // Example: Handle suggestion selection from the dropdown
             // The text is already set in the search box, but we can perform additional actions
-            kryptonLabel1.Text = $"Selected suggestion: {e.Suggestion ?? kryptonSearchBox1.Text}";
+            kryptonLabel1.Text = $"Selected: {e.Suggestion ?? kryptonSearchBox1.Text}";
             FilterListBox(kryptonSearchBox1.Text);
+            
+            // Show search history count
+            if (kryptonSearchBox1.EnableSearchHistory)
+            {
+                kryptonLabel2.Text = $"History: {kryptonSearchBox1.SearchHistory.Count} items";
+            }
         }
 
-        // Example: You can also configure the search box programmatically
-        private void ConfigureSearchBoxExample()
+        private void KryptonSearchBox3_SuggestionSelected(object? sender, Krypton.Toolkit.SuggestionSelectedEventArgs e)
         {
-            // Disable suggestions if needed
-            // kryptonSearchBox1.EnableSuggestions = false;
+            // Handle rich suggestion selection
+            string displayText = e.Suggestion ?? kryptonSearchBox3.Text;
+            
+            // Access the full object if needed
+            if (e.SuggestionObject is KryptonListItem kli)
+            {
+                displayText = $"{kli.ShortText} - {kli.LongText}";
+            }
+            else if (e.SuggestionObject is FruitItem fi)
+            {
+                displayText = $"{fi.Name} ({fi.Color}, {fi.Season})";
+            }
+            
+            kryptonLabel5.Text = $"Rich suggestion: {displayText}";
+        }
 
-            // Change maximum suggestion count
-            // kryptonSearchBox1.SuggestionMaxCount = 5;
+        private void KryptonSearchBox4_SuggestionSelected(object? sender, Krypton.Toolkit.SuggestionSelectedEventArgs e)
+        {
+            // Handle DataGridView multi-column suggestion selection
+            string displayText = e.Suggestion ?? kryptonSearchBox4.Text;
+            
+            if (e.SuggestionObject is FruitItem fi)
+            {
+                displayText = $"{fi.Name} | {fi.Color} | {fi.Season}";
+            }
+            
+            kryptonLabel6.Text = $"Multi-column: {displayText}";
+        }
 
-            // Hide search button (search still works with Enter key)
-            // kryptonSearchBox1.ShowSearchButton = false;
-
-            // Hide clear button
-            // kryptonSearchBox1.ShowClearButton = false;
-
-            // Disable clearing on Escape
-            // kryptonSearchBox1.ClearOnEscape = false;
-
-            // Update suggestions dynamically
-            // var newSuggestions = new List<string> { "New", "Items" };
-            // kryptonSearchBox1.SetSuggestions(newSuggestions);
+        private void KryptonSearchBox5_SuggestionSelected(object? sender, Krypton.Toolkit.SuggestionSelectedEventArgs e)
+        {
+            // Handle custom filter suggestion selection
+            kryptonLabel7.Text = $"Custom filter: {e.Suggestion ?? kryptonSearchBox5.Text}";
         }
     }
 }
