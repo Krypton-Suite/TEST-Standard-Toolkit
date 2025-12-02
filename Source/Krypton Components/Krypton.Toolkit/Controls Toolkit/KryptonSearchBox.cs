@@ -27,6 +27,9 @@ public class KryptonSearchBoxValues : Storage
     private int _minimumSearchLength;
     private bool _enableSearchHistory;
     private int _searchHistoryMaxCount;
+    private bool _clearOnEscape;
+    private string _placeholderText;
+    private Func<string, IEnumerable<object>, IEnumerable<object>>? _customFilter;
     private KryptonSearchBox? _owner;
     #endregion
 
@@ -49,6 +52,10 @@ public class KryptonSearchBoxValues : Storage
         // History defaults
         _enableSearchHistory = false;
         _searchHistoryMaxCount = 10;
+        // Behavior defaults
+        _clearOnEscape = true;
+        _placeholderText = string.Empty;
+        _customFilter = null;
     }
     #endregion
 
@@ -64,7 +71,10 @@ public class KryptonSearchBoxValues : Storage
                                       SuggestionDisplayType == SuggestionDisplayType.ListBox &&
                                       MinimumSearchLength == 0 &&
                                       !EnableSearchHistory && 
-                                      SearchHistoryMaxCount == 10;
+                                      SearchHistoryMaxCount == 10 &&
+                                      ClearOnEscape &&
+                                      string.IsNullOrEmpty(PlaceholderText) &&
+                                      CustomFilter == null;
     #endregion
 
     #region Button Properties
@@ -237,6 +247,107 @@ public class KryptonSearchBoxValues : Storage
     }
     #endregion
 
+    #region Behavior Properties
+    /// <summary>
+    /// Gets or sets a value indicating whether pressing Escape clears the text.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Indicates whether pressing Escape clears the text.")]
+    [DefaultValue(true)]
+    public bool ClearOnEscape
+    {
+        get => _clearOnEscape;
+        set
+        {
+            if (_clearOnEscape != value)
+            {
+                _clearOnEscape = value;
+                _owner?.OnSearchBoxValuesChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the placeholder text (watermark) displayed when the text box is empty.
+    /// </summary>
+    [Category(@"Appearance")]
+    [Description(@"The placeholder text displayed when the text box is empty.")]
+    [DefaultValue("")]
+    [Localizable(true)]
+    public string PlaceholderText
+    {
+        get => _placeholderText;
+        set
+        {
+            if (_placeholderText != value)
+            {
+                _placeholderText = value ?? string.Empty;
+                _owner?.OnPlaceholderTextChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a custom filter function for suggestions.
+    /// If set, this function will be used instead of the default filtering logic.
+    /// The function receives the search text and the collection of suggestion objects, and returns the filtered collection.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Func<string, IEnumerable<object>, IEnumerable<object>>? CustomFilter
+    {
+        get => _customFilter;
+        set => _customFilter = value;
+    }
+    #endregion
+
+    #region Data Properties
+    /// <summary>
+    /// Gets the collection of suggestion strings.
+    /// </summary>
+    [Category(@"Data")]
+    [Description(@"The collection of suggestion strings.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public List<string> Suggestions => _owner?._suggestions ?? new List<string>();
+
+    /// <summary>
+    /// Gets the collection of search history items.
+    /// </summary>
+    [Category(@"Data")]
+    [Description(@"The collection of search history items.")]
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public IReadOnlyList<string> SearchHistory => _owner?._searchHistory.AsReadOnly() ?? Array.Empty<string>().ToList().AsReadOnly();
+
+    /// <summary>
+    /// Gets the collection of column definitions for DataGridView suggestion display.
+    /// </summary>
+    [Category(@"Data")]
+    [Description(@"Column definitions for DataGridView suggestion display. Only used when SuggestionDisplayType is DataGridView.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public List<SuggestionColumnDefinition> DataGridViewColumns => _owner?._dataGridViewColumns ?? new List<SuggestionColumnDefinition>();
+    #endregion
+
+    #region Button References
+    /// <summary>
+    /// Gets access to the search button specification.
+    /// </summary>
+    [Category(@"Buttons")]
+    [Description(@"Access to the search button specification.")]
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ButtonSpecAny? SearchButton => _owner?._searchButton;
+
+    /// <summary>
+    /// Gets access to the clear button specification.
+    /// </summary>
+    [Category(@"Buttons")]
+    [Description(@"Access to the clear button specification.")]
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ButtonSpecAny? ClearButton => _owner?._clearButton;
+    #endregion
+
     #region Implementation
     internal void SetOwner(KryptonSearchBox owner) => _owner = owner;
     #endregion
@@ -328,17 +439,15 @@ public class SuggestionColumnDefinition
 public class KryptonSearchBox : KryptonTextBox
 {
     #region Instance Fields
-    private ButtonSpecAny? _searchButton;
-    private ButtonSpecAny? _clearButton;
-    private bool _clearOnEscape;
-    private readonly List<string> _suggestions;
+    internal ButtonSpecAny? _searchButton;
+    internal ButtonSpecAny? _clearButton;
+    internal readonly List<string> _suggestions;
     private readonly List<object> _richSuggestions; // For IContentValues support
     private SuggestionPopup? _suggestionPopup;
     private int _selectedSuggestionIndex;
     private bool _isNavigatingSuggestions;
-    private readonly List<string> _searchHistory;
-    private Func<string, IEnumerable<object>, IEnumerable<object>>? _customFilter;
-    private readonly List<SuggestionColumnDefinition> _dataGridViewColumns;
+    internal readonly List<string> _searchHistory;
+    internal readonly List<SuggestionColumnDefinition> _dataGridViewColumns;
     
     // Property value group
     private readonly KryptonSearchBoxValues _values;
@@ -395,7 +504,6 @@ public class KryptonSearchBox : KryptonTextBox
         _values = new KryptonSearchBoxValues(this);
         
         // Defaults
-        _clearOnEscape = true;
         _suggestions = new List<string>();
         _richSuggestions = new List<object>();
         _selectedSuggestionIndex = -1;
@@ -450,6 +558,9 @@ public class KryptonSearchBox : KryptonTextBox
 
         // Update clear button visibility
         UpdateClearButtonVisibility();
+        
+        // Initialize placeholder text
+        OnPlaceholderTextChanged();
     }
 
     /// <summary>
@@ -494,46 +605,6 @@ public class KryptonSearchBox : KryptonTextBox
     public KryptonSearchBoxValues Values => _values;
 
     private bool ShouldSerializeValues() => !_values.IsDefault;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether pressing Escape clears the text.
-    /// </summary>
-    [Category(@"Behavior")]
-    [Description(@"Indicates whether pressing Escape clears the text.")]
-    [DefaultValue(true)]
-    public bool ClearOnEscape
-    {
-        get => _clearOnEscape;
-        set => _clearOnEscape = value;
-    }
-
-    /// <summary>
-    /// Gets or sets the placeholder text (watermark) displayed when the text box is empty.
-    /// </summary>
-    [Category(@"Appearance")]
-    [Description(@"The placeholder text displayed when the text box is empty.")]
-    [DefaultValue("")]
-    [Localizable(true)]
-    public string PlaceholderText
-    {
-        get => CueHint.CueHintText;
-        set => CueHint.CueHintText = value;
-    }
-
-    /// <summary>
-    /// Gets the collection of suggestion strings.
-    /// </summary>
-    [Category(@"Data")]
-    [Description(@"The collection of suggestion strings.")]
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public List<string> Suggestions => _suggestions;
-
-    /// <summary>
-    /// Gets the collection of search history items.
-    /// </summary>
-    [Browsable(false)]
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public IReadOnlyList<string> SearchHistory => _searchHistory.AsReadOnly();
 
     /// <summary>
     /// Gets or sets a custom filter function for suggestions.
@@ -744,7 +815,7 @@ public class KryptonSearchBox : KryptonTextBox
                 e.Handled = true;
                 e.SuppressKeyPress = true;
             }
-            else if (_clearOnEscape)
+            else if (_values.ClearOnEscape)
             {
                 // Clear text
                 e.Handled = true;
@@ -853,6 +924,11 @@ public class KryptonSearchBox : KryptonTextBox
         }
     }
 
+    internal void OnPlaceholderTextChanged()
+    {
+        CueHint.CueHintText = _values.PlaceholderText;
+    }
+
     private void UpdateSuggestions()
     {
         if (!_values.EnableSuggestions || string.IsNullOrEmpty(Text))
@@ -872,14 +948,14 @@ public class KryptonSearchBox : KryptonTextBox
         List<object> filtered;
 
         // Use custom filter if provided
-        if (_customFilter != null)
+        if (_values.CustomFilter != null)
         {
             // Combine string suggestions and rich suggestions
             var allSuggestions = new List<object>();
             allSuggestions.AddRange(_suggestions);
             allSuggestions.AddRange(_richSuggestions);
             
-            filtered = _customFilter(searchText, allSuggestions)
+            filtered = _values.CustomFilter(searchText, allSuggestions)
                 .Take(_values.SuggestionMaxCount)
                 .ToList();
         }
