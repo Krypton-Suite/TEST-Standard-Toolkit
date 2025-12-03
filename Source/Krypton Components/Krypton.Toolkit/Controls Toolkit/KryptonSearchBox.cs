@@ -10,6 +10,8 @@
  */
 #endregion
 
+using System.Data;
+
 namespace Krypton.Toolkit;
 
 /// <summary>
@@ -615,8 +617,8 @@ public class KryptonSearchBox : KryptonTextBox
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Func<string, IEnumerable<object>, IEnumerable<object>>? CustomFilter
     {
-        get => _customFilter;
-        set => _customFilter = value;
+        get => _values.CustomFilter;
+        set => _values.CustomFilter = value;
     }
 
     /// <summary>
