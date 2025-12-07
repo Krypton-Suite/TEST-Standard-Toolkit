@@ -37,6 +37,7 @@ namespace TestForm
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.kryptonPanel1 = new Krypton.Toolkit.KryptonPanel();
             this.kbtnClose = new Krypton.Toolkit.KryptonButton();
             this.kryptonGroupBoxNavigation = new Krypton.Toolkit.KryptonGroupBox();
@@ -77,23 +78,28 @@ namespace TestForm
             ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxNavigation)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxNavigation.Panel)).BeginInit();
             this.kryptonGroupBoxNavigation.Panel.SuspendLayout();
+            this.kryptonGroupBoxNavigation.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel2)).BeginInit();
             this.kryptonPanel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxOptions)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxOptions.Panel)).BeginInit();
             this.kryptonGroupBoxOptions.Panel.SuspendLayout();
+            this.kryptonGroupBoxOptions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel3)).BeginInit();
             this.kryptonPanel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxRootPath)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxRootPath.Panel)).BeginInit();
             this.kryptonGroupBoxRootPath.Panel.SuspendLayout();
+            this.kryptonGroupBoxRootPath.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel4)).BeginInit();
             this.kryptonPanel4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonComboBoxRootPath)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonSplitContainer1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonSplitContainer1.Panel1)).BeginInit();
             this.kryptonSplitContainer1.Panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonSplitContainer1.Panel2)).BeginInit();
             this.kryptonSplitContainer1.Panel2.SuspendLayout();
+            this.kryptonSplitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel5)).BeginInit();
             this.kryptonPanel5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel6)).BeginInit();
@@ -101,6 +107,7 @@ namespace TestForm
             ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxInfo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxInfo.Panel)).BeginInit();
             this.kryptonGroupBoxInfo.Panel.SuspendLayout();
+            this.kryptonGroupBoxInfo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel7)).BeginInit();
             this.kryptonPanel7.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel8)).BeginInit();
@@ -125,10 +132,12 @@ namespace TestForm
             // kbtnClose
             // 
             this.kbtnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.kbtnClose.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.kbtnClose.Location = new System.Drawing.Point(1100, 770);
             this.kbtnClose.Name = "kbtnClose";
             this.kbtnClose.Size = new System.Drawing.Size(90, 25);
             this.kbtnClose.TabIndex = 6;
+            this.kbtnClose.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             this.kbtnClose.Values.Text = "Close";
             this.kbtnClose.Click += new System.EventHandler(this.kbtnClose_Click);
             // 
@@ -137,14 +146,13 @@ namespace TestForm
             this.kryptonGroupBoxNavigation.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.kryptonGroupBoxNavigation.Location = new System.Drawing.Point(490, 620);
-            this.kryptonGroupBoxNavigation.Name = "kryptonGroupBoxNavigation";
-            this.kryptonGroupBoxNavigation.Size = new System.Drawing.Size(700, 60);
-            this.kryptonGroupBoxNavigation.TabIndex = 5;
-            this.kryptonGroupBoxNavigation.Values.Heading = "Navigate To Path";
             // 
             // kryptonGroupBoxNavigation.Panel
             // 
             this.kryptonGroupBoxNavigation.Panel.Controls.Add(this.kryptonPanel2);
+            this.kryptonGroupBoxNavigation.Size = new System.Drawing.Size(700, 60);
+            this.kryptonGroupBoxNavigation.TabIndex = 5;
+            this.kryptonGroupBoxNavigation.Values.Heading = "Navigate To Path";
             // 
             // kryptonPanel2
             // 
@@ -165,6 +173,7 @@ namespace TestForm
             this.kbtnNavigate.Name = "kbtnNavigate";
             this.kbtnNavigate.Size = new System.Drawing.Size(70, 25);
             this.kbtnNavigate.TabIndex = 2;
+            this.kbtnNavigate.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             this.kbtnNavigate.Values.Text = "Navigate";
             this.kbtnNavigate.Click += new System.EventHandler(this.kbtnNavigate_Click);
             // 
@@ -181,7 +190,7 @@ namespace TestForm
             // 
             this.kryptonLabel3.Location = new System.Drawing.Point(5, 11);
             this.kryptonLabel3.Name = "kryptonLabel3";
-            this.kryptonLabel3.Size = new System.Drawing.Size(74, 20);
+            this.kryptonLabel3.Size = new System.Drawing.Size(38, 20);
             this.kryptonLabel3.TabIndex = 0;
             this.kryptonLabel3.Values.Text = "Path:";
             // 
@@ -189,14 +198,13 @@ namespace TestForm
             // 
             this.kryptonGroupBoxOptions.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.kryptonGroupBoxOptions.Location = new System.Drawing.Point(12, 620);
-            this.kryptonGroupBoxOptions.Name = "kryptonGroupBoxOptions";
-            this.kryptonGroupBoxOptions.Size = new System.Drawing.Size(470, 144);
-            this.kryptonGroupBoxOptions.TabIndex = 4;
-            this.kryptonGroupBoxOptions.Values.Heading = "Options";
             // 
             // kryptonGroupBoxOptions.Panel
             // 
             this.kryptonGroupBoxOptions.Panel.Controls.Add(this.kryptonPanel3);
+            this.kryptonGroupBoxOptions.Size = new System.Drawing.Size(470, 144);
+            this.kryptonGroupBoxOptions.TabIndex = 4;
+            this.kryptonGroupBoxOptions.Values.Heading = "Options";
             // 
             // kryptonPanel3
             // 
@@ -220,6 +228,7 @@ namespace TestForm
             this.kbtnReload.Name = "kbtnReload";
             this.kbtnReload.Size = new System.Drawing.Size(110, 25);
             this.kbtnReload.TabIndex = 6;
+            this.kbtnReload.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             this.kbtnReload.Values.Text = "Reload";
             this.kbtnReload.Click += new System.EventHandler(this.kbtnReload_Click);
             // 
@@ -229,6 +238,7 @@ namespace TestForm
             this.kbtnRefreshSelected.Name = "kbtnRefreshSelected";
             this.kbtnRefreshSelected.Size = new System.Drawing.Size(110, 25);
             this.kbtnRefreshSelected.TabIndex = 5;
+            this.kbtnRefreshSelected.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             this.kbtnRefreshSelected.Values.Text = "Refresh Selected";
             this.kbtnRefreshSelected.Click += new System.EventHandler(this.kbtnRefreshSelected_Click);
             // 
@@ -254,7 +264,7 @@ namespace TestForm
             // 
             this.kryptonCheckBoxShowSystem.Location = new System.Drawing.Point(5, 58);
             this.kryptonCheckBoxShowSystem.Name = "kryptonCheckBoxShowSystem";
-            this.kryptonCheckBoxShowSystem.Size = new System.Drawing.Size(130, 20);
+            this.kryptonCheckBoxShowSystem.Size = new System.Drawing.Size(123, 20);
             this.kryptonCheckBoxShowSystem.TabIndex = 2;
             this.kryptonCheckBoxShowSystem.Values.Text = "Show System Files";
             this.kryptonCheckBoxShowSystem.CheckedChanged += new System.EventHandler(this.kryptonCheckBoxShowSystem_CheckedChanged);
@@ -263,7 +273,7 @@ namespace TestForm
             // 
             this.kryptonCheckBoxShowHidden.Location = new System.Drawing.Point(120, 35);
             this.kryptonCheckBoxShowHidden.Name = "kryptonCheckBoxShowHidden";
-            this.kryptonCheckBoxShowHidden.Size = new System.Drawing.Size(109, 20);
+            this.kryptonCheckBoxShowHidden.Size = new System.Drawing.Size(96, 20);
             this.kryptonCheckBoxShowHidden.TabIndex = 1;
             this.kryptonCheckBoxShowHidden.Values.Text = "Show Hidden";
             this.kryptonCheckBoxShowHidden.CheckedChanged += new System.EventHandler(this.kryptonCheckBoxShowHidden_CheckedChanged);
@@ -274,7 +284,7 @@ namespace TestForm
             this.kryptonCheckBoxShowFiles.CheckState = System.Windows.Forms.CheckState.Checked;
             this.kryptonCheckBoxShowFiles.Location = new System.Drawing.Point(5, 35);
             this.kryptonCheckBoxShowFiles.Name = "kryptonCheckBoxShowFiles";
-            this.kryptonCheckBoxShowFiles.Size = new System.Drawing.Size(109, 20);
+            this.kryptonCheckBoxShowFiles.Size = new System.Drawing.Size(80, 20);
             this.kryptonCheckBoxShowFiles.TabIndex = 0;
             this.kryptonCheckBoxShowFiles.Values.Text = "Show Files";
             this.kryptonCheckBoxShowFiles.CheckedChanged += new System.EventHandler(this.kryptonCheckBoxShowFiles_CheckedChanged);
@@ -284,14 +294,13 @@ namespace TestForm
             this.kryptonGroupBoxRootPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.kryptonGroupBoxRootPath.Location = new System.Drawing.Point(12, 12);
-            this.kryptonGroupBoxRootPath.Name = "kryptonGroupBoxRootPath";
-            this.kryptonGroupBoxRootPath.Size = new System.Drawing.Size(1176, 60);
-            this.kryptonGroupBoxRootPath.TabIndex = 3;
-            this.kryptonGroupBoxRootPath.Values.Heading = "Root Path";
             // 
             // kryptonGroupBoxRootPath.Panel
             // 
             this.kryptonGroupBoxRootPath.Panel.Controls.Add(this.kryptonPanel4);
+            this.kryptonGroupBoxRootPath.Size = new System.Drawing.Size(1176, 60);
+            this.kryptonGroupBoxRootPath.TabIndex = 3;
+            this.kryptonGroupBoxRootPath.Values.Heading = "Root Path";
             // 
             // kryptonPanel4
             // 
@@ -312,6 +321,7 @@ namespace TestForm
             this.kbtnBrowseRootPath.Name = "kbtnBrowseRootPath";
             this.kbtnBrowseRootPath.Size = new System.Drawing.Size(77, 25);
             this.kbtnBrowseRootPath.TabIndex = 2;
+            this.kbtnBrowseRootPath.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             this.kbtnBrowseRootPath.Values.Text = "Browse...";
             this.kbtnBrowseRootPath.Click += new System.EventHandler(this.kbtnBrowseRootPath_Click);
             // 
@@ -323,7 +333,7 @@ namespace TestForm
             this.kryptonComboBoxRootPath.DropDownWidth = 1080;
             this.kryptonComboBoxRootPath.Location = new System.Drawing.Point(85, 8);
             this.kryptonComboBoxRootPath.Name = "kryptonComboBoxRootPath";
-            this.kryptonComboBoxRootPath.Size = new System.Drawing.Size(999, 21);
+            this.kryptonComboBoxRootPath.Size = new System.Drawing.Size(999, 22);
             this.kryptonComboBoxRootPath.TabIndex = 1;
             this.kryptonComboBoxRootPath.SelectedIndexChanged += new System.EventHandler(this.kryptonComboBoxRootPath_SelectedIndexChanged);
             // 
@@ -331,7 +341,7 @@ namespace TestForm
             // 
             this.kryptonLabel1.Location = new System.Drawing.Point(5, 11);
             this.kryptonLabel1.Name = "kryptonLabel1";
-            this.kryptonLabel1.Size = new System.Drawing.Size(74, 20);
+            this.kryptonLabel1.Size = new System.Drawing.Size(67, 20);
             this.kryptonLabel1.TabIndex = 0;
             this.kryptonLabel1.Values.Text = "Root Path:";
             // 
@@ -341,7 +351,6 @@ namespace TestForm
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.kryptonSplitContainer1.Location = new System.Drawing.Point(12, 78);
-            this.kryptonSplitContainer1.Name = "kryptonSplitContainer1";
             // 
             // kryptonSplitContainer1.Panel1
             // 
@@ -363,17 +372,17 @@ namespace TestForm
             this.kryptonPanel5.Location = new System.Drawing.Point(0, 0);
             this.kryptonPanel5.Name = "kryptonPanel5";
             this.kryptonPanel5.Padding = new System.Windows.Forms.Padding(5);
-            this.kryptonPanel5.Size = new System.Drawing.Size(696, 536);
+            this.kryptonPanel5.Size = new System.Drawing.Size(700, 536);
             this.kryptonPanel5.TabIndex = 0;
             // 
             // kryptonFileSystemTreeView1
             // 
             this.kryptonFileSystemTreeView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.kryptonFileSystemTreeView1.FileSystemTreeViewValues.FileFilter = "*.*";
+            this.kryptonFileSystemTreeView1.ImageIndex = 0;
             this.kryptonFileSystemTreeView1.Location = new System.Drawing.Point(5, 5);
             this.kryptonFileSystemTreeView1.Name = "kryptonFileSystemTreeView1";
-            this.kryptonFileSystemTreeView1.FileSystemTreeViewValues.ShowFiles = true;
-            this.kryptonFileSystemTreeView1.Size = new System.Drawing.Size(686, 526);
+            this.kryptonFileSystemTreeView1.SelectedImageIndex = 0;
+            this.kryptonFileSystemTreeView1.Size = new System.Drawing.Size(690, 526);
             this.kryptonFileSystemTreeView1.TabIndex = 0;
             // 
             // kryptonPanel6
@@ -383,7 +392,7 @@ namespace TestForm
             this.kryptonPanel6.Location = new System.Drawing.Point(0, 0);
             this.kryptonPanel6.Name = "kryptonPanel6";
             this.kryptonPanel6.Padding = new System.Windows.Forms.Padding(5);
-            this.kryptonPanel6.Size = new System.Drawing.Size(472, 536);
+            this.kryptonPanel6.Size = new System.Drawing.Size(471, 536);
             this.kryptonPanel6.TabIndex = 0;
             // 
             // kryptonPropertyGrid1
@@ -391,8 +400,9 @@ namespace TestForm
             this.kryptonPropertyGrid1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.kryptonPropertyGrid1.Location = new System.Drawing.Point(5, 5);
             this.kryptonPropertyGrid1.Name = "kryptonPropertyGrid1";
+            this.kryptonPropertyGrid1.Padding = new System.Windows.Forms.Padding(1);
             this.kryptonPropertyGrid1.SelectedObject = this.kryptonFileSystemTreeView1;
-            this.kryptonPropertyGrid1.Size = new System.Drawing.Size(462, 526);
+            this.kryptonPropertyGrid1.Size = new System.Drawing.Size(461, 526);
             this.kryptonPropertyGrid1.TabIndex = 0;
             // 
             // kryptonGroupBoxInfo
@@ -400,14 +410,13 @@ namespace TestForm
             this.kryptonGroupBoxInfo.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.kryptonGroupBoxInfo.Location = new System.Drawing.Point(490, 690);
-            this.kryptonGroupBoxInfo.Name = "kryptonGroupBoxInfo";
-            this.kryptonGroupBoxInfo.Size = new System.Drawing.Size(700, 74);
-            this.kryptonGroupBoxInfo.TabIndex = 1;
-            this.kryptonGroupBoxInfo.Values.Heading = "Selected Item Information";
             // 
             // kryptonGroupBoxInfo.Panel
             // 
             this.kryptonGroupBoxInfo.Panel.Controls.Add(this.kryptonPanel7);
+            this.kryptonGroupBoxInfo.Size = new System.Drawing.Size(700, 74);
+            this.kryptonGroupBoxInfo.TabIndex = 1;
+            this.kryptonGroupBoxInfo.Values.Heading = "Selected Item Information";
             // 
             // kryptonPanel7
             // 
@@ -427,7 +436,7 @@ namespace TestForm
             | System.Windows.Forms.AnchorStyles.Right)));
             this.kryptonLabelFileInfo.Location = new System.Drawing.Point(85, 31);
             this.kryptonLabelFileInfo.Name = "kryptonLabelFileInfo";
-            this.kryptonLabelFileInfo.Size = new System.Drawing.Size(606, 20);
+            this.kryptonLabelFileInfo.Size = new System.Drawing.Size(39, 20);
             this.kryptonLabelFileInfo.TabIndex = 2;
             // 
             // kryptonTextBoxSelectedPath
@@ -444,7 +453,7 @@ namespace TestForm
             // 
             this.kryptonLabel4.Location = new System.Drawing.Point(5, 8);
             this.kryptonLabel4.Name = "kryptonLabel4";
-            this.kryptonLabel4.Size = new System.Drawing.Size(69, 20);
+            this.kryptonLabel4.Size = new System.Drawing.Size(38, 20);
             this.kryptonLabel4.TabIndex = 0;
             this.kryptonLabel4.Values.Text = "Path:";
             // 
@@ -467,6 +476,7 @@ namespace TestForm
             this.kbtnCollapseAll.Name = "kbtnCollapseAll";
             this.kbtnCollapseAll.Size = new System.Drawing.Size(110, 25);
             this.kbtnCollapseAll.TabIndex = 2;
+            this.kbtnCollapseAll.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             this.kbtnCollapseAll.Values.Text = "Collapse All";
             this.kbtnCollapseAll.Click += new System.EventHandler(this.kbtnCollapseAll_Click);
             // 
@@ -476,6 +486,7 @@ namespace TestForm
             this.kbtnExpandAll.Name = "kbtnExpandAll";
             this.kbtnExpandAll.Size = new System.Drawing.Size(110, 25);
             this.kbtnExpandAll.TabIndex = 1;
+            this.kbtnExpandAll.Values.DropDownArrowColor = System.Drawing.Color.Empty;
             this.kbtnExpandAll.Values.Text = "Expand All";
             this.kbtnExpandAll.Click += new System.EventHandler(this.kbtnExpandAll_Click);
             // 
@@ -485,7 +496,7 @@ namespace TestForm
             | System.Windows.Forms.AnchorStyles.Right)));
             this.kryptonLabelStatus.Location = new System.Drawing.Point(5, 41);
             this.kryptonLabelStatus.Name = "kryptonLabelStatus";
-            this.kryptonLabelStatus.Size = new System.Drawing.Size(460, 20);
+            this.kryptonLabelStatus.Size = new System.Drawing.Size(39, 20);
             this.kryptonLabelStatus.TabIndex = 0;
             // 
             // FileSystemTreeViewExample
@@ -495,28 +506,34 @@ namespace TestForm
             this.CancelButton = this.kbtnClose;
             this.ClientSize = new System.Drawing.Size(1200, 800);
             this.Controls.Add(this.kryptonPanel1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.MinimumSize = new System.Drawing.Size(1000, 600);
             this.Name = "FileSystemTreeViewExample";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "File System Tree View Example";
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel1)).EndInit();
             this.kryptonPanel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxNavigation)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxNavigation.Panel)).EndInit();
             this.kryptonGroupBoxNavigation.Panel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxNavigation)).EndInit();
+            this.kryptonGroupBoxNavigation.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel2)).EndInit();
             this.kryptonPanel2.ResumeLayout(false);
             this.kryptonPanel2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxOptions)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxOptions.Panel)).EndInit();
             this.kryptonGroupBoxOptions.Panel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxOptions)).EndInit();
+            this.kryptonGroupBoxOptions.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel3)).EndInit();
             this.kryptonPanel3.ResumeLayout(false);
             this.kryptonPanel3.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxRootPath)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxRootPath.Panel)).EndInit();
             this.kryptonGroupBoxRootPath.Panel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxRootPath)).EndInit();
+            this.kryptonGroupBoxRootPath.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel4)).EndInit();
             this.kryptonPanel4.ResumeLayout(false);
             this.kryptonPanel4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonComboBoxRootPath)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.kryptonSplitContainer1.Panel1)).EndInit();
             this.kryptonSplitContainer1.Panel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.kryptonSplitContainer1.Panel2)).EndInit();
@@ -527,8 +544,10 @@ namespace TestForm
             this.kryptonPanel5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel6)).EndInit();
             this.kryptonPanel6.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxInfo)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxInfo.Panel)).EndInit();
             this.kryptonGroupBoxInfo.Panel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonGroupBoxInfo)).EndInit();
+            this.kryptonGroupBoxInfo.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel7)).EndInit();
             this.kryptonPanel7.ResumeLayout(false);
             this.kryptonPanel7.PerformLayout();

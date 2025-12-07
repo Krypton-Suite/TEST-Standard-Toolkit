@@ -86,6 +86,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("TextBox", string.Empty, typeof(TextBoxEventTest));
         CreateButton("TreeView", string.Empty, typeof(TreeViewExample));
         CreateButton("File System Tree View", "Browse your file system with proper icons and navigation", typeof(FileSystemTreeViewExample));
+        CreateButton("Browser Control & File Dialog", "Comprehensive demo of KryptonBrowserControl and KryptonCommonFileDialog", typeof(BrowserControlDemo));
         CreateButton("Panel Form", string.Empty, typeof(PanelForm));
         CreateButton("Palette Viewer", string.Empty, typeof(PaletteViewerForm));
         CreateButton("Powered By Button", string.Empty, typeof(PoweredByButtonExample));
