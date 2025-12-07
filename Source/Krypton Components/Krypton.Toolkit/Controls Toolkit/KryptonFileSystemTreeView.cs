@@ -90,6 +90,9 @@ public class KryptonFileSystemTreeView : KryptonTreeView
         // Wire up events
         BeforeExpand += OnBeforeExpand;
         AfterSelect += OnAfterSelect;
+        
+        // Access the internal TreeView to hook into DrawNode event
+        TreeView.DrawNode += OnDrawNode;
     }
 
     #endregion
@@ -418,8 +421,14 @@ public class KryptonFileSystemTreeView : KryptonTreeView
             SelectedImageIndex = GetIconIndex(path, true)
         };
 
-        // Add dummy node to enable expansion
-        node.Nodes.Add(new TreeNode(DUMMY_NODE_KEY) { Tag = null });
+        // Add dummy node to enable expansion (hidden from view)
+        TreeNode dummyNode = new TreeNode(DUMMY_NODE_KEY) 
+        { 
+            Tag = null,
+            Name = DUMMY_NODE_KEY,  // Use Name to identify it
+            Text = string.Empty  // Hide the dummy node text
+        };
+        node.Nodes.Add(dummyNode);
 
         return node;
     }
@@ -441,17 +450,22 @@ public class KryptonFileSystemTreeView : KryptonTreeView
     {
         if (e.Node?.Tag is string path && Directory.Exists(path))
         {
-            // Check if this is a dummy node
-            if (e.Node.Nodes.Count == 1 && e.Node.Nodes[0].Text == DUMMY_NODE_KEY)
+            // Check if this is a dummy node (check by Name, Tag and empty text)
+            if (e.Node.Nodes.Count == 1)
             {
-                e.Node.Nodes.Clear();
-                
-                var expandingArgs = new DirectoryExpandingEventArgs(path);
-                OnDirectoryExpanding(expandingArgs);
-
-                if (!expandingArgs.Cancel)
+                TreeNode firstChild = e.Node.Nodes[0];
+                // Check if it's the dummy node by checking Name, Tag is null and text is empty
+                if (firstChild.Name == DUMMY_NODE_KEY || (firstChild.Tag == null && string.IsNullOrEmpty(firstChild.Text)))
                 {
-                    LoadDirectoryNodes(e.Node, path);
+                    e.Node.Nodes.Clear();
+                    
+                    var expandingArgs = new DirectoryExpandingEventArgs(path);
+                    OnDirectoryExpanding(expandingArgs);
+
+                    if (!expandingArgs.Cancel)
+                    {
+                        LoadDirectoryNodes(e.Node, path);
+                    }
                 }
             }
         }
@@ -463,6 +477,20 @@ public class KryptonFileSystemTreeView : KryptonTreeView
         {
             OnDirectoryExpanded(new DirectoryExpandedEventArgs(path));
         }
+    }
+
+    private void OnDrawNode(object? sender, DrawTreeNodeEventArgs e)
+    {
+        // Skip drawing dummy nodes
+        if (e.Node?.Name == DUMMY_NODE_KEY || 
+            (e.Node?.Tag == null && string.IsNullOrEmpty(e.Node?.Text) && e.Node?.Name == DUMMY_NODE_KEY))
+        {
+            e.DrawDefault = false;
+            return;
+        }
+        
+        // Let the base class handle normal drawing
+        e.DrawDefault = true;
     }
 
     private void LoadDirectoryNodes(TreeNode parentNode, string directoryPath)
