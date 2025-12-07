@@ -243,13 +243,35 @@ public class KryptonFileSystemListView : KryptonListView
                 using (folderIcon)
                 {
                     Bitmap sourceBitmap = folderIcon.ToBitmap();
-                    Bitmap bitmapToAdd = CreateBitmapForImageList(sourceBitmap);
-                    sourceBitmap.Dispose();
-                    
-                    if (bitmapToAdd != null)
+                    try
                     {
-                        _imageList.Images.Add(bitmapToAdd);
-                        bitmapToAdd.Dispose();
+                        // Create a bitmap with the exact size needed for ImageList
+                        Bitmap bitmapToAdd = new Bitmap(_imageList.ImageSize.Width, _imageList.ImageSize.Height, PixelFormat.Format32bppArgb);
+                        try
+                        {
+                            using (Graphics g = Graphics.FromImage(bitmapToAdd))
+                            {
+                                g.Clear(Color.Transparent);
+                                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                g.DrawImage(sourceBitmap, 0, 0, _imageList.ImageSize.Width, _imageList.ImageSize.Height);
+                            }
+                            
+                            // Validate and add - ImageList will make its own copy
+                            if (bitmapToAdd.Width > 0 && bitmapToAdd.Height > 0)
+                            {
+                                _imageList.Images.Add(bitmapToAdd);
+                                // Force ImageList to create handle and copy the bitmap immediately
+                                _ = _imageList.Handle;
+                            }
+                        }
+                        finally
+                        {
+                            bitmapToAdd.Dispose();
+                        }
+                    }
+                    finally
+                    {
+                        sourceBitmap.Dispose();
                     }
                 }
             }
@@ -257,19 +279,23 @@ public class KryptonFileSystemListView : KryptonListView
         catch
         {
             // If stock icon fails, create a simple colored bitmap
-            Bitmap defaultBitmap = new Bitmap(_imageList.ImageSize.Width, _imageList.ImageSize.Height);
-            using (Graphics g = Graphics.FromImage(defaultBitmap))
+            Bitmap defaultBitmap = new Bitmap(_imageList.ImageSize.Width, _imageList.ImageSize.Height, PixelFormat.Format32bppArgb);
+            try
             {
-                g.Clear(Color.Transparent);
-                g.FillRectangle(new SolidBrush(Color.LightGray), 0, 0, defaultBitmap.Width, defaultBitmap.Height);
+                using (Graphics g = Graphics.FromImage(defaultBitmap))
+                {
+                    g.Clear(Color.Transparent);
+                    g.FillRectangle(new SolidBrush(Color.LightGray), 0, 0, defaultBitmap.Width, defaultBitmap.Height);
+                }
+                
+                if (defaultBitmap.Width > 0 && defaultBitmap.Height > 0)
+                {
+                    _imageList.Images.Add(defaultBitmap);
+                    // Force ImageList to create handle and copy the bitmap immediately
+                    _ = _imageList.Handle;
+                }
             }
-            
-            if (defaultBitmap.Width > 0 && defaultBitmap.Height > 0)
-            {
-                _imageList.Images.Add(defaultBitmap);
-                defaultBitmap.Dispose();
-            }
-            else
+            finally
             {
                 defaultBitmap.Dispose();
             }
@@ -422,9 +448,24 @@ public class KryptonFileSystemListView : KryptonListView
             Tag = fullPath,
             ImageIndex = GetIconIndex(fullPath, true)
         };
-        item.SubItems.Add("Folder");
+        
+        // Type column
+        item.SubItems.Add("File folder");
+        
+        // Size column (empty for directories)
         item.SubItems.Add("");
-        item.SubItems.Add(Directory.GetLastWriteTime(fullPath).ToString("g"));
+        
+        // Date Modified column
+        try
+        {
+            DateTime lastWrite = Directory.GetLastWriteTime(fullPath);
+            item.SubItems.Add(lastWrite.ToString("g"));
+        }
+        catch
+        {
+            item.SubItems.Add("");
+        }
+        
         return item;
     }
 
@@ -435,10 +476,70 @@ public class KryptonFileSystemListView : KryptonListView
             Tag = fileInfo.FullName,
             ImageIndex = GetIconIndex(fileInfo.FullName, false)
         };
-        item.SubItems.Add("File");
-        item.SubItems.Add(fileInfo.Length.ToString("N0"));
+        
+        // Type column - get file extension description
+        string fileType = GetFileTypeDescription(fileInfo.Extension);
+        item.SubItems.Add(fileType);
+        
+        // Size column - format file size
+        item.SubItems.Add(FormatFileSize(fileInfo.Length));
+        
+        // Date Modified column
         item.SubItems.Add(fileInfo.LastWriteTime.ToString("g"));
+        
         return item;
+    }
+
+    private static string GetFileTypeDescription(string extension)
+    {
+        if (string.IsNullOrEmpty(extension))
+        {
+            return "File";
+        }
+
+        // Remove the dot and convert to uppercase for display
+        string ext = extension.TrimStart('.').ToUpperInvariant();
+        
+        // Common file type descriptions
+        return ext switch
+        {
+            "TXT" => "Text Document",
+            "DOC" or "DOCX" => "Microsoft Word Document",
+            "XLS" or "XLSX" => "Microsoft Excel Worksheet",
+            "PPT" or "PPTX" => "Microsoft PowerPoint Presentation",
+            "PDF" => "PDF Document",
+            "ZIP" or "RAR" or "7Z" => "Compressed Folder",
+            "JPG" or "JPEG" or "PNG" or "GIF" or "BMP" => "Image File",
+            "MP3" or "WAV" or "WMA" => "Audio File",
+            "MP4" or "AVI" or "WMV" => "Video File",
+            "EXE" => "Application",
+            "DLL" => "Application Extension",
+            "CS" => "C# Source File",
+            "VB" => "Visual Basic Source File",
+            "JS" => "JavaScript File",
+            "HTML" or "HTM" => "HTML Document",
+            "CSS" => "Cascading Style Sheet",
+            "XML" => "XML Document",
+            "JSON" => "JSON Document",
+            _ => $"{ext} File"
+        };
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        double len = bytes;
+        int order = 0;
+        
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        
+        // Format with appropriate decimal places
+        string format = order == 0 ? "N0" : "N2";
+        return $"{len.ToString(format)} {sizes[order]}";
     }
 
     private int GetIconIndex(string path, bool isDirectory)
@@ -516,25 +617,39 @@ public class KryptonFileSystemListView : KryptonListView
                 using (icon)
                 {
                     Bitmap sourceBitmap = icon.ToBitmap();
-                    Bitmap bitmapToAdd = CreateBitmapForImageList(sourceBitmap);
-                    sourceBitmap.Dispose();
-                    
-                    if (bitmapToAdd != null)
+                    try
                     {
-                        int index = _imageList.Images.Count;
-                        _imageList.Images.Add(bitmapToAdd);
-                        bitmapToAdd.Dispose();
+                        Bitmap? bitmapToAdd = CreateBitmapForImageList(sourceBitmap);
                         
-                        // Cache the index
-                        _iconCache[cacheKey] = index;
-                        
-                        return index;
+                        if (bitmapToAdd != null)
+                        {
+                            try
+                            {
+                                int index = _imageList.Images.Count;
+                                _imageList.Images.Add(bitmapToAdd);
+                                // Force ImageList to create handle and copy the bitmap immediately
+                                _ = _imageList.Handle;
+                                
+                                // Cache the index
+                                _iconCache[cacheKey] = index;
+                                
+                                return index;
+                            }
+                            finally
+                            {
+                                bitmapToAdd.Dispose();
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        sourceBitmap.Dispose();
                     }
                 }
             }
             catch
             {
-                icon?.Dispose();
+                // Icon retrieval or bitmap creation failed
             }
         }
 
