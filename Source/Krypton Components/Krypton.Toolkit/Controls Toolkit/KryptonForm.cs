@@ -166,6 +166,9 @@ public class KryptonForm : VisualForm,
         // Yes, we want to be drawn double buffered by default
         base.DoubleBuffered = true;
 
+        // Initialize FormValues before it's used
+        _formValues = new KryptonFormValues(this);
+
         // Create storage objects
         FormValues.ButtonSpecs = new FormButtonSpecCollection(this);
         var buttonSpecsFixed = new FormFixedButtonSpecCollection(this);
@@ -269,8 +272,6 @@ public class KryptonForm : VisualForm,
 
         // Init only here. Must instantiate in OnHandleCreated
         _kryptonSystemMenu = null;
-
-        _formValues = new KryptonFormValues(this);
     }
     #endregion
 

@@ -83,7 +83,11 @@ public class KryptonErrorProvider : Component, IExtenderProvider
             // Dispose the underlying ErrorProvider
             _errorProvider?.Dispose();
             _errorProvider = null;
-            _icon?.Dispose();
+            // Only dispose if we own the icon (not a SystemIcons shared instance)
+            if (_icon != null && !IsSystemIcon(_icon))
+            {
+                _icon.Dispose();
+            }
             _icon = null;
             _palette = null;
         }
@@ -246,9 +250,17 @@ public class KryptonErrorProvider : Component, IExtenderProvider
         {
             if (_icon != value)
             {
-                _icon?.Dispose();
+                // Only dispose if we own the icon (not a SystemIcons shared instance)
+                if (_icon != null && !IsSystemIcon(_icon))
+                {
+                    _icon.Dispose();
+                }
                 _icon = value;
-                _errorProvider?.Icon = value;
+                // Only assign to ErrorProvider if value is not null (ErrorProvider.Icon is non-nullable)
+                if (_errorProvider != null && value != null)
+                {
+                    _errorProvider.Icon = value;
+                }
             }
         }
     }
@@ -421,6 +433,32 @@ public class KryptonErrorProvider : Component, IExtenderProvider
             ErrorIconAlignment.BottomRight => KryptonErrorIconAlignment.BottomRight,
             _ => KryptonErrorIconAlignment.MiddleRight
         };
+    }
+
+    /// <summary>
+    /// Determines if the specified icon is a SystemIcons shared instance that must not be disposed.
+    /// </summary>
+    /// <param name="icon">The icon to check.</param>
+    /// <returns>True if the icon is a SystemIcons instance; otherwise, false.</returns>
+    private static bool IsSystemIcon(Icon icon)
+    {
+        if (icon == null)
+        {
+            return false;
+        }
+
+        // Check if the icon reference matches any of the SystemIcons properties
+        // SystemIcons properties return shared static instances that must not be disposed
+        return ReferenceEquals(icon, SystemIcons.Application) ||
+               ReferenceEquals(icon, SystemIcons.Asterisk) ||
+               ReferenceEquals(icon, SystemIcons.Error) ||
+               ReferenceEquals(icon, SystemIcons.Exclamation) ||
+               ReferenceEquals(icon, SystemIcons.Hand) ||
+               ReferenceEquals(icon, SystemIcons.Information) ||
+               ReferenceEquals(icon, SystemIcons.Question) ||
+               ReferenceEquals(icon, SystemIcons.Shield) ||
+               ReferenceEquals(icon, SystemIcons.Warning) ||
+               ReferenceEquals(icon, SystemIcons.WinLogo);
     }
 
     private void OnGlobalPaletteChanged(object? sender, EventArgs e)
