@@ -20,11 +20,13 @@ public class FileSystemTreeViewValues : Storage
 {
     #region Instance Fields
 
+    private FileSystemRootMode _rootMode = FileSystemRootMode.Drives;
     private string _rootPath = string.Empty;
     private bool _showFiles = true;
     private bool _showHiddenFiles = false;
     private bool _showSystemFiles = false;
     private string _fileFilter = "*.*";
+    private bool _showSpecialFolders = true;
 
     private readonly KryptonFileSystemTreeView _owner;
 
@@ -40,10 +42,29 @@ public class FileSystemTreeViewValues : Storage
     }
 
     /// <summary>
-    /// Gets or sets the root directory path to display in the tree view.
+    /// Gets or sets the root mode for the tree view.
     /// </summary>
     [Category(@"Behavior")]
-    [Description(@"The root directory path to display in the tree view.")]
+    [Description(@"Determines the root display mode: Desktop (Explorer-style with special folders), Computer (drives only), Drives (all drives), or CustomPath (use RootPath).")]
+    [DefaultValue(FileSystemRootMode.Drives)]
+    public FileSystemRootMode RootMode
+    {
+        get => _rootMode;
+        set
+        {
+            if (_rootMode != value)
+            {
+                _rootMode = value;
+                _owner.Reload();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the root directory path to display in the tree view (used when RootMode is CustomPath).
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"The root directory path to display in the tree view (used when RootMode is CustomPath).")]
     [DefaultValue("")]
     public string RootPath
     {
@@ -130,6 +151,28 @@ public class FileSystemTreeViewValues : Storage
             {
                 _fileFilter = value ?? "*.*";
                 if (_showFiles)
+                {
+                    _owner.Reload();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether special folders (Desktop, Computer, Network, Recycle Bin, etc.) should be displayed when RootMode is Desktop.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Indicates whether special folders (Desktop, Computer, Network, Recycle Bin, etc.) should be displayed when RootMode is Desktop.")]
+    [DefaultValue(true)]
+    public bool ShowSpecialFolders
+    {
+        get => _showSpecialFolders;
+        set
+        {
+            if (_showSpecialFolders != value)
+            {
+                _showSpecialFolders = value;
+                if (_rootMode == FileSystemRootMode.Desktop)
                 {
                     _owner.Reload();
                 }
