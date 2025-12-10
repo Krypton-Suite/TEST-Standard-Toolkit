@@ -17,18 +17,30 @@ public partial class FileSystemTreeViewExample : KryptonForm
     {
         InitializeComponent();
 
+        // Initialize root mode combo
+        InitializeRootModes();
+        
         // Initialize with common folders
         InitializeRootPaths();
         
-        // Setup initial state
-        kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        // Setup initial state - use Desktop mode for Explorer-style view
+        kryptonFileSystemTreeView1.RootMode = FileSystemRootMode.Desktop;
+        kryptonComboBoxRootMode.SelectedItem = FileSystemRootMode.Desktop;
+        kryptonCheckBoxShowSpecialFolders.Checked = true;
         UpdateStatusLabel();
 
         // Hook up events
         kryptonFileSystemTreeView1.AfterSelect += OnTreeViewAfterSelect;
-        kryptonFileSystemTreeView1.DirectoryExpanding += OnDirectoryExpanding;
-        kryptonFileSystemTreeView1.DirectoryExpanded += OnDirectoryExpanded;
         kryptonFileSystemTreeView1.FileSystemError += OnFileSystemError;
+    }
+
+    private void InitializeRootModes()
+    {
+        kryptonComboBoxRootMode.Items.Clear();
+        kryptonComboBoxRootMode.Items.Add(FileSystemRootMode.Desktop);
+        kryptonComboBoxRootMode.Items.Add(FileSystemRootMode.Computer);
+        kryptonComboBoxRootMode.Items.Add(FileSystemRootMode.Drives);
+        kryptonComboBoxRootMode.Items.Add(FileSystemRootMode.CustomPath);
     }
 
     private void InitializeRootPaths()
@@ -101,16 +113,6 @@ public partial class FileSystemTreeViewExample : KryptonForm
         }
     }
 
-    private void OnDirectoryExpanding(object? sender, DirectoryExpandingEventArgs e)
-    {
-        // Could show a loading indicator here
-    }
-
-    private void OnDirectoryExpanded(object? sender, DirectoryExpandedEventArgs e)
-    {
-        UpdateStatusLabel();
-    }
-
     private void OnFileSystemError(object? sender, FileSystemErrorEventArgs e)
     {
         // Show error in status label
@@ -119,13 +121,29 @@ public partial class FileSystemTreeViewExample : KryptonForm
 
     private void UpdateStatusLabel()
     {
-        if (kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath != null && Directory.Exists(kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath))
+        string modeText = kryptonFileSystemTreeView1.RootMode switch
         {
-            kryptonLabelStatus.Text = $"Root: {kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath}";
+            FileSystemRootMode.Desktop => "Desktop",
+            FileSystemRootMode.Computer => "Computer",
+            FileSystemRootMode.Drives => "Drives",
+            FileSystemRootMode.CustomPath => "Custom Path",
+            _ => "Unknown"
+        };
+
+        if (kryptonFileSystemTreeView1.RootMode == FileSystemRootMode.CustomPath)
+        {
+            if (!string.IsNullOrEmpty(kryptonFileSystemTreeView1.RootPath) && Directory.Exists(kryptonFileSystemTreeView1.RootPath))
+            {
+                kryptonLabelStatus.Text = $"Mode: {modeText} | Root: {kryptonFileSystemTreeView1.RootPath}";
+            }
+            else
+            {
+                kryptonLabelStatus.Text = $"Mode: {modeText} | No root path set";
+            }
         }
         else
         {
-            kryptonLabelStatus.Text = "No root path set";
+            kryptonLabelStatus.Text = $"Mode: {modeText}";
         }
     }
 
@@ -136,22 +154,54 @@ public partial class FileSystemTreeViewExample : KryptonForm
 
     private void kbtnBrowseRootPath_Click(object sender, EventArgs e)
     {
+        // Only allow browsing in CustomPath mode
+        if (kryptonFileSystemTreeView1.RootMode != FileSystemRootMode.CustomPath)
+        {
+            return;
+        }
+
         using var dialog = new KryptonFolderBrowserDialog
         {
             Title = "Select the root folder for the file system tree view:",
-            SelectedPath = kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath
+            SelectedPath = kryptonFileSystemTreeView1.RootPath
         };
 
         if (dialog.ShowDialog(this) == DialogResult.OK)
         {
-            kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath = dialog.SelectedPath;
+            kryptonFileSystemTreeView1.RootPath = dialog.SelectedPath;
             kryptonComboBoxRootPath.Text = dialog.SelectedPath;
             UpdateStatusLabel();
         }
     }
 
+    private void kryptonComboBoxRootMode_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (kryptonComboBoxRootMode.SelectedItem is FileSystemRootMode selectedMode)
+        {
+            kryptonFileSystemTreeView1.RootMode = selectedMode;
+            
+            // Enable/disable root path controls based on mode
+            bool isCustomPath = selectedMode == FileSystemRootMode.CustomPath;
+            kryptonComboBoxRootPath.Enabled = isCustomPath;
+            kbtnBrowseRootPath.Enabled = isCustomPath;
+            
+            UpdateStatusLabel();
+        }
+    }
+
+    private void kryptonCheckBoxShowSpecialFolders_CheckedChanged(object sender, EventArgs e)
+    {
+        kryptonFileSystemTreeView1.ShowSpecialFolders = kryptonCheckBoxShowSpecialFolders.Checked;
+    }
+
     private void kryptonComboBoxRootPath_SelectedIndexChanged(object sender, EventArgs e)
     {
+        // Only process if CustomPath mode is selected
+        if (kryptonFileSystemTreeView1.RootMode != FileSystemRootMode.CustomPath)
+        {
+            return;
+        }
+
         string? selectedItem = kryptonComboBoxRootPath.SelectedItem?.ToString();
         if (string.IsNullOrEmpty(selectedItem))
         {
@@ -171,32 +221,32 @@ public partial class FileSystemTreeViewExample : KryptonForm
 
         if (Directory.Exists(path))
         {
-            kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath = path;
+            kryptonFileSystemTreeView1.RootPath = path;
             UpdateStatusLabel();
         }
     }
 
     private void kryptonCheckBoxShowFiles_CheckedChanged(object sender, EventArgs e)
     {
-        kryptonFileSystemTreeView1.FileSystemTreeViewValues.ShowFiles = kryptonCheckBoxShowFiles.Checked;
+        kryptonFileSystemTreeView1.ShowFiles = kryptonCheckBoxShowFiles.Checked;
         kryptonTextBoxFileFilter.Enabled = kryptonCheckBoxShowFiles.Checked;
     }
 
     private void kryptonCheckBoxShowHidden_CheckedChanged(object sender, EventArgs e)
     {
-        kryptonFileSystemTreeView1.FileSystemTreeViewValues.ShowHiddenFiles = kryptonCheckBoxShowHidden.Checked;
+        kryptonFileSystemTreeView1.ShowHiddenFiles = kryptonCheckBoxShowHidden.Checked;
     }
 
     private void kryptonCheckBoxShowSystem_CheckedChanged(object sender, EventArgs e)
     {
-        kryptonFileSystemTreeView1.FileSystemTreeViewValues.ShowSystemFiles = kryptonCheckBoxShowSystem.Checked;
+        kryptonFileSystemTreeView1.ShowSystemFiles = kryptonCheckBoxShowSystem.Checked;
     }
 
     private void kryptonTextBoxFileFilter_TextChanged(object sender, EventArgs e)
     {
         if (!string.IsNullOrEmpty(kryptonTextBoxFileFilter.Text))
         {
-            kryptonFileSystemTreeView1.FileSystemTreeViewValues.FileFilter = kryptonTextBoxFileFilter.Text;
+            kryptonFileSystemTreeView1.FileFilter = kryptonTextBoxFileFilter.Text;
         }
     }
 

@@ -9,8 +9,6 @@
 
 namespace Krypton.Toolkit;
 
-using System.ComponentModel;
-
 /// <summary>
 /// Provides data for the DirectoryExpanding event.
 /// </summary>
@@ -19,14 +17,15 @@ public class DirectoryExpandingEventArgs : CancelEventArgs
     /// <summary>
     /// Initializes a new instance of the DirectoryExpandingEventArgs class.
     /// </summary>
-    /// <param name="directoryPath">The path of the directory being expanded.</param>
-    public DirectoryExpandingEventArgs(string directoryPath)
+    /// <param name="path">The path of the directory being expanded.</param>
+    public DirectoryExpandingEventArgs(string path)
     {
-        DirectoryPath = directoryPath;
+        Path = path;
     }
 
     /// <summary>
     /// Gets the path of the directory being expanded.
     /// </summary>
-    public string DirectoryPath { get; }
+    public string Path { get; }
 }
+

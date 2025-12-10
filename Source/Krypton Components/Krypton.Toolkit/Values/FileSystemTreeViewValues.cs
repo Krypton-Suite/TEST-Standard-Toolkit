@@ -20,13 +20,13 @@ public class FileSystemTreeViewValues : Storage
 {
     #region Instance Fields
 
-
+    private FileSystemRootMode _rootMode = FileSystemRootMode.Drives;
     private string _rootPath = string.Empty;
     private bool _showFiles = true;
     private bool _showHiddenFiles = false;
     private bool _showSystemFiles = false;
     private string _fileFilter = "*.*";
-    private bool _useLargeIcons = false;
+    private bool _showSpecialFolders = true;
 
     private readonly KryptonFileSystemTreeView _owner;
 
@@ -42,10 +42,29 @@ public class FileSystemTreeViewValues : Storage
     }
 
     /// <summary>
-    /// Gets or sets the root directory path to display in the tree view.
+    /// Gets or sets the root mode for the tree view.
     /// </summary>
     [Category(@"Behavior")]
-    [Description(@"The root directory path to display in the tree view.")]
+    [Description(@"Determines the root display mode: Desktop (Explorer-style with special folders), Computer (drives only), Drives (all drives), or CustomPath (use RootPath).")]
+    [DefaultValue(FileSystemRootMode.Drives)]
+    public FileSystemRootMode RootMode
+    {
+        get => _rootMode;
+        set
+        {
+            if (_rootMode != value)
+            {
+                _rootMode = value;
+                _owner.Reload();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the root directory path to display in the tree view (used when RootMode is CustomPath).
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"The root directory path to display in the tree view (used when RootMode is CustomPath).")]
     [DefaultValue("")]
     public string RootPath
     {
@@ -140,35 +159,22 @@ public class FileSystemTreeViewValues : Storage
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether to use large icons (32x32) instead of small icons (16x16).
+    /// Gets or sets a value indicating whether special folders (Desktop, Computer, Network, Recycle Bin, etc.) should be displayed when RootMode is Desktop.
     /// </summary>
-    [Category(@"Appearance")]
-    [Description(@"Indicates whether to use large icons (32x32) instead of small icons (16x16).")]
-    [DefaultValue(false)]
-    public bool UseLargeIcons
+    [Category(@"Behavior")]
+    [Description(@"Indicates whether special folders (Desktop, Computer, Network, Recycle Bin, etc.) should be displayed when RootMode is Desktop.")]
+    [DefaultValue(true)]
+    public bool ShowSpecialFolders
     {
-        get => _useLargeIcons;
+        get => _showSpecialFolders;
         set
         {
-            if (_useLargeIcons != value)
+            if (_showSpecialFolders != value)
             {
-                _useLargeIcons = value;
-
-                // Update ImageList size
-                Size newSize = value ? new Size(32, 32) : new Size(16, 16);
-                if (_owner.ImageList?.ImageSize != newSize)
+                _showSpecialFolders = value;
+                if (_rootMode == FileSystemRootMode.Desktop)
                 {
-                    _owner.ImageList?.ImageSize = newSize;
-
-                    // Clear cache and reload
-                    _owner.IconCache.Clear();
-                    _owner.ImageList?.Images.Clear();
-                    _owner.AddDefaultIcon();
-
-                    if (!string.IsNullOrEmpty(_rootPath))
-                    {
-                        _owner.Reload();
-                    }
+                    _owner.Reload();
                 }
             }
         }
@@ -182,3 +188,4 @@ public class FileSystemTreeViewValues : Storage
     /// <returns>A string that represents the current object.</returns>
     public override string ToString() => "File System Tree View Values";
 }
+

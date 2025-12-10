@@ -496,7 +496,7 @@ public class KryptonBrowserControl : KryptonPanel
         _splitContainer = new KryptonSplitContainer
         {
             Dock = DockStyle.Fill,
-            Orientation = Orientation.Horizontal,
+            Orientation = Orientation.Vertical,
             SplitterDistance = 200,
             FixedPanel = FixedPanel.Panel1,
             Panel1MinSize = 100,
