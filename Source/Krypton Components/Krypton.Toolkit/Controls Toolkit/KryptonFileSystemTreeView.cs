@@ -10,25 +10,22 @@
 namespace Krypton.Toolkit;
 
 using System.ComponentModel;
-using System.Drawing;
 using System.IO;
 
 /// <summary>
-/// Provides a Krypton-styled TreeView control for browsing the file system with proper icons.
+/// Provides a Krypton-styled TreeView control for browsing the file system.
 /// </summary>
 [ToolboxItem(true)]
 [ToolboxBitmap(typeof(KryptonTreeView), "ToolboxBitmaps.KryptonTreeView.bmp")]
 [DefaultEvent(nameof(AfterSelect))]
-[DefaultProperty(nameof(FileSystemTreeViewValues.RootPath))]
+[DefaultProperty(nameof(FileSystemTreeViewValues))]
 [DesignerCategory(@"code")]
-[Description(@"Displays a hierarchical file system tree with folder and file icons.")]
+[Description(@"Displays a hierarchical file system tree with Krypton styling.")]
 [Docking(DockingBehavior.Ask)]
 public class KryptonFileSystemTreeView : KryptonTreeView
 {
     #region Instance Fields
 
-    private readonly ImageList _imageList;
-    private readonly Dictionary<string, int> _iconCache;
     private const string DUMMY_NODE_KEY = "__DUMMY__";
     private readonly FileSystemTreeViewValues _fileSystemValues;
 
@@ -66,21 +63,8 @@ public class KryptonFileSystemTreeView : KryptonTreeView
     /// </summary>
     public KryptonFileSystemTreeView()
     {
-        _iconCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        
-        _imageList = new ImageList
-        {
-            ColorDepth = ColorDepth.Depth32Bit,
-            ImageSize = new Size(16, 16)
-        };
-        
         // Create the expandable properties object
         _fileSystemValues = new FileSystemTreeViewValues(this);
-
-        // Add a default folder icon
-        AddDefaultIcon();
-        
-        ImageList = _imageList;
 
         // Set default properties
         ShowPlusMinus = true;
@@ -91,7 +75,7 @@ public class KryptonFileSystemTreeView : KryptonTreeView
         BeforeExpand += OnBeforeExpand;
         AfterSelect += OnAfterSelect;
         
-        // Access the internal TreeView to hook into DrawNode event
+        // Hide dummy nodes - minimal interference with Krypton rendering
         TreeView.DrawNode += OnDrawNode;
     }
 
@@ -108,13 +92,71 @@ public class KryptonFileSystemTreeView : KryptonTreeView
     public FileSystemTreeViewValues FileSystemTreeViewValues => _fileSystemValues;
 
     /// <summary>
+    /// Gets or sets the root directory path to display in the tree view.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"The root directory path to display in the tree view.")]
+    [DefaultValue("")]
+    public string RootPath
+    {
+        get => _fileSystemValues.RootPath;
+        set => _fileSystemValues.RootPath = value;
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether files should be displayed in the tree view.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Indicates whether files should be displayed in the tree view.")]
+    [DefaultValue(true)]
+    public bool ShowFiles
+    {
+        get => _fileSystemValues.ShowFiles;
+        set => _fileSystemValues.ShowFiles = value;
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether hidden files should be displayed.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Indicates whether hidden files should be displayed.")]
+    [DefaultValue(false)]
+    public bool ShowHiddenFiles
+    {
+        get => _fileSystemValues.ShowHiddenFiles;
+        set => _fileSystemValues.ShowHiddenFiles = value;
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether system files should be displayed.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Indicates whether system files should be displayed.")]
+    [DefaultValue(false)]
+    public bool ShowSystemFiles
+    {
+        get => _fileSystemValues.ShowSystemFiles;
+        set => _fileSystemValues.ShowSystemFiles = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the file filter to apply when showing files (e.g., "*.txt" or "*.txt;*.doc").
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description("The file filter to apply when showing files (e.g., \"*.txt\" or \"*.txt;*.doc\").")]
+    [DefaultValue("*.*")]
+    public string FileFilter
+    {
+        get => _fileSystemValues.FileFilter;
+        set => _fileSystemValues.FileFilter = value;
+    }
+
+    /// <summary>
     /// Gets the full path of the currently selected file or folder.
     /// </summary>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public string? SelectedPath => SelectedNode?.Tag as string;
-
-    internal Dictionary<string, int> IconCache => _iconCache;
 
     #endregion
 
@@ -126,24 +168,23 @@ public class KryptonFileSystemTreeView : KryptonTreeView
     public void Reload()
     {
         Nodes.Clear();
-        _iconCache.Clear();
-        _imageList.Images.Clear();
-        AddDefaultIcon();
 
-        if (string.IsNullOrEmpty(FileSystemTreeViewValues.RootPath) || !Directory.Exists(FileSystemTreeViewValues.RootPath))
+        // If RootPath is not set or invalid, fall back to drives
+        if (string.IsNullOrEmpty(_fileSystemValues.RootPath) || !Directory.Exists(_fileSystemValues.RootPath))
         {
+            LoadDriveRoots();
             return;
         }
 
         try
         {
-            TreeNode rootNode = CreateDirectoryNode(FileSystemTreeViewValues.RootPath);
+            TreeNode rootNode = CreateDirectoryNode(_fileSystemValues.RootPath);
             Nodes.Add(rootNode);
             rootNode.Expand();
         }
         catch (Exception ex)
         {
-            OnFileSystemError(new FileSystemErrorEventArgs(FileSystemTreeViewValues.RootPath, ex));
+            OnFileSystemError(new FileSystemErrorEventArgs(_fileSystemValues.RootPath, ex));
         }
     }
 
@@ -154,7 +195,7 @@ public class KryptonFileSystemTreeView : KryptonTreeView
     /// <returns>True if the path was found and selected; otherwise, false.</returns>
     public bool NavigateToPath(string path)
     {
-        if (string.IsNullOrEmpty(path) || !Directory.Exists(path) && !File.Exists(path))
+        if (string.IsNullOrEmpty(path) || (!Directory.Exists(path) && !File.Exists(path)))
         {
             return false;
         }
@@ -204,6 +245,19 @@ public class KryptonFileSystemTreeView : KryptonTreeView
     #region Protected Virtual
 
     /// <summary>
+    /// Ensure initial population of the tree when the control is created.
+    /// </summary>
+    /// <param name="e">Event args.</param>
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        if (!DesignMode)
+        {
+            Reload();
+        }
+    }
+
+    /// <summary>
     /// Raises the DirectoryExpanding event.
     /// </summary>
     /// <param name="e">A DirectoryExpandingEventArgs containing the event data.</param>
@@ -225,185 +279,13 @@ public class KryptonFileSystemTreeView : KryptonTreeView
 
     #region Implementation
 
-    internal void AddDefaultIcon()
+    private void OnDrawNode(object? sender, DrawTreeNodeEventArgs e)
     {
-        try
+        // Hide dummy nodes only - let KryptonTreeView handle everything else
+        if (e.Node?.Name == DUMMY_NODE_KEY)
         {
-            Icon? folderIcon = StockIconHelper.GetStockIcon(StockIconHelper.StockIconId.Folder);
-            if (folderIcon != null)
-            {
-                using (folderIcon)
-                {
-                    Bitmap sourceBitmap = folderIcon.ToBitmap();
-                    try
-                    {
-                        // Create a bitmap with the exact size needed for ImageList
-                        Bitmap bitmapToAdd = new Bitmap(_imageList.ImageSize.Width, _imageList.ImageSize.Height, PixelFormat.Format32bppArgb);
-                        using (Graphics g = Graphics.FromImage(bitmapToAdd))
-                        {
-                            g.Clear(Color.Transparent);
-                            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                            g.DrawImage(sourceBitmap, 0, 0, _imageList.ImageSize.Width, _imageList.ImageSize.Height);
-                        }
-                        
-                        // Validate and add - ImageList will make its own copy
-                        if (bitmapToAdd.Width > 0 && bitmapToAdd.Height > 0)
-                        {
-                            _imageList.Images.Add(bitmapToAdd);
-                            // Force ImageList to create handle and copy the bitmap immediately
-                            _ = _imageList.Handle;
-                        }
-                        bitmapToAdd.Dispose();
-                    }
-                    finally
-                    {
-                        sourceBitmap.Dispose();
-                    }
-                }
-            }
+            e.DrawDefault = false;
         }
-        catch
-        {
-            // If stock icon fails, create a simple colored bitmap
-            Bitmap defaultBitmap = new Bitmap(_imageList.ImageSize.Width, _imageList.ImageSize.Height, PixelFormat.Format32bppArgb);
-            try
-            {
-                using (Graphics g = Graphics.FromImage(defaultBitmap))
-                {
-                    g.Clear(Color.Transparent);
-                    g.FillRectangle(new SolidBrush(Color.LightGray), 0, 0, defaultBitmap.Width, defaultBitmap.Height);
-                }
-                
-                if (defaultBitmap.Width > 0 && defaultBitmap.Height > 0)
-                {
-                    _imageList.Images.Add(defaultBitmap);
-                    // Force ImageList to create handle and copy the bitmap immediately
-                    _ = _imageList.Handle;
-                }
-            }
-            finally
-            {
-                defaultBitmap.Dispose();
-            }
-        }
-    }
-
-    private int GetIconIndex(string path, bool isDirectory)
-    {
-        // Create cache key
-        string cacheKey = isDirectory ? "__DIRECTORY__" : Path.GetExtension(path).ToLowerInvariant();
-        if (string.IsNullOrEmpty(cacheKey))
-        {
-            cacheKey = "__FILE__";
-        }
-
-        // Check cache first
-        if (_iconCache.TryGetValue(cacheKey, out int cachedIndex))
-        {
-            return cachedIndex;
-        }
-
-        // Get icon
-        Icon? icon = null;
-        try
-        {
-            if (isDirectory)
-            {
-                // Try to get specific folder icon first
-                if (Directory.Exists(path))
-                {
-                    icon = FileSystemIconHelper.GetFileSystemIcon(path, FileSystemTreeViewValues.UseLargeIcons);
-                }
-                
-                // Fallback to generic folder icon
-                if (icon == null)
-                {
-                    icon = FileSystemIconHelper.GetFolderIcon(FileSystemTreeViewValues.UseLargeIcons);
-                }
-                
-                // Final fallback to stock icon
-                if (icon == null)
-                {
-                    icon = StockIconHelper.GetStockIcon(StockIconHelper.StockIconId.Folder);
-                }
-            }
-            else
-            {
-                // For files, get icon based on extension or actual file
-                if (File.Exists(path))
-                {
-                    icon = FileSystemIconHelper.GetFileSystemIcon(path, FileSystemTreeViewValues.UseLargeIcons);
-                }
-                else
-                {
-                    string extension = Path.GetExtension(path);
-                    if (!string.IsNullOrEmpty(extension))
-                    {
-                        icon = FileSystemIconHelper.GetFileIcon(extension, FileSystemTreeViewValues.UseLargeIcons);
-                    }
-                }
-                
-                // Fallback to document icon
-                if (icon == null)
-                {
-                    icon = StockIconHelper.GetStockIcon(StockIconHelper.StockIconId.DocumentNotAssociated);
-                }
-            }
-        }
-        catch
-        {
-            // Icon retrieval failed
-        }
-
-        // Convert icon to bitmap and add to ImageList
-        if (icon != null)
-        {
-            try
-            {
-                using (icon)
-                {
-                    Bitmap sourceBitmap = icon.ToBitmap();
-                    try
-                    {
-                        // Create a bitmap with the exact size needed for ImageList
-                        Bitmap bitmapToAdd = new Bitmap(_imageList.ImageSize.Width, _imageList.ImageSize.Height, PixelFormat.Format32bppArgb);
-                        using (Graphics g = Graphics.FromImage(bitmapToAdd))
-                        {
-                            g.Clear(Color.Transparent);
-                            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                            g.DrawImage(sourceBitmap, 0, 0, _imageList.ImageSize.Width, _imageList.ImageSize.Height);
-                        }
-                        
-                        // Validate and add to ImageList - ImageList will make its own copy
-                        if (bitmapToAdd.Width > 0 && bitmapToAdd.Height > 0)
-                        {
-                            int index = _imageList.Images.Count;
-                            _imageList.Images.Add(bitmapToAdd);
-                            // Force ImageList to create handle and copy the bitmap immediately
-                            _ = _imageList.Handle;
-                            
-                            // Cache the index
-                            _iconCache[cacheKey] = index;
-                            
-                            bitmapToAdd.Dispose();
-                            return index;
-                        }
-                        bitmapToAdd.Dispose();
-                    }
-                    finally
-                    {
-                        sourceBitmap.Dispose();
-                    }
-                }
-            }
-            catch
-            {
-                // Icon disposal handled by using statement
-            }
-        }
-
-        // Fallback to default icon (index 0)
-        return 0;
     }
 
     private TreeNode CreateDirectoryNode(string path)
@@ -416,17 +298,15 @@ public class KryptonFileSystemTreeView : KryptonTreeView
 
         var node = new TreeNode(displayName)
         {
-            Tag = path,
-            ImageIndex = GetIconIndex(path, true),
-            SelectedImageIndex = GetIconIndex(path, true)
+            Tag = path
         };
 
-        // Add dummy node to enable expansion (hidden from view)
+        // Add dummy node to enable expansion
         TreeNode dummyNode = new TreeNode(DUMMY_NODE_KEY) 
         { 
             Tag = null,
-            Name = DUMMY_NODE_KEY,  // Use Name to identify it
-            Text = string.Empty  // Hide the dummy node text
+            Name = DUMMY_NODE_KEY,
+            Text = string.Empty
         };
         node.Nodes.Add(dummyNode);
 
@@ -438,9 +318,7 @@ public class KryptonFileSystemTreeView : KryptonTreeView
         string displayName = Path.GetFileName(path);
         var node = new TreeNode(displayName)
         {
-            Tag = path,
-            ImageIndex = GetIconIndex(path, false),
-            SelectedImageIndex = GetIconIndex(path, false)
+            Tag = path
         };
 
         return node;
@@ -450,12 +328,11 @@ public class KryptonFileSystemTreeView : KryptonTreeView
     {
         if (e.Node?.Tag is string path && Directory.Exists(path))
         {
-            // Check if this is a dummy node (check by Name, Tag and empty text)
+            // Check if this node has a dummy child node
             if (e.Node.Nodes.Count == 1)
             {
                 TreeNode firstChild = e.Node.Nodes[0];
-                // Check if it's the dummy node by checking Name, Tag is null and text is empty
-                if (firstChild.Name == DUMMY_NODE_KEY || (firstChild.Tag == null && string.IsNullOrEmpty(firstChild.Text)))
+                if (firstChild.Name == DUMMY_NODE_KEY)
                 {
                     e.Node.Nodes.Clear();
                     
@@ -479,20 +356,6 @@ public class KryptonFileSystemTreeView : KryptonTreeView
         }
     }
 
-    private void OnDrawNode(object? sender, DrawTreeNodeEventArgs e)
-    {
-        // Skip drawing dummy nodes
-        if (e.Node?.Name == DUMMY_NODE_KEY || 
-            (e.Node?.Tag == null && string.IsNullOrEmpty(e.Node?.Text) && e.Node?.Name == DUMMY_NODE_KEY))
-        {
-            e.DrawDefault = false;
-            return;
-        }
-        
-        // Let the base class handle normal drawing
-        e.DrawDefault = true;
-    }
-
     private void LoadDirectoryNodes(TreeNode parentNode, string directoryPath)
     {
         try
@@ -507,7 +370,7 @@ public class KryptonFileSystemTreeView : KryptonTreeView
                     bool isHidden = (dirInfo.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden;
                     bool isSystem = (dirInfo.Attributes & FileAttributes.System) == FileAttributes.System;
 
-                    if ((isHidden && !FileSystemTreeViewValues.ShowHiddenFiles) || (isSystem && !FileSystemTreeViewValues.ShowSystemFiles))
+                    if ((isHidden && !_fileSystemValues.ShowHiddenFiles) || (isSystem && !_fileSystemValues.ShowSystemFiles))
                     {
                         continue;
                     }
@@ -522,9 +385,9 @@ public class KryptonFileSystemTreeView : KryptonTreeView
             }
 
             // Get files
-            if (FileSystemTreeViewValues.ShowFiles)
+            if (_fileSystemValues.ShowFiles)
             {
-                string[] files = Directory.GetFiles(directoryPath, FileSystemTreeViewValues.FileFilter);
+                string[] files = Directory.GetFiles(directoryPath, _fileSystemValues.FileFilter);
                 foreach (string file in files)
                 {
                     try
@@ -533,7 +396,7 @@ public class KryptonFileSystemTreeView : KryptonTreeView
                         bool isHidden = (fileInfo.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden;
                         bool isSystem = (fileInfo.Attributes & FileAttributes.System) == FileAttributes.System;
 
-                        if ((isHidden && !FileSystemTreeViewValues.ShowHiddenFiles) || (isSystem && !FileSystemTreeViewValues.ShowSystemFiles))
+                        if ((isHidden && !_fileSystemValues.ShowHiddenFiles) || (isSystem && !_fileSystemValues.ShowSystemFiles))
                         {
                             continue;
                         }
@@ -554,5 +417,29 @@ public class KryptonFileSystemTreeView : KryptonTreeView
         }
     }
 
+    private void LoadDriveRoots()
+    {
+        try
+        {
+            foreach (DriveInfo drive in DriveInfo.GetDrives())
+            {
+                if (!drive.IsReady)
+                {
+                    continue;
+                }
+
+                string path = drive.RootDirectory.FullName;
+                TreeNode driveNode = CreateDirectoryNode(path);
+                driveNode.Text = $"{path} ({drive.DriveType})";
+                Nodes.Add(driveNode);
+            }
+        }
+        catch (Exception ex)
+        {
+            OnFileSystemError(new FileSystemErrorEventArgs(string.Empty, ex));
+        }
+    }
+
     #endregion
 }
+

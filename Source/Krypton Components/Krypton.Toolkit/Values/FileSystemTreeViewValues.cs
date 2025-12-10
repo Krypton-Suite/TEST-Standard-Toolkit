@@ -20,13 +20,11 @@ public class FileSystemTreeViewValues : Storage
 {
     #region Instance Fields
 
-
     private string _rootPath = string.Empty;
     private bool _showFiles = true;
     private bool _showHiddenFiles = false;
     private bool _showSystemFiles = false;
     private string _fileFilter = "*.*";
-    private bool _useLargeIcons = false;
 
     private readonly KryptonFileSystemTreeView _owner;
 
@@ -139,41 +137,6 @@ public class FileSystemTreeViewValues : Storage
         }
     }
 
-    /// <summary>
-    /// Gets or sets a value indicating whether to use large icons (32x32) instead of small icons (16x16).
-    /// </summary>
-    [Category(@"Appearance")]
-    [Description(@"Indicates whether to use large icons (32x32) instead of small icons (16x16).")]
-    [DefaultValue(false)]
-    public bool UseLargeIcons
-    {
-        get => _useLargeIcons;
-        set
-        {
-            if (_useLargeIcons != value)
-            {
-                _useLargeIcons = value;
-
-                // Update ImageList size
-                Size newSize = value ? new Size(32, 32) : new Size(16, 16);
-                if (_owner.ImageList?.ImageSize != newSize)
-                {
-                    _owner.ImageList?.ImageSize = newSize;
-
-                    // Clear cache and reload
-                    _owner.IconCache.Clear();
-                    _owner.ImageList?.Images.Clear();
-                    _owner.AddDefaultIcon();
-
-                    if (!string.IsNullOrEmpty(_rootPath))
-                    {
-                        _owner.Reload();
-                    }
-                }
-            }
-        }
-    }
-
     public override bool IsDefault => throw new NotImplementedException();
 
     /// <summary>
@@ -182,3 +145,4 @@ public class FileSystemTreeViewValues : Storage
     /// <returns>A string that represents the current object.</returns>
     public override string ToString() => "File System Tree View Values";
 }
+

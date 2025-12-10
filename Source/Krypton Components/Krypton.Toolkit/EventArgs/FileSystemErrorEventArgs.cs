@@ -35,3 +35,4 @@ public class FileSystemErrorEventArgs : EventArgs
     /// </summary>
     public Exception Exception { get; }
 }
+

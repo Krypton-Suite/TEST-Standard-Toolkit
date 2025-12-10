@@ -21,13 +21,11 @@ public partial class FileSystemTreeViewExample : KryptonForm
         InitializeRootPaths();
         
         // Setup initial state
-        kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        kryptonFileSystemTreeView1.RootPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         UpdateStatusLabel();
 
         // Hook up events
         kryptonFileSystemTreeView1.AfterSelect += OnTreeViewAfterSelect;
-        kryptonFileSystemTreeView1.DirectoryExpanding += OnDirectoryExpanding;
-        kryptonFileSystemTreeView1.DirectoryExpanded += OnDirectoryExpanded;
         kryptonFileSystemTreeView1.FileSystemError += OnFileSystemError;
     }
 
@@ -101,16 +99,6 @@ public partial class FileSystemTreeViewExample : KryptonForm
         }
     }
 
-    private void OnDirectoryExpanding(object? sender, DirectoryExpandingEventArgs e)
-    {
-        // Could show a loading indicator here
-    }
-
-    private void OnDirectoryExpanded(object? sender, DirectoryExpandedEventArgs e)
-    {
-        UpdateStatusLabel();
-    }
-
     private void OnFileSystemError(object? sender, FileSystemErrorEventArgs e)
     {
         // Show error in status label
@@ -119,9 +107,9 @@ public partial class FileSystemTreeViewExample : KryptonForm
 
     private void UpdateStatusLabel()
     {
-        if (kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath != null && Directory.Exists(kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath))
+        if (!string.IsNullOrEmpty(kryptonFileSystemTreeView1.RootPath) && Directory.Exists(kryptonFileSystemTreeView1.RootPath))
         {
-            kryptonLabelStatus.Text = $"Root: {kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath}";
+            kryptonLabelStatus.Text = $"Root: {kryptonFileSystemTreeView1.RootPath}";
         }
         else
         {
@@ -139,12 +127,12 @@ public partial class FileSystemTreeViewExample : KryptonForm
         using var dialog = new KryptonFolderBrowserDialog
         {
             Title = "Select the root folder for the file system tree view:",
-            SelectedPath = kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath
+            SelectedPath = kryptonFileSystemTreeView1.RootPath
         };
 
         if (dialog.ShowDialog(this) == DialogResult.OK)
         {
-            kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath = dialog.SelectedPath;
+            kryptonFileSystemTreeView1.RootPath = dialog.SelectedPath;
             kryptonComboBoxRootPath.Text = dialog.SelectedPath;
             UpdateStatusLabel();
         }
@@ -171,32 +159,32 @@ public partial class FileSystemTreeViewExample : KryptonForm
 
         if (Directory.Exists(path))
         {
-            kryptonFileSystemTreeView1.FileSystemTreeViewValues.RootPath = path;
+            kryptonFileSystemTreeView1.RootPath = path;
             UpdateStatusLabel();
         }
     }
 
     private void kryptonCheckBoxShowFiles_CheckedChanged(object sender, EventArgs e)
     {
-        kryptonFileSystemTreeView1.FileSystemTreeViewValues.ShowFiles = kryptonCheckBoxShowFiles.Checked;
+        kryptonFileSystemTreeView1.ShowFiles = kryptonCheckBoxShowFiles.Checked;
         kryptonTextBoxFileFilter.Enabled = kryptonCheckBoxShowFiles.Checked;
     }
 
     private void kryptonCheckBoxShowHidden_CheckedChanged(object sender, EventArgs e)
     {
-        kryptonFileSystemTreeView1.FileSystemTreeViewValues.ShowHiddenFiles = kryptonCheckBoxShowHidden.Checked;
+        kryptonFileSystemTreeView1.ShowHiddenFiles = kryptonCheckBoxShowHidden.Checked;
     }
 
     private void kryptonCheckBoxShowSystem_CheckedChanged(object sender, EventArgs e)
     {
-        kryptonFileSystemTreeView1.FileSystemTreeViewValues.ShowSystemFiles = kryptonCheckBoxShowSystem.Checked;
+        kryptonFileSystemTreeView1.ShowSystemFiles = kryptonCheckBoxShowSystem.Checked;
     }
 
     private void kryptonTextBoxFileFilter_TextChanged(object sender, EventArgs e)
     {
         if (!string.IsNullOrEmpty(kryptonTextBoxFileFilter.Text))
         {
-            kryptonFileSystemTreeView1.FileSystemTreeViewValues.FileFilter = kryptonTextBoxFileFilter.Text;
+            kryptonFileSystemTreeView1.FileFilter = kryptonTextBoxFileFilter.Text;
         }
     }
 
