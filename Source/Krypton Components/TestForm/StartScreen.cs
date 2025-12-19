@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -82,6 +82,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("MessageBox", string.Empty, typeof(MessageBoxTest));
         CreateButton("Old Style Main: Fullscreen", string.Empty, typeof(Main));
         CreateButton("PropertyGridTest", string.Empty, typeof(PropertyGridTest));
+        CreateButton("RadialMenuTest", string.Empty, typeof(RadialMenuTest));
         CreateButton("Ribbon", string.Empty, typeof(RibbonTest));
         CreateButton("TextBox", string.Empty, typeof(TextBoxEventTest));
         CreateButton("TreeView", string.Empty, typeof(TreeViewExample));
@@ -91,6 +92,8 @@ public partial class StartScreen : KryptonForm
         CreateButton("Palette Viewer", string.Empty, typeof(PaletteViewerForm));
         CreateButton("Powered By Button", string.Empty, typeof(PoweredByButtonExample));
         CreateButton("Krypton Task Dialog Demo", string.Empty, typeof(KryptonTaskDialogDemoForm));
+        CreateButton("Tabbed Editor", "Comprehensive example of KryptonTabbedEditor with close buttons and RichTextBox editors", typeof(TabbedEditorTest));
+        CreateButton("Text Suggestions", "Comprehensive demo of KryptonTextSuggestionProvider with multiple examples and settings", typeof(TextSuggestionDemo));
     }
 
     private void OnFormClosed(object? sender, FormClosedEventArgs e)

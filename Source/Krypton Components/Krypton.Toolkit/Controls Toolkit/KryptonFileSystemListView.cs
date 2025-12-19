@@ -707,6 +707,7 @@ public class KryptonFileSystemListView : KryptonListView
     /// <summary>
     /// Gets or sets how items are displayed in the control.
     /// </summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public new View View
     {
         get => base.View;
