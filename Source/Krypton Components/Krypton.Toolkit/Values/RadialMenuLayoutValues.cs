@@ -21,6 +21,8 @@ public class RadialMenuLayoutValues : Storage
     private int _ringThickness;
     private int _centerRadius;
     private float _startAngle;
+    private float _arrowSegmentWidth;
+    private bool _showNavigationArrows;
     #endregion
 
     #region Identity
@@ -35,6 +37,8 @@ public class RadialMenuLayoutValues : Storage
         _ringThickness = 60;
         _centerRadius = 15;
         _startAngle = -90f;
+        _arrowSegmentWidth = 8f;
+        _showNavigationArrows = true;
     }
     #endregion
 
@@ -144,6 +148,56 @@ public class RadialMenuLayoutValues : Storage
     private void ResetStartAngle() => StartAngle = -90f;
 
     /// <summary>
+    /// Gets or sets the width of navigation arrow segments in degrees.
+    /// </summary>
+    [Category(@"Layout")]
+    [Description(@"Width of navigation arrow segments in degrees.")]
+    [DefaultValue(8f)]
+    public float ArrowSegmentWidth
+    {
+        get => _arrowSegmentWidth;
+        set
+        {
+            if (value < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(ArrowSegmentWidth), @"Arrow segment width cannot be less than zero");
+            }
+            if (_arrowSegmentWidth != value)
+            {
+                _arrowSegmentWidth = value;
+                _owner.PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeArrowSegmentWidth() => Math.Abs(_arrowSegmentWidth - 8f) > 0.01f;
+
+    private void ResetArrowSegmentWidth() => ArrowSegmentWidth = 8f;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether navigation arrows are shown between menu segments.
+    /// </summary>
+    [Category(@"Layout")]
+    [Description(@"Indicates whether navigation arrows are shown between menu segments.")]
+    [DefaultValue(true)]
+    public bool ShowNavigationArrows
+    {
+        get => _showNavigationArrows;
+        set
+        {
+            if (_showNavigationArrows != value)
+            {
+                _showNavigationArrows = value;
+                _owner.PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeShowNavigationArrows() => !_showNavigationArrows;
+
+    private void ResetShowNavigationArrows() => ShowNavigationArrows = true;
+
+    /// <summary>
     /// Resets all properties to their default values.
     /// </summary>
     public void Reset()
@@ -152,6 +206,8 @@ public class RadialMenuLayoutValues : Storage
         ResetRingThickness();
         ResetCenterRadius();
         ResetStartAngle();
+        ResetArrowSegmentWidth();
+        ResetShowNavigationArrows();
     }
 
     /// <summary>
@@ -162,7 +218,9 @@ public class RadialMenuLayoutValues : Storage
     public override bool IsDefault => !ShouldSerializeInnerRadius()
                                    && !ShouldSerializeRingThickness()
                                    && !ShouldSerializeCenterRadius()
-                                   && !ShouldSerializeStartAngle();
+                                   && !ShouldSerializeStartAngle()
+                                   && !ShouldSerializeArrowSegmentWidth()
+                                   && !ShouldSerializeShowNavigationArrows();
 
     /// <summary>
     /// Returns a string that represents the current object.

@@ -9,6 +9,8 @@
 
 namespace Krypton.Toolkit;
 
+using Timer = System.Windows.Forms.Timer;
+
 /// <summary>
 /// Displays a radial menu with multiple levels/rings using Krypton renderer.
 /// </summary>
@@ -30,6 +32,21 @@ public class KryptonRadialMenu : VisualControl
         public float OuterRadius { get; set; }
         public RectangleF Bounds { get; set; }
         public PointF Center { get; set; }
+        
+        // Animation state
+        public float Opacity { get; set; } = 1.0f;
+        public float Scale { get; set; } = 1.0f;
+        public float HoverProgress { get; set; } = 0.0f;
+        public int AnimationStartTime { get; set; }
+    }
+
+    private class ArrowSegmentInfo
+    {
+        public float StartAngle { get; set; }
+        public float SweepAngle { get; set; }
+        public float InnerRadius { get; set; }
+        public float OuterRadius { get; set; }
+        public PointF Center { get; set; }
     }
     #endregion
 
@@ -40,6 +57,7 @@ public class KryptonRadialMenu : VisualControl
     #region Instance Fields
     private readonly List<KryptonRadialMenuItem> _items;
     private readonly List<RadialMenuItemInfo> _itemInfos;
+    private readonly List<ArrowSegmentInfo> _arrowSegments;
     private KryptonRadialMenuItem? _hoveredItem;
     private KryptonRadialMenuItem? _pressedItem;
     private readonly PaletteRedirect _redirector;
@@ -49,6 +67,9 @@ public class KryptonRadialMenu : VisualControl
     private Point _dragStartPoint;
     private Point _dragOffset;
     private VisualRadialMenuFloatingForm? _floatingWindow;
+    private Timer? _animationTimer;
+    private bool _isAnimating;
+    private int _menuShowTime;
     #endregion
 
     #region Events
@@ -101,6 +122,7 @@ public class KryptonRadialMenu : VisualControl
         // Create collections
         _items = new List<KryptonRadialMenuItem>();
         _itemInfos = new List<RadialMenuItemInfo>();
+        _arrowSegments = new List<ArrowSegmentInfo>();
 
         // Create palette redirector
         _redirector = new PaletteRedirect(Redirector);
@@ -136,6 +158,12 @@ public class KryptonRadialMenu : VisualControl
         _pressedItem = null;
         _isDragging = false;
         _floatingWindow = null;
+        _isAnimating = false;
+        _menuShowTime = 0;
+
+        // Create animation timer
+        _animationTimer = new Timer { Interval = 16 }; // ~60fps
+        _animationTimer.Tick += OnAnimationTimerTick;
 
         // Create view manager
         ViewManager = new ViewManager(this, new ViewLayoutNull());
@@ -149,6 +177,10 @@ public class KryptonRadialMenu : VisualControl
     {
         if (disposing)
         {
+            // Stop and dispose animation timer
+            _animationTimer?.Stop();
+            _animationTimer?.Dispose();
+
             // Dispose of items
             foreach (var item in _items)
             {
@@ -156,6 +188,7 @@ public class KryptonRadialMenu : VisualControl
             }
             _items.Clear();
             _itemInfos.Clear();
+            _arrowSegments.Clear();
         }
 
         base.Dispose(disposing);
@@ -370,6 +403,12 @@ public class KryptonRadialMenu : VisualControl
             // Draw center circle
             DrawCenter(context, renderer);
 
+            // Draw navigation arrows (if enabled)
+            if (_layout.ShowNavigationArrows)
+            {
+                DrawArrows(context, renderer);
+            }
+
             // Draw menu items
             DrawItems(context, renderer);
         }
@@ -398,6 +437,38 @@ public class KryptonRadialMenu : VisualControl
 
         if (_hoveredItem != hitItem)
         {
+            // Update hover animation state
+            if (_behavior.EnableAnimations)
+            {
+                foreach (var info in _itemInfos)
+                {
+                    if (info.Item == hitItem)
+                    {
+                        // Start hover animation
+                        if (info.HoverProgress < 1.0f)
+                        {
+                            if (!_isAnimating)
+                            {
+                                _animationTimer?.Start();
+                                _isAnimating = true;
+                            }
+                        }
+                    }
+                    else if (info.Item == _hoveredItem)
+                    {
+                        // Start unhover animation
+                        if (info.HoverProgress > 0.0f)
+                        {
+                            if (!_isAnimating)
+                            {
+                                _animationTimer?.Start();
+                                _isAnimating = true;
+                            }
+                        }
+                    }
+                }
+            }
+            
             _hoveredItem = hitItem;
             Invalidate();
 
@@ -503,6 +574,43 @@ public class KryptonRadialMenu : VisualControl
     }
 
     /// <summary>
+    /// Raises the VisibleChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnVisibleChanged(EventArgs e)
+    {
+        base.OnVisibleChanged(e);
+        
+        if (Visible && _behavior.EnableAnimations)
+        {
+            // Start opening animation
+            _menuShowTime = Environment.TickCount;
+            _isAnimating = true;
+            
+            // Initialize animation state for all items
+            foreach (var info in _itemInfos)
+            {
+                info.Opacity = 0.0f;
+                info.Scale = 0.5f;
+                info.HoverProgress = 0.0f;
+                info.AnimationStartTime = _menuShowTime + (int)(_itemInfos.IndexOf(info) * (_behavior.AnimationDuration / (float)_itemInfos.Count));
+            }
+            
+            // Start animation timer
+            if (_animationTimer != null && !_animationTimer.Enabled)
+            {
+                _animationTimer.Start();
+            }
+        }
+        else if (!Visible)
+        {
+            // Stop animation when hidden
+            _animationTimer?.Stop();
+            _isAnimating = false;
+        }
+    }
+
+    /// <summary>
     /// Raises the Initialized event.
     /// </summary>
     /// <param name="e">An EventArgs that contains the event data.</param>
@@ -565,6 +673,7 @@ public class KryptonRadialMenu : VisualControl
     private void UpdateItemInfo()
     {
         _itemInfos.Clear();
+        _arrowSegments.Clear();
 
         if (_items.Count == 0)
         {
@@ -590,7 +699,10 @@ public class KryptonRadialMenu : VisualControl
             }
 
             // Calculate angles for items in this level
-            float sweepAngle = 360f / itemCount;
+            // If arrows are shown, reduce sweep angle to make room for arrows
+            float totalArrowWidth = _layout.ShowNavigationArrows ? _layout.ArrowSegmentWidth * itemCount : 0f;
+            float availableAngle = 360f - totalArrowWidth;
+            float sweepAngle = availableAngle / itemCount;
             float currentAngle = _layout.StartAngle;
 
             foreach (var item in levelItems)
@@ -604,7 +716,11 @@ public class KryptonRadialMenu : VisualControl
                     SweepAngle = sweepAngle,
                     InnerRadius = currentInnerRadius,
                     OuterRadius = outerRadius,
-                    Center = center
+                    Center = center,
+                    Opacity = _behavior.EnableAnimations ? 0.0f : 1.0f,
+                    Scale = _behavior.EnableAnimations ? 0.5f : 1.0f,
+                    HoverProgress = 0.0f,
+                    AnimationStartTime = 0
                 };
 
                 // Calculate bounding rectangle for hit testing
@@ -613,6 +729,21 @@ public class KryptonRadialMenu : VisualControl
                 _itemInfos.Add(info);
 
                 currentAngle += sweepAngle;
+
+                // Add arrow segment after this item (if arrows are enabled)
+                if (_layout.ShowNavigationArrows)
+                {
+                    var arrowInfo = new ArrowSegmentInfo
+                    {
+                        StartAngle = currentAngle,
+                        SweepAngle = _layout.ArrowSegmentWidth,
+                        InnerRadius = currentInnerRadius,
+                        OuterRadius = outerRadius,
+                        Center = center
+                    };
+                    _arrowSegments.Add(arrowInfo);
+                    currentAngle += _layout.ArrowSegmentWidth;
+                }
             }
 
             // Move to next level
@@ -661,6 +792,198 @@ public class KryptonRadialMenu : VisualControl
             renderer.RenderStandardBorder.DrawBorder(context, centerRect, palette.PaletteBorder, VisualOrientation.Top,
                 state);
         }
+
+        // Draw back arrow icon in center (pointing left)
+        DrawCenterArrowIcon(context, renderer, center, palette.PaletteContent, state);
+    }
+
+    private void DrawCenterArrowIcon(RenderContext context, IRenderer renderer, PointF center, IPaletteContent? paletteContent, PaletteState state)
+    {
+        // Arrow size based on center radius
+        float arrowSize = _layout.CenterRadius * 0.6f;
+        float arrowHalfWidth = arrowSize * 0.3f;
+        float arrowLength = arrowSize * 0.5f;
+
+        // Create left-pointing arrow
+        using var arrowPath = new GraphicsPath();
+        
+        // Arrow tip (pointing left)
+        PointF tip = new PointF(center.X - arrowLength, center.Y);
+        
+        // Arrow base points
+        PointF base1 = new PointF(center.X + arrowLength * 0.3f, center.Y - arrowHalfWidth);
+        PointF base2 = new PointF(center.X + arrowLength * 0.3f, center.Y + arrowHalfWidth);
+        
+        arrowPath.AddLine(tip, base1);
+        arrowPath.AddLine(base1, base2);
+        arrowPath.CloseFigure();
+
+        // Get arrow color from palette (use white/light color for visibility)
+        Color arrowColor = paletteContent?.GetContentShortTextColor1(state) ?? Color.White;
+        if (state == PaletteState.Disabled)
+        {
+            arrowColor = Color.FromArgb(128, arrowColor);
+        }
+        else
+        {
+            // Use white for better contrast on colored backgrounds
+            arrowColor = Color.White;
+        }
+
+        // Draw arrow
+        using var brush = new SolidBrush(arrowColor);
+        context.Graphics.FillPath(brush, arrowPath);
+    }
+
+    private void DrawArrows(RenderContext context, IRenderer renderer)
+    {
+        foreach (var arrowInfo in _arrowSegments)
+        {
+            DrawArrowSegment(context, renderer, arrowInfo);
+        }
+    }
+
+    private void DrawArrowSegment(RenderContext context, IRenderer renderer, ArrowSegmentInfo arrowInfo)
+    {
+        // Use normal client palette for arrows (they match the adjacent segments)
+        PaletteState state = Enabled ? PaletteState.Normal : PaletteState.Disabled;
+        IPaletteTriple palette = state == PaletteState.Disabled ? StateDisabledClient : StateNormalClient;
+
+        // Create pie slice path for arrow
+        using var path = CreateArrowPath(arrowInfo);
+
+        // Draw background
+        Rectangle boundsRect = Rectangle.Round(new RectangleF(
+            arrowInfo.Center.X - arrowInfo.OuterRadius,
+            arrowInfo.Center.Y - arrowInfo.OuterRadius,
+            arrowInfo.OuterRadius * 2,
+            arrowInfo.OuterRadius * 2));
+        renderer.RenderStandardBack.DrawBack(context, boundsRect, path, palette.PaletteBack, VisualOrientation.Top, state, null);
+
+        // Draw border
+        if (palette.PaletteBorder != null)
+        {
+            renderer.RenderStandardBorder.DrawBorder(context, boundsRect, palette.PaletteBorder, VisualOrientation.Top, state);
+        }
+
+        // Draw arrow icon pointing inward
+        DrawArrowIcon(context, renderer, arrowInfo, palette.PaletteContent, state);
+    }
+
+    private GraphicsPath CreateArrowPath(ArrowSegmentInfo arrowInfo)
+    {
+        var path = new GraphicsPath();
+
+        // Convert angles to radians
+        float startRad = (float)(arrowInfo.StartAngle * Math.PI / 180.0);
+        float sweepRad = (float)(arrowInfo.SweepAngle * Math.PI / 180.0);
+        float endRad = startRad + sweepRad;
+
+        // Calculate points
+        PointF center = arrowInfo.Center;
+        float innerRadius = arrowInfo.InnerRadius;
+        float outerRadius = arrowInfo.OuterRadius;
+
+        // Inner arc start point
+        PointF innerStart = new PointF(
+            center.X + (float)(innerRadius * Math.Cos(startRad)),
+            center.Y + (float)(innerRadius * Math.Sin(startRad)));
+
+        // Outer arc start point
+        PointF outerStart = new PointF(
+            center.X + (float)(outerRadius * Math.Cos(startRad)),
+            center.Y + (float)(outerRadius * Math.Sin(startRad)));
+
+        // Outer arc end point
+        PointF outerEnd = new PointF(
+            center.X + (float)(outerRadius * Math.Cos(endRad)),
+            center.Y + (float)(outerRadius * Math.Sin(endRad)));
+
+        // Inner arc end point
+        PointF innerEnd = new PointF(
+            center.X + (float)(innerRadius * Math.Cos(endRad)),
+            center.Y + (float)(innerRadius * Math.Sin(endRad)));
+
+        // Create rectangle for arcs
+        RectangleF outerRect = new RectangleF(
+            center.X - outerRadius,
+            center.Y - outerRadius,
+            outerRadius * 2,
+            outerRadius * 2);
+
+        RectangleF innerRect = new RectangleF(
+            center.X - innerRadius,
+            center.Y - innerRadius,
+            innerRadius * 2,
+            innerRadius * 2);
+
+        // Build path: outer arc -> line to inner end -> inner arc (reverse) -> line to outer start
+        path.AddArc(outerRect, arrowInfo.StartAngle, arrowInfo.SweepAngle);
+        path.AddLine(outerEnd, innerEnd);
+        path.AddArc(innerRect, arrowInfo.StartAngle + arrowInfo.SweepAngle, -arrowInfo.SweepAngle);
+        path.CloseFigure();
+
+        return path;
+    }
+
+    private void DrawArrowIcon(RenderContext context, IRenderer renderer, ArrowSegmentInfo arrowInfo, IPaletteContent? paletteContent, PaletteState state)
+    {
+        // Calculate center of the arrow segment
+        float midAngle = arrowInfo.StartAngle + (arrowInfo.SweepAngle / 2f);
+        float midRadius = (arrowInfo.InnerRadius + arrowInfo.OuterRadius) / 2f;
+        float midRad = (float)(midAngle * Math.PI / 180.0);
+
+        PointF arrowCenter = new PointF(
+            arrowInfo.Center.X + (float)(midRadius * Math.Cos(midRad)),
+            arrowInfo.Center.Y + (float)(midRadius * Math.Sin(midRad)));
+
+        // Create a small arrow icon pointing inward (toward center)
+        // Arrow size based on ring thickness
+        float arrowSize = Math.Min((arrowInfo.OuterRadius - arrowInfo.InnerRadius) * 0.4f, 12f);
+        RectangleF arrowRect = new RectangleF(
+            arrowCenter.X - arrowSize / 2,
+            arrowCenter.Y - arrowSize / 2,
+            arrowSize,
+            arrowSize);
+
+        // Draw arrow using graphics path
+        using var arrowPath = new GraphicsPath();
+        
+        // Create a simple triangle arrow pointing inward
+        float arrowHalfWidth = arrowSize * 0.3f;
+        float arrowLength = arrowSize * 0.5f;
+        
+        // Calculate arrow direction (pointing toward center)
+        float arrowDirection = midRad + (float)Math.PI; // Point inward
+        
+        // Arrow tip (pointing toward center)
+        PointF tip = new PointF(
+            arrowCenter.X + (float)(arrowLength * Math.Cos(arrowDirection)),
+            arrowCenter.Y + (float)(arrowLength * Math.Sin(arrowDirection)));
+        
+        // Arrow base points
+        PointF base1 = new PointF(
+            arrowCenter.X + (float)(arrowHalfWidth * Math.Cos(arrowDirection + Math.PI / 2)),
+            arrowCenter.Y + (float)(arrowHalfWidth * Math.Sin(arrowDirection + Math.PI / 2)));
+        
+        PointF base2 = new PointF(
+            arrowCenter.X + (float)(arrowHalfWidth * Math.Cos(arrowDirection - Math.PI / 2)),
+            arrowCenter.Y + (float)(arrowHalfWidth * Math.Sin(arrowDirection - Math.PI / 2)));
+        
+        arrowPath.AddLine(tip, base1);
+        arrowPath.AddLine(base1, base2);
+        arrowPath.CloseFigure();
+
+        // Get arrow color from palette
+        Color arrowColor = paletteContent?.GetContentShortTextColor1(state) ?? Color.Black;
+        if (state == PaletteState.Disabled)
+        {
+            arrowColor = Color.FromArgb(128, arrowColor);
+        }
+
+        // Draw arrow
+        using var brush = new SolidBrush(arrowColor);
+        context.Graphics.FillPath(brush, arrowPath);
     }
 
     private void DrawItems(RenderContext context, IRenderer renderer)
@@ -717,22 +1040,57 @@ public class KryptonRadialMenu : VisualControl
             };
         }
 
-        // Create pie slice path
-        using var path = CreatePieSlicePath(info);
-
-        // Draw background
-        Rectangle boundsRect = Rectangle.Round(info.Bounds);
-        renderer.RenderStandardBack.DrawBack(context, boundsRect, path, palette.PaletteBack, VisualOrientation.Top, state, null);
-
-        // Draw border
-        if (palette.PaletteBorder != null)
+        // Apply animations
+        float opacity = _behavior.EnableAnimations ? info.Opacity : 1.0f;
+        float scale = _behavior.EnableAnimations ? Lerp(1.0f, _behavior.HoverScaleFactor, info.HoverProgress) : (isHovered ? _behavior.HoverScaleFactor : 1.0f);
+        
+        // Save graphics state for transformations
+        GraphicsState gs = context.Graphics.Save();
+        
+        try
         {
-            renderer.RenderStandardBorder.DrawBorder(context, boundsRect, palette.PaletteBorder, VisualOrientation.Top,
-                state);
-        }
+            // Apply scale transformation (centered on item)
+            PointF center = info.Center;
+            float midAngle = info.StartAngle + (info.SweepAngle / 2f);
+            float midRadius = (info.InnerRadius + info.OuterRadius) / 2f;
+            float midRad = (float)(midAngle * Math.PI / 180.0);
+            
+            PointF itemCenter = new PointF(
+                center.X + (float)(midRadius * Math.Cos(midRad)),
+                center.Y + (float)(midRadius * Math.Sin(midRad)));
+            
+            context.Graphics.TranslateTransform(itemCenter.X, itemCenter.Y);
+            context.Graphics.ScaleTransform(scale, scale);
+            context.Graphics.TranslateTransform(-itemCenter.X, -itemCenter.Y);
+            
+            // Apply opacity by adjusting compositing mode
+            if (opacity < 1.0f)
+            {
+                context.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
+                context.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+            }
 
-        // Draw content (text and image)
-        DrawMenuItemContent(context, renderer, info, palette.PaletteContent, state);
+            // Create pie slice path
+            using var path = CreatePieSlicePath(info);
+
+            // Draw background
+            Rectangle boundsRect = Rectangle.Round(info.Bounds);
+            renderer.RenderStandardBack.DrawBack(context, boundsRect, path, palette.PaletteBack, VisualOrientation.Top, state, null);
+
+            // Draw border
+            if (palette.PaletteBorder != null)
+            {
+                renderer.RenderStandardBorder.DrawBorder(context, boundsRect, palette.PaletteBorder, VisualOrientation.Top,
+                    state);
+            }
+
+            // Draw content (text and image)
+            DrawMenuItemContent(context, renderer, info, palette.PaletteContent, state);
+        }
+        finally
+        {
+            context.Graphics.Restore(gs);
+        }
     }
 
     private GraphicsPath CreatePieSlicePath(RadialMenuItemInfo info)
@@ -882,13 +1240,13 @@ public class KryptonRadialMenu : VisualControl
         // Adjust for start angle
         angle = (angle - _layout.StartAngle + 360f) % 360f;
 
-        // Check each item
-            foreach (var info in _itemInfos)
+        // Check each item (skip arrow segments)
+        foreach (var info in _itemInfos)
+        {
+            if (distance >= info.InnerRadius && distance <= info.OuterRadius)
             {
-                if (distance >= info.InnerRadius && distance <= info.OuterRadius)
-                {
-                    // Normalize item start angle
-                    float itemStart = (info.StartAngle - _layout.StartAngle + 360f) % 360f;
+                // Normalize item start angle
+                float itemStart = (info.StartAngle - _layout.StartAngle + 360f) % 360f;
                 float itemEnd = (itemStart + info.SweepAngle) % 360f;
 
                 // Check if angle is within item's sweep
@@ -940,6 +1298,82 @@ public class KryptonRadialMenu : VisualControl
     {
         _floatingWindow = null;
         OnMenuReturned(EventArgs.Empty);
+    }
+
+    private void OnAnimationTimerTick(object? sender, EventArgs e)
+    {
+        if (!_behavior.EnableAnimations)
+        {
+            _animationTimer?.Stop();
+            _isAnimating = false;
+            return;
+        }
+
+        int currentTime = Environment.TickCount;
+        bool needsUpdate = false;
+
+        // Update opening animation
+        if (_menuShowTime > 0)
+        {
+            foreach (var info in _itemInfos)
+            {
+                int elapsed = currentTime - info.AnimationStartTime;
+                if (elapsed < 0)
+                {
+                    elapsed = 0;
+                }
+
+                float progress = Math.Min(elapsed / (float)_behavior.AnimationDuration, 1.0f);
+                
+                // Ease-out cubic for smooth animation
+                float eased = EaseOutCubic(progress);
+                
+                info.Opacity = eased;
+                info.Scale = 0.5f + (eased * 0.5f); // Scale from 0.5 to 1.0
+                
+                if (progress < 1.0f)
+                {
+                    needsUpdate = true;
+                }
+            }
+        }
+
+        // Update hover animations
+        foreach (var info in _itemInfos)
+        {
+            float targetHover = (_hoveredItem == info.Item) ? 1.0f : 0.0f;
+            float hoverStep = 0.15f; // Smooth hover transition
+            
+            if (Math.Abs(info.HoverProgress - targetHover) > 0.01f)
+            {
+                info.HoverProgress = Lerp(info.HoverProgress, targetHover, hoverStep);
+                needsUpdate = true;
+            }
+            else
+            {
+                info.HoverProgress = targetHover;
+            }
+        }
+
+        // Stop timer if no animations are running
+        if (!needsUpdate && _isAnimating)
+        {
+            _isAnimating = false;
+            _animationTimer?.Stop();
+        }
+
+        if (needsUpdate)
+        {
+            Invalidate();
+        }
+    }
+
+    private float Lerp(float start, float end, float amount) => start + (end - start) * amount;
+
+    private float EaseOutCubic(float t)
+    {
+        float t1 = t - 1.0f;
+        return t1 * t1 * t1 + 1.0f;
     }
 
     private void PaintTransparentBackground(PaintEventArgs? e)

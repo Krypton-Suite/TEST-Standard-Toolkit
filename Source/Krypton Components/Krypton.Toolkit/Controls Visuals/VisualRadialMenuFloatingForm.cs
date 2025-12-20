@@ -68,33 +68,26 @@ public class VisualRadialMenuFloatingForm : KryptonForm
             FormBorderStyle = FormBorderStyle.Sizable;
             WindowState = FormWindowState.Normal;
         }
-        else
-        {
-            // Floating tool window
-            FormBorderStyle = FormBorderStyle.SizableToolWindow;
-        }
 
-        // Check if radial menu has transparent background
-        bool isTransparent = radialMenu.BackColor == Color.Transparent;
+        // Make form invisible using transparency key
+        // Set background to transparency key color so form itself is invisible
+        BackColor = GlobalStaticValues.TRANSPARENCY_KEY_COLOR;
+        TransparencyKey = GlobalStaticValues.TRANSPARENCY_KEY_COLOR;
         
-        // For transparent backgrounds, we need to configure the form's palette
-        if (isTransparent)
-        {
-            // Set form background to match radial menu's parent or use a transparent key
-            // Since KryptonForm ignores BackColor, we'll handle it via the form's client area
-            StateCommon?.Back.Color1 = Color.Transparent;
-            StateCommon?.Back.ColorStyle = PaletteColorStyle.Solid;
-        }
+        // Remove border drawing
+        StateCommon!.Border.DrawBorders = PaletteDrawBorders.None;
+        StateCommon.Border.Width = 0;
 
-        // Create content panel - always transparent to let radial menu show through
+        // Create content panel - transparent to let radial menu show through
         _contentPanel = new KryptonPanel
         {
             Dock = DockStyle.Fill,
-            Padding = isTransparent ? new Padding(0) : new Padding(5)
+            Padding = new Padding(0)
         };
         
-        // Set panel to transparent
-        _contentPanel.StateCommon.Color1 = Color.Transparent;
+        // Set panel to transparent (use transparency key color)
+        _contentPanel.BackColor = GlobalStaticValues.TRANSPARENCY_KEY_COLOR;
+        _contentPanel.StateCommon.Color1 = GlobalStaticValues.TRANSPARENCY_KEY_COLOR;
         _contentPanel.StateCommon.ColorStyle = PaletteColorStyle.Solid;
 
         // Move the radial menu to this window

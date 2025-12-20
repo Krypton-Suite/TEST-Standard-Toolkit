@@ -20,6 +20,9 @@ public class RadialMenuBehaviorValues : Storage
     private bool _allowDrag;
     private bool _allowFloat;
     private Form? _mdiParent;
+    private bool _enableAnimations;
+    private int _animationDuration;
+    private float _hoverScaleFactor;
     #endregion
 
     #region Identity
@@ -33,6 +36,9 @@ public class RadialMenuBehaviorValues : Storage
         _allowDrag = false;
         _allowFloat = false;
         _mdiParent = null;
+        _enableAnimations = true;
+        _animationDuration = 300;
+        _hoverScaleFactor = 1.1f;
     }
     #endregion
 
@@ -86,6 +92,82 @@ public class RadialMenuBehaviorValues : Storage
     private void ResetMdiParent() => MdiParent = null;
 
     /// <summary>
+    /// Gets or sets a value indicating whether animations are enabled.
+    /// </summary>
+    [Category(@"Animation")]
+    [Description(@"Indicates whether animations are enabled for menu items.")]
+    [DefaultValue(true)]
+    public bool EnableAnimations
+    {
+        get => _enableAnimations;
+        set
+        {
+            if (_enableAnimations != value)
+            {
+                _enableAnimations = value;
+                _owner.PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeEnableAnimations() => !_enableAnimations;
+
+    private void ResetEnableAnimations() => EnableAnimations = true;
+
+    /// <summary>
+    /// Gets or sets the animation duration in milliseconds.
+    /// </summary>
+    [Category(@"Animation")]
+    [Description(@"Animation duration in milliseconds.")]
+    [DefaultValue(300)]
+    public int AnimationDuration
+    {
+        get => _animationDuration;
+        set
+        {
+            if (value < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(AnimationDuration), @"Animation duration cannot be less than zero");
+            }
+            if (_animationDuration != value)
+            {
+                _animationDuration = value;
+            }
+        }
+    }
+
+    private bool ShouldSerializeAnimationDuration() => _animationDuration != 300;
+
+    private void ResetAnimationDuration() => AnimationDuration = 300;
+
+    /// <summary>
+    /// Gets or sets the scale factor for hover animations (1.0 = no scaling).
+    /// </summary>
+    [Category(@"Animation")]
+    [Description(@"Scale factor for hover animations (1.0 = no scaling).")]
+    [DefaultValue(1.1f)]
+    public float HoverScaleFactor
+    {
+        get => _hoverScaleFactor;
+        set
+        {
+            if (value < 1.0f)
+            {
+                throw new ArgumentOutOfRangeException(nameof(HoverScaleFactor), @"Hover scale factor must be at least 1.0");
+            }
+            if (_hoverScaleFactor != value)
+            {
+                _hoverScaleFactor = value;
+                _owner.PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeHoverScaleFactor() => Math.Abs(_hoverScaleFactor - 1.1f) > 0.01f;
+
+    private void ResetHoverScaleFactor() => HoverScaleFactor = 1.1f;
+
+    /// <summary>
     /// Resets all properties to their default values.
     /// </summary>
     public void Reset()
@@ -93,6 +175,9 @@ public class RadialMenuBehaviorValues : Storage
         ResetAllowDrag();
         ResetAllowFloat();
         ResetMdiParent();
+        ResetEnableAnimations();
+        ResetAnimationDuration();
+        ResetHoverScaleFactor();
     }
 
     /// <summary>
@@ -102,7 +187,10 @@ public class RadialMenuBehaviorValues : Storage
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public override bool IsDefault => !ShouldSerializeAllowDrag()
                                     && !ShouldSerializeAllowFloat()
-                                    && !ShouldSerializeMdiParent();
+                                    && !ShouldSerializeMdiParent()
+                                    && !ShouldSerializeEnableAnimations()
+                                    && !ShouldSerializeAnimationDuration()
+                                    && !ShouldSerializeHoverScaleFactor();
 
     /// <summary>
     /// Returns a string that represents the current object.

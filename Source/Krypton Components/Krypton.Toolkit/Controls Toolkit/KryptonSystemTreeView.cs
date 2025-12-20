@@ -362,7 +362,13 @@ public class KryptonSystemTreeView : KryptonTreeView
             {
                 using (icon)
                 {
-                    Bitmap sourceBitmap = icon.ToBitmap();
+                    Bitmap? sourceBitmap = icon.ToBitmap();
+                    if (sourceBitmap == null || sourceBitmap.Width <= 0 || sourceBitmap.Height <= 0)
+                    {
+                        // Invalid bitmap, skip
+                        return 0;
+                    }
+                    
                     try
                     {
                         // Create a bitmap with the exact size needed for ImageList
@@ -459,7 +465,13 @@ public class KryptonSystemTreeView : KryptonTreeView
             {
                 using (icon)
                 {
-                    Bitmap sourceBitmap = icon.ToBitmap();
+                    Bitmap? sourceBitmap = icon.ToBitmap();
+                    if (sourceBitmap == null || sourceBitmap.Width <= 0 || sourceBitmap.Height <= 0)
+                    {
+                        // Invalid bitmap, skip
+                        return 0;
+                    }
+                    
                     try
                     {
                         // Create a bitmap with the exact size needed for ImageList
