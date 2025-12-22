@@ -69,7 +69,7 @@ public class ButtonSpecFormWindowMax : ButtonSpecFormFixed
         if (GetViewEnabled())
         {
             // If we do not provide an inert form
-            if (!KryptonForm.FormValues.InertForm)
+            if (!KryptonForm.InertForm)
             {
                 // Only if the mouse is still within the button bounds do we perform action
                 var mea = (MouseEventArgs)e;

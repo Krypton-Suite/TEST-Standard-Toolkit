@@ -365,14 +365,14 @@ public class KryptonIntegratedToolBarManager : Component
             {
                 foreach (ButtonSpecAny button in ReturnIntegratedToolBarButtonArray())
                 {
-                    parentForm.FormValues.ButtonSpecs.Add(button);
+                    parentForm.ButtonSpecs.Add(button);
                 }
             }
             else
             {
                 foreach (ButtonSpecAny button in ReturnIntegratedToolBarButtonArray())
                 {
-                    parentForm.FormValues.ButtonSpecs.Remove(button);
+                    parentForm.ButtonSpecs.Remove(button);
                 }
             }
         }
@@ -392,7 +392,7 @@ public class KryptonIntegratedToolBarManager : Component
             {
                 foreach (ButtonSpecAny button in ReturnIntegratedToolBarButtonArray())
                 {
-                    parentForm.FormValues.ButtonSpecs.Add(button);
+                    parentForm.ButtonSpecs.Add(button);
                 }
 
                 UpdateButtonVisibility(true);
@@ -419,7 +419,7 @@ public class KryptonIntegratedToolBarManager : Component
             {
                 foreach (ButtonSpecAny button in ReturnIntegratedToolBarButtonArray())
                 {
-                    parentForm.FormValues.ButtonSpecs.Remove(button);
+                    parentForm.ButtonSpecs.Remove(button);
                 }
 
                 UpdateButtonVisibility(false);

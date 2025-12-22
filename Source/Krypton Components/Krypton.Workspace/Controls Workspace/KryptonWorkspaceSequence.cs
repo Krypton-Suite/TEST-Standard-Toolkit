@@ -531,12 +531,8 @@ public class KryptonWorkspaceSequence : Component,
         // Load the sequence details
         workspace.ReadSequenceElement(xmlReader, this);
 
-        // If the sequence contains nothing then read past the empty element and exit
-        if (xmlReader.IsEmptyElement)
-        {
-            xmlReader.Read();
-        }
-        else
+        // If the sequence contains nothing then exit immediately
+        if (!xmlReader.IsEmptyElement)
         {
             do
             {

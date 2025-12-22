@@ -9,9 +9,6 @@
 
 namespace Krypton.Toolkit;
 
-using System.ComponentModel;
-using System.Windows.Forms;
-
 /// <summary>
 /// Groups file system tree view specific properties for display in the PropertyGrid.
 /// </summary>
@@ -28,18 +25,24 @@ public class FileSystemTreeViewValues : Storage
     private string _fileFilter = "*.*";
     private bool _showSpecialFolders = true;
 
-    private readonly KryptonFileSystemTreeView _owner;
+    private readonly InternalKryptonFileSystemTreeView _owner;
 
     #endregion
+
+    #region Identity
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FileSystemTreeViewValues"/> class.
     /// </summary>
     /// <param name="owner">The owner.</param>
-    internal FileSystemTreeViewValues(KryptonFileSystemTreeView owner)
+    internal FileSystemTreeViewValues(InternalKryptonFileSystemTreeView owner)
     {
         _owner = owner;
     }
+
+    #endregion
+
+    #region Public
 
     /// <summary>
     /// Gets or sets the root mode for the tree view.
@@ -179,13 +182,17 @@ public class FileSystemTreeViewValues : Storage
             }
         }
     }
+    #endregion
+
+    #region IsDefault
 
     public override bool IsDefault => throw new NotImplementedException();
+
+    #endregion
 
     /// <summary>
     /// Returns a string representation of this object.
     /// </summary>
     /// <returns>A string that represents the current object.</returns>
-    public override string ToString() => "File System Tree View Values";
+    public override string ToString() => IsDefault ? string.Empty : "Modified";
 }
-

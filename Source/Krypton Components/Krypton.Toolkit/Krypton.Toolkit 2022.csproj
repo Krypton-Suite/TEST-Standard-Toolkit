@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <Choose>
 	<When Condition="'$(Configuration)' == 'Nightly' Or '$(Configuration)' == 'Canary' Or '$(Configuration)' == 'Debug'">
@@ -34,7 +34,6 @@
 	<Configurations>Debug;Release;Installer;Nightly;Canary</Configurations>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	<OutputPath>..\..\..\Bin\$(Configuration)\</OutputPath>
-	<BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
 	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	<Nullable>enable</Nullable>
 	<!--https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-messages/warning-waves-->
@@ -57,6 +56,7 @@
 	<ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
 		<Reference Include="System.Net.Http" />
 	</ItemGroup>
+
 
 
 	<PropertyGroup>
@@ -932,42 +932,6 @@
 	<EmbeddedResource Update="ResourceFiles\WindowsLogos\WindowsLogoImageResources.resx">
 	  <Generator>ResXFileCodeGenerator</Generator>
 	  <LastGenOutput>WindowsLogoImageResources.Designer.cs</LastGenOutput>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\RTL\ProgressBar\VisualToastNotificationMaskedTextBoxInputWithProgressBarRtlAwareForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationMaskedTextBoxInputWithProgressBarRtlAwareForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\RTL\ProgressBar\VisualToastNotificationComboBoxUserInputWithProgressBarRtlAwareForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationComboBoxUserInputWithProgressBarRtlAwareForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\RTL\ProgressBar\VisualToastNotificationDomainUpDownInputWithProgressBarRtlAwareForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationDomainUpDownInputWithProgressBarRtlAwareForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\RTL\ProgressBar\VisualToastNotificationTextBoxUserInputWithProgressBarRtlAwareForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationTextBoxUserInputWithProgressBarRtlAwareForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\RTL\ProgressBar\VisualToastNotificationDateTimeUserInputWithProgressBarRtlAwareForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationDateTimeUserInputWithProgressBarRtlAwareForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\RTL\ProgressBar\VisualToastNotificationNUDUserInputWithProgressBarRtlAwareForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationNUDUserInputWithProgressBarRtlAwareForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\LTR\ProgressBar\VisualToastNotificationMaskedTextBoxInputWithProgressBarForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationMaskedTextBoxInputWithProgressBarForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\LTR\ProgressBar\VisualToastNotificationComboBoxUserInputWithProgressBarForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationComboBoxUserInputWithProgressBarForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\LTR\ProgressBar\VisualToastNotificationDomianUpDownInputWithProgressBarForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationDomianUpDownInputWithProgressBarForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\LTR\ProgressBar\VisualToastNotificationTextBoxUserInputWithProgressBarForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationTextBoxUserInputWithProgressBarForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\LTR\ProgressBar\VisualToastNotificationDateTimeUserInputWithProgressBarForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationDateTimeUserInputWithProgressBarForm</ManifestResourceName>
-	</EmbeddedResource>
-	<EmbeddedResource Update="Controls Visuals\Notification Toast\User Input\LTR\ProgressBar\VisualToastNotificationNUDUserInputWithProgressBarForm.resx">
-	  <ManifestResourceName>Krypton.Toolkit.VisualToastNotificationNUDUserInputWithProgressBarForm</ManifestResourceName>
 	</EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

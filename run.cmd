@@ -1,4 +1,4 @@
-﻿:: Last updated: Saturday 16th August, 2025 @ 19:00
+﻿:: Last updated: Saturday 6th December, 2025 @ 10:00
 
 @echo off
 
@@ -16,18 +16,18 @@ goto selectvsversion
 :selectvsversion
 cls
 
-@echo Welcome to the Krypton Toolkit Build system, version: 3.0.
+@echo Welcome to the Krypton Toolkit Build system, version: 3.0a.
 @echo Please select the Visual Studio toolset to target.
 echo:
 @echo ==============================================================================================
 echo:
 echo 1. Visual Studio 2022 (Scripts\VS2022)
-echo 2. Visual Studio 2026 (Scripts\VS2026)
+echo 2. Visual Studio 2026 (Scripts\Current)
 echo 3. End
 echo:
 set /p answer="Enter number (1 - 3): "
 if "%answer%"=="1" (goto usevs2022)
-if "%answer%"=="2" (goto usevs2026)
+if "%answer%"=="2" (goto usevscurrent)
 if "%answer%"=="3" (goto exitbuildsystem)
 
 @echo Invalid input, please try again.
@@ -41,8 +41,8 @@ call :configurevsversion VS2022
 if errorlevel 1 (goto selectvsversion)
 goto mainmenu
 
-:usevs2026
-call :configurevsversion VS2026
+:usevscurrent
+call :configurevsversion Current
 if errorlevel 1 (goto selectvsversion)
 goto mainmenu
 
@@ -82,10 +82,11 @@ echo 4. Build and Pack Toolkit
 echo 5. Debug project
 echo 6. NuGet Tools
 echo 7. Create Archives (ZIP/TAR)
-echo 8. Change Visual Studio target
-echo 9. End
+echo 8. WebView2 SDK Tools
+echo 9. Change Visual Studio target
+echo 10. End
 echo:
-set /p answer="Enter number (1 - 9): "
+set /p answer="Enter number (1 - 10): "
 if "%answer%"=="1" (goto cleanproject)
 if "%answer%"=="2" (goto buildproject)
 if "%answer%"=="3" (goto createnugetpackages)
@@ -93,8 +94,9 @@ if "%answer%"=="4" (goto buildandpacktoolkit)
 if "%answer%"=="5" (goto debugproject)
 if "%answer%"=="6" (goto nugettools)
 if "%answer%"=="7" (goto createarchives)
-if "%answer%"=="8" (goto selectvsversion)
-if "%answer%"=="9" (goto exitbuildsystem)
+if "%answer%"=="8" (goto webview2menu)
+if "%answer%"=="9" (goto selectvsversion)
+if "%answer%"=="10" (goto exitbuildsystem)
 
 @echo Invalid input, please try again.
 
@@ -109,14 +111,16 @@ echo 1. Build nightly version
 echo    a. Rebuild project
 echo 2. Build canary version
 echo 3. Build stable version
-echo 4. Go back to main menu
+echo 4. Build long term stable version (LTS)
+echo 5. Go back to main menu
 echo:
-set /p answer="Enter number or letter (1 - 4, a - *): "
+set /p answer="Enter number or letter (1 - 5, a - *): "
 if %answer%==1 (goto buildnightly)
 if %answer%==a (goto rebuildproject)
 if %answer%==2 (goto buildcanary)
 if %answer%==3 (goto buildstable)
-if %answer%==4 (goto mainmenu)
+if %answer%==4 (goto buildlts)
+if %answer%==5 (goto mainmenu)
 
 @echo Invalid input, please try again.
 
@@ -130,13 +134,15 @@ cls
 echo 1. Pack nightly version
 echo 2. Pack canary version
 echo 3. Pack stable version
-echo 4. Go back to main menu
+echo 4. Pack long term stable version (LTS)
+echo 5. Go back to main menu
 echo:
-set /p answer="Enter number (1 - 4): "
+set /p answer="Enter number (1 - 5): "
 if %answer%==1 (goto packnightly)
 if %answer%==2 (goto packcanary)
 if %answer%==3 (goto packstable)
-if %answer%==4 (goto mainmenu)
+if %answer%==4 (goto packlts)
+if %answer%==5 (goto mainmenu)
 
 @echo Invalid input, please try again.
 
@@ -167,13 +173,15 @@ cls
 echo 1. Build and pack nightly
 echo 2. Build and pack canary
 echo 3. Build and pack stable
-echo 4. Go to main mainmenu
+echo 4. Build and pack long term stable (LTS)
+echo 5. Go to main mainmenu
 echo:
-set /p answer="Enter number (1 - 4): "
+set /p answer="Enter number (1 - 5): "
 if %answer%==1 (goto buildandpacknightly)
 if %answer%==2 (goto buildandpackcanary)
 if %answer%==3 (goto buildandpackstable)
-if %answer%==4 (goto mainmenu)
+if %answer%==4 (goto buildandpacklts)
+if %answer%==5 (goto mainmenu)
 
 @echo Invalid input, please try again.
 
@@ -311,6 +319,16 @@ pause
 goto createarchives
 
 :: ===================================================================================================
+
+:webview2menu
+
+cls
+
+cd Scripts/WebVew2/
+
+WebView2Setup.cmd
+
+:; ===================================================================================================
 
 :updatenuget
 cls
@@ -477,6 +495,12 @@ cls
 call "%VS_SCRIPTS_DIR%\build-stable.cmd"
 goto buildmenu
 
+:buildlts
+cls
+
+call "%VS_SCRIPTS_DIR%\build-lts.cmd"
+goto buildmenu
+
 
 :: ===================================================================================================
 
@@ -521,6 +545,29 @@ pause
 
 goto packstable
 
+:packltsmenu
+
+cls
+
+echo 1. Produce 'Lite' LTS packages
+echo 2. Produce 'full' LTS packages
+echo 3. Produce 'full/lite' LTS packages
+echo 4. Go back to main menu
+
+echo:
+set /p answer="Enter number (1 - 4): "
+
+if %answer%==1 (goto packltslite)
+if %answer%==2 (goto packltsfull)
+if %answer%==3 (goto packltsboth)
+if %answer%==4 (goto mainmenu)
+
+@echo Invalid input, please try again.
+
+pause
+
+goto packltsmenu
+
 :: ===================================================================================================
 
 :packstablelite
@@ -543,6 +590,24 @@ cls
 
 call "%VS_SCRIPTS_DIR%\build-stable.cmd" Pack
 goto packmenu
+
+:packltslite
+cls
+
+call "%VS_SCRIPTS_DIR%\build-lts.cmd" PackLite
+goto packltsmenu
+
+:packltsfull
+cls
+
+call "%VS_SCRIPTS_DIR%\build-lts.cmd" PackAll
+goto packltsmenu
+
+:packltsboth
+cls
+
+call "%VS_SCRIPTS_DIR%\build-lts.cmd" Pack
+goto packltsmenu
 
 :: ===================================================================================================
 
@@ -591,15 +656,17 @@ echo 1. Build nightly packages
 echo 2. Build canary packages
 echo 3. Build stable packages
 echo 4. Build stable (lite) packages
-echo 5. Go back to main menu
+echo 5. Build LTS packages
+echo 6. Go back to main menu
 echo:
-set /p answer="Enter number (1 - 5): "
+set /p answer="Enter number (1 - 6): "
 
 if %answer%==1 (goto buildnightlypackages)
 if %answer%==2 (goto buildcanarypackages)
 if %answer%==3 (goto buildstablepackages)
 if %answer%==4 (goto buildstablelitepackages)
-if %answer%==5 (goto mainmenu)
+if %answer%==5 (goto buildltspackages)
+if %answer%==6 (goto mainmenu)
 
 @echo Invalid input, please try again.
 
@@ -671,11 +738,19 @@ cls
 
 call "%VS_SCRIPTS_DIR%\build-nightly.cmd" Pack
 
+pause
+
+goto mainmenu
+
 :buildandpackcanary
 cls
 
 
 call "%VS_SCRIPTS_DIR%\build-canary.cmd" Pack
+
+pause
+
+goto mainmenu
 
 :buildandpackstable
 cls
@@ -683,7 +758,99 @@ cls
 
 call "%VS_SCRIPTS_DIR%\build-stable.cmd" Pack
 
+pause
+
+goto mainmenu
+
+:buildandpacklts
+cls
+
+
+call "%VS_SCRIPTS_DIR%\build-lts.cmd" Pack
+
+pause
+
+goto mainmenu
+
 :: ===================================================================================================
+
+:webview2tools
+cls
+
+echo WebView2 SDK Tools
+echo.
+echo 1. Setup WebView2 SDK
+echo 2. Update WebView2 SDK
+echo 3. Check WebView2 Version
+echo 4. Go back to main menu
+echo:
+set /p answer="Enter number (1 - 4): "
+if %answer%==1 (goto setupwebview2sdk)
+if %answer%==2 (goto updatewebview2sdk)
+if %answer%==3 (goto checkwebview2version)
+if %answer%==4 (goto mainmenu)
+
+@echo Invalid input, please try again.
+
+pause
+
+goto webview2tools
+
+:: ===================================================================================================
+
+:setupwebview2sdk
+cls
+
+echo Setting up WebView2 SDK for KryptonWebView2 control...
+echo This will install the latest stable WebView2 SDK version.
+echo.
+
+cd Scripts
+
+Setup-WebView2SDK.cmd
+
+cd ..
+
+pause
+
+goto webview2tools
+
+:: ===================================================================================================
+
+:updatewebview2sdk
+cls
+
+echo Updating WebView2 SDK to latest version...
+echo This will check for updates and install the newest stable version.
+echo.
+
+cd Scripts
+
+Update-WebView2SDK.cmd
+
+cd ..
+
+pause
+
+goto webview2tools
+
+:: ===================================================================================================
+
+:checkwebview2version
+cls
+
+echo Checking WebView2 SDK version...
+echo.
+
+cd Scripts
+
+Check-WebView2Version.cmd
+
+cd ..
+
+pause
+
+goto webview2tools
 
 :clearlogfiles
 

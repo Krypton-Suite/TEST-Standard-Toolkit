@@ -225,7 +225,7 @@
             this.Controls.Add(this.kpnlMain);
             this.Controls.Add(this.kpnlFooter);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
-            this.FormValues.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Near;
+            this.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Near;
             this.GroupBackStyle = Krypton.Toolkit.PaletteBackStyle.FormMain;
             this.GroupBorderStyle = Krypton.Toolkit.PaletteBorderStyle.FormMain;
             this.HeaderStyle = Krypton.Toolkit.HeaderStyle.Form;
@@ -237,7 +237,7 @@
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
-            this.FormValues.TitleStyle = Krypton.Toolkit.KryptonFormTitleStyle.Inherit;
+            this.TitleStyle = Krypton.Toolkit.KryptonFormTitleStyle.Inherit;
             this.Load += new System.EventHandler(this.VisualToastNotificationBasicWithProgressBarForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.kpnlMain)).EndInit();
             this.kpnlMain.ResumeLayout(false);

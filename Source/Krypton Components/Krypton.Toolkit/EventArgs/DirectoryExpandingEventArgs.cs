@@ -17,15 +17,14 @@ public class DirectoryExpandingEventArgs : CancelEventArgs
     /// <summary>
     /// Initializes a new instance of the DirectoryExpandingEventArgs class.
     /// </summary>
-    /// <param name="path">The path of the directory being expanded.</param>
-    public DirectoryExpandingEventArgs(string path)
+    /// <param name="directoryPath">The path of the directory being expanded.</param>
+    public DirectoryExpandingEventArgs(string directoryPath)
     {
-        Path = path;
+        DirectoryPath = directoryPath;
     }
 
     /// <summary>
     /// Gets the path of the directory being expanded.
     /// </summary>
-    public string Path { get; }
+    public string DirectoryPath { get; }
 }
-

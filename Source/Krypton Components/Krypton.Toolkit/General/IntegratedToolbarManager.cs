@@ -53,7 +53,7 @@ internal class IntegratedToolbarManager
                 {
                     foreach (ButtonSpecAny buttons in _integratedToolBarValues.IntegratedToolBarItems)
                     {
-                        _parentForm.FormValues.ButtonSpecs.Add(buttons);
+                        _parentForm.ButtonSpecs.Add(buttons);
                     }
                 }
                 else

@@ -53,7 +53,7 @@ public class KryptonFloatingWindow : KryptonForm
         ShowInTaskbar = false;
         MinimizeBox = useMinimiseBox;
         StartPosition = FormStartPosition.Manual;
-        FormValues.ButtonSpecMin.ImageStates.ImageDisabled = EMPTY_IMAGE;
+        ButtonSpecMin.ImageStates.ImageDisabled = EMPTY_IMAGE;
 
         // Hook into floatspace events and add as the content of the floating window
         FloatspaceControl = floatspace;
