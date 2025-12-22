@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -8,15 +8,11 @@
 #endregion
 
 namespace Krypton.Toolkit;
-
-using System.ComponentModel;
-using System.Windows.Forms;
-
 /// <summary>
 /// Groups system tree view specific properties for display in the PropertyGrid.
 /// </summary>
 [TypeConverter(typeof(ExpandableObjectConverter))]
-public class SystemTreeViewValues : Storage
+internal class SystemTreeViewValues : Storage
 {
     #region Instance Fields
 
@@ -26,7 +22,7 @@ public class SystemTreeViewValues : Storage
     private string _fileFilter = "*.*";
     private bool _useLargeIcons = false;
 
-    private readonly KryptonSystemTreeView _owner;
+    private readonly InternalKryptonSystemTreeView _owner;
 
     #endregion
 
@@ -34,7 +30,7 @@ public class SystemTreeViewValues : Storage
     /// Initializes a new instance of the <see cref="SystemTreeViewValues"/> class.
     /// </summary>
     /// <param name="owner">The owner.</param>
-    internal SystemTreeViewValues(KryptonSystemTreeView owner)
+    internal SystemTreeViewValues(InternalKryptonSystemTreeView owner)
     {
         _owner = owner;
     }
@@ -156,6 +152,5 @@ public class SystemTreeViewValues : Storage
     /// Returns a string representation of this object.
     /// </summary>
     /// <returns>A string that represents the current object.</returns>
-    public override string ToString() => "System Tree View Values";
+    public override string ToString() => IsDefault ? string.Empty : "Modified";
 }
-

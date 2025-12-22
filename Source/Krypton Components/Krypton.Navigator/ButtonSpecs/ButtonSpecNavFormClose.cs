@@ -77,7 +77,7 @@ public class ButtonSpecNavFormClose : ButtonSpecNavFixed
     {
         if (GetViewEnabled())
         {
-            if (_navigator.Owner is { FormValues.InertForm: false })
+            if (_navigator.Owner is { InertForm: false })
             {
                 var mea = (MouseEventArgs)e;
 

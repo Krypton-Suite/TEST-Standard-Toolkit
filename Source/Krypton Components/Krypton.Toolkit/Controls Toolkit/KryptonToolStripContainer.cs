@@ -1,12 +1,9 @@
-#region BSD License
+﻿#region BSD License
 /*
- * 
- * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
- *  © Component Factory Pty Ltd, 2006 - 2016, (Version 4.5.0.0) All rights reserved.
- * 
+ *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
- *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac & Ahmed Abdelhameed et al. 2017 - 2026. All rights reserved.
- *  
+ *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac & Ahmed Abdelhameed, tobitege et al. 2026 - 2026. All rights reserved.
+ *
  */
 #endregion
 
@@ -24,6 +21,7 @@ namespace Krypton.Toolkit;
 public class KryptonToolStripContainer : ToolStripContainer
 {
     #region Instance Fields
+
     private PaletteRedirect? _redirector;
     private PaletteDoubleRedirect? _stateCommon;
     private PaletteDouble? _stateDisabled;
@@ -31,9 +29,11 @@ public class KryptonToolStripContainer : ToolStripContainer
     private PaletteBase? _palette;
     private PaletteMode _paletteMode;
     private bool _contentPanelPainted;
+    
     #endregion
 
     #region Identity
+    
     /// <summary>
     /// Initialize a new instance of the KryptonToolStripContainer class.
     /// </summary>
@@ -80,9 +80,11 @@ public class KryptonToolStripContainer : ToolStripContainer
 
         base.Dispose(disposing);
     }
+
     #endregion
 
     #region Public
+    
     /// <summary>
     /// Gets and sets the palette mode.
     /// </summary>
@@ -238,9 +240,11 @@ public class KryptonToolStripContainer : ToolStripContainer
         // Not implemented for ToolStripContainer
         // This method is provided for API consistency with other Krypton controls
     }
+    
     #endregion
 
     #region Protected Overrides
+
     /// <summary>
     /// Raises the EnabledChanged event.
     /// </summary>
@@ -251,9 +255,11 @@ public class KryptonToolStripContainer : ToolStripContainer
         ContentPanel.Invalidate();
         base.OnEnabledChanged(e);
     }
+    
     #endregion
 
     #region Implementation
+    
     private void OnNeedPaint(object? sender, NeedLayoutEventArgs e)
     {
         // Need to repaint ContentPanel when palette changes
@@ -321,6 +327,6 @@ public class KryptonToolStripContainer : ToolStripContainer
             Invalidate();
         }
     }
+
     #endregion
 }
-

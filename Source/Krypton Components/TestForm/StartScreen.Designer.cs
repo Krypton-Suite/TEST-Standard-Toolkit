@@ -131,8 +131,8 @@ namespace TestForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.FormValues.ButtonSpecs.Add(this.btnRestoreSize);
-            this.FormValues.ButtonSpecs.Add(this.btnDockTopRight);
+            this.ButtonSpecs.Add(this.btnRestoreSize);
+            this.ButtonSpecs.Add(this.btnDockTopRight);
             this.CancelButton = this.kbtnExit;
             this.ClientSize = new System.Drawing.Size(876, 729);
             this.Controls.Add(this.kryptonThemeListBox1);

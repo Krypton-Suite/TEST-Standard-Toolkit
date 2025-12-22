@@ -17,15 +17,14 @@ public class DirectoryExpandedEventArgs : EventArgs
     /// <summary>
     /// Initializes a new instance of the DirectoryExpandedEventArgs class.
     /// </summary>
-    /// <param name="path">The path of the directory that was expanded.</param>
+    /// <param name="path">The path that was expanded or selected.</param>
     public DirectoryExpandedEventArgs(string path)
     {
         Path = path;
     }
 
     /// <summary>
-    /// Gets the path of the directory that was expanded.
+    /// Gets the path that was expanded or selected.
     /// </summary>
     public string Path { get; }
 }
-

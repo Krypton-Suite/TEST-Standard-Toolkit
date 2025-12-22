@@ -209,7 +209,7 @@
             this.Controls.Add(this.kryptonPanel2);
             this.Controls.Add(this.kpnlButtons);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
-            this.FormValues.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
+            this.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "VisualToastNotificationBasicForm";

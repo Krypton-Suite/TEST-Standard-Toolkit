@@ -616,7 +616,13 @@ public class KryptonFileSystemListView : KryptonListView
             {
                 using (icon)
                 {
-                    Bitmap sourceBitmap = icon.ToBitmap();
+                    Bitmap? sourceBitmap = icon.ToBitmap();
+                    if (sourceBitmap == null || sourceBitmap.Width <= 0 || sourceBitmap.Height <= 0)
+                    {
+                        // Invalid bitmap, skip
+                        return 0;
+                    }
+                    
                     try
                     {
                         Bitmap? bitmapToAdd = CreateBitmapForImageList(sourceBitmap);
@@ -659,6 +665,11 @@ public class KryptonFileSystemListView : KryptonListView
 
     private Bitmap? CreateBitmapForImageList(Bitmap sourceBitmap)
     {
+        if (sourceBitmap == null || sourceBitmap.Width <= 0 || sourceBitmap.Height <= 0)
+        {
+            return null;
+        }
+        
         try
         {
             // Create a bitmap with the exact size needed for ImageList
@@ -707,6 +718,7 @@ public class KryptonFileSystemListView : KryptonListView
     /// <summary>
     /// Gets or sets how items are displayed in the control.
     /// </summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public new View View
     {
         get => base.View;

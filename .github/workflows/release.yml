@@ -1,5 +1,5 @@
 # New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
-# Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac, tobitege et al. 2025 - 2025. All rights reserved.
+# Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), tobitege et al. 2025 - 2026. All rights reserved.
 
 name: Release
 
@@ -15,7 +15,6 @@ on:
 jobs:
   release-master:
     runs-on: windows-latest
-    # environment: production  # Requires approval before publishing - DISABLED for automatic publishing
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
@@ -36,30 +35,6 @@ jobs:
             echo "enabled=true" >> $env:GITHUB_OUTPUT
           }
 
-      - name: Security - Verify Repository
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/TEST-Standard-Toolkit') {
-            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/TEST-Standard-Toolkit"
-            exit 1
-          }
-          Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
-
-      - name: Security - Verify Branch
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REF -ne 'refs/heads/master') {
-            Write-Error "Security: Invalid branch '$env:GITHUB_REF'. This job should only run on master"
-            exit 1
-          }
-          Write-Host "✓ Branch verified: $env:GITHUB_REF"
-
       - name: Checkout
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
@@ -74,22 +49,6 @@ jobs:
           dotnet-version: |
             9.0.x
             10.0.x
-
-      # .NET 11 (will auto-upgrade from preview to GA when available)
-      - name: Setup .NET 11
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        id: setup_dotnet_11
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 11.0.x
-        continue-on-error: true
-      
-      - name: Note .NET 11 Status
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.setup_dotnet_11.outcome == 'failure'
-        run: |
-          Write-Host "::notice::.NET 11 is not yet available - falling back to .NET 10 (this is expected)"
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
@@ -114,10 +73,10 @@ jobs:
         with:
           msbuild-architecture: x64
 
-      - name: Setup NuGet
+      - name: Setup 
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: NuGet/setup-nuget@v2
+        uses: NuGet/setup-nuget@v2.0.1
 
       - name: Cache NuGet
         # Kill switch check
@@ -128,6 +87,45 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
+
+      - name: Setup WebView2 SDK
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "WebView2SDK")) { mkdir WebView2SDK }
+          $packageId = "Microsoft.Web.WebView2"
+          $latestVersion = $null
+          try {
+            $searchUrl = "https://azuresearch-usnc.nuget.org/query?q=$packageId&prerelease=false&semVerLevel=2.0.0&take=1"
+            $searchResponse = Invoke-RestMethod -Uri $searchUrl -Method Get
+            if ($searchResponse.data -and $searchResponse.data.Count -gt 0) {
+              $latestVersion = $searchResponse.data[0].version
+            }
+          } catch {
+            try {
+              $apiUrl = "https://api.nuget.org/v3-flatcontainer/$packageId/index.json"
+              $response = Invoke-RestMethod -Uri $apiUrl -Method Get
+              if ($response.versions) {
+                $stableVersions = $response.versions | Where-Object { $_ -notmatch '[-]' -and $_ -match '^\d+\.\d+\.\d+$' }
+                if ($stableVersions) {
+                  $latestVersion = $stableVersions | Sort-Object { [System.Version]$_ } -Descending | Select-Object -First 1
+                }
+              }
+            } catch {}
+          }
+          if (-not $latestVersion) { $latestVersion = "1.0.3595.46" }
+          Write-Host "Using WebView2 SDK version: $latestVersion"
+          dotnet add "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
+          dotnet restore "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
+          $nugetBasePath = "$env:USERPROFILE\.nuget\packages\microsoft.web.webview2\$latestVersion"
+          $coreDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.Core.dll" | Select-Object -First 1
+          Copy-Item (Join-Path $nugetBasePath $coreDll) "WebView2SDK\"
+          $winFormsDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.WinForms.dll" | Select-Object -First 1
+          Copy-Item (Join-Path $nugetBasePath $winFormsDll) "WebView2SDK\"
+          $loaderDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "WebView2Loader.dll" | Select-Object -First 1
+          Copy-Item (Join-Path $nugetBasePath $loaderDll) "WebView2SDK\"
+          dotnet remove "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
 
       - name: Restore
         # Kill switch check
@@ -207,7 +205,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -228,304 +226,6 @@ jobs:
           Write-Host "Final determined version: $version"
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "tag=v$version" >> $env:GITHUB_OUTPUT
-
-      - name: Diagnostics - List Artifacts
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          Write-Host "=== Files in Bin/Packages/Release ==="
-          Get-ChildItem -Path Bin/Packages/Release -Recurse -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
-          Write-Host "`n=== Files in Bin/Release/Zips ==="
-          Get-ChildItem -Path Bin/Release/Zips -Recurse -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
-          Write-Host "`n=== Secrets Check ==="
-          Write-Host "GITHUB_TOKEN present: $(if ($env:GITHUB_TOKEN) { 'yes' } else { 'no' })"
-          Write-Host "NUGET_API_KEY present: $(if ($env:NUGET_API_KEY) { 'yes' } else { 'no' })"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-
-      - name: Announce Release on Discord
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
-        shell: pwsh
-        run: |
-          if (-not $env:DISCORD_WEBHOOK_MASTER) {
-            Write-Warning "DISCORD_WEBHOOK_MASTER not set - skipping Discord notification"
-            exit 0
-          }
-          
-          $payload = @{
-            embeds = @(
-              @{
-                title = "🎉 Krypton Toolkit Stable Release"
-                description = "A new stable release is now available!"
-                color = 77dd76
-                fields = @(
-                  @{
-                    name = "📌 Version"
-                    value = "``${{ steps.get_version.outputs.version }}``"
-                    inline = $true
-                  }
-                  @{
-                    name = "📦 NuGet Packages"
-                    value = "• [Krypton.Toolkit.TEST](https://www.nuget.org/packages/Krypton.Toolkit.TEST)`n• [Krypton.Ribbon.TEST](https://www.nuget.org/packages/Krypton.Ribbon.TEST)`n• [Krypton.Navigator.TEST](https://www.nuget.org/packages/Krypton.Navigator.TEST)`n• [Krypton.Workspace.TEST](https://www.nuget.org/packages/Krypton.Workspace.TEST)`n• [Krypton.Docking.TEST](https://www.nuget.org/packages/Krypton.Docking.TEST)`n• [Krypton.Standard.Toolkit.TEST](https://www.nuget.org/packages/Krypton.Standard.Toolkit)"
-                    inline = $false
-                  }
-                  @{
-                    name = "🎯 Target Frameworks"
-                    value = "• .NET Framework 4.7.2`n• .NET Framework 4.8`n• .NET Framework 4.8.1`n• .NET 8.0`n• .NET 9.0`n• .NET 10.0"
-                    inline = $false
-                  }
-                  @{
-                    name = "📄 Release Notes"
-                    value = "[View Changelog](https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/Documents/Changelog/Changelog.md)"
-                    inline = $false
-                  }
-                )
-                footer = @{
-                  text = "Released"
-                }
-                timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-              }
-            )
-          } | ConvertTo-Json -Depth 10
-          
-          Invoke-RestMethod -Uri "${{ secrets.DISCORD_WEBHOOK_MASTER }}" -Method Post -Body $payload -ContentType "application/json"
-        env:
-          DISCORD_WEBHOOK_MASTER: ${{ secrets.DISCORD_WEBHOOK_MASTER }}
-          
-    release-v105-lts:
-    runs-on: windows-latest
-    # environment: production  # Requires approval before publishing - DISABLED for automatic publishing
-    if: github.ref == 'refs/heads/V105-LTS' && github.event_name == 'push'
-
-    steps:
-      # Release kill switch
-      - name: Release Kill Switch Check
-        id: release_kill_switch
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $disabled = '${{ vars.RELEASE_DISABLED }}'
-
-          if ($disabled -eq 'true') {
-            Write-Host "::warning:: Release workflow is currently DISABLED via kill switch (RELEASE_DISABLED=true)"
-            Write-Host "To re-enable: Go to Repository Settings -> Secrets and Variables -> Actions -> Variables -> Set RELEASE_DISABLED to 'false'."
-            echo "enabled=false" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Host "Release kill switch check has passed, continuing..."
-            echo "enabled=true" >> $env:GITHUB_OUTPUT
-          }
-
-      - name: Security - Verify Repository
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/TEST-Standard-Toolkit') {
-            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/TEST-Standard-Toolkit"
-            exit 1
-          }
-          Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
-
-      - name: Security - Verify Branch
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REF -ne 'refs/heads/master') {
-            Write-Error "Security: Invalid branch '$env:GITHUB_REF'. This job should only run on master"
-            exit 1
-          }
-          Write-Host "✓ Branch verified: $env:GITHUB_REF"
-
-      - name: Checkout
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: actions/checkout@v6
-
-      # .NET 9 and 10
-      - name: Setup .NET
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: |
-            9.0.x
-            10.0.x
-
-      # .NET 11 (will auto-upgrade from preview to GA when available)
-      - name: Setup .NET 11
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        id: setup_dotnet_11
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 11.0.x
-        continue-on-error: true
-      
-      - name: Note .NET 11 Status
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.setup_dotnet_11.outcome == 'failure'
-        run: |
-          Write-Host "::notice::.NET 11 is not yet available - falling back to .NET 10 (this is expected)"
-
-      # global.json dynamically generate
-      - name: Force .NET 10 SDK via global.json
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: |
-          $sdkVersion = (dotnet --list-sdks | Select-String "10.0").ToString().Split(" ")[0]
-          Write-Output "Using SDK $sdkVersion"
-          @"
-          {
-            "sdk": {
-              "version": "$sdkVersion",
-              "rollForward": "latestFeature"
-            }
-          }
-          "@ | Out-File -Encoding utf8 global.json
-
-      - name: Setup MSBuild
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: microsoft/setup-msbuild@v2
-        with:
-          msbuild-architecture: x64
-
-      - name: Setup NuGet
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: NuGet/setup-nuget@v2
-
-      - name: Cache NuGet
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: actions/cache@v5
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Restore
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
-
-      - name: Build Release
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
-
-      - name: Pack Release
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
-
-      - name: Push NuGet Packages to nuget.org
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        id: push_nuget
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if (-not $env:NUGET_API_KEY) {
-            Write-Warning "NUGET_API_KEY not set - skipping NuGet push"
-            echo "packages_published=false" >> $env:GITHUB_OUTPUT
-            exit 0
-          }
-          
-          $packages = Get-ChildItem "Bin/Packages/Release/*.nupkg" -ErrorAction SilentlyContinue
-          $publishedAny = $false
-          
-          if ($packages) {
-            foreach ($package in $packages) {
-              Write-Output "Pushing package: $($package.Name)"
-              try {
-                $output = dotnet nuget push "$($package.FullName)" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate 2>&1 | Out-String
-                Write-Output $output
-                # Check if package was actually pushed (not skipped)
-                if ($output -notmatch "already exists" -and $output -notmatch "was not pushed") {
-                  $publishedAny = $true
-                  Write-Host "Package $($package.Name) was published"
-                } else {
-                  Write-Host "Package $($package.Name) already exists - skipped"
-                }
-              } catch {
-                Write-Warning "Failed to push $($package.Name): $_"
-              }
-            }
-          } else {
-            Write-Output "No NuGet packages found to push"
-          }
-          
-          echo "packages_published=$publishedAny" >> $env:GITHUB_OUTPUT
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-
-      - name: Get Version
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        id: get_version
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $version = $null
-          
-          # Try to get version from the built assembly (most reliable)
-          try {
-            $dllPath = Get-ChildItem "Bin/Release/net48/Krypton.Toolkit.dll" -ErrorAction Stop
-            $assemblyVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dllPath.FullName).Version
-            $version = $assemblyVersion.ToString()
-            Write-Host "Got version from assembly: $version"
-          } catch {
-            Write-Host "Could not read version from assembly: $_"
-          }
-          
-          # Fallback: Try to read from csproj XML
-          if (-not $version) {
-            try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
-              [xml]$projXml = Get-Content $proj
-              $versionNode = $projXml.SelectSingleNode("//Version")
-              if ($versionNode) {
-                $version = $versionNode.InnerText.Trim()
-                Write-Host "Got version from csproj: $version"
-              }
-            } catch {
-              Write-Host "Could not read version from csproj: $_"
-            }
-          }
-          
-          # Last resort fallback
-          if (-not $version) {
-            Write-Warning "Version not found, using fallback."
-            $version = "100.25.1.1"
-          }
-          
-          Write-Host "Final determined version: $version"
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-          echo "tag=v$version" >> $env:GITHUB_OUTPUT
-
-      - name: Diagnostics - List Artifacts
-        # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          Write-Host "=== Files in Bin/Packages/Release ==="
-          Get-ChildItem -Path Bin/Packages/Release -Recurse -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
-          Write-Host "`n=== Files in Bin/Release/Zips ==="
-          Get-ChildItem -Path Bin/Release/Zips -Recurse -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
-          Write-Host "`n=== Secrets Check ==="
-          Write-Host "GITHUB_TOKEN present: $(if ($env:GITHUB_TOKEN) { 'yes' } else { 'no' })"
-          Write-Host "NUGET_API_KEY present: $(if ($env:NUGET_API_KEY) { 'yes' } else { 'no' })"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
 
       - name: Announce Release on Discord
         # Kill switch check
@@ -577,9 +277,233 @@ jobs:
         env:
           DISCORD_WEBHOOK_MASTER: ${{ secrets.DISCORD_WEBHOOK_MASTER }}
 
+  release-v105-lts:
+    runs-on: windows-latest
+    if: github.ref == 'refs/heads/V105-LTS' && github.event_name == 'push'
+
+    steps:
+      # V105 Release kill switch
+      - name: V105 Release Kill Switch Check
+        id: release_kill_switch
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $disabled = '${{ vars.RELEASE_DISABLED }}'
+
+          if ($disabled -eq 'true') {
+            Write-Host "::warning:: Release workflow is currently DISABLED via kill switch (RELEASE_DISABLED=true)"
+            Write-Host "To re-enable: Go to Repository Settings -> Secrets and Variables -> Actions -> Variables -> Set RELEASE_DISABLED to 'false'."
+            echo "enabled=false" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "Release kill switch check has passed, continuing..."
+            echo "enabled=true" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Checkout
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        uses: actions/checkout@v6
+
+      # .NET 9 and 10
+      - name: Setup .NET
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+
+      # global.json dynamically generate
+      - name: Force .NET 10 SDK via global.json
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        run: |
+          $sdkVersion = (dotnet --list-sdks | Select-String "10.0").ToString().Split(" ")[0]
+          Write-Output "Using SDK $sdkVersion"
+          @"
+          {
+            "sdk": {
+              "version": "$sdkVersion",
+              "rollForward": "latestFeature"
+            }
+          }
+          "@ | Out-File -Encoding utf8 global.json
+
+      - name: Setup MSBuild
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: x64
+
+      - name: Setup NuGet
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        uses: NuGet/setup-nuget@v2.0.1
+
+      - name: Cache NuGet
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        uses: actions/cache@v5
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
+
+      - name: Build Release
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        run: msbuild "Scripts/Build/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
+
+      - name: Pack Release
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        run: msbuild "Scripts/Build/build.proj" /t:Pack /p:Configuration=Release /p:Platform="Any CPU"
+
+      - name: Push NuGet Packages to nuget.org
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        id: push_nuget
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:NUGET_API_KEY) {
+            Write-Warning "NUGET_API_KEY not set - skipping NuGet push"
+            echo "packages_published=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          
+          $packages = Get-ChildItem "Bin/Packages/Release/*.nupkg" -ErrorAction SilentlyContinue
+          $publishedAny = $false
+          
+          if ($packages) {
+            foreach ($package in $packages) {
+              Write-Output "Pushing package: $($package.Name)"
+              try {
+                $output = dotnet nuget push "$($package.FullName)" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate 2>&1 | Out-String
+                Write-Output $output
+                # Check if package was actually pushed (not skipped)
+                if ($output -notmatch "already exists" -and $output -notmatch "was not pushed") {
+                  $publishedAny = $true
+                  Write-Host "Package $($package.Name) was published"
+                } else {
+                  Write-Host "Package $($package.Name) already exists - skipped"
+                }
+              } catch {
+                Write-Warning "Failed to push $($package.Name): $_"
+              }
+            }
+          } else {
+            Write-Output "No NuGet packages found to push"
+          }
+          
+          echo "packages_published=$publishedAny" >> $env:GITHUB_OUTPUT
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
+      - name: Get Version
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true'
+        id: get_version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = $null
+          
+          # Try to get version from the built assembly (most reliable)
+          try {
+            $dllPath = Get-ChildItem "Bin/Release/net48/Krypton.Toolkit.dll" -ErrorAction Stop
+            $assemblyVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dllPath.FullName).Version
+            $version = $assemblyVersion.ToString()
+            Write-Host "Got version from assembly: $version"
+          } catch {
+            Write-Host "Could not read version from assembly: $_"
+          }
+          
+          # Fallback: Try to read from csproj XML
+          if (-not $version) {
+            try {
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
+              [xml]$projXml = Get-Content $proj
+              $versionNode = $projXml.SelectSingleNode("//Version")
+              if ($versionNode) {
+                $version = $versionNode.InnerText.Trim()
+                Write-Host "Got version from csproj: $version"
+              }
+            } catch {
+              Write-Host "Could not read version from csproj: $_"
+            }
+          }
+          
+          # Last resort fallback
+          if (-not $version) {
+            Write-Warning "Version not found, using fallback."
+            $version = "100.25.1.1"
+          }
+          
+          Write-Host "Final determined version: $version"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "tag=v$version" >> $env:GITHUB_OUTPUT
+
+      - name: Announce Release on Discord
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        shell: pwsh
+        run: |
+          if (-not $env:DISCORD_WEBHOOK_MASTER) {
+            Write-Warning "DISCORD_WEBHOOK_MASTER not set - skipping Discord notification"
+            exit 0
+          }
+          
+          $payload = @{
+            embeds = @(
+              @{
+                title = "🎉 Krypton Toolkit Stable Release"
+                description = "A new stable release is now available!"
+                color = 77dd76
+                fields = @(
+                  @{
+                    name = "📌 Version"
+                    value = "``${{ steps.get_version.outputs.version }}``"
+                    inline = $true
+                  }
+                  @{
+                    name = "📦 NuGet Packages"
+                    value = "• [Krypton.Toolkit](https://www.nuget.org/packages/Krypton.Toolkit)`n• [Krypton.Ribbon](https://www.nuget.org/packages/Krypton.Ribbon)`n• [Krypton.Navigator](https://www.nuget.org/packages/Krypton.Navigator)`n• [Krypton.Workspace](https://www.nuget.org/packages/Krypton.Workspace)`n• [Krypton.Docking](https://www.nuget.org/packages/Krypton.Docking)`n• [Krypton.Standard.Toolkit](https://www.nuget.org/packages/Krypton.Standard.Toolkit)"
+                    inline = $false
+                  }
+                  @{
+                    name = "🎯 Target Frameworks"
+                    value = "• .NET Framework 4.7.2`n• .NET Framework 4.8`n• .NET Framework 4.8.1`n• .NET 8.0`n• .NET 9.0`n• .NET 10.0"
+                    inline = $false
+                  }
+                  @{
+                    name = "📄 Release Notes"
+                    value = "[View Changelog](https://github.com/Krypton-Suite/Standard-Toolkit/blob/V105-LTS/Documents/Changelog/Changelog.md)"
+                    inline = $false
+                  }
+                )
+                footer = @{
+                  text = "Released"
+                }
+                timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+              }
+            )
+          } | ConvertTo-Json -Depth 10
+          
+          Invoke-RestMethod -Uri "${{ secrets.DISCORD_WEBHOOK_MASTER }}" -Method Post -Body $payload -ContentType "application/json"
+        env:
+          DISCORD_WEBHOOK_MASTER: ${{ secrets.DISCORD_WEBHOOK_MASTER }}
+
   release-v85-lts:
     runs-on: windows-latest
-    environment: production  # Requires approval before publishing
     if: github.ref == 'refs/heads/V85-LTS' && github.event_name == 'push'
 
     steps:
@@ -599,30 +523,6 @@ jobs:
             Write-Host "LTS Release kill switch check has passed, continuing..."
             echo "enabled=true" >> $env:GITHUB_OUTPUT
           }
-          
-      - name: Security - Verify Repository
-        # Kill switch check
-        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/TEST-Standard-Toolkit') {
-            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/TEST-Standard-Toolkit"
-            exit 1
-          }
-          Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
-
-      - name: Security - Verify Branch
-        # Kill switch check
-        if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REF -ne 'refs/heads/V85-LTS') {
-            Write-Error "Security: Invalid branch '$env:GITHUB_REF'. This job should only run on V85-LTS"
-            exit 1
-          }
-          Write-Host "✓ Branch verified: $env:GITHUB_REF"
 
       - name: Checkout
         # Kill switch check
@@ -650,7 +550,7 @@ jobs:
       - name: Setup NuGet
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        uses: NuGet/setup-nuget@v2
+        uses: NuGet/setup-nuget@v2.0.1
 
       - name: Cache NuGet
         # Kill switch check
@@ -740,7 +640,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -786,7 +686,7 @@ jobs:
                   }
                   @{
                     name = "📦 NuGet Packages"
-                    value = "• [Krypton.Toolkit.TEST.LTS](https://www.nuget.org/packages/Krypton.Toolkit.TEST.LTS)`n• [Krypton.Ribbon.TEST.LTS](https://www.nuget.org/packages/Krypton.Ribbon.TEST.LTS)`n• [Krypton.Navigator.TEST.LTS](https://www.nuget.org/packages/Krypton.Navigator.TEST.LTS)`n• [Krypton.Workspace.TEST.LTS](https://www.nuget.org/packages/Krypton.Workspace.TEST.LTS)`n• [Krypton.Docking.TEST.LTS](https://www.nuget.org/packages/Krypton.Docking.TEST.LTS)"
+                    value = "• [Krypton.Toolkit.LTS](https://www.nuget.org/packages/Krypton.Toolkit.LTS)`n• [Krypton.Ribbon.LTS](https://www.nuget.org/packages/Krypton.Ribbon.LTS)`n• [Krypton.Navigator.LTS](https://www.nuget.org/packages/Krypton.Navigator.LTS)`n• [Krypton.Workspace.LTS](https://www.nuget.org/packages/Krypton.Workspace.LTS)`n• [Krypton.Docking.LTS](https://www.nuget.org/packages/Krypton.Docking.LTS)"
                     inline = $false
                   }
                   @{
@@ -814,7 +714,6 @@ jobs:
 
   release-canary:
     runs-on: windows-latest
-    environment: production  # Requires approval before publishing
     if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
 
     steps:
@@ -834,30 +733,6 @@ jobs:
             Write-Host "Canary Release kill switch check has passed, continuing..."
             echo "enabled=true" >> $env:GITHUB_OUTPUT
           }
-
-      - name: Security - Verify Repository
-        # Kill switch check
-        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/TEST-Standard-Toolkit') {
-            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/TEST-Standard-Toolkit"
-            exit 1
-          }
-          Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
-
-      - name: Security - Verify Branch
-        # Kill switch check
-        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REF -ne 'refs/heads/canary') {
-            Write-Error "Security: Invalid branch '$env:GITHUB_REF'. This job should only run on canary"
-            exit 1
-          }
-          Write-Host "✓ Branch verified: $env:GITHUB_REF"
 
       - name: Checkout
         # Kill switch check
@@ -900,7 +775,7 @@ jobs:
       - name: Setup NuGet
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        uses: NuGet/setup-nuget@v2
+        uses: NuGet/setup-nuget@v2.0.1
 
       - name: Cache NuGet
         # Kill switch check
@@ -911,6 +786,45 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
+
+      - name: Setup WebView2 SDK
+        # Kill switch check
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "WebView2SDK")) { mkdir WebView2SDK }
+          $packageId = "Microsoft.Web.WebView2"
+          $latestVersion = $null
+          try {
+            $searchUrl = "https://azuresearch-usnc.nuget.org/query?q=$packageId&prerelease=false&semVerLevel=2.0.0&take=1"
+            $searchResponse = Invoke-RestMethod -Uri $searchUrl -Method Get
+            if ($searchResponse.data -and $searchResponse.data.Count -gt 0) {
+              $latestVersion = $searchResponse.data[0].version
+            }
+          } catch {
+            try {
+              $apiUrl = "https://api.nuget.org/v3-flatcontainer/$packageId/index.json"
+              $response = Invoke-RestMethod -Uri $apiUrl -Method Get
+              if ($response.versions) {
+                $stableVersions = $response.versions | Where-Object { $_ -notmatch '[-]' -and $_ -match '^\d+\.\d+\.\d+$' }
+                if ($stableVersions) {
+                  $latestVersion = $stableVersions | Sort-Object { [System.Version]$_ } -Descending | Select-Object -First 1
+                }
+              }
+            } catch {}
+          }
+          if (-not $latestVersion) { $latestVersion = "1.0.3595.46" }
+          Write-Host "Using WebView2 SDK version: $latestVersion"
+          dotnet add "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
+          dotnet restore "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
+          $nugetBasePath = "$env:USERPROFILE\.nuget\packages\microsoft.web.webview2\$latestVersion"
+          $coreDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.Core.dll" | Select-Object -First 1
+          Copy-Item (Join-Path $nugetBasePath $coreDll) "WebView2SDK\"
+          $winFormsDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.WinForms.dll" | Select-Object -First 1
+          Copy-Item (Join-Path $nugetBasePath $winFormsDll) "WebView2SDK\"
+          $loaderDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "WebView2Loader.dll" | Select-Object -First 1
+          Copy-Item (Join-Path $nugetBasePath $loaderDll) "WebView2SDK\"
+          dotnet remove "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
 
       - name: Restore
         # Kill switch check
@@ -990,7 +904,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj'
+              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -1036,7 +950,7 @@ jobs:
                   }
                   @{
                     name = "📦 NuGet Packages"
-                    value = "• [Krypton.Toolkit.TEST.Canary](https://www.nuget.org/packages/Krypton.Toolkit.TEST.Canary)`n• [Krypton.Ribbon.TEST.Canary](https://www.nuget.org/packages/Krypton.Ribbon.TEST.Canary)`n• [Krypton.Navigator.TEST.Canary](https://www.nuget.org/packages/Krypton.Navigator.TEST.Canary)`n• [Krypton.Workspace.TEST.Canary](https://www.nuget.org/packages/Krypton.Workspace.TEST.Canary)`n• [Krypton.Docking.TEST.Canary](https://www.nuget.org/packages/Krypton.Docking.TEST.Canary)`n• [Krypton.Standard.Toolkit.TEST.Canary](https://www.nuget.org/packages/Krypton.Standard.Toolkit.TEST.Canary)"
+                    value = "• [Krypton.Toolkit.Canary](https://www.nuget.org/packages/Krypton.Toolkit.Canary)`n• [Krypton.Ribbon.Canary](https://www.nuget.org/packages/Krypton.Ribbon.Canary)`n• [Krypton.Navigator.Canary](https://www.nuget.org/packages/Krypton.Navigator.Canary)`n• [Krypton.Workspace.Canary](https://www.nuget.org/packages/Krypton.Workspace.Canary)`n• [Krypton.Docking.Canary](https://www.nuget.org/packages/Krypton.Docking.Canary)`n• [Krypton.Standard.Toolkit.Canary](https://www.nuget.org/packages/Krypton.Standard.Toolkit.Canary)"
                     inline = $false
                   }
                   @{
@@ -1064,7 +978,6 @@ jobs:
 
   release-alpha:
     runs-on: windows-latest
-    environment: production  # Requires approval before publishing
     if: github.ref == 'refs/heads/alpha' && github.event_name == 'push'
 
     steps:
@@ -1084,30 +997,6 @@ jobs:
             Write-Host "Nightly Release kill switch check has passed, continuing..."
             echo "enabled=true" >> $env:GITHUB_OUTPUT
           }
-            
-      - name: Security - Verify Repository
-        # Kill switch check
-        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/TEST-Standard-Toolkit') {
-            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/TEST-Standard-Toolkit"
-            exit 1
-          }
-          Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
-
-      - name: Security - Verify Branch
-        # Kill switch check
-        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REF -ne 'refs/heads/alpha') {
-            Write-Error "Security: Invalid branch '$env:GITHUB_REF'. This job should only run on alpha"
-            exit 1
-          }
-          Write-Host "✓ Branch verified: $env:GITHUB_REF"
 
       - name: Checkout
         # Kill switch check
@@ -1123,22 +1012,6 @@ jobs:
           dotnet-version: |
             9.0.x
             10.0.x
-
-      # .NET 11 (will auto-upgrade from preview to GA when available)
-      - name: Setup .NET 11
-        # Kill switch check
-        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        id: setup_dotnet_11
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 11.0.x
-        continue-on-error: true
-      
-      - name: Note .NET 11 Status
-        # Kill switch check
-        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.setup_dotnet_11.outcome == 'failure'
-        run: |
-          Write-Host "::notice::.NET 11 is not yet available - falling back to .NET 10 (this is expected)"
 
       # global.json dynamically generate
       - name: Force .NET 10 SDK via global.json
@@ -1166,7 +1039,7 @@ jobs:
       - name: Setup NuGet
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        uses: NuGet/setup-nuget@v2
+        uses: NuGet/setup-nuget@v2.0.1
 
       - name: Cache NuGet
         # Kill switch check
@@ -1177,6 +1050,45 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
+
+      - name: Setup WebView2 SDK
+        # Kill switch check
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "WebView2SDK")) { mkdir WebView2SDK }
+          $packageId = "Microsoft.Web.WebView2"
+          $latestVersion = $null
+          try {
+            $searchUrl = "https://azuresearch-usnc.nuget.org/query?q=$packageId&prerelease=false&semVerLevel=2.0.0&take=1"
+            $searchResponse = Invoke-RestMethod -Uri $searchUrl -Method Get
+            if ($searchResponse.data -and $searchResponse.data.Count -gt 0) {
+              $latestVersion = $searchResponse.data[0].version
+            }
+          } catch {
+            try {
+              $apiUrl = "https://api.nuget.org/v3-flatcontainer/$packageId/index.json"
+              $response = Invoke-RestMethod -Uri $apiUrl -Method Get
+              if ($response.versions) {
+                $stableVersions = $response.versions | Where-Object { $_ -notmatch '[-]' -and $_ -match '^\d+\.\d+\.\d+$' }
+                if ($stableVersions) {
+                  $latestVersion = $stableVersions | Sort-Object { [System.Version]$_ } -Descending | Select-Object -First 1
+                }
+              }
+            } catch {}
+          }
+          if (-not $latestVersion) { $latestVersion = "1.0.3595.46" }
+          Write-Host "Using WebView2 SDK version: $latestVersion"
+          dotnet add "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
+          dotnet restore "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
+          $nugetBasePath = "$env:USERPROFILE\.nuget\packages\microsoft.web.webview2\$latestVersion"
+          $coreDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.Core.dll" | Select-Object -First 1
+          Copy-Item (Join-Path $nugetBasePath $coreDll) "WebView2SDK\"
+          $winFormsDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.WinForms.dll" | Select-Object -First 1
+          Copy-Item (Join-Path $nugetBasePath $winFormsDll) "WebView2SDK\"
+          $loaderDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "WebView2Loader.dll" | Select-Object -First 1
+          Copy-Item (Join-Path $nugetBasePath $loaderDll) "WebView2SDK\"
+          dotnet remove "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
 
       - name: Restore
         # Kill switch check

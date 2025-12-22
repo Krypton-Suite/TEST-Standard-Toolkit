@@ -66,7 +66,7 @@ public class ButtonSpecNavFormMaximize : ButtonSpecNavFixed
         if (GetViewEnabled())
         {
             // If we do not provide an inert form
-            if (!_navigator.Owner!.FormValues.InertForm)
+            if (!_navigator.Owner!.InertForm)
             {
                 // Only if the mouse is still within the button bounds do we perform action
                 var mea = (MouseEventArgs)e;

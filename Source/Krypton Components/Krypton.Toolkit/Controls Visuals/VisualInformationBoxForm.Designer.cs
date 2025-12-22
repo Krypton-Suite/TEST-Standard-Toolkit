@@ -207,7 +207,7 @@
             this.ClientSize = new System.Drawing.Size(267, 163);
             this.Controls.Add(this.tlpBase);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.FormValues.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
+            this.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "VisualInformationBoxForm";
