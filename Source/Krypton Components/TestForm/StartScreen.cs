@@ -63,6 +63,13 @@ public partial class StartScreen : KryptonForm
         CreateButton("DateTime Example", string.Empty, typeof(DateTimeExample));
         CreateButton("Docking Config Save/Load Test", "Test SaveConfigToArray and LoadConfigFromArray", typeof(DockingConfigSaveLoadTest));
         CreateButton("ErrorProvider", string.Empty, typeof(ErrorProviderTest));
+        CreateButton("FileSystemWatcher", "Monitor file system changes with Krypton integration.", typeof(FileSystemWatcherTest));
+        CreateButton("Timer", "Test KryptonTimer with interval configuration and event tracking.", typeof(TimerTest));
+        CreateButton("Splitter", "Test KryptonSplitter with vertical, horizontal, and multi-panel layouts.", typeof(SplitterTest));
+        CreateButton("FlowLayoutPanel", "Test KryptonFlowLayoutPanel with dynamic control layout and flow directions.", typeof(FlowLayoutPanelTest));
+        CreateButton("TableLayoutPanel", "Test KryptonTableLayoutPanel with grid-based layout and cell management.", typeof(TableLayoutPanelTest));
+        CreateButton("Markdown Editor/Viewer", "Full-featured markdown editor with custom Krypton rendering and HTML preview.", typeof(MarkdownEditorViewer));
+        CreateButton("Code Editor", "Native code editor with syntax highlighting, line numbering, code folding, and auto-completion.", typeof(CodeEditorTest));
         CreateButton("FormBorder Test", string.Empty, typeof(FormBorderTest));
         CreateButton("Header Examples", string.Empty, typeof(HeaderExamples));
         CreateButton("Menu/Tool/Status Strips", string.Empty, typeof(MenuToolBarStatusStripTest));

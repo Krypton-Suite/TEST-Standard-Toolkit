@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Krypton.Toolkit;
+using Krypton.Utilities;
+
+using SuggestionSelectedEventArgs = Krypton.Utilities.SuggestionSelectedEventArgs;
 
 namespace TestForm
 {
@@ -67,54 +70,54 @@ namespace TestForm
             // ============================================
             // SearchBox 1: Basic ListBox suggestions with search history
             // ============================================
-            kryptonSearchBox1.Values.PlaceholderText = "Search fruits (ListBox, with history)...";
-            kryptonSearchBox1.Values.ShowSearchButton = true;
-            kryptonSearchBox1.Values.ShowClearButton = true;
-            kryptonSearchBox1.Values.ClearOnEscape = true;
-            kryptonSearchBox1.Values.EnableSuggestions = true;
-            kryptonSearchBox1.Values.SuggestionMaxCount = 8;
-            kryptonSearchBox1.Values.SuggestionDisplayType = SuggestionDisplayType.ListBox;
+            kryptonSearchBox1.SearchBoxValues.PlaceholderText = "Search fruits (ListBox, with history)...";
+            kryptonSearchBox1.SearchBoxValues.ShowSearchButton = true;
+            kryptonSearchBox1.SearchBoxValues.ShowClearButton = true;
+            kryptonSearchBox1.SearchBoxValues.ClearOnEscape = true;
+            kryptonSearchBox1.SearchBoxValues.EnableSuggestions = true;
+            kryptonSearchBox1.SearchBoxValues.SuggestionMaxCount = 8;
+            kryptonSearchBox1.SearchBoxValues.SuggestionDisplayType = SearchSuggestionDisplayType.ListBox;
             
             // Enable search history
-            kryptonSearchBox1.Values.EnableSearchHistory = true;
-            kryptonSearchBox1.Values.SearchHistoryMaxCount = 10;
+            kryptonSearchBox1.SearchBoxValues.EnableSearchHistory = true;
+            kryptonSearchBox1.SearchBoxValues.SearchHistoryMaxCount = 10;
             
             // Set minimum search length (show suggestions after 1 character)
-            kryptonSearchBox1.Values.MinimumSearchLength = 1;
+            kryptonSearchBox1.SearchBoxValues.MinimumSearchLength = 1;
 
             // Set up custom suggestions from the listbox items
-            kryptonSearchBox1.SetSuggestions(_allItems);
+            kryptonSearchBox1.SetSearchSuggestions(_allItems);
 
             // Handle events
             kryptonSearchBox1.TextChanged += KryptonSearchBox1_TextChanged;
             kryptonSearchBox1.Search += KryptonSearchBox_Search;
-            kryptonSearchBox1.Cleared += KryptonSearchBox1_Cleared;
+            kryptonSearchBox1.SearchCleared += KryptonSearchBox1_Cleared;
             kryptonSearchBox1.SuggestionSelected += KryptonSearchBox1_SuggestionSelected;
 
             // ============================================
             // SearchBox 2: DataGridView highlighting (no suggestions)
             // ============================================
-            kryptonSearchBox2.Values.PlaceholderText = "Search DataGridView (highlights matches)...";
-            kryptonSearchBox2.Values.ShowSearchButton = true;
-            kryptonSearchBox2.Values.ShowClearButton = true;
-            kryptonSearchBox2.Values.ClearOnEscape = true;
-            kryptonSearchBox2.Values.EnableSuggestions = false;
+            kryptonSearchBox2.SearchBoxValues.PlaceholderText = "Search DataGridView (highlights matches)...";
+            kryptonSearchBox2.SearchBoxValues.ShowSearchButton = true;
+            kryptonSearchBox2.SearchBoxValues.ShowClearButton = true;
+            kryptonSearchBox2.SearchBoxValues.ClearOnEscape = true;
+            kryptonSearchBox2.SearchBoxValues.EnableSuggestions = false;
 
             kryptonSearchBox2.TextChanged += KryptonSearchBox2_TextChanged;
             kryptonSearchBox2.Search += KryptonSearchBox2_Search;
-            kryptonSearchBox2.Cleared += KryptonSearchBox2_Cleared;
+            kryptonSearchBox2.SearchCleared += KryptonSearchBox2_Cleared;
 
             // ============================================
             // SearchBox 3: Rich suggestions with icons (ListBox)
             // ============================================
             InitializeRichSuggestions();
-            kryptonSearchBox3.Values.PlaceholderText = "Rich suggestions (icons, descriptions)...";
-            kryptonSearchBox3.Values.ShowSearchButton = true;
-            kryptonSearchBox3.Values.ShowClearButton = true;
-            kryptonSearchBox3.Values.EnableSuggestions = true;
-            kryptonSearchBox3.Values.SuggestionMaxCount = 8;
-            kryptonSearchBox3.Values.SuggestionDisplayType = SuggestionDisplayType.ListBox;
-            kryptonSearchBox3.Values.MinimumSearchLength = 1;
+            kryptonSearchBox3.SearchBoxValues.PlaceholderText = "Rich suggestions (icons, descriptions)...";
+            kryptonSearchBox3.SearchBoxValues.ShowSearchButton = true;
+            kryptonSearchBox3.SearchBoxValues.ShowClearButton = true;
+            kryptonSearchBox3.SearchBoxValues.EnableSuggestions = true;
+            kryptonSearchBox3.SearchBoxValues.SuggestionMaxCount = 8;
+            kryptonSearchBox3.SearchBoxValues.SuggestionDisplayType = SearchSuggestionDisplayType.ListBox;
+            kryptonSearchBox3.SearchBoxValues.MinimumSearchLength = 1;
             
             // Set rich suggestions (with icons and descriptions)
             kryptonSearchBox3.SetRichSuggestions(_richSuggestions);
@@ -125,26 +128,26 @@ namespace TestForm
             // SearchBox 4: DataGridView with multiple columns
             // ============================================
             InitializeDataGridViewSuggestions();
-            kryptonSearchBox4.Values.PlaceholderText = "Multi-column DataGridView suggestions...";
-            kryptonSearchBox4.Values.ShowSearchButton = true;
-            kryptonSearchBox4.Values.ShowClearButton = true;
-            kryptonSearchBox4.Values.EnableSuggestions = true;
-            kryptonSearchBox4.Values.SuggestionMaxCount = 8;
-            kryptonSearchBox4.Values.SuggestionDisplayType = SuggestionDisplayType.DataGridView;
-            kryptonSearchBox4.Values.MinimumSearchLength = 1;
+            kryptonSearchBox4.SearchBoxValues.PlaceholderText = "Multi-column DataGridView suggestions...";
+            kryptonSearchBox4.SearchBoxValues.ShowSearchButton = true;
+            kryptonSearchBox4.SearchBoxValues.ShowClearButton = true;
+            kryptonSearchBox4.SearchBoxValues.EnableSuggestions = true;
+            kryptonSearchBox4.SearchBoxValues.SuggestionMaxCount = 8;
+            kryptonSearchBox4.SearchBoxValues.SuggestionDisplayType = SearchSuggestionDisplayType.DataGridView;
+            kryptonSearchBox4.SearchBoxValues.MinimumSearchLength = 1;
             
             // Set up multi-column DataGridView
-            var columns = new List<SuggestionColumnDefinition>
+            var columns = new List<SearchSuggestionColumnDefinition>
             {
-                new SuggestionColumnDefinition("Name", "Name", 
+                new SearchSuggestionColumnDefinition("Name", "Name", 
                     obj => obj is FruitItem fi ? fi.Name : (obj is IContentValues cv ? cv.GetShortText() : obj?.ToString())),
-                new SuggestionColumnDefinition("Color", "Color", 
+                new SearchSuggestionColumnDefinition("Color", "Color", 
                     obj => obj is FruitItem fi ? fi.Color : string.Empty)
                 {
                     Width = 100,
                     AutoSizeMode = DataGridViewAutoSizeColumnMode.None
                 },
-                new SuggestionColumnDefinition("Season", "Season", 
+                new SearchSuggestionColumnDefinition("Season", "Season", 
                     obj => obj is FruitItem fi ? fi.Season : string.Empty)
                 {
                     Width = 80,
@@ -161,13 +164,13 @@ namespace TestForm
             // ============================================
             // SearchBox 5: Custom filtering
             // ============================================
-            kryptonSearchBox5.Values.PlaceholderText = "Custom filter (starts with only)...";
-            kryptonSearchBox5.Values.ShowSearchButton = true;
-            kryptonSearchBox5.Values.ShowClearButton = true;
-            kryptonSearchBox5.Values.EnableSuggestions = true;
-            kryptonSearchBox5.Values.SuggestionMaxCount = 8;
-            kryptonSearchBox5.Values.SuggestionDisplayType = SuggestionDisplayType.ListBox;
-            kryptonSearchBox5.Values.MinimumSearchLength = 1;
+            kryptonSearchBox5.SearchBoxValues.PlaceholderText = "Custom filter (starts with only)...";
+            kryptonSearchBox5.SearchBoxValues.ShowSearchButton = true;
+            kryptonSearchBox5.SearchBoxValues.ShowClearButton = true;
+            kryptonSearchBox5.SearchBoxValues.EnableSuggestions = true;
+            kryptonSearchBox5.SearchBoxValues.SuggestionMaxCount = 8;
+            kryptonSearchBox5.SearchBoxValues.SuggestionDisplayType = SearchSuggestionDisplayType.ListBox;
+            kryptonSearchBox5.SearchBoxValues.MinimumSearchLength = 1;
             
             // Set custom filter (only show items that start with search text)
             kryptonSearchBox5.CustomFilter = (searchText, suggestions) =>
@@ -188,7 +191,7 @@ namespace TestForm
                 });
             };
             
-            kryptonSearchBox5.SetSuggestions(_allItems);
+            kryptonSearchBox5.SetSearchSuggestions(_allItems);
             kryptonSearchBox5.SuggestionSelected += KryptonSearchBox5_SuggestionSelected;
         }
 
@@ -328,7 +331,7 @@ namespace TestForm
             kryptonListBox1.EndUpdate();
         }
 
-        private void KryptonSearchBox_Search(object? sender, Krypton.Toolkit.SearchEventArgs e)
+        private void KryptonSearchBox_Search(object? sender, Krypton.Utilities.SearchEventArgs e)
         {
             // Example: Handle search event
             kryptonLabel1.Text = $"Searching for: {e.SearchText}";
@@ -352,7 +355,7 @@ namespace TestForm
             HighlightDataGridView(kryptonSearchBox2.Text);
         }
 
-        private void KryptonSearchBox2_Search(object? sender, Krypton.Toolkit.SearchEventArgs e)
+        private void KryptonSearchBox2_Search(object? sender, Krypton.Utilities.SearchEventArgs e)
         {
             // Highlight search results in DataGridView
             HighlightDataGridView(e.SearchText);
@@ -399,7 +402,7 @@ namespace TestForm
             kryptonSearchBox1.Clear();
         }
 
-        private void KryptonSearchBox1_SuggestionSelected(object? sender, Krypton.Toolkit.SuggestionSelectedEventArgs e)
+        private void KryptonSearchBox1_SuggestionSelected(object? sender, SuggestionSelectedEventArgs e)
         {
             // Example: Handle suggestion selection from the dropdown
             // The text is already set in the search box, but we can perform additional actions
@@ -407,13 +410,13 @@ namespace TestForm
             FilterListBox(kryptonSearchBox1.Text);
             
             // Show search history count
-            if (kryptonSearchBox1.Values.EnableSearchHistory)
+            if (kryptonSearchBox1.SearchBoxValues.EnableSearchHistory)
             {
-                kryptonLabel2.Text = $"History: {kryptonSearchBox1.Values.SearchHistory.Count} items";
+                kryptonLabel2.Text = $"History: {kryptonSearchBox1.SearchBoxValues.SearchHistory.Count} items";
             }
         }
 
-        private void KryptonSearchBox3_SuggestionSelected(object? sender, Krypton.Toolkit.SuggestionSelectedEventArgs e)
+        private void KryptonSearchBox3_SuggestionSelected(object? sender, SuggestionSelectedEventArgs e)
         {
             // Handle rich suggestion selection
             string displayText = e.Suggestion ?? kryptonSearchBox3.Text;
@@ -431,7 +434,7 @@ namespace TestForm
             kryptonLabel5.Text = $"Rich suggestion: {displayText}";
         }
 
-        private void KryptonSearchBox4_SuggestionSelected(object? sender, Krypton.Toolkit.SuggestionSelectedEventArgs e)
+        private void KryptonSearchBox4_SuggestionSelected(object? sender, SuggestionSelectedEventArgs e)
         {
             // Handle DataGridView multi-column suggestion selection
             string displayText = e.Suggestion ?? kryptonSearchBox4.Text;
@@ -444,7 +447,7 @@ namespace TestForm
             kryptonLabel6.Text = $"Multi-column: {displayText}";
         }
 
-        private void KryptonSearchBox5_SuggestionSelected(object? sender, Krypton.Toolkit.SuggestionSelectedEventArgs e)
+        private void KryptonSearchBox5_SuggestionSelected(object? sender, SuggestionSelectedEventArgs e)
         {
             // Handle custom filter suggestion selection
             kryptonLabel7.Text = $"Custom filter: {e.Suggestion ?? kryptonSearchBox5.Text}";

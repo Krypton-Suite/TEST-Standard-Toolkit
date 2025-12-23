@@ -4450,7 +4450,7 @@ public enum ErrorProviderIconType
 
 #region Enum File System Root Mode
 
-/// <summary>
+/*/// <summary>
 /// Specifies the root display mode for the file system tree view.
 /// </summary>
 public enum FileSystemRootMode
@@ -4474,7 +4474,7 @@ public enum FileSystemRootMode
     /// Uses the custom RootPath property to determine the root directory.
     /// </summary>
     CustomPath
-}
+}*/
 
 #endregion
 

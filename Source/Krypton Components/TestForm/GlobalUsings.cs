@@ -19,3 +19,4 @@ global using System.Linq;
 global using System.Windows.Forms;
 
 global using Krypton.Toolkit;
+global using Krypton.Utilities;

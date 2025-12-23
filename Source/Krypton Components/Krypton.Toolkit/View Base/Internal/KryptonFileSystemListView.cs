@@ -7,7 +7,7 @@
  */
 #endregion
 
-namespace Krypton.Toolkit;
+/*namespace Krypton.Toolkit;
 
 /// <summary>
 /// Provides a Krypton-styled ListView control for browsing the file system with proper icons.
@@ -63,7 +63,7 @@ public class InternalKryptonFileSystemListView : KryptonListView
         };
 
         // Create the expandable properties object
-        _fileSystemValues = new FileSystemListViewValues(this);
+        _fileSystemValues = new InternalFileSystemListViewValues(this);
 
         // Add a default folder icon
         AddDefaultIcon();
@@ -100,7 +100,7 @@ public class InternalKryptonFileSystemListView : KryptonListView
     /// </value>
     public FileSystemListViewValues FileSystemListViewValues => _fileSystemValues;
 
-    /*/// <summary>
+    /// <summary>
     /// Gets or sets the current directory path.
     /// </summary>
     [Category(@"Behavior")]
@@ -155,7 +155,7 @@ public class InternalKryptonFileSystemListView : KryptonListView
             }
             return Array.Empty<string>();
         }
-    }*/
+    }
 
     internal Dictionary<string, int> IconCache => _iconCache;
 
@@ -743,4 +743,4 @@ public class InternalKryptonFileSystemListView : KryptonListView
     }
 
     #endregion
-}
+}*/

@@ -33,7 +33,7 @@ public class KryptonExplorerBrowser : KryptonPanel
     private KryptonPanel? _statusPanel;
     private KryptonSplitContainer? _splitContainer;
     private KryptonFileSystemTreeView? _treeView;
-    private KryptonFileSystemListView? _listView;
+    //private KryptonFileSystemListView? _listView;
     private KryptonSplitterPanel? _treeViewPanel;
     private KryptonSplitterPanel? _listViewPanel;
 
@@ -137,7 +137,7 @@ public class KryptonExplorerBrowser : KryptonPanel
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public KryptonFileSystemTreeView? TreeView => _treeView;
 
-    /// <summary>
+    /*/// <summary>
     /// Gets the list view control.
     /// </summary>
     [Browsable(false)]
@@ -156,7 +156,7 @@ public class KryptonExplorerBrowser : KryptonPanel
     /// </summary>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public string[] SelectedPaths => _listView?.SelectedPaths ?? Array.Empty<string>();
+    public string[] SelectedPaths => _listView?.SelectedPaths ?? Array.Empty<string>();*/
 
     #endregion
 
@@ -188,7 +188,7 @@ public class KryptonExplorerBrowser : KryptonPanel
         }
 
         _currentPath = path;
-        _navigationValues._currentPath = path;
+        //_navigationValues._currentPath = path;
 
         // Update tree view
         if (_treeView != null)
@@ -198,16 +198,10 @@ public class KryptonExplorerBrowser : KryptonPanel
         }
 
         // Update list view
-        if (_listView != null)
-        {
-            _listView.CurrentPath = path;
-        }
+        //_listView?.CurrentPath = path;
 
         // Update address bar
-        if (_addressBar != null)
-        {
-            _addressBar.Text = path;
-        }
+        _addressBar?.Text = path;
 
         // Update status
         UpdateStatus();
@@ -263,14 +257,11 @@ public class KryptonExplorerBrowser : KryptonPanel
     /// </summary>
     public new void Refresh()
     {
-        if (_treeView != null)
-        {
-            _treeView.Reload();
-        }
-        if (_listView != null)
+        _treeView?.Reload();
+        /*if (_listView != null)
         {
             _listView.Refresh();
-        }
+        }*/
         UpdateStatus();
         base.Refresh();
     }
@@ -313,11 +304,11 @@ public class KryptonExplorerBrowser : KryptonPanel
     protected override void OnEnabledChanged(EventArgs e)
     {
         base.OnEnabledChanged(e);
-        if (_splitContainer != null) _splitContainer.Enabled = Enabled;
-        if (_treeView != null) _treeView.Enabled = Enabled;
-        if (_listView != null) _listView.Enabled = Enabled;
-        if (_toolbarPanel != null) _toolbarPanel.Enabled = Enabled;
-        if (_statusPanel != null) _statusPanel.Enabled = Enabled;
+        _splitContainer?.Enabled = Enabled;
+        _treeView?.Enabled = Enabled;
+        //_listView?.Enabled = Enabled;
+        _toolbarPanel?.Enabled = Enabled;
+        _statusPanel?.Enabled = Enabled;
     }
 
     #endregion
@@ -461,7 +452,7 @@ public class KryptonExplorerBrowser : KryptonPanel
         _treeView.FileSystemError += TreeView_FileSystemError;
 
         // Create list view
-        _listView = new KryptonFileSystemListView
+        /*_listView = new KryptonFileSystemListView
         {
             Dock = DockStyle.Fill,
             View = View.Details
@@ -469,11 +460,11 @@ public class KryptonExplorerBrowser : KryptonPanel
         _listView.SelectedIndexChanged += ListView_SelectedIndexChanged;
         _listView.DoubleClick += ListView_DoubleClick;
         _listView.PathChanged += ListView_PathChanged;
-        _listView.FileSystemError += ListView_FileSystemError;
+        _listView.FileSystemError += ListView_FileSystemError;*/
 
         // Add controls to panels
         _treeViewPanel.Controls.Add(_treeView);
-        _listViewPanel.Controls.Add(_listView);
+        //_listViewPanel.Controls.Add(_listView);
 
         // Add split container to content panel
         _contentPanel.Controls.Add(_splitContainer);
@@ -507,7 +498,7 @@ public class KryptonExplorerBrowser : KryptonPanel
         if (string.IsNullOrEmpty(_currentPath))
         {
             _currentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            _navigationValues._currentPath = _currentPath;
+            //_navigationValues._currentPath = _currentPath;
         }
 
         // Configure tree view
@@ -521,7 +512,7 @@ public class KryptonExplorerBrowser : KryptonPanel
         }
 
         // Configure list view
-        if (_listView != null)
+        /*if (_listView != null)
         {
             _listView.View = _displayValues.ViewMode;
             _listView.MultiSelect = _displayValues.SelectionMode != SelectionMode.One;
@@ -530,27 +521,15 @@ public class KryptonExplorerBrowser : KryptonPanel
             _listView.FileSystemListViewValues.ShowSystemFiles = _explorerValues.ShowSystemFiles;
             _listView.FileSystemListViewValues.FileFilter = _explorerValues.FileFilter;
             _listView.CurrentPath = _currentPath;
-        }
+        }*/
 
         // Configure UI visibility
-        if (_toolbarPanel != null)
-        {
-            _toolbarPanel.Visible = _displayValues.ShowToolbar;
-        }
-        if (_statusPanel != null)
-        {
-            _statusPanel.Visible = _displayValues.ShowStatusBar;
-        }
-        if (_splitContainer != null)
-        {
-            _splitContainer.Panel1Collapsed = !_displayValues.ShowTreeView;
-        }
+        _toolbarPanel?.Visible = _displayValues.ShowToolbar;
+        _statusPanel?.Visible = _displayValues.ShowStatusBar;
+        _splitContainer?.Panel1Collapsed = !_displayValues.ShowTreeView;
 
         // Update address bar
-        if (_addressBar != null)
-        {
-            _addressBar.Text = _currentPath;
-        }
+        _addressBar?.Text = _currentPath;
 
         // Update navigation buttons
         UpdateNavigationButtons();
@@ -559,18 +538,9 @@ public class KryptonExplorerBrowser : KryptonPanel
 
     private void UpdateNavigationButtons()
     {
-        if (_btnBack != null)
-        {
-            _btnBack.Enabled = _backHistory.Count > 0;
-        }
-        if (_btnForward != null)
-        {
-            _btnForward.Enabled = _forwardHistory.Count > 0;
-        }
-        if (_btnUp != null)
-        {
-            _btnUp.Enabled = !string.IsNullOrEmpty(_currentPath) && Directory.GetParent(_currentPath) != null;
-        }
+        _btnBack?.Enabled = _backHistory.Count > 0;
+        _btnForward?.Enabled = _forwardHistory.Count > 0;
+        _btnUp?.Enabled = !string.IsNullOrEmpty(_currentPath) && Directory.GetParent(_currentPath) != null;
     }
 
     private void UpdateStatus()
@@ -667,26 +637,26 @@ public class KryptonExplorerBrowser : KryptonPanel
 
     private void ListView_DoubleClick(object? sender, EventArgs e)
     {
-        if (_listView?.SelectedItems.Count > 0)
+        /*if (_listView?.SelectedItems.Count > 0)
         {
             string? path = _listView.SelectedItems[0].Tag as string;
             if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
             {
                 NavigateTo(path);
             }
-        }
+        }*/
     }
 
     private void ListView_PathChanged(object? sender, EventArgs e)
     {
-        if (_listView is KryptonFileSystemListView fsListView)
+        /*if (_listView is KryptonFileSystemListView fsListView)
         {
             string newPath = fsListView.CurrentPath;
             if (_currentPath != newPath)
             {
                 NavigateTo(newPath);
             }
-        }
+        }*/
     }
 
     private void ListView_FileSystemError(object? sender, FileSystemErrorEventArgs e)
@@ -809,7 +779,7 @@ public class ExplorerBrowserValues : Storage
 
     private void UpdateControls()
     {
-        if (_owner._treeView != null)
+        /*if (_owner._treeView != null)
         {
             _owner._treeView.FileSystemTreeViewValues.ShowFiles = _showFiles;
             _owner._treeView.FileSystemTreeViewValues.ShowHiddenFiles = _showHiddenFiles;
@@ -822,7 +792,7 @@ public class ExplorerBrowserValues : Storage
             _owner._listView.FileSystemListViewValues.ShowHiddenFiles = _showHiddenFiles;
             _owner._listView.FileSystemListViewValues.ShowSystemFiles = _showSystemFiles;
             _owner._listView.FileSystemListViewValues.FileFilter = _fileFilter;
-        }
+        }*/
         _owner.Refresh();
     }
 }
@@ -938,10 +908,10 @@ public class DisplayValues : Storage
             if (_viewMode != value)
             {
                 _viewMode = value;
-                if (_owner._listView != null)
+                /*if (_owner._listView != null)
                 {
                     _owner._listView.View = value;
-                }
+                }*/
             }
         }
     }
@@ -960,10 +930,10 @@ public class DisplayValues : Storage
             if (_selectionMode != value)
             {
                 _selectionMode = value;
-                if (_owner._listView != null)
+                /*if (_owner._listView != null)
                 {
                     _owner._listView.MultiSelect = value != SelectionMode.One;
-                }
+                }*/
             }
         }
     }
@@ -982,10 +952,10 @@ public class DisplayValues : Storage
             if (_showToolbar != value)
             {
                 _showToolbar = value;
-                if (_owner._toolbarPanel != null)
+                /*if (_owner._toolbarPanel != null)
                 {
                     _owner._toolbarPanel.Visible = value;
-                }
+                }*/
             }
         }
     }
@@ -1004,10 +974,10 @@ public class DisplayValues : Storage
             if (_showStatusBar != value)
             {
                 _showStatusBar = value;
-                if (_owner._statusPanel != null)
+                /*if (_owner._statusPanel != null)
                 {
                     _owner._statusPanel.Visible = value;
-                }
+                }*/
             }
         }
     }
@@ -1026,10 +996,10 @@ public class DisplayValues : Storage
             if (_showTreeView != value)
             {
                 _showTreeView = value;
-                if (_owner._splitContainer != null)
+                /*if (_owner._splitContainer != null)
                 {
                     _owner._splitContainer.Panel1Collapsed = !value;
-                }
+                }*/
             }
         }
     }

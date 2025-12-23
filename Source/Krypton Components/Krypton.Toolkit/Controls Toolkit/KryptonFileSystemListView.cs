@@ -7,7 +7,7 @@
  */
 #endregion
 
-namespace Krypton.Toolkit;
+/*namespace Krypton.Toolkit;
 
 using System.ComponentModel;
 using System.Drawing;
@@ -777,7 +777,7 @@ public class FileSystemListViewValues : Storage
     private string _fileFilter = "*.*";
     private bool _useLargeIcons = false;
 
-    private readonly KryptonFileSystemListView _owner;
+    private readonly InternalKryptonFileSystemListView _owner;
 
     #endregion
 
@@ -785,7 +785,7 @@ public class FileSystemListViewValues : Storage
     /// Initializes a new instance of the <see cref="FileSystemListViewValues"/> class.
     /// </summary>
     /// <param name="owner">The owner.</param>
-    internal FileSystemListViewValues(KryptonFileSystemListView owner)
+    internal FileSystemListViewValues(InternalKryptonFileSystemListView owner)
     {
         _owner = owner;
     }
@@ -938,5 +938,5 @@ public class FileSystemListViewValues : Storage
     /// </summary>
     /// <returns>A string that represents the current object.</returns>
     public override string ToString() => "File System List View Values";
-}
+}*/
 

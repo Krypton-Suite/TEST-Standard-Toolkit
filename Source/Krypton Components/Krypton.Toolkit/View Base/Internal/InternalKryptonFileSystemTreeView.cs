@@ -22,7 +22,7 @@ using System.IO;
 [DesignerCategory(@"code")]
 [Description(@"Displays a hierarchical file system tree with Krypton styling.")]
 [Docking(DockingBehavior.Ask)]
-public class InternalKryptonFileSystemTreeView : KryptonTreeView
+public class InternalKryptonFileSystemTreeView : KryptonFileSystemTreeView
 {
     #region Instance Fields
 

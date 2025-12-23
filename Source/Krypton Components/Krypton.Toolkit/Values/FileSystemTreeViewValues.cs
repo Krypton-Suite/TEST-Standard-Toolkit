@@ -25,7 +25,7 @@ public class FileSystemTreeViewValues : Storage
     private string _fileFilter = "*.*";
     private bool _showSpecialFolders = true;
 
-    private readonly InternalKryptonFileSystemTreeView _owner;
+    private readonly KryptonFileSystemTreeView _owner;
 
     #endregion
 
@@ -35,7 +35,7 @@ public class FileSystemTreeViewValues : Storage
     /// Initializes a new instance of the <see cref="FileSystemTreeViewValues"/> class.
     /// </summary>
     /// <param name="owner">The owner.</param>
-    internal FileSystemTreeViewValues(InternalKryptonFileSystemTreeView owner)
+    internal FileSystemTreeViewValues(KryptonFileSystemTreeView owner)
     {
         _owner = owner;
     }

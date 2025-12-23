@@ -185,8 +185,6 @@ public class KryptonFormValues : Storage
     /// <returns>The shadow around the form.</returns>
     private void DrawDropShadow()
     {
-        _owner.GetCreateParams();
-
         // Redraw
         _owner.Invalidate();
     }

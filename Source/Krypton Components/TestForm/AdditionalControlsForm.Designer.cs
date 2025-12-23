@@ -42,11 +42,11 @@
             this.kryptonLabel3 = new Krypton.Toolkit.KryptonLabel();
             this.kryptonLabel2 = new Krypton.Toolkit.KryptonLabel();
             this.kryptonLabel1 = new Krypton.Toolkit.KryptonLabel();
-            this.kryptonSearchBox5 = new Krypton.Toolkit.KryptonSearchBox();
-            this.kryptonSearchBox4 = new Krypton.Toolkit.KryptonSearchBox();
-            this.kryptonSearchBox3 = new Krypton.Toolkit.KryptonSearchBox();
-            this.kryptonSearchBox2 = new Krypton.Toolkit.KryptonSearchBox();
-            this.kryptonSearchBox1 = new Krypton.Toolkit.KryptonSearchBox();
+            this.kryptonSearchBox5 = new Krypton.Utilities.KryptonSearchBox();
+            this.kryptonSearchBox4 = new Krypton.Utilities.KryptonSearchBox();
+            this.kryptonSearchBox3 = new Krypton.Utilities.KryptonSearchBox();
+            this.kryptonSearchBox2 = new Krypton.Utilities.KryptonSearchBox();
+            this.kryptonSearchBox1 = new Krypton.Utilities.KryptonSearchBox();
             this.kryptonHeaderGroup1 = new Krypton.Toolkit.KryptonHeaderGroup();
             this.kryptonToolStripContainer1.SuspendLayout();
             this.toolStripContainer1.SuspendLayout();
@@ -179,7 +179,7 @@
             this.kryptonSearchBox2.Name = "kryptonSearchBox2";
             this.kryptonSearchBox2.Size = new System.Drawing.Size(300, 25);
             this.kryptonSearchBox2.TabIndex = 1;
-            this.kryptonSearchBox2.Search += new System.EventHandler<Krypton.Toolkit.SearchEventArgs>(this.KryptonSearchBox2_Search);
+            this.kryptonSearchBox2.Search += new System.EventHandler<Krypton.Utilities.SearchEventArgs>(this.KryptonSearchBox2_Search);
             // 
             // kryptonSearchBox1
             // 
@@ -187,7 +187,7 @@
             this.kryptonSearchBox1.Name = "kryptonSearchBox1";
             this.kryptonSearchBox1.Size = new System.Drawing.Size(300, 25);
             this.kryptonSearchBox1.TabIndex = 0;
-            this.kryptonSearchBox1.Search += new System.EventHandler<Krypton.Toolkit.SearchEventArgs>(this.KryptonSearchBox_Search);
+            this.kryptonSearchBox1.Search += new System.EventHandler<Krypton.Utilities.SearchEventArgs>(this.KryptonSearchBox_Search);
             // 
             // kryptonSearchBox3
             // 
@@ -195,7 +195,7 @@
             this.kryptonSearchBox3.Name = "kryptonSearchBox3";
             this.kryptonSearchBox3.Size = new System.Drawing.Size(300, 25);
             this.kryptonSearchBox3.TabIndex = 10;
-            this.kryptonSearchBox3.SuggestionSelected += new System.EventHandler<Krypton.Toolkit.SuggestionSelectedEventArgs>(this.KryptonSearchBox3_SuggestionSelected);
+            this.kryptonSearchBox3.SuggestionSelected += new System.EventHandler<Krypton.Utilities.SuggestionSelectedEventArgs>(this.KryptonSearchBox3_SuggestionSelected);
             // 
             // kryptonSearchBox4
             // 
@@ -203,7 +203,7 @@
             this.kryptonSearchBox4.Name = "kryptonSearchBox4";
             this.kryptonSearchBox4.Size = new System.Drawing.Size(300, 25);
             this.kryptonSearchBox4.TabIndex = 11;
-            this.kryptonSearchBox4.SuggestionSelected += new System.EventHandler<Krypton.Toolkit.SuggestionSelectedEventArgs>(this.KryptonSearchBox4_SuggestionSelected);
+            this.kryptonSearchBox4.SuggestionSelected += new System.EventHandler<Krypton.Utilities.SuggestionSelectedEventArgs>(this.KryptonSearchBox4_SuggestionSelected);
             // 
             // kryptonSearchBox5
             // 
@@ -211,7 +211,7 @@
             this.kryptonSearchBox5.Name = "kryptonSearchBox5";
             this.kryptonSearchBox5.Size = new System.Drawing.Size(300, 25);
             this.kryptonSearchBox5.TabIndex = 12;
-            this.kryptonSearchBox5.SuggestionSelected += new System.EventHandler<Krypton.Toolkit.SuggestionSelectedEventArgs>(this.KryptonSearchBox5_SuggestionSelected);
+            this.kryptonSearchBox5.SuggestionSelected += new System.EventHandler<Krypton.Utilities.SuggestionSelectedEventArgs>(this.KryptonSearchBox5_SuggestionSelected);
             // 
             // kryptonLabel5
             // 
@@ -259,7 +259,7 @@
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.kryptonHeaderGroup1);
             this.Controls.Add(this.kryptonPanel1);
-            this.FormValues.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
+            this.FormTitleAlign = Krypton.Toolkit.PaletteRelativeAlign.Inherit;
             this.Name = "AdditionalControlsForm";
             this.Text = "Additional Controls Examples";
             this.kryptonToolStripContainer1.ResumeLayout(false);
@@ -281,11 +281,11 @@
         private KryptonToolStripContainer kryptonToolStripContainer1;
         private ToolStripContainer toolStripContainer1;
         private KryptonPanel kryptonPanel1;
-        private KryptonSearchBox kryptonSearchBox1;
-        private KryptonSearchBox kryptonSearchBox2;
-        private KryptonSearchBox kryptonSearchBox3;
-        private KryptonSearchBox kryptonSearchBox4;
-        private KryptonSearchBox kryptonSearchBox5;
+        private Krypton.Utilities.KryptonSearchBox kryptonSearchBox1;
+        private Krypton.Utilities.KryptonSearchBox kryptonSearchBox2;
+        private Krypton.Utilities.KryptonSearchBox kryptonSearchBox3;
+        private Krypton.Utilities.KryptonSearchBox kryptonSearchBox4;
+        private Krypton.Utilities.KryptonSearchBox kryptonSearchBox5;
         private KryptonLabel kryptonLabel1;
         private KryptonLabel kryptonLabel2;
         private KryptonLabel kryptonLabel3;
