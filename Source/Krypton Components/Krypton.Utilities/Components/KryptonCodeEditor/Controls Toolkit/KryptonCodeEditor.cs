@@ -525,7 +525,7 @@ public class KryptonCodeEditor : VisualControlBase,
         
         if (patterns.Count == 0)
         {
-            tokens.Add(new CodeToken(TokenType.Normal, text, 0, text.Length));
+            tokens.Add(new CodeToken(TokenType.Normal, 0, text.Length));
             return tokens;
         }
         
@@ -616,13 +616,11 @@ public class KryptonCodeEditor : VisualControlBase,
             // Add normal text before this token
             if (range.Start > lastIndex)
             {
-                var normalText = text.Substring(lastIndex, range.Start - lastIndex);
-                tokens.Add(new CodeToken(TokenType.Normal, normalText, lastIndex, range.Start - lastIndex));
+                tokens.Add(new CodeToken(TokenType.Normal, lastIndex, range.Start - lastIndex));
             }
             
-            // Add the token
-            var tokenText = text.Substring(range.Start, range.End - range.Start);
-            tokens.Add(new CodeToken(range.Type, tokenText, range.Start, range.End - range.Start));
+            // Add the token - index-based, no string duplication
+            tokens.Add(new CodeToken(range.Type, range.Start, range.End - range.Start));
             
             lastIndex = range.End;
         }
@@ -630,8 +628,7 @@ public class KryptonCodeEditor : VisualControlBase,
         // Add remaining text
         if (lastIndex < text.Length)
         {
-            var remainingText = text.Substring(lastIndex);
-            tokens.Add(new CodeToken(TokenType.Normal, remainingText, lastIndex, text.Length - lastIndex));
+            tokens.Add(new CodeToken(TokenType.Normal, lastIndex, text.Length - lastIndex));
         }
         
         return tokens;
@@ -1062,7 +1059,7 @@ public class KryptonCodeEditor : VisualControlBase,
             (anchors, TokenType.Constant),
             (booleans, TokenType.Constant),
             (strings, TokenType.String),
-            (keys, TokenType.Property),
+            (keys, TokenType.Meta),
             (numbers, TokenType.Number)
         };
     }
@@ -1082,7 +1079,7 @@ public class KryptonCodeEditor : VisualControlBase,
             (dates, TokenType.Constant),
             (booleans, TokenType.Constant),
             (strings, TokenType.String),
-            (keys, TokenType.Property),
+            (keys, TokenType.Meta),
             (numbers, TokenType.Number)
         };
     }
@@ -1110,7 +1107,7 @@ public class KryptonCodeEditor : VisualControlBase,
         var keywords = @"\b(if|else|elseif|switch|for|foreach|while|do|until|break|continue|return|function|filter|workflow|class|enum|namespace|using|module|param|begin|process|end|try|catch|finally|throw|trap|data|inlinescript|parallel|sequence|flowcontrol|configuration|node|import-dscresource)\b";
         var cmdlets = @"\b(Get-|Set-|New-|Remove-|Add-|Clear-|Copy-|Export-|Import-|Move-|Out-|Pop-|Push-|Rename-|Resolve-|Search-|Select-|Send-|Sort-|Split-|Start-|Stop-|Suspend-|Test-|Trace-|Update-|Wait-|Write-|ConvertFrom-|ConvertTo-|Disable-|Enable-|Format-|Group-|Hide-|Join-|Limit-|Lock-|Measure-|Mount-|Open-|Optimize-|Publish-|Read-|Receive-|Register-|Restore-|Save-|Show-|Skip-|Step-|Switch-|Sync-|Tab-|Tee-|Unblock-|Unlock-|Unpublish-|Unregister-|Use-|Watch-)\w+\b";
         var variables = @"\$[\w]+|\$\{[\w]+\}";
-        var strings = @"""[^""]*""|'[^']*'|`"[^`]*`"";
+        var strings = @"""[^""]*""|'[^']*'|" + @"`""[^`]*`"""; // PowerShell backtick-escaped strings
         var comments = @"#.*?$|<#[\s\S]*?#>";
         var numbers = @"\b\d+\.?\d*\b";
         var operators = @"(-eq|-ne|-gt|-ge|-lt|-le|-like|-notlike|-match|-notmatch|-contains|-notcontains|-in|-notin|-replace|-split|-join|-and|-or|-not|-xor|-band|-bor|-bxor|-shl|-shr)\b";
@@ -1467,6 +1464,17 @@ public class KryptonCodeEditor : VisualControlBase,
         }
         
         _foldingMargin.Invalidate();
+    }
+    
+    /// <summary>
+    /// Gets whether a line is collapsed (folded).
+    /// </summary>
+    internal bool IsLineCollapsed(int lineNumber)
+    {
+        return _foldBlocks.Any(block => 
+            block.IsFolded && 
+            lineNumber > block.StartLine && 
+            lineNumber < block.EndLine);
     }
     
     #endregion

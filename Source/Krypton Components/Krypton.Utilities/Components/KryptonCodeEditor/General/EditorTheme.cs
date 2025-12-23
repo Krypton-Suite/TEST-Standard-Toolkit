@@ -462,7 +462,7 @@ public class EditorTheme
         SetTokenColor(TokenType.Constant, Color.FromArgb(174, 129, 255));
         SetTokenColor(TokenType.Attribute, Color.FromArgb(117, 113, 94));
         SetTokenColor(TokenType.Tag, Color.FromArgb(249, 38, 114));
-        SetTokenColor(TokenType.Property, Color.FromArgb(166, 226, 46));
+        SetTokenColor(TokenType.Meta, Color.FromArgb(166, 226, 46));
     }
     
     private void ApplySolarizedLightTheme()
@@ -489,7 +489,7 @@ public class EditorTheme
         SetTokenColor(TokenType.Constant, Color.FromArgb(220, 50, 47));
         SetTokenColor(TokenType.Attribute, Color.FromArgb(181, 137, 0));
         SetTokenColor(TokenType.Tag, Color.FromArgb(38, 139, 210));
-        SetTokenColor(TokenType.Property, Color.FromArgb(133, 153, 0));
+        SetTokenColor(TokenType.Meta, Color.FromArgb(133, 153, 0));
     }
     
     private void ApplySolarizedDarkTheme()
@@ -516,7 +516,7 @@ public class EditorTheme
         SetTokenColor(TokenType.Constant, Color.FromArgb(220, 50, 47));
         SetTokenColor(TokenType.Attribute, Color.FromArgb(181, 137, 0));
         SetTokenColor(TokenType.Tag, Color.FromArgb(38, 139, 210));
-        SetTokenColor(TokenType.Property, Color.FromArgb(133, 153, 0));
+        SetTokenColor(TokenType.Meta, Color.FromArgb(133, 153, 0));
     }
     
     #endregion
