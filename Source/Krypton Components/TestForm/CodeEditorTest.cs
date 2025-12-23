@@ -244,7 +244,7 @@ emp.greet();",
     vec.push(2);
     
     for item in &vec {
-        println!(\"{}\", item);
+        println!(""{}"", item);
     }
 }
 
@@ -254,7 +254,7 @@ struct Point {
 }",
             ["Go"] = @"package main
 
-import \"fmt\"
+import ""fmt""
 
 type Person struct {
     Name string
@@ -262,8 +262,8 @@ type Person struct {
 }
 
 func main() {
-    p := Person{Name: \"John\", Age: 30}
-    fmt.Printf(\"Name: %s, Age: %d\\n\", p.Name, p.Age)
+    p := Person{Name: ""John"", Age: 30}
+    fmt.Printf(""Name: %s, Age: %d\n"", p.Name, p.Age)
 }",
             ["Java"] = @"public class HelloWorld {
     private String message;
@@ -277,7 +277,7 @@ func main() {
     }
     
     public static void main(String[] args) {
-        HelloWorld hw = new HelloWorld(\"Hello, World!\");
+        HelloWorld hw = new HelloWorld(""Hello, World!"");
         hw.print();
     }
 }",
@@ -292,7 +292,7 @@ class Person {
     }
     
     public function greet() {
-        echo \"Hello, I'm \" . $this->name;
+        echo ""Hello, I'm "" . $this->name;
     }
 }
 
@@ -308,7 +308,7 @@ $person->greet();
     end
     
     def greet
-        puts \"Hello, I'm #{@name}\"
+        puts ""Hello, I'm #{@name}""
     end
 end
 
@@ -319,20 +319,20 @@ person.greet",
     var age: Int
     
     func greet() {
-        print(\"Hello, I'm \\(name)\")
+        print(""Hello, I'm \\(name)"")
     }
 }
 
-let person = Person(name: \"John\", age: 30)
+let person = Person(name: ""John"", age: 30)
 person.greet()",
             ["Kotlin"] = @"data class Person(val name: String, val age: Int) {
     fun greet() {
-        println(\"Hello, I'm \$name\")
+        println(""Hello, I'm $name"")
     }
 }
 
 fun main() {
-    val person = Person(\"John\", 30)
+    val person = Person(""John"", 30)
     person.greet()
 }",
             ["YAML"] = @"name: Example Application
@@ -349,14 +349,14 @@ features:
   - authorization
   - logging",
             ["TOML"] = @"[project]
-name = \"example\"
-version = \"1.0.0\"
-description = \"A sample TOML file\"
+name = ""example""
+version = ""1.0.0""
+description = ""A sample TOML file""
 
 [database]
-host = \"localhost\"
+host = ""localhost""
 port = 5432
-name = \"mydb\"
+name = ""mydb""
 
 [features]
 enabled = true",
@@ -382,17 +382,17 @@ pause",
         [int]$Age
     )
     
-    Write-Host \"Name: $Name\"
-    Write-Host \"Age: $Age\"
+    Write-Host ""Name: $Name""
+    Write-Host ""Age: $Age""
     
     if ($Age -ge 18) {
-        Write-Host \"Person is an adult\"
+        Write-Host ""Person is an adult""
     } else {
-        Write-Host \"Person is a minor\"
+        Write-Host ""Person is a minor""
     }
 }
 
-Get-PersonInfo -Name \"John\" -Age 30"
+Get-PersonInfo -Name ""John"" -Age 30"
         };
         
         // Store samples for later use
