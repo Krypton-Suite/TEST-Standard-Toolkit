@@ -63,11 +63,10 @@ internal class VisualAutoCompleteForm : Form
             }
             else
             {
-                // Pass to editor for live filtering
+                // Hide autocomplete and return focus to editor for normal typing
+                Hide();
                 _editor.RichTextBox.Focus();
-                // Send the key to editor for processing
-                var keyPressArgs = new KeyPressEventArgs((char)e.KeyValue);
-                _editor.RichTextBox.OnKeyPress(keyPressArgs);
+                e.Handled = true;
             }
         };
 
