@@ -20,6 +20,9 @@ public class BadgeValues : Storage
     private static readonly Color _defaultBadgeColor = Color.Red;
     private static readonly Color _defaultTextColor = Color.White;
     private static readonly Font? _defaultFont = null; // null means use default font
+    private static readonly Color _defaultBadgeBorderColor = Color.Empty;
+    private const int DEFAULT_BADGE_BORDER_SIZE = 0;
+    private const int DEFAULT_BADGE_DIAMETER = 0; // 0 means auto-size
     #endregion
 
     #region Instance Fields
@@ -32,6 +35,9 @@ public class BadgeValues : Storage
     private BadgeAnimation _animation;
     private Font? _font;
     private bool _visible;
+    private Color _badgeBorderColor;
+    private int _badgeBorderSize;
+    private int _badgeDiameter;
     #endregion
 
     #region Identity
@@ -54,6 +60,9 @@ public class BadgeValues : Storage
         _animation = BadgeAnimation.None;
         _font = _defaultFont;
         _visible = false;
+        _badgeBorderColor = _defaultBadgeBorderColor;
+        _badgeBorderSize = DEFAULT_BADGE_BORDER_SIZE;
+        _badgeDiameter = DEFAULT_BADGE_DIAMETER;
     }
     #endregion
 
@@ -71,7 +80,10 @@ public class BadgeValues : Storage
                                       (Shape == BadgeShape.Circle) &&
                                       (Animation == BadgeAnimation.None) &&
                                       (Font == _defaultFont) &&
-                                      (Visible == false);
+                                      (Visible == false) &&
+                                      (BadgeBorderColor == _defaultBadgeBorderColor) &&
+                                      (BadgeBorderSize == DEFAULT_BADGE_BORDER_SIZE) &&
+                                      (BadgeDiameter == DEFAULT_BADGE_DIAMETER);
 
     #endregion
 
@@ -337,5 +349,102 @@ public class BadgeValues : Storage
     /// Resets the Animation property to its default value.
     /// </summary>
     public void ResetAnimation() => Animation = BadgeAnimation.None;
+    #endregion
+
+    #region BadgeBorderColor
+    /// <summary>
+    /// Gets and sets the badge border color.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"The border color of the badge. Empty means no border.")]
+    [RefreshProperties(RefreshProperties.All)]
+    [KryptonDefaultColor]
+    public Color BadgeBorderColor
+    {
+        get => _badgeBorderColor;
+        set
+        {
+            if (_badgeBorderColor != value)
+            {
+                _badgeBorderColor = value;
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeBadgeBorderColor() => BadgeBorderColor != _defaultBadgeBorderColor;
+
+    /// <summary>
+    /// Resets the BadgeBorderColor property to its default value.
+    /// </summary>
+    public void ResetBadgeBorderColor() => BadgeBorderColor = _defaultBadgeBorderColor;
+    #endregion
+
+    #region BadgeBorderSize
+    /// <summary>
+    /// Gets and sets the badge border size (thickness in pixels).
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"The border size (thickness in pixels) of the badge. 0 means no border.")]
+    [RefreshProperties(RefreshProperties.All)]
+    [DefaultValue(0)]
+    public int BadgeBorderSize
+    {
+        get => _badgeBorderSize;
+        set
+        {
+            if (value < 0)
+            {
+                value = 0;
+            }
+
+            if (_badgeBorderSize != value)
+            {
+                _badgeBorderSize = value;
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeBadgeBorderSize() => BadgeBorderSize != DEFAULT_BADGE_BORDER_SIZE;
+
+    /// <summary>
+    /// Resets the BadgeBorderSize property to its default value.
+    /// </summary>
+    public void ResetBadgeBorderSize() => BadgeBorderSize = DEFAULT_BADGE_BORDER_SIZE;
+    #endregion
+
+    #region BadgeDiameter
+    /// <summary>
+    /// Gets and sets the badge diameter (for circle shape only). 0 means auto-size based on content.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"The diameter of the badge when Shape is Circle. 0 means auto-size based on content.")]
+    [RefreshProperties(RefreshProperties.All)]
+    [DefaultValue(0)]
+    public int BadgeDiameter
+    {
+        get => _badgeDiameter;
+        set
+        {
+            if (value < 0)
+            {
+                value = 0;
+            }
+
+            if (_badgeDiameter != value)
+            {
+                _badgeDiameter = value;
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeBadgeDiameter() => BadgeDiameter != DEFAULT_BADGE_DIAMETER;
+
+    /// <summary>
+    /// Resets the BadgeDiameter property to its default value.
+    /// </summary>
+    public void ResetBadgeDiameter() => BadgeDiameter = DEFAULT_BADGE_DIAMETER;
     #endregion
 }

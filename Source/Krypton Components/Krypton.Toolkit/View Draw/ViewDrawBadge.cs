@@ -159,6 +159,12 @@ public class ViewDrawBadge : ViewLeaf
     #region Implementation
     private Size CalculateBadgeSize(ViewLayoutContext context)
     {
+        // If shape is Circle and BadgeDiameter is specified, use it
+        if (_badgeValues.Shape == BadgeShape.Circle && _badgeValues.BadgeDiameter > 0)
+        {
+            return new Size(_badgeValues.BadgeDiameter, _badgeValues.BadgeDiameter);
+        }
+
         // If image is provided, use image size with padding
         if (_badgeValues.Image != null)
         {
@@ -318,6 +324,9 @@ public class ViewDrawBadge : ViewLeaf
             
             g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Default;
             g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Default;
+
+            // Draw border for image badges if specified
+            DrawBadgeBorder(g, drawRect, opacity);
         }
         else
         {
@@ -344,6 +353,9 @@ public class ViewDrawBadge : ViewLeaf
                         break;
                 }
             }
+
+            // Draw border if specified
+            DrawBadgeBorder(g, drawRect, opacity);
 
             // Draw the badge text
             string text = _badgeValues.Text ?? "";
@@ -393,6 +405,56 @@ public class ViewDrawBadge : ViewLeaf
             path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
             path.CloseAllFigures();
             g.FillPath(brush, path);
+        }
+    }
+
+    private void DrawRoundedRectangle(Graphics g, Pen pen, Rectangle rect, int radius)
+    {
+        using (var path = new GraphicsPath())
+        {
+            path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
+            path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
+            path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+            path.CloseAllFigures();
+            g.DrawPath(pen, path);
+        }
+    }
+
+    private void DrawBadgeBorder(Graphics g, Rectangle drawRect, float opacity)
+    {
+        if (_badgeValues.BadgeBorderSize > 0 && _badgeValues.BadgeBorderColor != Color.Empty)
+        {
+            Color borderColor = _badgeValues.BadgeBorderColor;
+            if (opacity < 1.0f)
+            {
+                borderColor = Color.FromArgb((int)(opacity * 255), borderColor.R, borderColor.G, borderColor.B);
+            }
+
+            // Adjust rectangle to account for pen width (pen draws centered on edge)
+            int halfBorder = _badgeValues.BadgeBorderSize / 2;
+            Rectangle borderRect = new Rectangle(
+                drawRect.X + halfBorder,
+                drawRect.Y + halfBorder,
+                drawRect.Width - _badgeValues.BadgeBorderSize,
+                drawRect.Height - _badgeValues.BadgeBorderSize);
+
+            using (var borderPen = new Pen(borderColor, _badgeValues.BadgeBorderSize))
+            {
+                switch (_badgeValues.Shape)
+                {
+                    case BadgeShape.Circle:
+                        g.DrawEllipse(borderPen, borderRect);
+                        break;
+                    case BadgeShape.Square:
+                        g.DrawRectangle(borderPen, borderRect);
+                        break;
+                    case BadgeShape.RoundedRectangle:
+                        int borderRadius = Math.Min(borderRect.Width, borderRect.Height) / 4;
+                        DrawRoundedRectangle(g, borderPen, borderRect, borderRadius);
+                        break;
+                }
+            }
         }
     }
 

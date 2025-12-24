@@ -576,7 +576,7 @@ public class ViewDrawButton : ViewComposite, IRippleHost
         if (_drawBadge != null)
         {
             // Layout the badge using our client rectangle
-            using var badgeContext = new ViewLayoutContext(context.Control, context.Renderer)
+            using var badgeContext = new ViewLayoutContext(context.Control, context.Renderer!)
             {
                 DisplayRectangle = ClientRectangle
             };
