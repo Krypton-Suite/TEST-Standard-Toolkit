@@ -264,29 +264,6 @@ public class ViewDrawBadge : ViewLeaf
 
         // Calculate opacity based on animation
         float opacity = GetAnimationOpacity();
-        Color badgeColor = _badgeValues.BadgeColor;
-        if (opacity < 1.0f)
-        {
-            badgeColor = Color.FromArgb((int)(opacity * 255), badgeColor.R, badgeColor.G, badgeColor.B);
-        }
-
-        // Draw the badge background based on shape
-        using (var badgeBrush = new SolidBrush(badgeColor))
-        {
-            switch (_badgeValues.Shape)
-            {
-                case BadgeShape.Circle:
-                    g.FillEllipse(badgeBrush, drawRect);
-                    break;
-                case BadgeShape.Square:
-                    g.FillRectangle(badgeBrush, drawRect);
-                    break;
-                case BadgeShape.RoundedRectangle:
-                    int radius = Math.Min(drawRect.Width, drawRect.Height) / 4;
-                    FillRoundedRectangle(g, badgeBrush, drawRect, radius);
-                    break;
-            }
-        }
 
         // Draw image if provided, otherwise draw text
         if (_badgeValues.Image != null)
@@ -344,6 +321,30 @@ public class ViewDrawBadge : ViewLeaf
         }
         else
         {
+            // Draw the badge background for text badges (no background for image badges)
+            Color badgeColor = _badgeValues.BadgeColor;
+            if (opacity < 1.0f)
+            {
+                badgeColor = Color.FromArgb((int)(opacity * 255), badgeColor.R, badgeColor.G, badgeColor.B);
+            }
+
+            using (var badgeBrush = new SolidBrush(badgeColor))
+            {
+                switch (_badgeValues.Shape)
+                {
+                    case BadgeShape.Circle:
+                        g.FillEllipse(badgeBrush, drawRect);
+                        break;
+                    case BadgeShape.Square:
+                        g.FillRectangle(badgeBrush, drawRect);
+                        break;
+                    case BadgeShape.RoundedRectangle:
+                        int radius = Math.Min(drawRect.Width, drawRect.Height) / 4;
+                        FillRoundedRectangle(g, badgeBrush, drawRect, radius);
+                        break;
+                }
+            }
+
             // Draw the badge text
             string text = _badgeValues.Text ?? "";
             if (!string.IsNullOrEmpty(text))
