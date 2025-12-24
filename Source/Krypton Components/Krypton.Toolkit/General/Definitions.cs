@@ -1080,6 +1080,34 @@ public enum ButtonCheckState
 }
 #endregion
 
+#region Enum BadgePosition
+/// <summary>
+/// Specifies the position of a badge on a button.
+/// </summary>
+public enum BadgePosition
+{
+    /// <summary>
+    /// Specifies the badge is positioned at the top-right corner.
+    /// </summary>
+    TopRight,
+
+    /// <summary>
+    /// Specifies the badge is positioned at the top-left corner.
+    /// </summary>
+    TopLeft,
+
+    /// <summary>
+    /// Specifies the badge is positioned at the bottom-right corner.
+    /// </summary>
+    BottomRight,
+
+    /// <summary>
+    /// Specifies the badge is positioned at the bottom-left corner.
+    /// </summary>
+    BottomLeft
+}
+#endregion
+
 #region Enum RelativeEdgeAlign
 /// <summary>
 /// Specifies a relative edge alignment position.
