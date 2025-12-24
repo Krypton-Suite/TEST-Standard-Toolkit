@@ -68,8 +68,8 @@ public class ViewDrawBadge : ViewLeaf
     {
         Debug.Assert(context != null);
 
-        // Only layout if badge is visible
-        if (!_badgeValues.Visible || string.IsNullOrEmpty(_badgeValues.Text))
+        // Only layout if badge is visible and has content (text or image)
+        if (!_badgeValues.Visible || (string.IsNullOrEmpty(_badgeValues.Text) && _badgeValues.Image == null))
         {
             ClientRectangle = Rectangle.Empty;
             return;
@@ -97,8 +97,8 @@ public class ViewDrawBadge : ViewLeaf
     {
         Debug.Assert(context != null);
 
-        // Only render if visible and has text
-        if (!Visible || !_badgeValues.Visible || string.IsNullOrEmpty(_badgeValues.Text))
+        // Only render if visible and has content (text or image)
+        if (!Visible || !_badgeValues.Visible || (string.IsNullOrEmpty(_badgeValues.Text) && _badgeValues.Image == null))
         {
             return;
         }
@@ -110,6 +110,17 @@ public class ViewDrawBadge : ViewLeaf
     #region Implementation
     private Size CalculateBadgeSize(ViewLayoutContext context)
     {
+        // If image is provided, use image size with padding
+        if (_badgeValues.Image != null)
+        {
+            int padding = 4; // Padding around image
+            // For images, use a reasonable badge size based on the image
+            int imageMax = Math.Max(_badgeValues.Image.Width, _badgeValues.Image.Height);
+            int size = Math.Max(BADGE_MIN_SIZE, Math.Min(imageMax + padding, 32)); // Cap at 32px for reasonable badge size
+            return new Size(size, size);
+        }
+
+        // Otherwise calculate based on text
         string text = _badgeValues.Text ?? "";
         
         if (string.IsNullOrEmpty(text))
@@ -170,7 +181,6 @@ public class ViewDrawBadge : ViewLeaf
         }
 
         Graphics g = context.Graphics;
-        string text = _badgeValues.Text ?? "";
 
         // Enable anti-aliasing for smoother rendering
         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
@@ -182,19 +192,49 @@ public class ViewDrawBadge : ViewLeaf
             g.FillEllipse(badgeBrush, badgeRect);
         }
 
-        // Draw the badge text
-        if (!string.IsNullOrEmpty(text))
+        // Draw image if provided, otherwise draw text
+        if (_badgeValues.Image != null)
         {
-            using var textFont = new Font("Segoe UI", 7.5f, FontStyle.Bold, GraphicsUnit.Point);
-            using var textBrush = new SolidBrush(_badgeValues.TextColor);
-            using var stringFormat = new StringFormat
+            // Scale image to fit within badge with padding
+            int padding = 4;
+            int maxImageSize = Math.Min(badgeRect.Width, badgeRect.Height) - padding;
+            
+            // Calculate scaled size maintaining aspect ratio
+            int imageWidth = _badgeValues.Image.Width;
+            int imageHeight = _badgeValues.Image.Height;
+            float scale = Math.Min((float)maxImageSize / imageWidth, (float)maxImageSize / imageHeight);
+            int scaledWidth = (int)(imageWidth * scale);
+            int scaledHeight = (int)(imageHeight * scale);
+            
+            // Center the image in the badge
+            int imageX = badgeRect.Left + (badgeRect.Width - scaledWidth) / 2;
+            int imageY = badgeRect.Top + (badgeRect.Height - scaledHeight) / 2;
+            Rectangle imageRect = new Rectangle(imageX, imageY, scaledWidth, scaledHeight);
+            
+            // Draw the image with high quality interpolation
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            g.DrawImage(_badgeValues.Image, imageRect);
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Default;
+            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Default;
+        }
+        else
+        {
+            // Draw the badge text
+            string text = _badgeValues.Text ?? "";
+            if (!string.IsNullOrEmpty(text))
             {
-                Alignment = StringAlignment.Center,
-                LineAlignment = StringAlignment.Center,
-                FormatFlags = StringFormatFlags.NoWrap
-            };
+                using var textFont = new Font("Segoe UI", 7.5f, FontStyle.Bold, GraphicsUnit.Point);
+                using var textBrush = new SolidBrush(_badgeValues.TextColor);
+                using var stringFormat = new StringFormat
+                {
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center,
+                    FormatFlags = StringFormatFlags.NoWrap
+                };
 
-            g.DrawString(text, textFont, textBrush, badgeRect, stringFormat);
+                g.DrawString(text, textFont, textBrush, badgeRect, stringFormat);
+            }
         }
     }
     #endregion

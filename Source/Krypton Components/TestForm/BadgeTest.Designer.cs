@@ -66,6 +66,11 @@ namespace TestForm
             this.btnToggleBadgeVisibility = new Krypton.Toolkit.KryptonButton();
             this.lblToggleStatus = new Krypton.Toolkit.KryptonLabel();
             this.btnInteractive = new Krypton.Toolkit.KryptonButton();
+            this.grpImageExamples = new Krypton.Toolkit.KryptonGroupBox();
+            this.btnImageQuestion = new Krypton.Toolkit.KryptonButton();
+            this.btnImageInfo = new Krypton.Toolkit.KryptonButton();
+            this.btnImageWarning = new Krypton.Toolkit.KryptonButton();
+            this.btnImageError = new Krypton.Toolkit.KryptonButton();
             this.grpCheckButton = new Krypton.Toolkit.KryptonGroupBox();
             this.checkBtnWithBadge = new Krypton.Toolkit.KryptonCheckButton();
             this.btnCheckButton = new Krypton.Toolkit.KryptonButton();
@@ -88,6 +93,10 @@ namespace TestForm
             ((System.ComponentModel.ISupportInitialize)(this.grpInteractive.Panel)).BeginInit();
             this.grpInteractive.Panel.SuspendLayout();
             this.grpInteractive.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.grpImageExamples)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grpImageExamples.Panel)).BeginInit();
+            this.grpImageExamples.Panel.SuspendLayout();
+            this.grpImageExamples.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grpCheckButton)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.grpCheckButton.Panel)).BeginInit();
             this.grpCheckButton.Panel.SuspendLayout();
@@ -379,6 +388,53 @@ namespace TestForm
             this.btnInteractive.TabIndex = 0;
             this.btnInteractive.Values.Text = "Interactive Button (Select in Property Grid)";
             // 
+            // grpImageExamples
+            // 
+            this.grpImageExamples.Location = new System.Drawing.Point(12, 470);
+            this.grpImageExamples.Name = "grpImageExamples";
+            this.grpImageExamples.Size = new System.Drawing.Size(380, 120);
+            this.grpImageExamples.TabIndex = 7;
+            this.grpImageExamples.Values.Heading = "Badge Image Examples";
+            // 
+            // grpImageExamples.Panel
+            // 
+            this.grpImageExamples.Panel.Controls.Add(this.btnImageQuestion);
+            this.grpImageExamples.Panel.Controls.Add(this.btnImageInfo);
+            this.grpImageExamples.Panel.Controls.Add(this.btnImageWarning);
+            this.grpImageExamples.Panel.Controls.Add(this.btnImageError);
+            // 
+            // btnImageQuestion
+            // 
+            this.btnImageQuestion.Location = new System.Drawing.Point(200, 70);
+            this.btnImageQuestion.Name = "btnImageQuestion";
+            this.btnImageQuestion.Size = new System.Drawing.Size(160, 35);
+            this.btnImageQuestion.TabIndex = 3;
+            this.btnImageQuestion.Values.Text = "Question Icon";
+            // 
+            // btnImageInfo
+            // 
+            this.btnImageInfo.Location = new System.Drawing.Point(15, 70);
+            this.btnImageInfo.Name = "btnImageInfo";
+            this.btnImageInfo.Size = new System.Drawing.Size(160, 35);
+            this.btnImageInfo.TabIndex = 2;
+            this.btnImageInfo.Values.Text = "Info Icon";
+            // 
+            // btnImageWarning
+            // 
+            this.btnImageWarning.Location = new System.Drawing.Point(200, 20);
+            this.btnImageWarning.Name = "btnImageWarning";
+            this.btnImageWarning.Size = new System.Drawing.Size(160, 35);
+            this.btnImageWarning.TabIndex = 1;
+            this.btnImageWarning.Values.Text = "Warning Icon";
+            // 
+            // btnImageError
+            // 
+            this.btnImageError.Location = new System.Drawing.Point(15, 20);
+            this.btnImageError.Name = "btnImageError";
+            this.btnImageError.Size = new System.Drawing.Size(160, 35);
+            this.btnImageError.TabIndex = 0;
+            this.btnImageError.Values.Text = "Error Icon";
+            // 
             // grpCheckButton
             // 
             this.grpCheckButton.Location = new System.Drawing.Point(398, 318);
@@ -430,9 +486,10 @@ namespace TestForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1146, 632);
+            this.ClientSize = new System.Drawing.Size(1146, 602);
             this.Controls.Add(this.lblPropertyGrid);
             this.Controls.Add(this.propertyGrid);
+            this.Controls.Add(this.grpImageExamples);
             this.Controls.Add(this.grpCheckButton);
             this.Controls.Add(this.grpInteractive);
             this.Controls.Add(this.grpNotificationExamples);
@@ -458,6 +515,10 @@ namespace TestForm
             this.grpInteractive.Panel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grpInteractive)).EndInit();
             this.grpInteractive.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.grpImageExamples.Panel)).EndInit();
+            this.grpImageExamples.Panel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.grpImageExamples)).EndInit();
+            this.grpImageExamples.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.grpCheckButton.Panel)).EndInit();
             this.grpCheckButton.Panel.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.grpCheckButton)).EndInit();
@@ -503,5 +564,10 @@ namespace TestForm
         private System.Windows.Forms.PropertyGrid propertyGrid;
         private Krypton.Toolkit.KryptonLabel lblPropertyGrid;
         private Krypton.Toolkit.KryptonButton btnToggle;
+        private Krypton.Toolkit.KryptonGroupBox grpImageExamples;
+        private Krypton.Toolkit.KryptonButton btnImageError;
+        private Krypton.Toolkit.KryptonButton btnImageWarning;
+        private Krypton.Toolkit.KryptonButton btnImageInfo;
+        private Krypton.Toolkit.KryptonButton btnImageQuestion;
     }
 }

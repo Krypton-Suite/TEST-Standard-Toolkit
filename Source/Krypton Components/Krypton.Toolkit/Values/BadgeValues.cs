@@ -23,6 +23,7 @@ public class BadgeValues : Storage
 
     #region Instance Fields
     private string? _text;
+    private Image? _image;
     private Color _badgeColor;
     private Color _textColor;
     private BadgePosition _position;
@@ -41,6 +42,7 @@ public class BadgeValues : Storage
 
         // Set initial values
         _text = DEFAULT_TEXT;
+        _image = null;
         _badgeColor = _defaultBadgeColor;
         _textColor = _defaultTextColor;
         _position = BadgePosition.TopRight;
@@ -55,6 +57,7 @@ public class BadgeValues : Storage
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public override bool IsDefault => (Text == DEFAULT_TEXT) &&
+                                      (Image == null) &&
                                       (BadgeColor == _defaultBadgeColor) &&
                                       (TextColor == _defaultTextColor) &&
                                       (Position == BadgePosition.TopRight) &&
@@ -90,6 +93,36 @@ public class BadgeValues : Storage
     /// Resets the Text property to its default value.
     /// </summary>
     public void ResetText() => Text = DEFAULT_TEXT;
+    #endregion
+
+    #region Image
+    /// <summary>
+    /// Gets and sets the badge image.
+    /// </summary>
+    [Localizable(true)]
+    [Category(@"Visuals")]
+    [Description(@"The image to display on the badge. If set, the image will be displayed instead of text.")]
+    [RefreshProperties(RefreshProperties.All)]
+    [DefaultValue(null)]
+    public Image? Image
+    {
+        get => _image;
+        set
+        {
+            if (_image != value)
+            {
+                _image = value;
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeImage() => Image != null;
+
+    /// <summary>
+    /// Resets the Image property to its default value.
+    /// </summary>
+    public void ResetImage() => Image = null;
     #endregion
 
     #region BadgeColor

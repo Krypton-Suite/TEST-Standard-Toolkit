@@ -67,29 +67,29 @@ public partial class BadgeTest : KryptonForm
 
     private void SetupColorExamples()
     {
-        // Red badge
+        // Red badge with text
         btnRedBadge.BadgeValues.Text = "5";
         btnRedBadge.BadgeValues.Visible = true;
         btnRedBadge.BadgeValues.BadgeColor = Color.Red;
         btnRedBadge.BadgeValues.TextColor = Color.White;
 
-        // Blue badge
+        // Blue badge with text
         btnBlueBadge.BadgeValues.Text = "8";
         btnBlueBadge.BadgeValues.Visible = true;
         btnBlueBadge.BadgeValues.BadgeColor = Color.Blue;
         btnBlueBadge.BadgeValues.TextColor = Color.White;
 
-        // Green badge
+        // Green badge with text
         btnGreenBadge.BadgeValues.Text = "12";
         btnGreenBadge.BadgeValues.Visible = true;
         btnGreenBadge.BadgeValues.BadgeColor = Color.Green;
         btnGreenBadge.BadgeValues.TextColor = Color.White;
 
-        // Custom color badge
-        btnCustomBadge.BadgeValues.Text = "NEW";
+        // Custom color badge with image (using SystemIcons)
+        btnCustomBadge.BadgeValues.Image = SystemIcons.Information.ToBitmap();
         btnCustomBadge.BadgeValues.Visible = true;
         btnCustomBadge.BadgeValues.BadgeColor = Color.Purple;
-        btnCustomBadge.BadgeValues.TextColor = Color.Yellow;
+        btnCustomBadge.BadgeValues.Text = ""; // Clear text when using image
     }
 
     private void SetupNotificationExamples()
@@ -106,11 +106,11 @@ public partial class BadgeTest : KryptonForm
         btnMessages.BadgeValues.BadgeColor = Color.DarkBlue;
         btnMessages.BadgeValues.TextColor = Color.White;
 
-        // Alert badge
-        btnAlerts.BadgeValues.Text = "!";
+        // Alert badge with image
+        btnAlerts.BadgeValues.Image = SystemIcons.Warning.ToBitmap();
         btnAlerts.BadgeValues.Visible = true;
         btnAlerts.BadgeValues.BadgeColor = Color.Orange;
-        btnAlerts.BadgeValues.TextColor = Color.White;
+        btnAlerts.BadgeValues.Text = ""; // Clear text when using image
     }
 
     private void SetupInteractiveExamples()
@@ -238,11 +238,11 @@ public partial class BadgeTest : KryptonForm
 
     private void BadgeTest_Load(object sender, EventArgs e)
     {
-        // Initialize check button badge
-        checkBtnWithBadge.BadgeValues.Text = "✓";
+        // Initialize check button badge with image
+        checkBtnWithBadge.BadgeValues.Image = SystemIcons.Shield.ToBitmap();
         checkBtnWithBadge.BadgeValues.Visible = true;
         checkBtnWithBadge.BadgeValues.BadgeColor = Color.Green;
-        checkBtnWithBadge.BadgeValues.TextColor = Color.White;
+        checkBtnWithBadge.BadgeValues.Text = ""; // Clear text when using image
         checkBtnWithBadge.BadgeValues.Position = BadgePosition.TopRight;
 
         // Initialize toggle button badge
@@ -274,5 +274,35 @@ public partial class BadgeTest : KryptonForm
         lblToggleStatus.Values.Text = $"Badge Visible: {btnToggle.BadgeValues.Visible}";
         lblPositionStatus.Values.Text = $"Position: {btnCyclePosition.BadgeValues.Position}";
         lblColorStatus.Values.Text = $"Badge Color: {btnCycleColors.BadgeValues.BadgeColor.Name}";
+
+        // Setup image examples
+        SetupImageExamples();
+    }
+
+    private void SetupImageExamples()
+    {
+        // Error icon badge
+        btnImageError.BadgeValues.Image = SystemIcons.Error.ToBitmap();
+        btnImageError.BadgeValues.Visible = true;
+        btnImageError.BadgeValues.BadgeColor = Color.Red;
+        btnImageError.BadgeValues.Text = "";
+
+        // Warning icon badge
+        btnImageWarning.BadgeValues.Image = SystemIcons.Warning.ToBitmap();
+        btnImageWarning.BadgeValues.Visible = true;
+        btnImageWarning.BadgeValues.BadgeColor = Color.Orange;
+        btnImageWarning.BadgeValues.Text = "";
+
+        // Info icon badge
+        btnImageInfo.BadgeValues.Image = SystemIcons.Information.ToBitmap();
+        btnImageInfo.BadgeValues.Visible = true;
+        btnImageInfo.BadgeValues.BadgeColor = Color.Blue;
+        btnImageInfo.BadgeValues.Text = "";
+
+        // Question icon badge
+        btnImageQuestion.BadgeValues.Image = SystemIcons.Question.ToBitmap();
+        btnImageQuestion.BadgeValues.Visible = true;
+        btnImageQuestion.BadgeValues.BadgeColor = Color.Green;
+        btnImageQuestion.BadgeValues.Text = "";
     }
 }
