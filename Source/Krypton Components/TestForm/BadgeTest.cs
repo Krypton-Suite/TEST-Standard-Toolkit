@@ -29,6 +29,9 @@ public partial class BadgeTest : KryptonForm
         SetupColorExamples();
         SetupNotificationExamples();
         SetupInteractiveExamples();
+        SetupShapeExamples();
+        SetupAnimationExamples();
+        SetupFontExamples();
         
         // Set property grid to show badge properties
         propertyGrid.SelectedObject = btnInteractive;
@@ -304,5 +307,41 @@ public partial class BadgeTest : KryptonForm
         btnImageQuestion.BadgeValues.Visible = true;
         btnImageQuestion.BadgeValues.BadgeColor = Color.Green;
         btnImageQuestion.BadgeValues.Text = "";
+    }
+
+    private void SetupShapeExamples()
+    {
+        // Demonstrate different badge shapes on existing buttons
+        // Circle (default) - already shown in other examples
+        
+        // Square shape example on blue badge
+        btnBlueBadge.BadgeValues.Shape = BadgeShape.Square;
+        
+        // Rounded rectangle shape example on green badge
+        btnGreenBadge.BadgeValues.Shape = BadgeShape.RoundedRectangle;
+    }
+
+    private void SetupAnimationExamples()
+    {
+        // Demonstrate fade in/out animation on alerts button
+        btnAlerts.BadgeValues.Animation = BadgeAnimation.FadeInOut;
+        
+        // Demonstrate pulse animation on messages button
+        btnMessages.BadgeValues.Animation = BadgeAnimation.Pulse;
+        
+        // Custom badge with pulse animation
+        btnCustomBadge.BadgeValues.Animation = BadgeAnimation.Pulse;
+    }
+
+    private void SetupFontExamples()
+    {
+        // Demonstrate custom font on red badge
+        btnRedBadge.BadgeValues.Font = new Font("Arial", 9f, FontStyle.Bold, GraphicsUnit.Point);
+        
+        // Demonstrate larger font on notification button
+        btnNotifications.BadgeValues.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold, GraphicsUnit.Point);
+        
+        // Custom font on bottom right button
+        btnBottomRight.BadgeValues.Font = new Font("Consolas", 7f, FontStyle.Bold, GraphicsUnit.Point);
     }
 }

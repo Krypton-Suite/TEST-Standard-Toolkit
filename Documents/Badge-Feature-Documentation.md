@@ -93,6 +93,62 @@ public enum BadgePosition
 
 ---
 
+### Enum: `BadgeShape`
+
+Specifies the shape of a badge.
+
+```csharp
+public enum BadgeShape
+{
+    /// <summary>
+    /// Specifies a circular badge.
+    /// </summary>
+    Circle,
+
+    /// <summary>
+    /// Specifies a square badge.
+    /// </summary>
+    Square,
+
+    /// <summary>
+    /// Specifies a rounded rectangle badge.
+    /// </summary>
+    RoundedRectangle
+}
+```
+
+**Default Value**: `Circle`
+
+---
+
+### Enum: `BadgeAnimation`
+
+Specifies the animation type for a badge.
+
+```csharp
+public enum BadgeAnimation
+{
+    /// <summary>
+    /// No animation.
+    /// </summary>
+    None,
+
+    /// <summary>
+    /// Fade in and out animation.
+    /// </summary>
+    FadeInOut,
+
+    /// <summary>
+    /// Pulsing animation (scale and opacity).
+    /// </summary>
+    Pulse
+}
+```
+
+**Default Value**: `None`
+
+---
+
 ### Class: `BadgeValues`
 
 Storage class for badge value information. This class is exposed via the `BadgeValues` property on `KryptonDropButton` and its derived classes.
@@ -175,6 +231,61 @@ button.BadgeValues.TextColor = Color.Yellow;
 
 **Note**: This property only affects text badges. Image badges ignore this property.
 
+##### `Font` (Font?)
+
+Gets and sets the font used to display badge text.
+
+- **Type**: `Font?` (nullable)
+- **Default**: `null` (uses default font: Segoe UI 7.5pt Bold)
+- **Localizable**: Yes
+- **Category**: Visuals
+- **Description**: The font used to display badge text. If null, uses default font (Segoe UI 7.5pt Bold).
+
+```csharp
+button.BadgeValues.Font = new Font("Arial", 8f, FontStyle.Bold);
+button.BadgeValues.Font = new Font("Segoe UI", 9f, FontStyle.Regular);
+button.BadgeValues.Font = null; // Use default font
+```
+
+**Note**: This property only affects text badges. Image badges ignore this property.
+
+##### `Shape` (BadgeShape)
+
+Gets and sets the shape of the badge.
+
+- **Type**: `BadgeShape`
+- **Default**: `BadgeShape.Circle`
+- **Category**: Visuals
+- **Description**: The shape of the badge.
+
+```csharp
+button.BadgeValues.Shape = BadgeShape.Circle;
+button.BadgeValues.Shape = BadgeShape.Square;
+button.BadgeValues.Shape = BadgeShape.RoundedRectangle;
+```
+
+##### `Animation` (BadgeAnimation)
+
+Gets and sets the animation type for the badge.
+
+- **Type**: `BadgeAnimation`
+- **Default**: `BadgeAnimation.None`
+- **Category**: Visuals
+- **Description**: The animation type for the badge.
+
+```csharp
+button.BadgeValues.Animation = BadgeAnimation.None;
+button.BadgeValues.Animation = BadgeAnimation.FadeInOut;
+button.BadgeValues.Animation = BadgeAnimation.Pulse;
+```
+
+**Notes**:
+- Animations only run when the badge is visible (`Visible = true`)
+- `FadeInOut`: Continuously fades the badge opacity between 30% and 100%
+- `Pulse`: Continuously pulses the badge size (85% to 100%) and opacity (60% to 100%)
+- Animations use a 50ms timer interval for smooth updates
+- Setting animation to `None` stops any running animation immediately
+
 ##### `Position` (BadgePosition)
 
 Gets and sets the position of the badge on the button.
@@ -222,6 +333,9 @@ This method sets:
 - `Image` to null
 - `BadgeColor` to `Color.Red`
 - `TextColor` to `Color.White`
+- `Font` to null (default font)
+- `Shape` to `BadgeShape.Circle`
+- `Animation` to `BadgeAnimation.None`
 - `Position` to `BadgePosition.TopRight`
 - `Visible` to `false`
 
@@ -234,6 +348,9 @@ button.BadgeValues.ResetText();
 button.BadgeValues.ResetImage();
 button.BadgeValues.ResetBadgeColor();
 button.BadgeValues.ResetTextColor();
+button.BadgeValues.ResetFont();
+button.BadgeValues.ResetShape();
+button.BadgeValues.ResetAnimation();
 button.BadgeValues.ResetPosition();
 button.BadgeValues.ResetVisible();
 ```
@@ -383,6 +500,86 @@ private void OnNotificationRead()
         UpdateNotificationBadge();
     }
 }
+```
+
+### Different Badge Shapes
+
+Demonstrate all three badge shapes:
+
+```csharp
+// Circle (default)
+KryptonButton btnCircle = new KryptonButton { Text = "Circle", Location = new Point(10, 10) };
+btnCircle.BadgeValues.Text = "5";
+btnCircle.BadgeValues.Visible = true;
+btnCircle.BadgeValues.Shape = BadgeShape.Circle;
+btnCircle.BadgeValues.BadgeColor = Color.Red;
+
+// Square
+KryptonButton btnSquare = new KryptonButton { Text = "Square", Location = new Point(150, 10) };
+btnSquare.BadgeValues.Text = "12";
+btnSquare.BadgeValues.Visible = true;
+btnSquare.BadgeValues.Shape = BadgeShape.Square;
+btnSquare.BadgeValues.BadgeColor = Color.Blue;
+
+// Rounded Rectangle
+KryptonButton btnRounded = new KryptonButton { Text = "Rounded", Location = new Point(290, 10) };
+btnRounded.BadgeValues.Text = "99+";
+btnRounded.BadgeValues.Visible = true;
+btnRounded.BadgeValues.Shape = BadgeShape.RoundedRectangle;
+btnRounded.BadgeValues.BadgeColor = Color.Green;
+```
+
+### Custom Font
+
+Use a custom font for badge text:
+
+```csharp
+KryptonButton button = new KryptonButton
+{
+    Text = "Custom Font",
+    Location = new Point(10, 10),
+    Size = new Size(120, 30)
+};
+
+button.BadgeValues.Text = "NEW";
+button.BadgeValues.Visible = true;
+button.BadgeValues.Font = new Font("Arial", 9f, FontStyle.Bold);
+button.BadgeValues.BadgeColor = Color.Purple;
+button.BadgeValues.TextColor = Color.White;
+```
+
+### Animated Badges
+
+Use fade in/out animation:
+
+```csharp
+KryptonButton button = new KryptonButton
+{
+    Text = "Animated",
+    Location = new Point(10, 10),
+    Size = new Size(120, 30)
+};
+
+button.BadgeValues.Text = "!";
+button.BadgeValues.Visible = true;
+button.BadgeValues.BadgeColor = Color.Red;
+button.BadgeValues.Animation = BadgeAnimation.FadeInOut;
+```
+
+Use pulsing animation:
+
+```csharp
+KryptonButton button = new KryptonButton
+{
+    Text = "Pulsing",
+    Location = new Point(10, 10),
+    Size = new Size(120, 30)
+};
+
+button.BadgeValues.Text = "5";
+button.BadgeValues.Visible = true;
+button.BadgeValues.BadgeColor = Color.Orange;
+button.BadgeValues.Animation = BadgeAnimation.Pulse;
 ```
 
 ### Different Badge Positions
@@ -538,8 +735,11 @@ The badge rendering follows this flow:
    - Sets `ClientRectangle` for the badge
 
 2. **Paint Phase** (`ViewDrawBadge.Render`):
-   - Draws circular background using `BadgeColor`
+   - Applies animation effects (opacity, scale) if enabled
+   - Draws badge background using `BadgeColor` and `Shape` (circle, square, or rounded rectangle)
    - Renders content (image or text) centered within the badge
+   - Uses custom `Font` if specified, otherwise default font
+   - Applies animation opacity to colors for fade effects
    - Uses anti-aliasing for smooth rendering
 
 ### Size Calculation
@@ -606,6 +806,26 @@ public string Text
 
 This ensures the UI updates immediately when badge properties change.
 
+### Animation System
+
+Badges support two animation types controlled by a `System.Windows.Forms.Timer`:
+
+1. **FadeInOut Animation**:
+   - Opacity oscillates between 30% and 100%
+   - Uses sine-wave-like interpolation for smooth transitions
+   - Updates every 50ms
+
+2. **Pulse Animation**:
+   - Scale oscillates between 85% and 100%
+   - Opacity oscillates between 60% and 100%
+   - Both properties animate in sync for a pulsing effect
+   - Updates every 50ms
+
+The animation timer:
+- Starts automatically when `Animation != None` and `Visible == true`
+- Stops automatically when `Animation == None` or `Visible == false`
+- Is managed internally and cleaned up when no longer needed
+
 ---
 
 ## Best Practices
@@ -631,14 +851,29 @@ button.BadgeValues.BadgeColor = Color.LightGray;
 button.BadgeValues.TextColor = Color.White; // Hard to read
 ```
 
-### 3. Image Size
+### 3. Font Selection
+
+When using custom fonts:
+- Keep font sizes small (7-9pt) to fit within the badge
+- Bold fonts work better for readability at small sizes
+- Test fonts at different DPI settings for consistency
+- Consider system fonts (Segoe UI, Arial) for better cross-platform compatibility
+
+### 4. Shape Selection
+
+Choose badge shapes based on content:
+- **Circle**: Best for single-digit numbers and icons
+- **Square**: Good for letters and short text (1-2 characters)
+- **RoundedRectangle**: Works well for longer text (2-4 characters) or when you want a softer appearance
+
+### 5. Image Size
 
 Use appropriately sized images:
 - Recommended: 16x16 to 32x32 pixels
 - Images are automatically scaled, but smaller images scale better
 - Use vector-style icons for best results at different sizes
 
-### 4. Visibility Management
+### 6. Visibility Management
 
 Show/hide badges based on content:
 
@@ -659,7 +894,7 @@ button.BadgeValues.Text = "";
 button.BadgeValues.Visible = true; // Badge appears but is empty
 ```
 
-### 5. Resource Management
+### 7. Resource Management
 
 Dispose of custom images when done:
 
@@ -672,14 +907,14 @@ button.BadgeValues.Image = customIcon;
 // Consider using image resources or a shared image cache
 ```
 
-### 6. Performance
+### 8. Performance
 
 Badges are lightweight and render efficiently:
 - Size calculations are cached during layout
 - Repaints only occur when properties change
 - No performance impact when badges are hidden (`Visible = false`)
 
-### 7. Accessibility
+### 9. Accessibility
 
 Consider accessibility when using badges:
 - Provide tooltips or status text for badge meaning
@@ -710,18 +945,17 @@ button.BadgeValues.Text = "5";
 
 Badges are positioned relative to the button's client rectangle. Very small buttons may cause badges to overlap button content.
 
-### 4. Font Limitations
+### 4. Animation Performance
 
-Text badges use a fixed font (Segoe UI 7.5pt Bold). Font customization is not currently supported.
+Animations run continuously while the badge is visible. For better performance, consider:
+- Using animations only when necessary (e.g., for important notifications)
+- Stopping animations (`Animation = BadgeAnimation.None`) when badges are not actively being monitored
+- Avoiding too many animated badges on the same form simultaneously
 
-### 5. Shape Limitations
+### 5. Animation Limitations
 
-Badges are always circular. Other shapes (square, rounded rectangle) are not supported.
+Animation timing and parameters (speed, opacity ranges, scale ranges) are fixed and cannot be customized. The animation interval is 50ms for smooth updates.
 
-### 6. Animation
-
-Badge animations (fade in/out, pulsing) are not built-in. This would require custom implementation.
-
-### 7. Multiple Badges
+### 6. Multiple Badges
 
 Only one badge per button is supported. Multiple badges are not supported.

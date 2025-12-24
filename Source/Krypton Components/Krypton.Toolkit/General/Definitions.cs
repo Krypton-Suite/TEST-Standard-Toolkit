@@ -1108,6 +1108,52 @@ public enum BadgePosition
 }
 #endregion
 
+#region Enum BadgeShape
+/// <summary>
+/// Specifies the shape of a badge.
+/// </summary>
+public enum BadgeShape
+{
+    /// <summary>
+    /// Specifies a circular badge.
+    /// </summary>
+    Circle,
+
+    /// <summary>
+    /// Specifies a square badge.
+    /// </summary>
+    Square,
+
+    /// <summary>
+    /// Specifies a rounded rectangle badge.
+    /// </summary>
+    RoundedRectangle
+}
+#endregion
+
+#region Enum BadgeAnimation
+/// <summary>
+/// Specifies the animation type for a badge.
+/// </summary>
+public enum BadgeAnimation
+{
+    /// <summary>
+    /// No animation.
+    /// </summary>
+    None,
+
+    /// <summary>
+    /// Fade in and out animation.
+    /// </summary>
+    FadeInOut,
+
+    /// <summary>
+    /// Pulsing animation (scale and opacity).
+    /// </summary>
+    Pulse
+}
+#endregion
+
 #region Enum RelativeEdgeAlign
 /// <summary>
 /// Specifies a relative edge alignment position.

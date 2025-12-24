@@ -19,6 +19,7 @@ public class BadgeValues : Storage
     private const string DEFAULT_TEXT = "";
     private static readonly Color _defaultBadgeColor = Color.Red;
     private static readonly Color _defaultTextColor = Color.White;
+    private static readonly Font? _defaultFont = null; // null means use default font
     #endregion
 
     #region Instance Fields
@@ -27,6 +28,9 @@ public class BadgeValues : Storage
     private Color _badgeColor;
     private Color _textColor;
     private BadgePosition _position;
+    private BadgeShape _shape;
+    private BadgeAnimation _animation;
+    private Font? _font;
     private bool _visible;
     #endregion
 
@@ -46,6 +50,9 @@ public class BadgeValues : Storage
         _badgeColor = _defaultBadgeColor;
         _textColor = _defaultTextColor;
         _position = BadgePosition.TopRight;
+        _shape = BadgeShape.Circle;
+        _animation = BadgeAnimation.None;
+        _font = _defaultFont;
         _visible = false;
     }
     #endregion
@@ -61,6 +68,9 @@ public class BadgeValues : Storage
                                       (BadgeColor == _defaultBadgeColor) &&
                                       (TextColor == _defaultTextColor) &&
                                       (Position == BadgePosition.TopRight) &&
+                                      (Shape == BadgeShape.Circle) &&
+                                      (Animation == BadgeAnimation.None) &&
+                                      (Font == _defaultFont) &&
                                       (Visible == false);
 
     #endregion
@@ -239,5 +249,93 @@ public class BadgeValues : Storage
     /// Resets the Visible property to its default value.
     /// </summary>
     public void ResetVisible() => Visible = false;
+    #endregion
+
+    #region Font
+    /// <summary>
+    /// Gets and sets the badge text font.
+    /// </summary>
+    [Localizable(true)]
+    [Category(@"Visuals")]
+    [Description(@"The font used to display badge text. If null, uses default font (Segoe UI 7.5pt Bold).")]
+    [RefreshProperties(RefreshProperties.All)]
+    [DefaultValue(null)]
+    public Font? Font
+    {
+        get => _font;
+        set
+        {
+            if (_font != value)
+            {
+                _font = value;
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeFont() => Font != null;
+
+    /// <summary>
+    /// Resets the Font property to its default value.
+    /// </summary>
+    public void ResetFont() => Font = null;
+    #endregion
+
+    #region Shape
+    /// <summary>
+    /// Gets and sets the badge shape.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"The shape of the badge.")]
+    [RefreshProperties(RefreshProperties.All)]
+    [DefaultValue(BadgeShape.Circle)]
+    public BadgeShape Shape
+    {
+        get => _shape;
+        set
+        {
+            if (_shape != value)
+            {
+                _shape = value;
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeShape() => Shape != BadgeShape.Circle;
+
+    /// <summary>
+    /// Resets the Shape property to its default value.
+    /// </summary>
+    public void ResetShape() => Shape = BadgeShape.Circle;
+    #endregion
+
+    #region Animation
+    /// <summary>
+    /// Gets and sets the badge animation type.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"The animation type for the badge.")]
+    [RefreshProperties(RefreshProperties.All)]
+    [DefaultValue(BadgeAnimation.None)]
+    public BadgeAnimation Animation
+    {
+        get => _animation;
+        set
+        {
+            if (_animation != value)
+            {
+                _animation = value;
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeAnimation() => Animation != BadgeAnimation.None;
+
+    /// <summary>
+    /// Resets the Animation property to its default value.
+    /// </summary>
+    public void ResetAnimation() => Animation = BadgeAnimation.None;
     #endregion
 }

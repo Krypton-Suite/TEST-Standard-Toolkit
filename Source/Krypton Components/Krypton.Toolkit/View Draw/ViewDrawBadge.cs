@@ -10,6 +10,13 @@
  */
 #endregion
 
+using Timer = System.Windows.Forms.Timer;
+using GraphicsPath = System.Drawing.Drawing2D.GraphicsPath;
+using ColorMatrix = System.Drawing.Imaging.ColorMatrix;
+using ImageAttributes = System.Drawing.Imaging.ImageAttributes;
+using ColorMatrixFlag = System.Drawing.Imaging.ColorMatrixFlag;
+using ColorAdjustType = System.Drawing.Imaging.ColorAdjustType;
+
 namespace Krypton.Toolkit;
 
 /// <summary>
@@ -20,9 +27,21 @@ public class ViewDrawBadge : ViewLeaf
     #region Instance Fields
     private readonly BadgeValues _badgeValues;
     private readonly Control _control;
+    private Timer? _animationTimer;
+    private float _animationOpacity = 1.0f;
+    private float _animationScale = 1.0f;
+    private bool _animationDirection = true; // true = increasing, false = decreasing
     private const int DEFAULT_BADGE_SIZE = 18;
     private const int BADGE_MIN_SIZE = 16;
     private const int BADGE_OFFSET = 3;
+    private const int ANIMATION_INTERVAL = 50; // ms between animation frames
+    private const float FADE_MIN_OPACITY = 0.3f;
+    private const float FADE_MAX_OPACITY = 1.0f;
+    private const float PULSE_MIN_SCALE = 0.85f;
+    private const float PULSE_MAX_SCALE = 1.0f;
+    private const float PULSE_MIN_OPACITY = 0.6f;
+    private const float PULSE_MAX_OPACITY = 1.0f;
+    private const float ANIMATION_STEP = 0.05f;
     #endregion
 
     #region Identity
@@ -35,6 +54,12 @@ public class ViewDrawBadge : ViewLeaf
     {
         _badgeValues = badgeValues;
         _control = control;
+        _animationOpacity = 1.0f;
+        _animationScale = 1.0f;
+        _animationDirection = true;
+        
+        // Setup animation timer if needed
+        UpdateAnimationTimer();
     }
 
     /// <summary>
@@ -44,6 +69,27 @@ public class ViewDrawBadge : ViewLeaf
     public override string ToString() =>
         // Return the class name and instance identifier
         $"ViewDrawBadge:{Id}";
+
+    /// <summary>
+    /// Release unmanaged and optionally managed resources.
+    /// </summary>
+    /// <param name="disposing">Called from Dispose method.</param>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            // Stop and dispose animation timer
+            if (_animationTimer != null)
+            {
+                _animationTimer.Stop();
+                _animationTimer.Tick -= OnAnimationTick;
+                _animationTimer.Dispose();
+                _animationTimer = null;
+            }
+        }
+
+        base.Dispose(disposing);
+    }
 
     #endregion
 
@@ -67,6 +113,9 @@ public class ViewDrawBadge : ViewLeaf
     public override void Layout([DisallowNull] ViewLayoutContext context)
     {
         Debug.Assert(context != null);
+
+        // Update animation timer if needed
+        UpdateAnimationTimer();
 
         // Only layout if badge is visible and has content (text or image)
         if (!_badgeValues.Visible || (string.IsNullOrEmpty(_badgeValues.Text) && _badgeValues.Image == null))
@@ -135,13 +184,18 @@ public class ViewDrawBadge : ViewLeaf
             return new Size(DEFAULT_BADGE_SIZE, DEFAULT_BADGE_SIZE);
         }
 
-        // Use a default font for measurement
-        using var font = new Font("Segoe UI", 7.5f, FontStyle.Bold, GraphicsUnit.Point);
-        SizeF textSize = g.MeasureString(text, font);
+        // Use the badge font or default font for measurement
+        Font measureFont = _badgeValues.Font ?? new Font("Segoe UI", 7.5f, FontStyle.Bold, GraphicsUnit.Point);
+        using (measureFont)
+        {
+            SizeF textSize = g.MeasureString(text, measureFont);
+            
+            // For non-circle shapes, we might want different sizing
+            int padding = _badgeValues.Shape == BadgeShape.Circle ? 8 : 6;
+            int diameter = Math.Max(BADGE_MIN_SIZE, (int)Math.Max(textSize.Width, textSize.Height) + padding);
+            return new Size(diameter, diameter);
+        }
         
-        // Calculate badge size - circular, so use the larger dimension plus padding
-        int diameter = Math.Max(BADGE_MIN_SIZE, (int)Math.Max(textSize.Width, textSize.Height) + 8);
-        return new Size(diameter, diameter);
     }
 
     private Point CalculateBadgeLocation(Rectangle parentRect, Size badgeSize)
@@ -186,18 +240,66 @@ public class ViewDrawBadge : ViewLeaf
         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
         g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
-        // Draw the circular badge background
-        using (var badgeBrush = new SolidBrush(_badgeValues.BadgeColor))
+        // Apply animation scale if pulsing
+        Rectangle drawRect = badgeRect;
+        if (_badgeValues.Animation == BadgeAnimation.Pulse && _animationScale != 1.0f)
         {
-            g.FillEllipse(badgeBrush, badgeRect);
+            int scaledWidth = (int)(badgeRect.Width * _animationScale);
+            int scaledHeight = (int)(badgeRect.Height * _animationScale);
+            int offsetX = (badgeRect.Width - scaledWidth) / 2;
+            int offsetY = (badgeRect.Height - scaledHeight) / 2;
+            drawRect = new Rectangle(badgeRect.X + offsetX, badgeRect.Y + offsetY, scaledWidth, scaledHeight);
+        }
+
+        // Calculate opacity based on animation
+        float opacity = GetAnimationOpacity();
+        Color badgeColor = _badgeValues.BadgeColor;
+        if (opacity < 1.0f)
+        {
+            badgeColor = Color.FromArgb((int)(opacity * 255), badgeColor.R, badgeColor.G, badgeColor.B);
+        }
+
+        // Draw the badge background based on shape
+        using (var badgeBrush = new SolidBrush(badgeColor))
+        {
+            switch (_badgeValues.Shape)
+            {
+                case BadgeShape.Circle:
+                    g.FillEllipse(badgeBrush, drawRect);
+                    break;
+                case BadgeShape.Square:
+                    g.FillRectangle(badgeBrush, drawRect);
+                    break;
+                case BadgeShape.RoundedRectangle:
+                    int radius = Math.Min(drawRect.Width, drawRect.Height) / 4;
+                    FillRoundedRectangle(g, badgeBrush, drawRect, radius);
+                    break;
+            }
         }
 
         // Draw image if provided, otherwise draw text
         if (_badgeValues.Image != null)
         {
+            // Calculate opacity for image
+            ColorMatrix? colorMatrix = null;
+            ImageAttributes? imageAttributes = null;
+            if (opacity < 1.0f)
+            {
+                colorMatrix = new ColorMatrix(new float[][]
+                {
+                    new float[] { 1, 0, 0, 0, 0 },
+                    new float[] { 0, 1, 0, 0, 0 },
+                    new float[] { 0, 0, 1, 0, 0 },
+                    new float[] { 0, 0, 0, opacity, 0 },
+                    new float[] { 0, 0, 0, 0, 1 }
+                });
+                imageAttributes = new ImageAttributes();
+                imageAttributes.SetColorMatrix(colorMatrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+            }
+
             // Scale image to fit within badge with padding
             int padding = 4;
-            int maxImageSize = Math.Min(badgeRect.Width, badgeRect.Height) - padding;
+            int maxImageSize = Math.Min(drawRect.Width, drawRect.Height) - padding;
             
             // Calculate scaled size maintaining aspect ratio
             int imageWidth = _badgeValues.Image.Width;
@@ -207,14 +309,25 @@ public class ViewDrawBadge : ViewLeaf
             int scaledHeight = (int)(imageHeight * scale);
             
             // Center the image in the badge
-            int imageX = badgeRect.Left + (badgeRect.Width - scaledWidth) / 2;
-            int imageY = badgeRect.Top + (badgeRect.Height - scaledHeight) / 2;
+            int imageX = drawRect.Left + (drawRect.Width - scaledWidth) / 2;
+            int imageY = drawRect.Top + (drawRect.Height - scaledHeight) / 2;
             Rectangle imageRect = new Rectangle(imageX, imageY, scaledWidth, scaledHeight);
             
             // Draw the image with high quality interpolation
             g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
             g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            g.DrawImage(_badgeValues.Image, imageRect);
+            
+            if (imageAttributes != null)
+            {
+                g.DrawImage(_badgeValues.Image, imageRect, 0, 0, imageWidth, imageHeight, GraphicsUnit.Pixel, imageAttributes);
+                imageAttributes.Dispose();
+                colorMatrix = null;
+            }
+            else
+            {
+                g.DrawImage(_badgeValues.Image, imageRect);
+            }
+            
             g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Default;
             g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Default;
         }
@@ -224,17 +337,144 @@ public class ViewDrawBadge : ViewLeaf
             string text = _badgeValues.Text ?? "";
             if (!string.IsNullOrEmpty(text))
             {
-                using var textFont = new Font("Segoe UI", 7.5f, FontStyle.Bold, GraphicsUnit.Point);
-                using var textBrush = new SolidBrush(_badgeValues.TextColor);
-                using var stringFormat = new StringFormat
+                Font textFont = _badgeValues.Font ?? new Font("Segoe UI", 7.5f, FontStyle.Bold, GraphicsUnit.Point);
+                Color textColor = _badgeValues.TextColor;
+                if (opacity < 1.0f)
+                {
+                    textColor = Color.FromArgb((int)(opacity * 255), textColor.R, textColor.G, textColor.B);
+                }
+                
+                using (textFont)
+                using (var textBrush = new SolidBrush(textColor))
+                using (var stringFormat = new StringFormat
                 {
                     Alignment = StringAlignment.Center,
                     LineAlignment = StringAlignment.Center,
                     FormatFlags = StringFormatFlags.NoWrap
-                };
-
-                g.DrawString(text, textFont, textBrush, badgeRect, stringFormat);
+                })
+                {
+                    g.DrawString(text, textFont, textBrush, drawRect, stringFormat);
+                }
             }
+        }
+    }
+
+    private void FillRoundedRectangle(Graphics g, Brush brush, Rectangle rect, int radius)
+    {
+        using (var path = new GraphicsPath())
+        {
+            path.AddArc(rect.X, rect.Y, radius * 2, radius * 2, 180, 90);
+            path.AddArc(rect.Right - radius * 2, rect.Y, radius * 2, radius * 2, 270, 90);
+            path.AddArc(rect.Right - radius * 2, rect.Bottom - radius * 2, radius * 2, radius * 2, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - radius * 2, radius * 2, radius * 2, 90, 90);
+            path.CloseAllFigures();
+            g.FillPath(brush, path);
+        }
+    }
+
+    private float GetAnimationOpacity()
+    {
+        return _badgeValues.Animation switch
+        {
+            BadgeAnimation.FadeInOut => _animationOpacity,
+            BadgeAnimation.Pulse => _animationOpacity,
+            _ => 1.0f
+        };
+    }
+
+    private void UpdateAnimationTimer()
+    {
+        // Stop existing timer
+        if (_animationTimer != null)
+        {
+            _animationTimer.Stop();
+            _animationTimer.Tick -= OnAnimationTick;
+            _animationTimer.Dispose();
+            _animationTimer = null;
+        }
+
+        // Start new timer if animation is enabled
+        if (_badgeValues.Animation != BadgeAnimation.None && _badgeValues.Visible)
+        {
+            _animationTimer = new Timer
+            {
+                Interval = ANIMATION_INTERVAL
+            };
+            _animationTimer.Tick += OnAnimationTick;
+            
+            // Reset animation state
+            _animationOpacity = _badgeValues.Animation == BadgeAnimation.FadeInOut ? FADE_MIN_OPACITY : PULSE_MAX_OPACITY;
+            _animationScale = PULSE_MAX_SCALE;
+            _animationDirection = true;
+            
+            _animationTimer.Start();
+        }
+    }
+
+    private void OnAnimationTick(object? sender, EventArgs e)
+    {
+        if (_badgeValues.Animation == BadgeAnimation.None || !_badgeValues.Visible)
+        {
+            UpdateAnimationTimer();
+            return;
+        }
+
+        bool needsUpdate = false;
+
+        switch (_badgeValues.Animation)
+        {
+            case BadgeAnimation.FadeInOut:
+                if (_animationDirection)
+                {
+                    _animationOpacity += ANIMATION_STEP;
+                    if (_animationOpacity >= FADE_MAX_OPACITY)
+                    {
+                        _animationOpacity = FADE_MAX_OPACITY;
+                        _animationDirection = false;
+                    }
+                }
+                else
+                {
+                    _animationOpacity -= ANIMATION_STEP;
+                    if (_animationOpacity <= FADE_MIN_OPACITY)
+                    {
+                        _animationOpacity = FADE_MIN_OPACITY;
+                        _animationDirection = true;
+                    }
+                }
+                needsUpdate = true;
+                break;
+
+            case BadgeAnimation.Pulse:
+                if (_animationDirection)
+                {
+                    _animationScale -= ANIMATION_STEP * 0.15f;
+                    _animationOpacity -= ANIMATION_STEP * 0.4f;
+                    if (_animationScale <= PULSE_MIN_SCALE)
+                    {
+                        _animationScale = PULSE_MIN_SCALE;
+                        _animationOpacity = PULSE_MIN_OPACITY;
+                        _animationDirection = false;
+                    }
+                }
+                else
+                {
+                    _animationScale += ANIMATION_STEP * 0.15f;
+                    _animationOpacity += ANIMATION_STEP * 0.4f;
+                    if (_animationScale >= PULSE_MAX_SCALE)
+                    {
+                        _animationScale = PULSE_MAX_SCALE;
+                        _animationOpacity = PULSE_MAX_OPACITY;
+                        _animationDirection = true;
+                    }
+                }
+                needsUpdate = true;
+                break;
+        }
+
+        if (needsUpdate && _control != null && !_control.IsDisposed && _control.IsHandleCreated)
+        {
+            _control.Invalidate();
         }
     }
     #endregion
