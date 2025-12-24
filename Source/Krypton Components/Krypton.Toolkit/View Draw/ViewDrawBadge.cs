@@ -192,7 +192,7 @@ public class ViewDrawBadge : ViewLeaf
 
         // Use the badge font or default font for measurement
         // Only dispose fonts we create ourselves, not fonts from BadgeValues
-        Font measureFont = _badgeValues.Font ?? new Font("Segoe UI", 7.5f, FontStyle.Bold, GraphicsUnit.Point);
+        Font measureFont = _badgeValues.Font ?? new Font(KryptonManager.CurrentGlobalPalette.BaseFont.FontFamily, 7.5f, FontStyle.Bold, GraphicsUnit.Point);
         bool createdFont = _badgeValues.Font == null;
         
         try
@@ -362,7 +362,7 @@ public class ViewDrawBadge : ViewLeaf
             if (!string.IsNullOrEmpty(text))
             {
                 // Only dispose fonts we create ourselves, not fonts from BadgeValues
-                Font textFont = _badgeValues.Font ?? new Font("Segoe UI", 7.5f, FontStyle.Bold, GraphicsUnit.Point);
+                Font textFont = _badgeValues.Font ?? new Font(KryptonManager.CurrentGlobalPalette.BaseFont.FontFamily, 7.5f, FontStyle.Bold, GraphicsUnit.Point);
                 bool createdFont = _badgeValues.Font == null;
                 Color textColor = _badgeValues.TextColor;
                 if (opacity < 1.0f)
