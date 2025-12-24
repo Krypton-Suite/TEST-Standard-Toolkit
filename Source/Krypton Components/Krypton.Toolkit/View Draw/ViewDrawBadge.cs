@@ -185,8 +185,11 @@ public class ViewDrawBadge : ViewLeaf
         }
 
         // Use the badge font or default font for measurement
+        // Only dispose fonts we create ourselves, not fonts from BadgeValues
         Font measureFont = _badgeValues.Font ?? new Font("Segoe UI", 7.5f, FontStyle.Bold, GraphicsUnit.Point);
-        using (measureFont)
+        bool createdFont = _badgeValues.Font == null;
+        
+        try
         {
             SizeF textSize = g.MeasureString(text, measureFont);
             
@@ -194,6 +197,14 @@ public class ViewDrawBadge : ViewLeaf
             int padding = _badgeValues.Shape == BadgeShape.Circle ? 8 : 6;
             int diameter = Math.Max(BADGE_MIN_SIZE, (int)Math.Max(textSize.Width, textSize.Height) + padding);
             return new Size(diameter, diameter);
+        }
+        finally
+        {
+            // Only dispose if we created the font
+            if (createdFont)
+            {
+                measureFont.Dispose();
+            }
         }
         
     }
@@ -337,23 +348,35 @@ public class ViewDrawBadge : ViewLeaf
             string text = _badgeValues.Text ?? "";
             if (!string.IsNullOrEmpty(text))
             {
+                // Only dispose fonts we create ourselves, not fonts from BadgeValues
                 Font textFont = _badgeValues.Font ?? new Font("Segoe UI", 7.5f, FontStyle.Bold, GraphicsUnit.Point);
+                bool createdFont = _badgeValues.Font == null;
                 Color textColor = _badgeValues.TextColor;
                 if (opacity < 1.0f)
                 {
                     textColor = Color.FromArgb((int)(opacity * 255), textColor.R, textColor.G, textColor.B);
                 }
                 
-                using (textFont)
-                using (var textBrush = new SolidBrush(textColor))
-                using (var stringFormat = new StringFormat
+                try
                 {
-                    Alignment = StringAlignment.Center,
-                    LineAlignment = StringAlignment.Center,
-                    FormatFlags = StringFormatFlags.NoWrap
-                })
+                    using (var textBrush = new SolidBrush(textColor))
+                    using (var stringFormat = new StringFormat
+                    {
+                        Alignment = StringAlignment.Center,
+                        LineAlignment = StringAlignment.Center,
+                        FormatFlags = StringFormatFlags.NoWrap
+                    })
+                    {
+                        g.DrawString(text, textFont, textBrush, drawRect, stringFormat);
+                    }
+                }
+                finally
                 {
-                    g.DrawString(text, textFont, textBrush, drawRect, stringFormat);
+                    // Only dispose if we created the font
+                    if (createdFont)
+                    {
+                        textFont.Dispose();
+                    }
                 }
             }
         }
