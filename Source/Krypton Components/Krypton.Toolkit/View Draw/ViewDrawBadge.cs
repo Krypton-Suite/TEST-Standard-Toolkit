@@ -176,7 +176,7 @@ public class ViewDrawBadge : ViewLeaf
         }
 
         // Otherwise calculate based on text
-        string text = _badgeValues.Text ?? "";
+        string text = GetDisplayText();
         
         if (string.IsNullOrEmpty(text))
         {
@@ -358,7 +358,7 @@ public class ViewDrawBadge : ViewLeaf
             DrawBadgeBorder(g, drawRect, opacity);
 
             // Draw the badge text
-            string text = _badgeValues.Text ?? "";
+            string text = GetDisplayText();
             if (!string.IsNullOrEmpty(text))
             {
                 // Only dispose fonts we create ourselves, not fonts from BadgeValues
@@ -419,6 +419,27 @@ public class ViewDrawBadge : ViewLeaf
             path.CloseAllFigures();
             g.DrawPath(pen, path);
         }
+    }
+
+    private string GetDisplayText()
+    {
+        string text = _badgeValues.Text ?? "";
+        
+        // Check for overflow if enabled (OverflowNumber > 0)
+        if (_badgeValues.OverflowNumber > 0 && !string.IsNullOrEmpty(text))
+        {
+            // Try to parse the text as an integer
+            if (int.TryParse(text, out int numericValue))
+            {
+                // If the value exceeds the overflow threshold, return overflow text
+                if (numericValue > _badgeValues.OverflowNumber)
+                {
+                    return _badgeValues.OverflowText;
+                }
+            }
+        }
+        
+        return text;
     }
 
     private void DrawBadgeBorder(Graphics g, Rectangle drawRect, float opacity)

@@ -23,6 +23,8 @@ public class BadgeValues : Storage
     private static readonly Color _defaultBadgeBorderColor = Color.Empty;
     private const int DEFAULT_BADGE_BORDER_SIZE = 0;
     private const int DEFAULT_BADGE_DIAMETER = 0; // 0 means auto-size
+    private const string DEFAULT_OVERFLOW_TEXT = "99+";
+    private const int DEFAULT_OVERFLOW_NUMBER = 99; // If value > this, show overflow text
     #endregion
 
     #region Instance Fields
@@ -38,6 +40,8 @@ public class BadgeValues : Storage
     private Color _badgeBorderColor;
     private int _badgeBorderSize;
     private int _badgeDiameter;
+    private string _overflowText;
+    private int _overflowNumber;
     #endregion
 
     #region Identity
@@ -63,6 +67,8 @@ public class BadgeValues : Storage
         _badgeBorderColor = _defaultBadgeBorderColor;
         _badgeBorderSize = DEFAULT_BADGE_BORDER_SIZE;
         _badgeDiameter = DEFAULT_BADGE_DIAMETER;
+        _overflowText = DEFAULT_OVERFLOW_TEXT;
+        _overflowNumber = DEFAULT_OVERFLOW_NUMBER;
     }
     #endregion
 
@@ -83,7 +89,9 @@ public class BadgeValues : Storage
                                       (Visible == false) &&
                                       (BadgeBorderColor == _defaultBadgeBorderColor) &&
                                       (BadgeBorderSize == DEFAULT_BADGE_BORDER_SIZE) &&
-                                      (BadgeDiameter == DEFAULT_BADGE_DIAMETER);
+                                      (BadgeDiameter == DEFAULT_BADGE_DIAMETER) &&
+                                      (OverflowText == DEFAULT_OVERFLOW_TEXT) &&
+                                      (OverflowNumber == DEFAULT_OVERFLOW_NUMBER);
 
     #endregion
 
@@ -446,5 +454,68 @@ public class BadgeValues : Storage
     /// Resets the BadgeDiameter property to its default value.
     /// </summary>
     public void ResetBadgeDiameter() => BadgeDiameter = DEFAULT_BADGE_DIAMETER;
+    #endregion
+
+    #region OverflowText
+    /// <summary>
+    /// Gets and sets the text to display when the badge value exceeds OverflowNumber.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"The text to display when the badge numeric value exceeds OverflowNumber (e.g., '99+').")]
+    [RefreshProperties(RefreshProperties.All)]
+    [DefaultValue("99+")]
+    public string OverflowText
+    {
+        get => _overflowText ?? GlobalStaticValues.DEFAULT_EMPTY_STRING;
+        set
+        {
+            if (_overflowText != value)
+            {
+                _overflowText = value;
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeOverflowText() => OverflowText != DEFAULT_OVERFLOW_TEXT;
+
+    /// <summary>
+    /// Resets the OverflowText property to its default value.
+    /// </summary>
+    public void ResetOverflowText() => OverflowText = DEFAULT_OVERFLOW_TEXT;
+    #endregion
+
+    #region OverflowNumber
+    /// <summary>
+    /// Gets and sets the threshold number. If the badge text value (as a number) exceeds this value, OverflowText is displayed instead.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"The threshold number. If the badge text value (as a number) exceeds this value, OverflowText is displayed instead. Set to 0 to disable overflow checking.")]
+    [RefreshProperties(RefreshProperties.All)]
+    [DefaultValue(99)]
+    public int OverflowNumber
+    {
+        get => _overflowNumber;
+        set
+        {
+            if (value < 0)
+            {
+                value = 0;
+            }
+
+            if (_overflowNumber != value)
+            {
+                _overflowNumber = value;
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeOverflowNumber() => OverflowNumber != DEFAULT_OVERFLOW_NUMBER;
+
+    /// <summary>
+    /// Resets the OverflowNumber property to its default value.
+    /// </summary>
+    public void ResetOverflowNumber() => OverflowNumber = DEFAULT_OVERFLOW_NUMBER;
     #endregion
 }
