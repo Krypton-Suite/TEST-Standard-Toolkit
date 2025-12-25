@@ -25,6 +25,7 @@ public class BadgeValues : Storage
     private const int DEFAULT_BADGE_DIAMETER = 0; // 0 means auto-size
     private const string DEFAULT_OVERFLOW_TEXT = "99+";
     private const int DEFAULT_OVERFLOW_NUMBER = 99; // If value > this, show overflow text
+    private const bool DEFAULT_AUTO_SHOW_HIDE_BADGE = false;
     #endregion
 
     #region Instance Fields
@@ -42,6 +43,7 @@ public class BadgeValues : Storage
     private int _badgeDiameter;
     private string _overflowText;
     private int _overflowNumber;
+    private bool _autoShowHideBadge;
     #endregion
 
     #region Identity
@@ -69,6 +71,7 @@ public class BadgeValues : Storage
         _badgeDiameter = DEFAULT_BADGE_DIAMETER;
         _overflowText = DEFAULT_OVERFLOW_TEXT;
         _overflowNumber = DEFAULT_OVERFLOW_NUMBER;
+        _autoShowHideBadge = DEFAULT_AUTO_SHOW_HIDE_BADGE;
     }
     #endregion
 
@@ -91,7 +94,8 @@ public class BadgeValues : Storage
                                       (BadgeBorderSize == DEFAULT_BADGE_BORDER_SIZE) &&
                                       (BadgeDiameter == DEFAULT_BADGE_DIAMETER) &&
                                       (OverflowText == DEFAULT_OVERFLOW_TEXT) &&
-                                      (OverflowNumber == DEFAULT_OVERFLOW_NUMBER);
+                                      (OverflowNumber == DEFAULT_OVERFLOW_NUMBER) &&
+                                      (AutoShowHideBadge == DEFAULT_AUTO_SHOW_HIDE_BADGE);
 
     #endregion
 
@@ -112,6 +116,13 @@ public class BadgeValues : Storage
             if (_text != value)
             {
                 _text = value;
+                
+                // Update visibility if auto-show/hide is enabled
+                if (_autoShowHideBadge)
+                {
+                    UpdateVisibilityFromContent();
+                }
+                
                 PerformNeedPaint(true);
             }
         }
@@ -142,6 +153,13 @@ public class BadgeValues : Storage
             if (_image != value)
             {
                 _image = value;
+                
+                // Update visibility if auto-show/hide is enabled
+                if (_autoShowHideBadge)
+                {
+                    UpdateVisibilityFromContent();
+                }
+                
                 PerformNeedPaint(true);
             }
         }
@@ -255,6 +273,13 @@ public class BadgeValues : Storage
         get => _visible;
         set
         {
+            // If AutoShowHideBadge is enabled, ignore manual changes to Visible
+            // Visibility is automatically managed based on content
+            if (_autoShowHideBadge)
+            {
+                return;
+            }
+            
             if (_visible != value)
             {
                 _visible = value;
@@ -517,5 +542,55 @@ public class BadgeValues : Storage
     /// Resets the OverflowNumber property to its default value.
     /// </summary>
     public void ResetOverflowNumber() => OverflowNumber = DEFAULT_OVERFLOW_NUMBER;
+    #endregion
+
+    #region AutoShowHideBadge
+    /// <summary>
+    /// Gets and sets whether the badge should automatically show when it has content (text or image) and hide when empty.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"When enabled, the badge automatically shows when it has content (text or image) and hides when empty.")]
+    [RefreshProperties(RefreshProperties.All)]
+    [DefaultValue(false)]
+    public bool AutoShowHideBadge
+    {
+        get => _autoShowHideBadge;
+        set
+        {
+            if (_autoShowHideBadge != value)
+            {
+                _autoShowHideBadge = value;
+                
+                // If enabled, update visibility based on current content
+                if (value)
+                {
+                    UpdateVisibilityFromContent();
+                }
+                
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeAutoShowHideBadge() => AutoShowHideBadge != DEFAULT_AUTO_SHOW_HIDE_BADGE;
+
+    /// <summary>
+    /// Resets the AutoShowHideBadge property to its default value.
+    /// </summary>
+    public void ResetAutoShowHideBadge() => AutoShowHideBadge = DEFAULT_AUTO_SHOW_HIDE_BADGE;
+
+    /// <summary>
+    /// Updates the Visible property based on whether the badge has content.
+    /// </summary>
+    private void UpdateVisibilityFromContent()
+    {
+        bool hasContent = !string.IsNullOrEmpty(Text) || Image != null;
+        // Use the property setter to ensure proper notification
+        if (_visible != hasContent)
+        {
+            _visible = hasContent;
+            // Don't call PerformNeedPaint here to avoid recursion - it will be called by the property setter that triggered this update
+        }
+    }
     #endregion
 }

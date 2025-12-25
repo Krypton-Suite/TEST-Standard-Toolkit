@@ -118,6 +118,7 @@ public class ViewDrawBadge : ViewLeaf
         UpdateAnimationTimer();
 
         // Only layout if badge is visible and has content (text or image)
+        // Note: If AutoShowHideBadge is enabled, visibility is automatically managed in the Text/Image property setters
         if (!_badgeValues.Visible || (string.IsNullOrEmpty(_badgeValues.Text) && _badgeValues.Image == null))
         {
             ClientRectangle = Rectangle.Empty;
