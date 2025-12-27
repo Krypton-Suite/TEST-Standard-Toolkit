@@ -23,11 +23,12 @@ public class KryptonBackstageView : KryptonPanel
     private KryptonBackstagePage? _selectedPage;
 
     private readonly KryptonPanel _navigationPanel;
-    private readonly KryptonListBox _navigationList;
+    private readonly BackstageNavigationList _navigationList;
     private readonly KryptonPanel _pageContainer;
 
     private int _navigationWidth;
     private bool _suspendSync;
+    private readonly BackstageColors _colors;
     #endregion
 
     #region Events
@@ -52,32 +53,37 @@ public class KryptonBackstageView : KryptonPanel
         _pages.Removed += OnPagesRemoved;
         _pages.Cleared += OnPagesCleared;
 
-        // Left navigation area
+        // Initialize colors object
+        _colors = new BackstageColors(OnColorsNeedPaint);
+
+        // Left navigation area - defaults to PanelAlternate style
         _navigationPanel = new KryptonPanel
         {
             Dock = DockStyle.Left,
             Width = _navigationWidth,
-            PanelBackStyle = PaletteBackStyle.ControlRibbonAppMenu
+            PanelBackStyle = PaletteBackStyle.PanelAlternate
         };
 
-        _navigationList = new KryptonListBox
+        _navigationList = new BackstageNavigationList(this)
         {
             Dock = DockStyle.Fill
         };
         _navigationList.SelectedIndexChanged += OnNavigationSelectedIndexChanged;
-        _navigationList.DisplayMember = nameof(Text);
 
         _navigationPanel.Controls.Add(_navigationList);
 
-        // Page container area
+        // Page container area - defaults to PanelClient style
         _pageContainer = new KryptonPanel
         {
             Dock = DockStyle.Fill,
-            PanelBackStyle = PaletteBackStyle.ControlRibbonAppMenu
+            PanelBackStyle = PaletteBackStyle.PanelClient
         };
 
         Controls.Add(_pageContainer);
         Controls.Add(_navigationPanel);
+
+        // Hook into palette changes to update colors
+        PaletteChanged += OnPaletteChanged;
     }
     #endregion
 
@@ -135,6 +141,16 @@ public class KryptonBackstageView : KryptonPanel
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     internal KryptonPanel PageContainer => _pageContainer;
+
+    /// <summary>
+    /// Gets access to the backstage colors.
+    /// </summary>
+    [Category(@"Backstage")]
+    [Description(@"Groups backstage view color properties.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public BackstageColors Colors => _colors;
+
+    private bool ShouldSerializeColors() => !_colors.IsDefault;
     #endregion
 
     #region Implementation
@@ -253,6 +269,87 @@ public class KryptonBackstageView : KryptonPanel
 
     private void OnPageNavigationPropertyChanged(object? sender, EventArgs e) => RebuildNavigationList();
 
+    private void UpdateNavigationColors()
+    {
+        if (_colors.NavigationBackgroundColor.HasValue)
+        {
+            _navigationPanel.StateCommon.Back.Color1 = _colors.NavigationBackgroundColor.Value;
+            _navigationPanel.StateCommon.Back.ColorStyle = PaletteColorStyle.Solid;
+        }
+        else
+        {
+            // Reset to use PanelAlternate palette
+            _navigationPanel.StateCommon.Back.ColorStyle = PaletteColorStyle.Inherit;
+            _navigationPanel.PanelBackStyle = PaletteBackStyle.PanelAlternate;
+        }
+        _navigationPanel.Invalidate();
+    }
+
+    private void UpdateContentColors()
+    {
+        if (_colors.ContentBackgroundColor.HasValue)
+        {
+            _pageContainer.StateCommon.Back.Color1 = _colors.ContentBackgroundColor.Value;
+            _pageContainer.StateCommon.Back.ColorStyle = PaletteColorStyle.Solid;
+        }
+        else
+        {
+            // Reset to use PanelClient palette
+            _pageContainer.StateCommon.Back.ColorStyle = PaletteColorStyle.Inherit;
+            _pageContainer.PanelBackStyle = PaletteBackStyle.PanelClient;
+        }
+        _pageContainer.Invalidate();
+    }
+
+    private void OnColorsNeedPaint(object? sender, NeedLayoutEventArgs e)
+    {
+        UpdateNavigationColors();
+        UpdateContentColors();
+        _navigationList.Invalidate();
+        PerformNeedPaint(e.NeedLayout);
+    }
+
+    internal Color GetNavigationBackgroundColor()
+    {
+        if (_colors.NavigationBackgroundColor.HasValue)
+        {
+            return _colors.NavigationBackgroundColor.Value;
+        }
+
+        // Get color from PanelAlternate palette
+        var palette = GetPalette();
+        return palette?.GetBackColor1(PaletteBackStyle.PanelAlternate, PaletteState.Normal) ?? Color.FromArgb(240, 240, 240);
+    }
+
+    internal Color GetContentBackgroundColor()
+    {
+        if (_colors.ContentBackgroundColor.HasValue)
+        {
+            return _colors.ContentBackgroundColor.Value;
+        }
+
+        // Get color from PanelClient palette
+        var palette = GetPalette();
+        return palette?.GetBackColor1(PaletteBackStyle.PanelClient, PaletteState.Normal) ?? Color.White;
+    }
+
+    internal Color GetSelectedItemHighlightColor()
+    {
+        if (_colors.SelectedItemHighlightColor.HasValue)
+        {
+            return _colors.SelectedItemHighlightColor.Value;
+        }
+
+        // Default Office 2010 orange, but could be made theme-aware in future
+        return Color.FromArgb(242, 155, 57);
+    }
+
+    private PaletteBase? GetPalette()
+    {
+        // Use our own resolved palette (inherits from VisualPanel)
+        return GetResolvedPalette();
+    }
+
     private void RebuildNavigationList()
     {
         if (_suspendSync)
@@ -284,6 +381,13 @@ public class KryptonBackstageView : KryptonPanel
             _navigationList.EndUpdate();
             _suspendSync = false;
         }
+    }
+
+    private void OnPaletteChanged(object? sender, EventArgs e)
+    {
+        UpdateNavigationColors();
+        UpdateContentColors();
+        _navigationList.Invalidate();
     }
     #endregion
 }
