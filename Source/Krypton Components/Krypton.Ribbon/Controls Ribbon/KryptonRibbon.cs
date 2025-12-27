@@ -1873,7 +1873,14 @@ public class KryptonRibbon : VisualSimple,
 		// Remember the currently selected tab so we can restore it on close
 		_backstageRestoreTab = SelectedTab;
 
-		_backstageOverlay = new BackstageOverlayForm(topForm);
+		// Get overlay mode from BackstageView if available
+		BackstageOverlayMode overlayMode = BackstageOverlayMode.FullClient;
+		if (RibbonFileAppTab.BackstageView != null)
+		{
+			overlayMode = RibbonFileAppTab.BackstageView.OverlayMode;
+		}
+
+		_backstageOverlay = new BackstageOverlayForm(topForm, overlayMode, this);
 		_backstageOverlay.SetContent(RibbonFileAppTab.BackstageContent);
 		_backstageOverlay.BackRequested += OnBackstageBackRequested;
 		_backstageOverlay.Disposed += OnBackstageOverlayDisposed;

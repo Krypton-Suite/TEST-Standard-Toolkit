@@ -31,6 +31,7 @@ public class KryptonBackstageView : KryptonPanel
 {
     #region Instance Fields
     private readonly KryptonBackstagePageCollection _pages;
+    private readonly KryptonBackstageCommandCollection _commands;
     private KryptonBackstagePage? _selectedPage;
 
     private readonly KryptonPanel _navigationPanel;
@@ -41,6 +42,7 @@ public class KryptonBackstageView : KryptonPanel
     private bool _suspendSync;
     private readonly BackstageColors _colors;
     private readonly BackstageCloseItem _closeItem;
+    private BackstageOverlayMode _overlayMode;
     #endregion
 
     #region Events
@@ -66,11 +68,17 @@ public class KryptonBackstageView : KryptonPanel
     public KryptonBackstageView()
     {
         _navigationWidth = 200;
+        _overlayMode = BackstageOverlayMode.FullClient;
 
         _pages = new KryptonBackstagePageCollection();
         _pages.Inserted += OnPagesInserted;
         _pages.Removed += OnPagesRemoved;
         _pages.Cleared += OnPagesCleared;
+
+        _commands = new KryptonBackstageCommandCollection();
+        _commands.Inserted += OnCommandsInserted;
+        _commands.Removed += OnCommandsRemoved;
+        _commands.Cleared += OnCommandsCleared;
 
         // Initialize colors object
         _colors = new BackstageColors(OnColorsNeedPaint);
@@ -118,6 +126,14 @@ public class KryptonBackstageView : KryptonPanel
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     [Editor(typeof(BackstagePageCollectionEditor), typeof(UITypeEditor))]
     public KryptonBackstagePageCollection Pages => _pages;
+
+    /// <summary>
+    /// Gets the backstage commands collection.
+    /// </summary>
+    [Category(@"Backstage")]
+    [Description(@"Collection of command-only items (no associated page) in the backstage view.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public KryptonBackstageCommandCollection Commands => _commands;
 
     /// <summary>
     /// Gets and sets the selected page.
@@ -173,6 +189,25 @@ public class KryptonBackstageView : KryptonPanel
     public BackstageColors Colors => _colors;
 
     private bool ShouldSerializeColors() => !_colors.IsDefault;
+
+    /// <summary>
+    /// Gets and sets the overlay coverage mode.
+    /// </summary>
+    [Category(@"Backstage")]
+    [Description(@"Determines whether the overlay covers the full client area or only the area below the ribbon.")]
+    [DefaultValue(BackstageOverlayMode.FullClient)]
+    public BackstageOverlayMode OverlayMode
+    {
+        get => _overlayMode;
+        set
+        {
+            if (_overlayMode != value)
+            {
+                _overlayMode = value;
+                PerformNeedPaint(false);
+            }
+        }
+    }
     #endregion
 
     #region Implementation
@@ -242,6 +277,20 @@ public class KryptonBackstageView : KryptonPanel
 
             // Close the main form (which will close the application)
             CloseApplication();
+            return;
+        }
+
+        // Check if a command was clicked
+        if (selectedItem is KryptonBackstageCommand command)
+        {
+            // Execute the command
+            command.PerformClick();
+            // Clear selection after command execution
+            _navigationList.ClearSelected();
+            if (_selectedPage != null)
+            {
+                _navigationList.SelectedItem = _selectedPage;
+            }
             return;
         }
 
@@ -599,6 +648,15 @@ public class KryptonBackstageView : KryptonPanel
                 }
             }
 
+            // Add all visible commands
+            foreach (KryptonBackstageCommand command in _commands)
+            {
+                if (command.VisibleInNavigation)
+                {
+                    _navigationList.Items.Add(command);
+                }
+            }
+
             // Always add the Close button as the last item
             _navigationList.Items.Add(_closeItem);
 
@@ -613,6 +671,42 @@ public class KryptonBackstageView : KryptonPanel
             _suspendSync = false;
         }
     }
+
+    private void OnCommandsInserted(object? sender, TypedCollectionEventArgs<KryptonBackstageCommand> e)
+    {
+        KryptonBackstageCommand? command = e.Item;
+        if (command == null)
+        {
+            return;
+        }
+
+        command.NavigationPropertyChanged += OnCommandNavigationPropertyChanged;
+        RebuildNavigationList();
+    }
+
+    private void OnCommandsRemoved(object? sender, TypedCollectionEventArgs<KryptonBackstageCommand> e)
+    {
+        KryptonBackstageCommand? command = e.Item;
+        if (command == null)
+        {
+            return;
+        }
+
+        command.NavigationPropertyChanged -= OnCommandNavigationPropertyChanged;
+        RebuildNavigationList();
+    }
+
+    private void OnCommandsCleared(object? sender, EventArgs e)
+    {
+        foreach (KryptonBackstageCommand command in _commands.ToArray())
+        {
+            command.NavigationPropertyChanged -= OnCommandNavigationPropertyChanged;
+        }
+
+        RebuildNavigationList();
+    }
+
+    private void OnCommandNavigationPropertyChanged(object? sender, EventArgs e) => RebuildNavigationList();
 
     private void OnPaletteChanged(object? sender, EventArgs e)
     {

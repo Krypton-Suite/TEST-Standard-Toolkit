@@ -16,9 +16,9 @@ internal class BackstageNavigationList : Control
     private readonly List<object> _items;
     private int _selectedIndex;
     private int _hoverIndex;
-    private readonly int _itemHeight;
     private int _updateCount;
     private readonly KryptonBackstageView? _parentView;
+    private readonly Dictionary<int, int> _itemHeights; // Cache item heights by index
     #endregion
 
     #region Identity
@@ -39,7 +39,7 @@ internal class BackstageNavigationList : Control
         _items = [];
         _selectedIndex = -1;
         _hoverIndex = -1;
-        _itemHeight = (int)(40 * GetDpiFactorY());
+        _itemHeights = new Dictionary<int, int>();
 
         UpdateBackColor();
     }
@@ -165,15 +165,18 @@ internal class BackstageNavigationList : Control
         }
 
         var y = 0;
+        _itemHeights.Clear();
         for (var i = 0; i < _items.Count; i++)
         {
-            var itemRect = new Rectangle(0, y, Width, _itemHeight);
+            var itemHeight = GetItemHeight(_items[i]);
+            _itemHeights[i] = itemHeight;
+            var itemRect = new Rectangle(0, y, Width, itemHeight);
             var isSelected = i == _selectedIndex;
             var isHover = i == _hoverIndex && !isSelected;
 
             DrawItem(g, itemRect, _items[i], isSelected, isHover);
 
-            y += _itemHeight;
+            y += itemHeight;
         }
     }
 
@@ -184,7 +187,7 @@ internal class BackstageNavigationList : Control
     {
         base.OnMouseMove(e);
 
-        var newHoverIndex = e.Y / _itemHeight;
+        var newHoverIndex = GetItemIndexAtY(e.Y);
         if (newHoverIndex >= 0 && newHoverIndex < _items.Count)
         {
             if (_hoverIndex != newHoverIndex)
@@ -223,7 +226,7 @@ internal class BackstageNavigationList : Control
 
         if (e.Button == MouseButtons.Left)
         {
-            var clickedIndex = e.Y / _itemHeight;
+            var clickedIndex = GetItemIndexAtY(e.Y);
             if (clickedIndex >= 0 && clickedIndex < _items.Count)
             {
                 SelectedIndex = clickedIndex;
@@ -233,6 +236,58 @@ internal class BackstageNavigationList : Control
     #endregion
 
     #region Implementation
+    private int GetItemHeight(object item)
+    {
+        var itemSize = GetItemSize(item);
+        var baseHeight = itemSize == BackstageItemSize.Large ? 60 : 40;
+        return (int)(baseHeight * GetDpiFactorY());
+    }
+
+    private BackstageItemSize GetItemSize(object item)
+    {
+        if (item is KryptonBackstagePage page)
+        {
+            return page.ItemSize;
+        }
+
+        if (item is KryptonBackstageCommand command)
+        {
+            return command.ItemSize;
+        }
+
+        return BackstageItemSize.Small; // Default for Close item
+    }
+
+    private Image? GetItemImage(object item)
+    {
+        if (item is KryptonBackstagePage page)
+        {
+            return page.Image;
+        }
+
+        if (item is KryptonBackstageCommand command)
+        {
+            return command.Image;
+        }
+
+        return null;
+    }
+
+    private int GetItemIndexAtY(int y)
+    {
+        var currentY = 0;
+        for (var i = 0; i < _items.Count; i++)
+        {
+            var itemHeight = _itemHeights.TryGetValue(i, out var height) ? height : GetItemHeight(_items[i]);
+            if (y >= currentY && y < currentY + itemHeight)
+            {
+                return i;
+            }
+            currentY += itemHeight;
+        }
+        return -1;
+    }
+
     private void DrawItem(Graphics g, Rectangle rect, object item, bool isSelected, bool isHover)
     {
         // Selected item: use custom or theme highlight color
@@ -249,17 +304,49 @@ internal class BackstageNavigationList : Control
             g.FillRectangle(brush, rect);
         }
 
-        // Draw item text
+        var itemSize = GetItemSize(item);
+        var image = GetItemImage(item);
         var text = GetItemText(item);
+        var imageSize = itemSize == BackstageItemSize.Large ? 32 : 16;
+        var imagePadding = (int)(12 * GetDpiFactorX());
+        var textPadding = image != null ? imageSize + imagePadding * 2 : imagePadding;
+
+        // Draw image if available
+        if (image != null)
+        {
+            var imageRect = new Rectangle(
+                rect.X + imagePadding,
+                rect.Y + (rect.Height - imageSize) / 2,
+                imageSize,
+                imageSize);
+
+            // Scale image if needed
+            if (image.Width == imageSize && image.Height == imageSize)
+            {
+                // Image is already the correct size
+                g.DrawImage(image, imageRect);
+            }
+            else
+            {
+                // Scale image to fit
+                using var scaledImage = new Bitmap(image, imageSize, imageSize);
+                g.DrawImage(scaledImage, imageRect);
+            }
+        }
+
+        // Draw item text
         if (!string.IsNullOrEmpty(text))
         {
             var textRect = rect;
-            textRect.X += (int)(12 * GetDpiFactorX());
-            textRect.Width -= (int)(12 * GetDpiFactorX());
+            textRect.X += textPadding;
+            textRect.Width -= textPadding + imagePadding;
 
             var textColor = isSelected ? Color.Black : Color.FromArgb(51, 51, 51);
             using var brush = new SolidBrush(textColor);
-            using var font = new Font(Font.FontFamily, Font.Size, FontStyle.Regular);
+            
+            // Use slightly larger font for large items
+            var fontSize = itemSize == BackstageItemSize.Large ? Font.Size * 1.1f : Font.Size;
+            using var font = new Font(Font.FontFamily, fontSize, FontStyle.Regular);
             var format = new StringFormat
             {
                 Alignment = StringAlignment.Near,
@@ -275,6 +362,11 @@ internal class BackstageNavigationList : Control
         if (item is KryptonBackstagePage page)
         {
             return page.Text;
+        }
+
+        if (item is KryptonBackstageCommand command)
+        {
+            return command.Text;
         }
 
         if (item is BackstageCloseItem closeItem)

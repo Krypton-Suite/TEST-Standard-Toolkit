@@ -23,6 +23,12 @@ internal sealed class BackstageOverlayForm : KryptonForm
     // Top-level form that owns the ribbon; used as the overlay owner and for bounds tracking.
     private readonly Form _ownerForm;
 
+    // Overlay mode determines coverage area
+    private BackstageOverlayMode _overlayMode;
+
+    // Reference to ribbon for below-ribbon mode calculations
+    private KryptonRibbon? _ribbon;
+
     // Root container for palette integration and simple composition.
     private readonly KryptonPanel _root;
 
@@ -57,9 +63,13 @@ internal sealed class BackstageOverlayForm : KryptonForm
     /// Create a new backstage overlay owned by the provided form.
     /// </summary>
     /// <param name="ownerForm">Top-level form that contains the ribbon.</param>
-    internal BackstageOverlayForm(Form ownerForm)
+    /// <param name="overlayMode">Overlay coverage mode.</param>
+    /// <param name="ribbon">Optional ribbon reference for below-ribbon mode.</param>
+    internal BackstageOverlayForm(Form ownerForm, BackstageOverlayMode overlayMode = BackstageOverlayMode.FullClient, KryptonRibbon? ribbon = null)
     {
         _ownerForm = ownerForm ?? throw new ArgumentNullException(nameof(ownerForm));
+        _overlayMode = overlayMode;
+        _ribbon = ribbon;
 
         // Configure as a simple, borderless overlay window.
         //
@@ -183,9 +193,20 @@ internal sealed class BackstageOverlayForm : KryptonForm
             return;
         }
 
-        // Convert the owner's client rectangle into screen coordinates for placement.
-        Rectangle screenClient = _ownerForm.RectangleToScreen(_ownerForm.ClientRectangle);
-        Bounds = screenClient;
+        Rectangle screenBounds;
+
+        if (_overlayMode == BackstageOverlayMode.BelowRibbon && _ribbon != null)
+        {
+            // Calculate bounds for below-ribbon mode
+            screenBounds = CalculateBelowRibbonBounds();
+        }
+        else
+        {
+            // Full client area mode (default)
+            screenBounds = _ownerForm.RectangleToScreen(_ownerForm.ClientRectangle);
+        }
+
+        Bounds = screenBounds;
 
         if (!Visible)
         {
@@ -197,6 +218,38 @@ internal sealed class BackstageOverlayForm : KryptonForm
         {
             BringToFront();
         }
+    }
+
+    /// <summary>
+    /// Calculates the screen bounds for below-ribbon overlay mode.
+    /// </summary>
+    private Rectangle CalculateBelowRibbonBounds()
+    {
+        if (_ribbon == null || _ownerForm == null)
+        {
+            // Fallback to full client area
+            return _ownerForm.RectangleToScreen(_ownerForm.ClientRectangle);
+        }
+
+        // Get ribbon's screen bounds
+        Rectangle ribbonScreenBounds = _ribbon.RectangleToScreen(_ribbon.ClientRectangle);
+
+        // Get owner form's client rectangle in screen coordinates
+        Rectangle ownerClientScreen = _ownerForm.RectangleToScreen(_ownerForm.ClientRectangle);
+
+        // Calculate area below ribbon
+        int top = ribbonScreenBounds.Bottom;
+        int left = ownerClientScreen.Left;
+        int width = ownerClientScreen.Width;
+        int height = ownerClientScreen.Bottom - top;
+
+        // Ensure we don't go negative
+        if (height < 0)
+        {
+            height = 0;
+        }
+
+        return new Rectangle(left, top, width, height);
     }
     #endregion
 
