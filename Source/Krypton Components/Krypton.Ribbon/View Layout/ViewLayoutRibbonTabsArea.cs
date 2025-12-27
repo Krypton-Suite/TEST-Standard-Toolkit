@@ -503,7 +503,7 @@ internal class ViewLayoutRibbonTabsArea : ViewLayoutDocker
         if (_appTabController != null)
         {
             _appTabController.Target1 = LayoutAppTab.AppTab;
-            _appTabController.Click += OnAppButtonClicked;
+            _appTabController.Click += OnAppTabClicked;
             _appTabController.MouseReleased += OnAppButtonReleased;
             LayoutAppTab.MouseController = _appTabController;
             LayoutAppTab.SourceController = _appTabController;
@@ -679,72 +679,102 @@ internal class ViewLayoutRibbonTabsArea : ViewLayoutDocker
         }
         else
         {
-            // Give event handler a change to cancel the open request
-            var cea = new CancelEventArgs();
-            _ribbon.OnAppButtonMenuOpening(cea);
+            ShowAppButtonMenu(_appButtonController?.Keyboard ?? false);
+        }
+    }
 
-            if (cea.Cancel)
+    private void OnAppTabClicked(object? sender, EventArgs e)
+    {
+        // We do not operate the application tab at design time
+        if (_ribbon.InDesignMode)
+        {
+            OnAppMenuDisposed(this, EventArgs.Empty);
+            return;
+        }
+
+        // Prefer backstage view when configured, fallback to the default app menu popup
+        if (_ribbon.TryToggleBackstageView())
+        {
+            return;
+        }
+
+        ShowAppButtonMenu(_appTabController?.Keyboard ?? false);
+    }
+
+    private void ShowAppButtonMenu(bool keyboardActivated)
+    {
+        // Give event handler a chance to cancel the open request
+        var cea = new CancelEventArgs();
+        _ribbon.OnAppButtonMenuOpening(cea);
+
+        if (cea.Cancel)
+        {
+            OnAppMenuDisposed(this, EventArgs.Empty);
+            return;
+        }
+
+        // Remove any minimized popup window from display
+        if (_ribbon.RealMinimizedMode)
+        {
+            _ribbon.KillMinimizedPopup();
+        }
+
+        // Give popups a chance to cleanup
+        Application.DoEvents();
+
+        if (_ribbon is { InDesignMode: false, IsDisposed: false })
+        {
+            Rectangle appRectTop;
+            Rectangle appRectBottom;
+            Rectangle appRectShow;
+
+            if (_ribbon.RibbonShape == PaletteRibbonShape.Office2007)
             {
-                OnAppMenuDisposed(this, EventArgs.Empty);
+                // Find screen location of the application button lower half
+                Rectangle appButtonRect = _ribbon.RectangleToScreen(LayoutAppButton.AppButton.ClientRectangle);
+                var localHalf = (int)(21 * FactorDpiY);
+                appRectBottom = appButtonRect with { Y = appButtonRect.Y + localHalf, Height = appButtonRect.Height - localHalf };
+                appRectTop = appRectBottom with { Y = appRectBottom.Y - localHalf, Height = localHalf };
+                appRectShow = appRectBottom;
             }
             else
             {
-                // Remove any minimized popup window from display
-                if (_ribbon.RealMinimizedMode)
-                {
-                    _ribbon.KillMinimizedPopup();
-                }
-
-                // Give popups a change to cleanup
-                Application.DoEvents();
-
-                if (_ribbon is { InDesignMode: false, IsDisposed: false })
-                {
-                    Rectangle appRectTop;
-                    Rectangle appRectBottom;
-                    Rectangle appRectShow;
-
-                    if (_ribbon.RibbonShape == PaletteRibbonShape.Office2007)
-                    {
-                        // Find screen location of the application button lower half
-                        Rectangle appButtonRect = _ribbon.RectangleToScreen(LayoutAppButton.AppButton.ClientRectangle);
-                        var localHalf = (int)(21 * FactorDpiY);
-                        appRectBottom = appButtonRect with { Y = appButtonRect.Y + localHalf, Height = appButtonRect.Height - localHalf };
-                        appRectTop = appRectBottom with { Y = appRectBottom.Y - localHalf, Height = localHalf };
-                        appRectShow = appRectBottom;
-                    }
-                    else
-                    {
-                        // Find screen location of the application tab lower half
-                        Rectangle appButtonRect = _ribbon.RectangleToScreen(LayoutAppTab.AppTab.ClientRectangle);
-                        appRectBottom = Rectangle.Empty;
-                        appRectTop = appButtonRect;
-                        appRectShow = appButtonRect with { Y = appButtonRect.Bottom - 1, Height = 0 };
-                    }
-
-                    // Create the actual control used to show the context menu
-                    _appMenu = new VisualPopupAppMenu(_ribbon,
-                        _ribbon.LocalCustomPalette, _ribbon.PaletteMode,
-                        _ribbon.GetRedirector(),
-                        appRectTop, appRectBottom,
-                        _appButtonController!.Keyboard);
-
-                    // Need to know when the visual control is removed
-                    _appMenu.Disposed += OnAppMenuDisposed;
-
-                    // Adjust the screen rect of the app button/tab, so we show half-way down the button
-                    appRectShow.X -= 3;
-                    appRectShow.Height = 0;
-
-                    // Request the menu be shown immediately
-                    _appMenu.Show(appRectShow);
-
-                    // Indicate the context menu is fully constructed and displayed
-                    _ribbon.OnAppButtonMenuOpened(EventArgs.Empty);
-                }
+                // Find screen location of the application tab lower half
+                Rectangle appButtonRect = _ribbon.RectangleToScreen(LayoutAppTab.AppTab.ClientRectangle);
+                appRectBottom = Rectangle.Empty;
+                appRectTop = appButtonRect;
+                appRectShow = appButtonRect with { Y = appButtonRect.Bottom - 1, Height = 0 };
             }
+
+            // Create the actual control used to show the context menu
+            _appMenu = new VisualPopupAppMenu(_ribbon,
+                _ribbon.LocalCustomPalette, _ribbon.PaletteMode,
+                _ribbon.GetRedirector(),
+                appRectTop, appRectBottom,
+                keyboardActivated);
+
+            // Need to know when the visual control is removed
+            _appMenu.Disposed += OnAppMenuDisposed;
+
+            // Adjust the screen rect of the app button/tab, so we show half-way down the button
+            appRectShow.X -= 3;
+            appRectShow.Height = 0;
+
+            // Request the menu be shown immediately
+            _appMenu.Show(appRectShow);
+
+            // Indicate the context menu is fully constructed and displayed
+            _ribbon.OnAppButtonMenuOpened(EventArgs.Empty);
         }
     }
+
+    internal void DismissAppButtonMenu()
+    {
+        // Close any open app menu popup (will trigger OnAppMenuDisposed cleanup)
+        _appMenu?.Dispose();
+    }
+
+    internal void RemoveFixedAppTab() => _appTabController?.RemoveFixed();
 
     private void OnAppMenuDisposed(object? sender, EventArgs e)
     {
