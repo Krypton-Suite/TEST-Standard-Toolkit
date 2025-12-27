@@ -20,11 +20,7 @@ public class BadgeValues : Storage
     private static readonly Color _defaultBadgeColor = Color.Red;
     private static readonly Color _defaultTextColor = Color.White;
     private static readonly Font? _defaultFont = null; // null means use default font
-    private static readonly Color _defaultBadgeBorderColor = Color.Empty;
-    private const int DEFAULT_BADGE_BORDER_SIZE = 0;
     private const int DEFAULT_BADGE_DIAMETER = 0; // 0 means auto-size
-    private const string DEFAULT_OVERFLOW_TEXT = "99+";
-    private const int DEFAULT_OVERFLOW_NUMBER = 99; // If value > this, show overflow text
     private const bool DEFAULT_AUTO_SHOW_HIDE_BADGE = false;
     #endregion
 
@@ -38,12 +34,10 @@ public class BadgeValues : Storage
     private BadgeAnimation _animation;
     private Font? _font;
     private bool _visible;
-    private Color _badgeBorderColor;
-    private int _badgeBorderSize;
     private int _badgeDiameter;
-    private string _overflowText;
-    private int _overflowNumber;
     private bool _autoShowHideBadge;
+    private readonly BadgeBorderValues _border;
+    private readonly BadgeOverflowValues _overflow;
     #endregion
 
     #region Identity
@@ -66,12 +60,12 @@ public class BadgeValues : Storage
         _animation = BadgeAnimation.None;
         _font = _defaultFont;
         _visible = false;
-        _badgeBorderColor = _defaultBadgeBorderColor;
-        _badgeBorderSize = DEFAULT_BADGE_BORDER_SIZE;
         _badgeDiameter = DEFAULT_BADGE_DIAMETER;
-        _overflowText = DEFAULT_OVERFLOW_TEXT;
-        _overflowNumber = DEFAULT_OVERFLOW_NUMBER;
         _autoShowHideBadge = DEFAULT_AUTO_SHOW_HIDE_BADGE;
+        
+        // Initialize nested expandable objects
+        _border = new BadgeBorderValues(needPaint);
+        _overflow = new BadgeOverflowValues(needPaint);
     }
     #endregion
 
@@ -90,12 +84,10 @@ public class BadgeValues : Storage
                                       (Animation == BadgeAnimation.None) &&
                                       (Font == _defaultFont) &&
                                       (Visible == false) &&
-                                      (BadgeBorderColor == _defaultBadgeBorderColor) &&
-                                      (BadgeBorderSize == DEFAULT_BADGE_BORDER_SIZE) &&
                                       (BadgeDiameter == DEFAULT_BADGE_DIAMETER) &&
-                                      (OverflowText == DEFAULT_OVERFLOW_TEXT) &&
-                                      (OverflowNumber == DEFAULT_OVERFLOW_NUMBER) &&
-                                      (AutoShowHideBadge == DEFAULT_AUTO_SHOW_HIDE_BADGE);
+                                      (AutoShowHideBadge == DEFAULT_AUTO_SHOW_HIDE_BADGE) &&
+                                      Border.IsDefault &&
+                                      Overflow.IsDefault;
 
     #endregion
 
@@ -384,67 +376,21 @@ public class BadgeValues : Storage
     public void ResetAnimation() => Animation = BadgeAnimation.None;
     #endregion
 
-    #region BadgeBorderColor
+    #region Border
     /// <summary>
-    /// Gets and sets the badge border color.
+    /// Gets access to the badge border values.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"The border color of the badge. Empty means no border.")]
-    [RefreshProperties(RefreshProperties.All)]
-    [KryptonDefaultColor]
-    public Color BadgeBorderColor
-    {
-        get => _badgeBorderColor;
-        set
-        {
-            if (_badgeBorderColor != value)
-            {
-                _badgeBorderColor = value;
-                PerformNeedPaint(true);
-            }
-        }
-    }
+    [Description(@"Badge border values")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public BadgeBorderValues Border => _border;
 
-    private bool ShouldSerializeBadgeBorderColor() => BadgeBorderColor != _defaultBadgeBorderColor;
+    private bool ShouldSerializeBorder() => !Border.IsDefault;
 
     /// <summary>
-    /// Resets the BadgeBorderColor property to its default value.
+    /// Resets the Border property to its default value.
     /// </summary>
-    public void ResetBadgeBorderColor() => BadgeBorderColor = _defaultBadgeBorderColor;
-    #endregion
-
-    #region BadgeBorderSize
-    /// <summary>
-    /// Gets and sets the badge border size (thickness in pixels).
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"The border size (thickness in pixels) of the badge. 0 means no border.")]
-    [RefreshProperties(RefreshProperties.All)]
-    [DefaultValue(0)]
-    public int BadgeBorderSize
-    {
-        get => _badgeBorderSize;
-        set
-        {
-            if (value < 0)
-            {
-                value = 0;
-            }
-
-            if (_badgeBorderSize != value)
-            {
-                _badgeBorderSize = value;
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeBadgeBorderSize() => BadgeBorderSize != DEFAULT_BADGE_BORDER_SIZE;
-
-    /// <summary>
-    /// Resets the BadgeBorderSize property to its default value.
-    /// </summary>
-    public void ResetBadgeBorderSize() => BadgeBorderSize = DEFAULT_BADGE_BORDER_SIZE;
+    public void ResetBorder() => Border.Reset();
     #endregion
 
     #region BadgeDiameter
@@ -481,67 +427,21 @@ public class BadgeValues : Storage
     public void ResetBadgeDiameter() => BadgeDiameter = DEFAULT_BADGE_DIAMETER;
     #endregion
 
-    #region OverflowText
+    #region Overflow
     /// <summary>
-    /// Gets and sets the text to display when the badge value exceeds OverflowNumber.
+    /// Gets access to the badge overflow values.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"The text to display when the badge numeric value exceeds OverflowNumber (e.g., '99+').")]
-    [RefreshProperties(RefreshProperties.All)]
-    [DefaultValue("99+")]
-    public string OverflowText
-    {
-        get => _overflowText ?? GlobalStaticValues.DEFAULT_EMPTY_STRING;
-        set
-        {
-            if (_overflowText != value)
-            {
-                _overflowText = value;
-                PerformNeedPaint(true);
-            }
-        }
-    }
+    [Description(@"Badge overflow values")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public BadgeOverflowValues Overflow => _overflow;
 
-    private bool ShouldSerializeOverflowText() => OverflowText != DEFAULT_OVERFLOW_TEXT;
+    private bool ShouldSerializeOverflow() => !Overflow.IsDefault;
 
     /// <summary>
-    /// Resets the OverflowText property to its default value.
+    /// Resets the Overflow property to its default value.
     /// </summary>
-    public void ResetOverflowText() => OverflowText = DEFAULT_OVERFLOW_TEXT;
-    #endregion
-
-    #region OverflowNumber
-    /// <summary>
-    /// Gets and sets the threshold number. If the badge text value (as a number) exceeds this value, OverflowText is displayed instead.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"The threshold number. If the badge text value (as a number) exceeds this value, OverflowText is displayed instead. Set to 0 to disable overflow checking.")]
-    [RefreshProperties(RefreshProperties.All)]
-    [DefaultValue(99)]
-    public int OverflowNumber
-    {
-        get => _overflowNumber;
-        set
-        {
-            if (value < 0)
-            {
-                value = 0;
-            }
-
-            if (_overflowNumber != value)
-            {
-                _overflowNumber = value;
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeOverflowNumber() => OverflowNumber != DEFAULT_OVERFLOW_NUMBER;
-
-    /// <summary>
-    /// Resets the OverflowNumber property to its default value.
-    /// </summary>
-    public void ResetOverflowNumber() => OverflowNumber = DEFAULT_OVERFLOW_NUMBER;
+    public void ResetOverflow() => Overflow.Reset();
     #endregion
 
     #region AutoShowHideBadge
