@@ -8,17 +8,15 @@
 namespace Krypton.Ribbon;
 
 /// <summary>
-/// Represents a single page hosted by a <see cref="KryptonBackstageView"/>.
+/// Represents a command-only item in the Backstage View navigation (no associated page).
 /// </summary>
 [ToolboxItem(false)]
 [DefaultEvent(nameof(Click))]
 [DefaultProperty(nameof(Text))]
-[Designer(typeof(KryptonBackstagePageDesigner))]
-[DesignerCategory(@"code")]
-[DesignTimeVisible(false)]
-public class KryptonBackstagePage : KryptonPanel
+public class KryptonBackstageCommand
 {
     #region Instance Fields
+    private string _text;
     private Image? _image;
     private bool _visibleInNavigation;
     private BackstageItemSize _itemSize;
@@ -26,27 +24,63 @@ public class KryptonBackstagePage : KryptonPanel
 
     #region Events
     /// <summary>
-    /// Occurs when a navigation-related page property has changed.
+    /// Occurs when the command is clicked.
     /// </summary>
     [Category(@"Backstage")]
-    [Description(@"Occurs when a navigation-related page property has changed.")]
+    [Description(@"Occurs when the command is clicked.")]
+    public event EventHandler? Click;
+
+    /// <summary>
+    /// Occurs when a navigation-related property has changed.
+    /// </summary>
+    [Category(@"Backstage")]
+    [Description(@"Occurs when a navigation-related property has changed.")]
     public event EventHandler? NavigationPropertyChanged;
     #endregion
 
     #region Identity
     /// <summary>
-    /// Initialize a new instance of the <see cref="KryptonBackstagePage"/> class.
+    /// Initialize a new instance of the <see cref="KryptonBackstageCommand"/> class.
     /// </summary>
-    public KryptonBackstagePage()
+    public KryptonBackstageCommand()
     {
+        _text = string.Empty;
         _visibleInNavigation = true;
         _itemSize = BackstageItemSize.Small;
-        Dock = DockStyle.Fill;
-        Visible = false;
+    }
+
+    /// <summary>
+    /// Initialize a new instance of the <see cref="KryptonBackstageCommand"/> class.
+    /// </summary>
+    /// <param name="text">The display text for the command.</param>
+    public KryptonBackstageCommand(string text)
+    {
+        _text = text ?? string.Empty;
+        _visibleInNavigation = true;
+        _itemSize = BackstageItemSize.Small;
     }
     #endregion
 
     #region Public
+    /// <summary>
+    /// Gets and sets the display text for the command.
+    /// </summary>
+    [Category(@"Backstage")]
+    [Description(@"Display text shown in the navigation list.")]
+    [DefaultValue("")]
+    public string Text
+    {
+        get => _text;
+        set
+        {
+            if (_text != value)
+            {
+                _text = value ?? string.Empty;
+                OnNavigationPropertyChanged(EventArgs.Empty);
+            }
+        }
+    }
+
     /// <summary>
     /// Gets and sets the image used in the backstage navigation list.
     /// </summary>
@@ -67,10 +101,10 @@ public class KryptonBackstagePage : KryptonPanel
     }
 
     /// <summary>
-    /// Gets and sets if this page should be shown in the navigation list.
+    /// Gets and sets if this command should be shown in the navigation list.
     /// </summary>
     [Category(@"Backstage")]
-    [Description(@"Determine if this page should be shown in the navigation list.")]
+    [Description(@"Determine if this command should be shown in the navigation list.")]
     [DefaultValue(true)]
     public bool VisibleInNavigation
     {
@@ -104,17 +138,22 @@ public class KryptonBackstagePage : KryptonPanel
         }
     }
 
-    /// <inheritdoc />
-    protected override void OnTextChanged(EventArgs e)
-    {
-        base.OnTextChanged(e);
-        OnNavigationPropertyChanged(EventArgs.Empty);
-    }
+    /// <summary>
+    /// Raises the <see cref="Click"/> event.
+    /// </summary>
+    public void PerformClick() => OnClick(EventArgs.Empty);
     #endregion
 
     #region Implementation
-    private void OnNavigationPropertyChanged(EventArgs e) => NavigationPropertyChanged?.Invoke(this, e);
+    /// <summary>
+    /// Raises the <see cref="Click"/> event.
+    /// </summary>
+    protected virtual void OnClick(EventArgs e) => Click?.Invoke(this, e);
+
+    /// <summary>
+    /// Raises the <see cref="NavigationPropertyChanged"/> event.
+    /// </summary>
+    protected virtual void OnNavigationPropertyChanged(EventArgs e) => NavigationPropertyChanged?.Invoke(this, e);
     #endregion
 }
-
 
