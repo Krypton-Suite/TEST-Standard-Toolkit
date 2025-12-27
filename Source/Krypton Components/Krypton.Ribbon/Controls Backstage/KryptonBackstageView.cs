@@ -318,9 +318,9 @@ public class KryptonBackstageView : KryptonPanel
 
         // Theme-aware defaults
         var palette = GetPalette();
-        if (IsOffice2013Theme(palette))
+        if (IsOffice2013Theme(palette) || IsMicrosoft365Theme(palette))
         {
-            // Office 2013: Dark blue navigation panel
+            // Office 2013 / Microsoft 365: Dark blue navigation panel
             return Color.FromArgb(31, 78, 121);
         }
 
@@ -349,9 +349,9 @@ public class KryptonBackstageView : KryptonPanel
 
         // Theme-aware defaults
         var palette = GetPalette();
-        if (IsOffice2013Theme(palette))
+        if (IsOffice2013Theme(palette) || IsMicrosoft365Theme(palette))
         {
-            // Office 2013: Lighter blue highlight for selected items
+            // Office 2013 / Microsoft 365: Lighter blue highlight for selected items
             return Color.FromArgb(68, 114, 196);
         }
 
@@ -373,6 +373,34 @@ public class KryptonBackstageView : KryptonPanel
         
         return (name != null && name.IndexOf("Office2013", StringComparison.OrdinalIgnoreCase) >= 0) ||
                (nameSpace != null && nameSpace.IndexOf("Office 2013", StringComparison.OrdinalIgnoreCase) >= 0);
+    }
+
+    private static bool IsMicrosoft365Theme(PaletteBase? palette)
+    {
+        if (palette == null)
+        {
+            return false;
+        }
+
+        // Check if the palette is a Microsoft 365 palette by checking the renderer type
+        var renderer = palette.GetRenderer();
+        if (renderer != null)
+        {
+            var rendererType = renderer.GetType();
+            var rendererName = rendererType.Name;
+            if (rendererName != null && rendererName.IndexOf("Microsoft365", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+        }
+
+        // Also check the palette type name and namespace as a fallback
+        var paletteType = palette.GetType();
+        var name = paletteType.Name;
+        var nameSpace = paletteType.Namespace;
+        
+        return (name != null && name.IndexOf("Microsoft365", StringComparison.OrdinalIgnoreCase) >= 0) ||
+               (nameSpace != null && nameSpace.IndexOf("Microsoft 365", StringComparison.OrdinalIgnoreCase) >= 0);
     }
 
     private PaletteBase? GetPalette()
