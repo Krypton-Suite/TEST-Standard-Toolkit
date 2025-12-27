@@ -399,4 +399,49 @@ public partial class Main : KryptonForm
     {
         new CheckedListBoxDemo().ShowDialog();
     }
+
+    private void kbtnErrorProviderTest_Click(object sender, EventArgs e)
+    {
+        new ErrorProviderTest().ShowDialog();
+    }
+
+    private void kbtnFileSystemWatcherTest_Click(object sender, EventArgs e)
+    {
+        new FileSystemWatcherTest().ShowDialog();
+    }
+
+    private void kbtnTimerTest_Click(object sender, EventArgs e)
+    {
+        new TimerTest().ShowDialog();
+    }
+
+    private void kbtnSplitterTest_Click(object sender, EventArgs e)
+    {
+        new SplitterTest().ShowDialog();
+    }
+
+    private void kbtnFlowLayoutPanelTest_Click(object sender, EventArgs e)
+    {
+        new FlowLayoutPanelTest().ShowDialog();
+    }
+
+    private void kbtnTableLayoutPanelTest_Click(object sender, EventArgs e)
+    {
+        new TableLayoutPanelTest().ShowDialog();
+    }
+
+    private void kbtnMarkdownEditorViewer_Click(object sender, EventArgs e)
+    {
+        new MarkdownEditorViewer().ShowDialog();
+    }
+
+    private void kbtnCodeEditorTest_Click(object sender, EventArgs e)
+    {
+        new CodeEditorTest().ShowDialog();
+    }
+
+    private void kbtnBugReportingDialogTest_Click(object sender, EventArgs e)
+    {
+        new BugReportingDialogTest().ShowDialog();
+    }
 }

@@ -40,6 +40,10 @@ namespace TestForm
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.kryptonPanel1 = new Krypton.Toolkit.KryptonPanel();
+            this.kbtnErrorProviderTest = new Krypton.Toolkit.KryptonButton();
+            this.kbtnFileSystemWatcherTest = new Krypton.Toolkit.KryptonButton();
+            this.kbtnTimerTest = new Krypton.Toolkit.KryptonButton();
+            this.kbtnSplitterTest = new Krypton.Toolkit.KryptonButton();
             this.kryptonButton17 = new Krypton.Toolkit.KryptonButton();
             this.kryptonCheckedListBox1 = new Krypton.Toolkit.KryptonCheckedListBox();
             this.kryptonButton16 = new Krypton.Toolkit.KryptonButton();
@@ -116,7 +120,6 @@ namespace TestForm
             this.buttonSpecAny9 = new Krypton.Toolkit.ButtonSpecAny();
             this.buttonSpecAny10 = new Krypton.Toolkit.ButtonSpecAny();
             this.kryptonIntegratedToolbarPrintCommand1 = new Krypton.Toolkit.KryptonIntegratedToolbarPrintCommand();
-            this.kryptonManager1 = new Krypton.Toolkit.KryptonManager(this.components);
             this.kryptonCheckSet1 = new Krypton.Toolkit.KryptonCheckSet(this.components);
             this.kryptonInputBoxManager1 = new Krypton.Toolkit.KryptonInputBoxManager();
             this.kcmdOpenImage = new Krypton.Toolkit.KryptonCommand();
@@ -144,6 +147,10 @@ namespace TestForm
             // 
             // kryptonPanel1
             // 
+            this.kryptonPanel1.Controls.Add(this.kbtnErrorProviderTest);
+            this.kryptonPanel1.Controls.Add(this.kbtnFileSystemWatcherTest);
+            this.kryptonPanel1.Controls.Add(this.kbtnTimerTest);
+            this.kryptonPanel1.Controls.Add(this.kbtnSplitterTest);
             this.kryptonPanel1.Controls.Add(this.kryptonButton17);
             this.kryptonPanel1.Controls.Add(this.kryptonCheckedListBox1);
             this.kryptonPanel1.Controls.Add(this.kryptonButton16);
@@ -206,6 +213,46 @@ namespace TestForm
             this.kryptonPanel1.Name = "kryptonPanel1";
             this.kryptonPanel1.Size = new System.Drawing.Size(1320, 740);
             this.kryptonPanel1.TabIndex = 0;
+            // 
+            // kbtnErrorProviderTest
+            // 
+            this.kbtnErrorProviderTest.Location = new System.Drawing.Point(11, 620);
+            this.kbtnErrorProviderTest.Name = "kbtnErrorProviderTest";
+            this.kbtnErrorProviderTest.Size = new System.Drawing.Size(133, 25);
+            this.kbtnErrorProviderTest.TabIndex = 85;
+            this.kbtnErrorProviderTest.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            this.kbtnErrorProviderTest.Values.Text = "ErrorProvider";
+            this.kbtnErrorProviderTest.Click += new System.EventHandler(this.kbtnErrorProviderTest_Click);
+            // 
+            // kbtnFileSystemWatcherTest
+            // 
+            this.kbtnFileSystemWatcherTest.Location = new System.Drawing.Point(150, 620);
+            this.kbtnFileSystemWatcherTest.Name = "kbtnFileSystemWatcherTest";
+            this.kbtnFileSystemWatcherTest.Size = new System.Drawing.Size(150, 25);
+            this.kbtnFileSystemWatcherTest.TabIndex = 86;
+            this.kbtnFileSystemWatcherTest.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            this.kbtnFileSystemWatcherTest.Values.Text = "FileSystemWatcher";
+            this.kbtnFileSystemWatcherTest.Click += new System.EventHandler(this.kbtnFileSystemWatcherTest_Click);
+            // 
+            // kbtnTimerTest
+            // 
+            this.kbtnTimerTest.Location = new System.Drawing.Point(306, 620);
+            this.kbtnTimerTest.Name = "kbtnTimerTest";
+            this.kbtnTimerTest.Size = new System.Drawing.Size(100, 25);
+            this.kbtnTimerTest.TabIndex = 87;
+            this.kbtnTimerTest.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            this.kbtnTimerTest.Values.Text = "Timer";
+            this.kbtnTimerTest.Click += new System.EventHandler(this.kbtnTimerTest_Click);
+            // 
+            // kbtnSplitterTest
+            // 
+            this.kbtnSplitterTest.Location = new System.Drawing.Point(412, 620);
+            this.kbtnSplitterTest.Name = "kbtnSplitterTest";
+            this.kbtnSplitterTest.Size = new System.Drawing.Size(100, 25);
+            this.kbtnSplitterTest.TabIndex = 88;
+            this.kbtnSplitterTest.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            this.kbtnSplitterTest.Values.Text = "Splitter";
+            this.kbtnSplitterTest.Click += new System.EventHandler(this.kbtnSplitterTest_Click);
             // 
             // kryptonButton17
             // 
@@ -919,13 +966,6 @@ namespace TestForm
             // 
             this.kryptonIntegratedToolbarPrintCommand1.Text = "Print";
             // 
-            // kryptonManager1
-            // 
-            this.kryptonManager1.BaseFont = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.kryptonManager1.GlobalPaletteMode = Krypton.Toolkit.PaletteMode.ProfessionalSystem;
-            this.kryptonManager1.ToolkitStrings.MessageBoxStrings.LessDetails = "L&ess Details...";
-            this.kryptonManager1.ToolkitStrings.MessageBoxStrings.MoreDetails = "&More Details...";
-            // 
             // kcmdOpenImage
             // 
             this.kcmdOpenImage.Text = "&...";
@@ -1016,7 +1056,6 @@ namespace TestForm
         private Krypton.Toolkit.ButtonSpecAny buttonSpecAny10;
         private Krypton.Toolkit.KryptonIntegratedToolbarPrintCommand kryptonIntegratedToolbarPrintCommand1;
         private Krypton.Toolkit.KryptonButton kbtnIntegratedToolbar;
-        private Krypton.Toolkit.KryptonManager kryptonManager1;
         private Krypton.Toolkit.KryptonButton kryptonButton3;
         private Krypton.Toolkit.KryptonTrackBar ktrkProgressValues;
         private Krypton.Toolkit.KryptonProgressBar kryptonProgressBar1;
@@ -1075,5 +1114,9 @@ namespace TestForm
         private KryptonButton kryptonButton16;
         private KryptonCheckedListBox kryptonCheckedListBox1;
         private KryptonButton kryptonButton17;
+        private KryptonButton kbtnErrorProviderTest;
+        private KryptonButton kbtnFileSystemWatcherTest;
+        private KryptonButton kbtnTimerTest;
+        private KryptonButton kbtnSplitterTest;
     }
 }
