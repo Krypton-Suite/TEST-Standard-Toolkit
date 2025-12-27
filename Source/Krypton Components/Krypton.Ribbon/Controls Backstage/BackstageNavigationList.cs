@@ -277,6 +277,11 @@ internal class BackstageNavigationList : Control
             return page.Text;
         }
 
+        if (item is BackstageCloseItem closeItem)
+        {
+            return closeItem.Text;
+        }
+
         return item?.ToString() ?? string.Empty;
     }
 

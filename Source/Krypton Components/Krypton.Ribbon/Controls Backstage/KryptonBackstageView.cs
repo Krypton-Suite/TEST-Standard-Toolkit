@@ -8,6 +8,17 @@
 namespace Krypton.Ribbon;
 
 /// <summary>
+/// Marker class for the permanent "Close" button in the navigation list.
+/// </summary>
+internal class BackstageCloseItem
+{
+    /// <summary>
+    /// Gets the display text for the Close button.
+    /// </summary>
+    public string Text => "Close";
+}
+
+/// <summary>
 /// Provides an Office 2010-style backstage navigation surface.
 /// </summary>
 [ToolboxItem(true)]
@@ -29,6 +40,7 @@ public class KryptonBackstageView : KryptonPanel
     private int _navigationWidth;
     private bool _suspendSync;
     private readonly BackstageColors _colors;
+    private readonly BackstageCloseItem _closeItem;
     #endregion
 
     #region Events
@@ -38,6 +50,13 @@ public class KryptonBackstageView : KryptonPanel
     [Category(@"Backstage")]
     [Description(@"Occurs when the selected page changes.")]
     public event EventHandler? SelectedPageChanged;
+
+    /// <summary>
+    /// Occurs when the Close button is clicked, allowing the developer to cancel the application close.
+    /// </summary>
+    [Category(@"Backstage")]
+    [Description(@"Occurs when the Close button is clicked, allowing the developer to cancel the application close.")]
+    public event CancelEventHandler? CloseRequested;
     #endregion
 
     #region Identity
@@ -55,6 +74,9 @@ public class KryptonBackstageView : KryptonPanel
 
         // Initialize colors object
         _colors = new BackstageColors(OnColorsNeedPaint);
+
+        // Create the permanent Close item
+        _closeItem = new BackstageCloseItem();
 
         // Left navigation area - defaults to PanelAlternate style
         _navigationPanel = new KryptonPanel
@@ -197,11 +219,150 @@ public class KryptonBackstageView : KryptonPanel
             return;
         }
 
-        var page = _navigationList.SelectedItem as KryptonBackstagePage;
+        var selectedItem = _navigationList.SelectedItem;
+        
+        // Check if the Close item was clicked
+        if (selectedItem is BackstageCloseItem)
+        {
+            // Raise the CloseRequested event to allow developers to cancel or handle the close
+            var cancelEventArgs = new CancelEventArgs(false);
+            OnCloseRequested(cancelEventArgs);
+
+            // If the event was canceled, don't close the application
+            if (cancelEventArgs.Cancel)
+            {
+                // Clear the selection so the Close button doesn't appear selected
+                _navigationList.ClearSelected();
+                if (_selectedPage != null)
+                {
+                    _navigationList.SelectedItem = _selectedPage;
+                }
+                return;
+            }
+
+            // Close the main form (which will close the application)
+            CloseApplication();
+            return;
+        }
+
+        var page = selectedItem as KryptonBackstagePage;
         if (!ReferenceEquals(_selectedPage, page))
         {
             SelectPage(page);
         }
+    }
+
+    /// <summary>
+    /// Raises the <see cref="CloseRequested"/> event.
+    /// </summary>
+    /// <param name="e">A <see cref="CancelEventArgs"/> containing the event data.</param>
+    protected virtual void OnCloseRequested(CancelEventArgs e) => CloseRequested?.Invoke(this, e);
+
+    /// <summary>
+    /// Closes the main application form.
+    /// </summary>
+    private void CloseApplication()
+    {
+        // Find the main form (the form that owns the ribbon)
+        var form = FindMainForm();
+        if (form != null && !form.IsDisposed)
+        {
+            form.Close();
+        }
+        else
+        {
+            // Fallback: if we can't find the form, use Application.Exit()
+            Application.Exit();
+        }
+    }
+
+    /// <summary>
+    /// Finds the main form that contains the ribbon.
+    /// </summary>
+    private Form? FindMainForm()
+    {
+        // First, try to find the form that owns this control
+        var form = FindForm();
+        if (form != null)
+        {
+            // If this form is an overlay form, get its owner
+            if (form.Owner != null)
+            {
+                return form.Owner;
+            }
+            return form;
+        }
+
+        // Fallback: try to find the ribbon and then its form
+        var ribbon = FindKryptonRibbon();
+        return ribbon?.FindForm();
+    }
+
+    /// <summary>
+    /// Finds the parent KryptonRibbon control by walking up the control hierarchy.
+    /// </summary>
+    private KryptonRibbon? FindKryptonRibbon()
+    {
+        // First, try walking up the parent chain
+        var control = Parent;
+        while (control != null)
+        {
+            if (control is KryptonRibbon ribbon)
+            {
+                return ribbon;
+            }
+            control = control.Parent;
+        }
+
+        // If not found, check the form that contains this control
+        var form = FindForm();
+        if (form != null)
+        {
+            // Check if this form is an overlay form (owned by another form)
+            if (form.Owner != null)
+            {
+                // Search in the owner form's controls
+                var found = FindKryptonRibbonInControls(form.Owner.Controls);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            // Also search in the current form's controls
+            var foundInForm = FindKryptonRibbonInControls(form.Controls);
+            if (foundInForm != null)
+            {
+                return foundInForm;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Recursively searches for KryptonRibbon in a control collection.
+    /// </summary>
+    private static KryptonRibbon? FindKryptonRibbonInControls(Control.ControlCollection controls)
+    {
+        foreach (Control control in controls)
+        {
+            if (control is KryptonRibbon ribbon)
+            {
+                return ribbon;
+            }
+
+            if (control.HasChildren)
+            {
+                var found = FindKryptonRibbonInControls(control.Controls);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+        }
+
+        return null;
     }
 
     private void OnPagesInserted(object? sender, TypedCollectionEventArgs<KryptonBackstagePage> e)
@@ -347,16 +508,23 @@ public class KryptonBackstageView : KryptonPanel
             return _colors.SelectedItemHighlightColor.Value;
         }
 
-        // Theme-aware defaults
+        // Use the theme's tracking color for selected items
         var palette = GetPalette();
-        if (IsOffice2013Theme(palette) || IsMicrosoft365Theme(palette))
+        if (palette != null)
         {
-            // Office 2013 / Microsoft 365: Lighter blue highlight for selected items
-            return Color.FromArgb(68, 114, 196);
+            try
+            {
+                // Use MenuItemSelectedBegin from the tracking colors
+                return palette.GetArrayColor(SchemeTrackingColors.MenuItemSelectedBegin);
+            }
+            catch
+            {
+                // Fallback if tracking color is not available
+            }
         }
 
-        // Office 2010: Orange highlight
-        return Color.FromArgb(242, 155, 57);
+        // Fallback to hardcoded defaults if palette is null or tracking color unavailable
+        return Color.FromArgb(242, 155, 57); // Office 2010 orange as ultimate fallback
     }
 
     private static bool IsOffice2013Theme(PaletteBase? palette)
@@ -422,6 +590,7 @@ public class KryptonBackstageView : KryptonPanel
             _navigationList.BeginUpdate();
             _navigationList.Items.Clear();
 
+            // Add all visible pages
             foreach (KryptonBackstagePage page in _pages)
             {
                 if (page.VisibleInNavigation)
@@ -429,6 +598,9 @@ public class KryptonBackstageView : KryptonPanel
                     _navigationList.Items.Add(page);
                 }
             }
+
+            // Always add the Close button as the last item
+            _navigationList.Items.Add(_closeItem);
 
             if (_selectedPage != null && _selectedPage.VisibleInNavigation)
             {
