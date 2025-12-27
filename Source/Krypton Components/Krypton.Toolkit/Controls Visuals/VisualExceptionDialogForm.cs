@@ -1,8 +1,8 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
- *  Modifications by Peter Wagner(aka Wagnerp), Simon Coghlan(aka Smurf-IV), Giduac, et al. 2024 - 2026. All rights reserved.
+ *  Modifications by Peter Wagner(aka Wagnerp), Simon Coghlan(aka Smurf-IV), Giduac, et al. 2025 - 2026. All rights reserved.
  *
  */
 #endregion
@@ -21,13 +21,15 @@ public partial class VisualExceptionDialogForm : KryptonForm
 
     private readonly Exception? _exception;
 
-    private List<TreeNode> _originalNodes = new List<TreeNode>();
+    private readonly Action<Exception>? _bugReportCallback;
+
+    private List<KryptonTreeNode> _originalNodes = new List<KryptonTreeNode>();
 
     #endregion
 
     #region Identity
 
-    public VisualExceptionDialogForm(bool? showCopyButton, bool? showSearchBox, Color? highlightColor, Exception exception)
+    public VisualExceptionDialogForm(bool? showCopyButton, bool? showSearchBox, Color? highlightColor, Exception exception, Action<Exception>? bugReportCallback = null)
     {
         InitializeComponent();
 
@@ -40,6 +42,8 @@ public partial class VisualExceptionDialogForm : KryptonForm
         _highlightColor = highlightColor ?? Color.LightYellow;
 
         _exception = exception;
+
+        _bugReportCallback = bugReportCallback;
 
         // Set highlight color
         isbSearchArea.HighlightColor = (Color)_highlightColor;
@@ -61,16 +65,28 @@ public partial class VisualExceptionDialogForm : KryptonForm
         kbtnCopy.Visible = _showCopyButton ?? true;
         isbSearchArea.ShowSearchFeatures = _showSearchBox ?? true;
 
+        if (_bugReportCallback != null && _exception != null)
+        {
+            kbtnReportBug.Visible = true;
+            kbtnReportBug.Text = "Report Bug";
+            kbtnReportBug.Click += KbtnReportBug_Click;
+        }
+        else
+        {
+            kbtnReportBug.Visible = false;
+        }
+
         isbSearchArea.SearchBox.CueHint.CueHintText = KryptonManager.Strings.ExceptionDialogStrings.SearchBoxCueText;
         if (_exception is not null)
         {
             isbSearchArea.Populate(_exception);
 
-            foreach (TreeNode node in isbSearchArea.Tree.Nodes)
+            foreach (KryptonTreeNode node in isbSearchArea.Tree.Nodes)
             {
-                _originalNodes.Add((TreeNode)node.Clone());
+                _originalNodes.Add((KryptonTreeNode)node.Clone());
             }
         }
+
         if (GeneralToolkitUtilities.GetCurrentScreenSize() == new Point(1080, 720))
         {
             GeneralToolkitUtilities.AdjustFormDimensions(this, 900, 650);
@@ -92,19 +108,6 @@ public partial class VisualExceptionDialogForm : KryptonForm
 
     private void kbtnOk_Click(object sender, EventArgs e) => DialogResult = DialogResult.OK;
 
-    #endregion
-
-    #region Show
-
-    internal static void Show(Exception exception, Color? highlightColor, bool? showCopyButton, bool? showSearchBox)
-    {
-        using var ved = new VisualExceptionDialogForm(showCopyButton, showSearchBox, highlightColor, exception);
-
-        ved.ShowDialog();
-    }
-
-    #endregion
-
     private void isbSearchArea_NodeSelected(object sender, TreeViewEventArgs e)
     {
         var selectedException = isbSearchArea.SelectedException;
@@ -122,8 +125,26 @@ public partial class VisualExceptionDialogForm : KryptonForm
         }
     }
 
-    private void krtbExceptionDetails_TextChanged(object sender, EventArgs e)
+    private void krtbExceptionDetails_TextChanged(object sender, EventArgs e) => kbtnCopy.Enabled = !string.IsNullOrEmpty(krtbExceptionDetails.Text);
+
+    private void KbtnReportBug_Click(object? sender, EventArgs e)
     {
-        kbtnCopy.Enabled = !string.IsNullOrEmpty(krtbExceptionDetails.Text);
+        if (_exception != null && _bugReportCallback != null)
+        {
+            _bugReportCallback(_exception);
+        }
     }
+
+    #endregion
+
+    #region Show
+
+    internal static void Show(Exception exception, Color? highlightColor, bool? showCopyButton, bool? showSearchBox, Action<Exception>? bugReportCallback = null)
+    {
+        using var ved = new VisualExceptionDialogForm(showCopyButton, showSearchBox, highlightColor, exception, bugReportCallback);
+
+        ved.ShowDialog();
+    }
+
+    #endregion
 }
