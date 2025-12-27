@@ -332,6 +332,7 @@ public class KryptonTextBox : VisualControlBase,
     private bool _showEllipsisButton;
     //private bool _isInAlphaNumericMode;
     private readonly ButtonSpecAny _editorButton;
+    private bool _processingInternalTextBoxValidation;
     #endregion
 
     #region Events
@@ -1752,6 +1753,26 @@ public class KryptonTextBox : VisualControlBase,
     }
 
     /// <summary>
+    /// Raises the Validating event.
+    /// </summary>
+    /// <param name="e">A CancelEventArgs that contains the event data.</param>
+    protected override void OnValidating(CancelEventArgs e)
+    {
+        // If we're not processing validation from the internal TextBox, this must be
+        // the container control validation being triggered. Since the internal TextBox
+        // already handles validation and forwards it to us, we suppress this duplicate
+        // validation call from the container control mechanism.
+        if (!_processingInternalTextBoxValidation)
+        {
+            // This is container control validation - suppress it to prevent duplicate events
+            return;
+        }
+
+        // This is validation from the internal TextBox - proceed normally
+        base.OnValidating(e);
+    }
+
+    /// <summary>
     /// Process Windows-based messages.
     /// </summary>
     /// <param name="m">A Windows-based message.</param>
@@ -1874,7 +1895,19 @@ public class KryptonTextBox : VisualControlBase,
 
     private void OnTextBoxValidated(object? sender, EventArgs e) => OnValidated(e);
 
-    private void OnTextBoxValidating(object? sender, CancelEventArgs e) => OnValidating(e);
+    private void OnTextBoxValidating(object? sender, CancelEventArgs e)
+    {
+        // Mark that we're processing validation from the internal TextBox
+        _processingInternalTextBoxValidation = true;
+        try
+        {
+            OnValidating(e);
+        }
+        finally
+        {
+            _processingInternalTextBoxValidation = false;
+        }
+    }
 
     private void OnShowToolTip(object? sender, ToolTipEventArgs e)
     {

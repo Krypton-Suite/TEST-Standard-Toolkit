@@ -1142,3 +1142,23 @@ public enum RibbonGroupCollapsedBorderT
 }
 
 #endregion
+
+#region Enumeration: ToolTipDrawMode
+
+/// <summary>
+/// Specifies how ToolTips are drawn.
+/// </summary>
+public enum ToolTipDrawMode
+{
+    /// <summary>
+    /// The operating system draws the ToolTip.
+    /// </summary>
+    Normal = 0,
+
+    /// <summary>
+    /// Your code draws the ToolTip.
+    /// </summary>
+    OwnerDraw = 1
+}
+
+#endregion

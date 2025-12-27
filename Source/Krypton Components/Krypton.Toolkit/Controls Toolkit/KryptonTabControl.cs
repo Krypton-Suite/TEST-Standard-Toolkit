@@ -41,6 +41,8 @@ public class KryptonTabControl : TabControl
     private IRenderer? _renderer;
     private int _hoveredTabIndex;
     private bool _mouseDown;
+    private readonly Dictionary<int, ButtonSpecAny> _tabButtonSpecs;
+    private int _hoveredButtonTabIndex;
     #endregion
 
     #region Identity
@@ -91,7 +93,9 @@ public class KryptonTabControl : TabControl
 
         // Initialize state
         _hoveredTabIndex = -1;
+        _hoveredButtonTabIndex = -1;
         _mouseDown = false;
+        _tabButtonSpecs = new Dictionary<int, ButtonSpecAny>();
 
         // Update appearance from palette
         UpdateAppearance();
@@ -393,6 +397,71 @@ public class KryptonTabControl : TabControl
         // Not implemented for TabControl
         // This method is provided for API consistency with other Krypton controls
     }
+
+    /// <summary>
+    /// Sets a ButtonSpec for a specific tab page.
+    /// </summary>
+    /// <param name="tabIndex">The index of the tab page.</param>
+    /// <param name="buttonSpec">The ButtonSpec to associate with the tab, or null to remove.</param>
+    public void SetTabButtonSpec(int tabIndex, ButtonSpecAny? buttonSpec)
+    {
+        if (tabIndex < 0 || tabIndex >= TabPages.Count)
+        {
+            return;
+        }
+
+        // Remove existing button spec if present
+        if (_tabButtonSpecs.TryGetValue(tabIndex, out var existingSpec))
+        {
+            existingSpec.ButtonSpecPropertyChanged -= OnTabButtonSpecChanged;
+            existingSpec.Click -= OnTabButtonSpecClick;
+            _tabButtonSpecs.Remove(tabIndex);
+        }
+
+        // Add new button spec if provided
+        if (buttonSpec != null)
+        {
+            buttonSpec.ButtonSpecPropertyChanged += OnTabButtonSpecChanged;
+            buttonSpec.Click += OnTabButtonSpecClick;
+            // Store tab index in button spec's Tag for later retrieval
+            buttonSpec.Tag = tabIndex;
+            _tabButtonSpecs[tabIndex] = buttonSpec;
+        }
+
+        // Invalidate the tab to redraw
+        if (tabIndex < TabCount)
+        {
+            Invalidate(GetTabRect(tabIndex));
+        }
+    }
+
+    /// <summary>
+    /// Gets the ButtonSpec for a specific tab page.
+    /// </summary>
+    /// <param name="tabIndex">The index of the tab page.</param>
+    /// <returns>The ButtonSpec associated with the tab, or null if none.</returns>
+    public ButtonSpecAny? GetTabButtonSpec(int tabIndex)
+    {
+        return _tabButtonSpecs.TryGetValue(tabIndex, out var spec) ? spec : null;
+    }
+
+    /// <summary>
+    /// Removes the ButtonSpec for a specific tab page.
+    /// </summary>
+    /// <param name="tabIndex">The index of the tab page.</param>
+    public void RemoveTabButtonSpec(int tabIndex)
+    {
+        SetTabButtonSpec(tabIndex, null);
+    }
+    #endregion
+
+    #region Events
+    /// <summary>
+    /// Occurs when a tab button spec is clicked.
+    /// </summary>
+    [Category(@"Action")]
+    [Description(@"Occurs when a tab button spec is clicked.")]
+    public event EventHandler<TabButtonSpecClickEventArgs>? TabButtonSpecClick;
     #endregion
 
     #region Protected Overrides
@@ -680,6 +749,26 @@ public class KryptonTabControl : TabControl
             textRect.Width -= image.Width + 4;
         }
 
+        // Check if this tab has a button spec
+        var hasButtonSpec = _tabButtonSpecs.TryGetValue(e.Index, out var buttonSpec);
+        var buttonSize = 0;
+        var buttonRect = Rectangle.Empty;
+
+        if (hasButtonSpec && buttonSpec != null && buttonSpec.GetVisible(_palette ?? KryptonManager.CurrentGlobalPalette))
+        {
+            // Reserve space for close button (typically 16x16 pixels)
+            buttonSize = 16;
+            var buttonPadding = 4;
+            buttonRect = new Rectangle(
+                textRect.Right - buttonSize - buttonPadding,
+                textRect.Top + (textRect.Height - buttonSize) / 2,
+                buttonSize,
+                buttonSize);
+
+            // Adjust text rectangle to leave space for button
+            textRect.Width -= buttonSize + buttonPadding + 4;
+        }
+
         // Draw text
         if (!string.IsNullOrEmpty(tabPage.Text))
         {
@@ -693,6 +782,57 @@ public class KryptonTabControl : TabControl
             TextRenderer.DrawText(e.Graphics, tabPage.Text, Font, textRect, contentTextColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
         }
 
+        // Draw button spec if present
+        if (hasButtonSpec && buttonSpec != null && !buttonRect.IsEmpty)
+        {
+            var buttonState = paletteState;
+            if (e.Index == _hoveredButtonTabIndex)
+            {
+                buttonState = isPressed ? PaletteState.Pressed : PaletteState.Tracking;
+            }
+
+            // Draw button background if needed
+            var buttonBackColor = tabPalette.Back.GetBackColor1(buttonState);
+            if (buttonBackColor != Color.Empty)
+            {
+                using var brush = new SolidBrush(buttonBackColor);
+                e.Graphics.FillRectangle(brush, buttonRect);
+            }
+
+            // Draw button image
+            var buttonImage = buttonSpec.GetImage(_palette ?? KryptonManager.CurrentGlobalPalette, buttonState);
+            if (buttonImage != null)
+            {
+                var imageRect = new Rectangle(
+                    buttonRect.Left + (buttonRect.Width - buttonImage.Width) / 2,
+                    buttonRect.Top + (buttonRect.Height - buttonImage.Height) / 2,
+                    buttonImage.Width,
+                    buttonImage.Height);
+                e.Graphics.DrawImage(buttonImage, imageRect);
+            }
+            else
+            {
+                // Draw default X symbol for close button
+                var penColor = tabPalette.Content.GetContentShortTextColor1(buttonState);
+                if (penColor == Color.Empty)
+                {
+                    penColor = ForeColor;
+                }
+                using var pen = new Pen(penColor, 1.5f);
+                var offset = 4;
+                e.Graphics.DrawLine(pen,
+                    buttonRect.Left + offset,
+                    buttonRect.Top + offset,
+                    buttonRect.Right - offset,
+                    buttonRect.Bottom - offset);
+                e.Graphics.DrawLine(pen,
+                    buttonRect.Right - offset,
+                    buttonRect.Top + offset,
+                    buttonRect.Left + offset,
+                    buttonRect.Bottom - offset);
+            }
+        }
+
         // Draw focus rectangle if needed
         if ((e.State & DrawItemState.Focus) == DrawItemState.Focus)
         {
@@ -703,32 +843,50 @@ public class KryptonTabControl : TabControl
     private void OnMouseMove(object? sender, MouseEventArgs e)
     {
         var newHoveredIndex = GetTabIndexAt(e.Location);
-        if (newHoveredIndex != _hoveredTabIndex)
+        var newHoveredButtonIndex = GetButtonIndexAt(e.Location);
+
+        if (newHoveredIndex != _hoveredTabIndex || newHoveredButtonIndex != _hoveredButtonTabIndex)
         {
-            var oldIndex = _hoveredTabIndex;
+            var oldTabIndex = _hoveredTabIndex;
+            var oldButtonIndex = _hoveredButtonTabIndex;
             _hoveredTabIndex = newHoveredIndex;
+            _hoveredButtonTabIndex = newHoveredButtonIndex;
             
             // Invalidate old and new tabs
-            if (oldIndex >= 0 && oldIndex < TabCount)
+            if (oldTabIndex >= 0 && oldTabIndex < TabCount)
             {
-                Invalidate(GetTabRect(oldIndex));
+                Invalidate(GetTabRect(oldTabIndex));
             }
             if (_hoveredTabIndex >= 0 && _hoveredTabIndex < TabCount)
             {
                 Invalidate(GetTabRect(_hoveredTabIndex));
+            }
+            if (oldButtonIndex >= 0 && oldButtonIndex < TabCount)
+            {
+                Invalidate(GetTabRect(oldButtonIndex));
+            }
+            if (_hoveredButtonTabIndex >= 0 && _hoveredButtonTabIndex < TabCount)
+            {
+                Invalidate(GetTabRect(_hoveredButtonTabIndex));
             }
         }
     }
 
     private void OnMouseLeave(object? sender, EventArgs e)
     {
-        if (_hoveredTabIndex >= 0)
+        if (_hoveredTabIndex >= 0 || _hoveredButtonTabIndex >= 0)
         {
-            var oldIndex = _hoveredTabIndex;
+            var oldTabIndex = _hoveredTabIndex;
+            var oldButtonIndex = _hoveredButtonTabIndex;
             _hoveredTabIndex = -1;
-            if (oldIndex >= 0 && oldIndex < TabCount)
+            _hoveredButtonTabIndex = -1;
+            if (oldTabIndex >= 0 && oldTabIndex < TabCount)
             {
-                Invalidate(GetTabRect(oldIndex));
+                Invalidate(GetTabRect(oldTabIndex));
+            }
+            if (oldButtonIndex >= 0 && oldButtonIndex < TabCount)
+            {
+                Invalidate(GetTabRect(oldButtonIndex));
             }
         }
     }
@@ -747,9 +905,27 @@ public class KryptonTabControl : TabControl
     {
         _mouseDown = false;
         var tabIndex = GetTabIndexAt(e.Location);
+        var buttonIndex = GetButtonIndexAt(e.Location);
+
+        // Check if button was clicked
+        if (buttonIndex >= 0 && buttonIndex < TabCount && _tabButtonSpecs.TryGetValue(buttonIndex, out var buttonSpec))
+        {
+            var buttonRect = GetTabButtonRect(buttonIndex);
+            if (!buttonRect.IsEmpty && buttonRect.Contains(e.Location))
+            {
+                // Raise the button spec's Click event, which will trigger our handler
+                buttonSpec.PerformClick();
+                return;
+            }
+        }
+
         if (tabIndex >= 0 && tabIndex < TabCount)
         {
             Invalidate(GetTabRect(tabIndex));
+        }
+        if (buttonIndex >= 0 && buttonIndex < TabCount)
+        {
+            Invalidate(GetTabRect(buttonIndex));
         }
     }
 
@@ -764,6 +940,104 @@ public class KryptonTabControl : TabControl
         }
         return -1;
     }
+
+    private int GetButtonIndexAt(Point location)
+    {
+        for (var i = 0; i < TabCount; i++)
+        {
+            if (_tabButtonSpecs.TryGetValue(i, out var buttonSpec) && buttonSpec.GetVisible(_palette ?? KryptonManager.CurrentGlobalPalette))
+            {
+                var buttonRect = GetTabButtonRect(i);
+                if (!buttonRect.IsEmpty && buttonRect.Contains(location))
+                {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private Rectangle GetTabButtonRect(int tabIndex)
+    {
+        if (tabIndex < 0 || tabIndex >= TabCount || !_tabButtonSpecs.TryGetValue(tabIndex, out _))
+        {
+            return Rectangle.Empty;
+        }
+
+        var tabRect = GetTabRect(tabIndex);
+        var buttonSize = 16;
+        var buttonPadding = 4;
+        var textRect = tabRect;
+        textRect.Inflate(-4, -2);
+
+        return new Rectangle(
+            textRect.Right - buttonSize - buttonPadding,
+            textRect.Top + (textRect.Height - buttonSize) / 2,
+            buttonSize,
+            buttonSize);
+    }
+
+    private void OnTabButtonSpecChanged(object? sender, EventArgs e)
+    {
+        // Find which tab this button spec belongs to
+        foreach (var kvp in _tabButtonSpecs)
+        {
+            if (kvp.Value == sender)
+            {
+                if (kvp.Key < TabCount)
+                {
+                    Invalidate(GetTabRect(kvp.Key));
+                }
+                break;
+            }
+        }
+    }
+
+    private void OnTabButtonSpecClick(object? sender, EventArgs e)
+    {
+        if (sender is ButtonSpecAny buttonSpec && buttonSpec.Tag is int tabIndex)
+        {
+            if (tabIndex >= 0 && tabIndex < TabPages.Count)
+            {
+                var args = new TabButtonSpecClickEventArgs(tabIndex, TabPages[tabIndex], buttonSpec);
+                TabButtonSpecClick?.Invoke(this, args);
+            }
+        }
+    }
     #endregion
+}
+
+/// <summary>
+/// Event arguments for tab button spec click events.
+/// </summary>
+public class TabButtonSpecClickEventArgs : EventArgs
+{
+    /// <summary>
+    /// Initializes a new instance of the TabButtonSpecClickEventArgs class.
+    /// </summary>
+    /// <param name="tabIndex">The index of the tab.</param>
+    /// <param name="tabPage">The tab page.</param>
+    /// <param name="buttonSpec">The button spec that was clicked.</param>
+    public TabButtonSpecClickEventArgs(int tabIndex, TabPage tabPage, ButtonSpecAny buttonSpec)
+    {
+        TabIndex = tabIndex;
+        TabPage = tabPage;
+        ButtonSpec = buttonSpec;
+    }
+
+    /// <summary>
+    /// Gets the index of the tab.
+    /// </summary>
+    public int TabIndex { get; }
+
+    /// <summary>
+    /// Gets the tab page.
+    /// </summary>
+    public TabPage TabPage { get; }
+
+    /// <summary>
+    /// Gets the button spec that was clicked.
+    /// </summary>
+    public ButtonSpecAny ButtonSpec { get; }
 }
 
