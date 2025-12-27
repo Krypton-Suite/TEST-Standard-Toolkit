@@ -316,8 +316,15 @@ public class KryptonBackstageView : KryptonPanel
             return _colors.NavigationBackgroundColor.Value;
         }
 
-        // Get color from PanelAlternate palette
+        // Theme-aware defaults
         var palette = GetPalette();
+        if (IsOffice2013Theme(palette))
+        {
+            // Office 2013: Dark blue navigation panel
+            return Color.FromArgb(31, 78, 121);
+        }
+
+        // Office 2010 and others: Use PanelAlternate palette color
         return palette?.GetBackColor1(PaletteBackStyle.PanelAlternate, PaletteState.Normal) ?? Color.FromArgb(240, 240, 240);
     }
 
@@ -328,7 +335,7 @@ public class KryptonBackstageView : KryptonPanel
             return _colors.ContentBackgroundColor.Value;
         }
 
-        // Get color from PanelClient palette
+        // All themes: Use PanelClient palette color
         var palette = GetPalette();
         return palette?.GetBackColor1(PaletteBackStyle.PanelClient, PaletteState.Normal) ?? Color.White;
     }
@@ -340,8 +347,29 @@ public class KryptonBackstageView : KryptonPanel
             return _colors.SelectedItemHighlightColor.Value;
         }
 
-        // Default Office 2010 orange, but could be made theme-aware in future
+        // Theme-aware defaults
+        var palette = GetPalette();
+        if (IsOffice2013Theme(palette))
+        {
+            // Office 2013: Lighter blue highlight for selected items
+            return Color.FromArgb(68, 114, 196);
+        }
+
+        // Office 2010: Orange highlight
         return Color.FromArgb(242, 155, 57);
+    }
+
+    private static bool IsOffice2013Theme(PaletteBase? palette)
+    {
+        if (palette == null)
+        {
+            return false;
+        }
+
+        // Check if the palette is an Office 2013 palette
+        var paletteType = palette.GetType();
+        return paletteType.Name.Contains("Office2013", StringComparison.OrdinalIgnoreCase) ||
+               paletteType.Namespace?.Contains("Office 2013", StringComparison.OrdinalIgnoreCase) == true;
     }
 
     private PaletteBase? GetPalette()

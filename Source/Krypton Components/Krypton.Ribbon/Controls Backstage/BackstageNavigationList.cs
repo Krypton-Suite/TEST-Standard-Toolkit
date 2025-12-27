@@ -39,9 +39,29 @@ internal class BackstageNavigationList : Control
         _items = [];
         _selectedIndex = -1;
         _hoverIndex = -1;
-        _itemHeight = (int)(40 * FactorDpiY);
+        _itemHeight = (int)(40 * GetDpiFactorY());
 
         UpdateBackColor();
+    }
+    #endregion
+
+    #region Protected
+    /// <summary>
+    /// Gets the DPI factor for X axis.
+    /// </summary>
+    protected float GetDpiFactorX()
+    {
+        using Graphics g = CreateGraphics();
+        return g.DpiX / 96f;
+    }
+
+    /// <summary>
+    /// Gets the DPI factor for Y axis.
+    /// </summary>
+    protected float GetDpiFactorY()
+    {
+        using Graphics g = CreateGraphics();
+        return g.DpiY / 96f;
     }
     #endregion
 
@@ -234,8 +254,8 @@ internal class BackstageNavigationList : Control
         if (!string.IsNullOrEmpty(text))
         {
             var textRect = rect;
-            textRect.X += (int)(12 * FactorDpiX);
-            textRect.Width -= (int)(12 * FactorDpiX);
+            textRect.X += (int)(12 * GetDpiFactorX());
+            textRect.Width -= (int)(12 * GetDpiFactorX());
 
             var textColor = isSelected ? Color.Black : Color.FromArgb(51, 51, 51);
             using var brush = new SolidBrush(textColor);
