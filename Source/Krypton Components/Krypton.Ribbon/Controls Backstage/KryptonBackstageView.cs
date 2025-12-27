@@ -368,8 +368,11 @@ public class KryptonBackstageView : KryptonPanel
 
         // Check if the palette is an Office 2013 palette
         var paletteType = palette.GetType();
-        return paletteType.Name.Contains("Office2013", StringComparison.OrdinalIgnoreCase) ||
-               paletteType.Namespace?.Contains("Office 2013", StringComparison.OrdinalIgnoreCase) == true;
+        var name = paletteType.Name;
+        var nameSpace = paletteType.Namespace;
+        
+        return (name != null && name.IndexOf("Office2013", StringComparison.OrdinalIgnoreCase) >= 0) ||
+               (nameSpace != null && nameSpace.IndexOf("Office 2013", StringComparison.OrdinalIgnoreCase) >= 0);
     }
 
     private PaletteBase? GetPalette()
