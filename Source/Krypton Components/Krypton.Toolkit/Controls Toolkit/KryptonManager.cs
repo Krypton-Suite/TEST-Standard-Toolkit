@@ -23,11 +23,14 @@ namespace Krypton.Toolkit;
 public sealed class KryptonManager : Component
 {
     #region Static Fields
+    // Thread synchronization for thread-safe access
+    private static readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
     // Initialize the global state
-    private static bool _globalApplyToolstrips = true;
-    private static bool _globalUseThemeFormChromeBorderWidth = true;
-    private static bool _globalShowAdministratorSuffix = true;
-    internal static bool _globalUseKryptonFileDialogs = true;
+    private static volatile bool _globalApplyToolstrips = true;
+    private static volatile bool _globalUseThemeFormChromeBorderWidth = true;
+    private static volatile bool _globalShowAdministratorSuffix = true;
+    internal static volatile bool _globalUseKryptonFileDialogs = true;
     private static Font? _baseFont;
 
     // Initialize the default modes
@@ -246,24 +249,41 @@ public sealed class KryptonManager : Component
         get => CurrentGlobalPaletteMode;
         set
         {
-            if (value != CurrentGlobalPaletteMode)
+            _lock.EnterWriteLock();
+            try
             {
-                if (value != PaletteMode.Custom)
+                if (value != _currentGlobalPaletteMode)
                 {
-                    // Get a reference to the standard palette from its name
-                    SetPalette(GetPaletteForMode(value));
-                }
-                CurrentGlobalPaletteMode = value;
-                if (_baseFont != null)
-                {
-                    CurrentGlobalPalette.BaseFont = _baseFont;
-                }
+                    if (value != PaletteMode.Custom)
+                    {
+                        // Get a reference to the standard palette from its name
+                        SetPaletteInternal(GetPaletteForMode(value));
+                    }
+                    _currentGlobalPaletteMode = value;
+                    if (_baseFont != null)
+                    {
+                        _currentGlobalPalette.BaseFont = _baseFont;
+                    }
 
-                if (value != PaletteMode.Custom)
-                {
-                    // Raise the palette changed event
-                    OnGlobalPaletteChanged(EventArgs.Empty);
+                    if (value != PaletteMode.Custom)
+                    {
+                        // Raise the palette changed event (outside lock to avoid deadlock)
+                        var eventArgs = EventArgs.Empty;
+                        _lock.ExitWriteLock();
+                        try
+                        {
+                            OnGlobalPaletteChanged(eventArgs);
+                        }
+                        finally
+                        {
+                            _lock.EnterWriteLock();
+                        }
+                    }
                 }
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
         }
     }
@@ -278,31 +298,61 @@ public sealed class KryptonManager : Component
     [DefaultValue(null)]
     public KryptonCustomPaletteBase? GlobalCustomPalette
     {
-        get => CurrentGlobalPalette as KryptonCustomPaletteBase;
+        get
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _currentGlobalPalette as KryptonCustomPaletteBase;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
 
         set
         {
-            // Only interested in changes of value
-            if (CurrentGlobalPalette != value)
+            _lock.EnterWriteLock();
+            try
             {
-                if (value != null)
+                // Only interested in changes of value
+                if (_currentGlobalPalette != value)
                 {
-                    // If no custom palette is required
-                    CurrentGlobalPalette = value;
-                    // Use the provided palette value
-                    SetPalette(value);
-                    CurrentGlobalPaletteMode = GetModeForPalette(value);
-                    // Notify the KryptonManager that there is a custom palette assigned to it
-                    // Fixes bug: https://github.com/Krypton-Suite/Standard-Toolkit/issues/1092
-                    GlobalPaletteMode = PaletteMode.Custom;
+                    if (value != null)
+                    {
+                        // If no custom palette is required
+                        _currentGlobalPalette = value;
+                        // Use the provided palette value
+                        SetPaletteInternal(value);
+                        _currentGlobalPaletteMode = GetModeForPalette(value);
+                        // Notify the KryptonManager that there is a custom palette assigned to it
+                        // Fixes bug: https://github.com/Krypton-Suite/Standard-Toolkit/issues/1092
+                        _currentGlobalPaletteMode = PaletteMode.Custom;
+                    }
+                    else
+                    {
+                        var resetMode = ThemeManager.DefaultGlobalPalette;
+                        _currentGlobalPaletteMode = resetMode;
+                        _currentGlobalPalette = GetPaletteForMode(resetMode);
+                        SetPaletteInternal(_currentGlobalPalette);
+                    }
+                    // Raise the palette changed event (outside lock to avoid deadlock)
+                    var eventArgs = EventArgs.Empty;
+                    _lock.ExitWriteLock();
+                    try
+                    {
+                        OnGlobalPaletteChanged(eventArgs);
+                    }
+                    finally
+                    {
+                        _lock.EnterWriteLock();
+                    }
                 }
-                else
-                {
-                    ResetGlobalPaletteMode();
-                    CurrentGlobalPalette = GetPaletteForMode(GlobalPaletteMode);
-                }
-                // Raise the palette changed event
-                OnGlobalPaletteChanged(EventArgs.Empty);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
         }
     }
@@ -319,26 +369,53 @@ public sealed class KryptonManager : Component
     [AllowNull]
     public Font BaseFont
     {
-        get => _baseFont ?? CurrentGlobalPalette.BaseFont;
+        get
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _baseFont ?? CurrentGlobalPalette.BaseFont;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
 
         set
         {
-            if (value != null)
+            _lock.EnterWriteLock();
+            try
             {
-                _baseFont = value;
-                CurrentGlobalPalette.BaseFont = value;
+                if (value != null)
+                {
+                    _baseFont = value;
+                    CurrentGlobalPalette.BaseFont = value;
+                }
+                else
+                {
+                    ResetBaseFont();
+                }
             }
-            else
+            finally
             {
-                ResetBaseFont();
+                _lock.ExitWriteLock();
             }
         }
     }
 
     private void ResetBaseFont()
     {
-        _baseFont = null;
-        CurrentGlobalPalette.ResetBaseFont();
+        _lock.EnterWriteLock();
+        try
+        {
+            _baseFont = null;
+            CurrentGlobalPalette.ResetBaseFont();
+        }
+        finally
+        {
+            _lock.ExitWriteLock();
+        }
     }
     private bool ShouldSerializeBaseFont() => _baseFont != null;
 
@@ -351,7 +428,7 @@ public sealed class KryptonManager : Component
     public bool GlobalApplyToolstrips
     {
         get => ApplyToolstrips;
-        set => ApplyToolstrips = value;
+        set => ApplyToolstrips = value; // Thread-safe via static property
     }
     private bool ShouldSerializeGlobalApplyToolstrips() => !GlobalApplyToolstrips;
     private void ResetGlobalApplyToolstrips() => GlobalApplyToolstrips = true;
@@ -364,7 +441,7 @@ public sealed class KryptonManager : Component
     public bool UseKryptonFileDialogs
     {
         get => _globalUseKryptonFileDialogs;
-        set => _globalUseKryptonFileDialogs = value;
+        set => _globalUseKryptonFileDialogs = value; // volatile write ensures visibility across threads
     }
     private bool ShouldSerializeUseKryptonFileDialogs() => !UseKryptonFileDialogs;
     private void ResetUseKryptonFileDialogs() => UseKryptonFileDialogs = true;
@@ -379,7 +456,7 @@ public sealed class KryptonManager : Component
     public bool GlobalUseThemeFormChromeBorderWidth
     {
         get => UseThemeFormChromeBorderWidth;
-        set => UseThemeFormChromeBorderWidth = value;
+        set => UseThemeFormChromeBorderWidth = value; // Thread-safe via static property
     }
     private bool ShouldSerializeGlobalUseThemeFormChromeBorderWidth() => !GlobalUseThemeFormChromeBorderWidth;
     private void ResetGlobalUseThemeFormChromeBorderWidth() => GlobalUseThemeFormChromeBorderWidth = true;
@@ -415,7 +492,7 @@ public sealed class KryptonManager : Component
     public bool ShowAdministratorSuffix
     {
         get => UseAdministratorSuffix;
-        set => UseAdministratorSuffix = value;
+        set => UseAdministratorSuffix = value; // Thread-safe via static property
     }
     private bool ShouldSerializeShowAdministratorSuffix() => !UseAdministratorSuffix;
     private void ResetShowAdministratorSuffix() => UseAdministratorSuffix = true;
@@ -450,7 +527,7 @@ public sealed class KryptonManager : Component
             // Only interested if the value changes
             if (_globalShowAdministratorSuffix != value)
             {
-                // Use new value
+                // Use new value (volatile write ensures visibility across threads)
                 _globalShowAdministratorSuffix = value;
             }
         }
@@ -473,7 +550,7 @@ public sealed class KryptonManager : Component
             // Only interested if the value changes
             if (_globalApplyToolstrips != value)
             {
-                // Use new value
+                // Use new value (volatile write ensures visibility across threads)
                 _globalApplyToolstrips = value;
 
                 // Change the toolstrip manager renderer as required
@@ -504,7 +581,7 @@ public sealed class KryptonManager : Component
             // Only interested if the value changes
             if (_globalUseThemeFormChromeBorderWidth != value)
             {
-                // Use new value
+                // Use new value (volatile write ensures visibility across threads)
                 _globalUseThemeFormChromeBorderWidth = value;
 
                 // Fire change event
@@ -1042,17 +1119,73 @@ public sealed class KryptonManager : Component
     #endregion
 
     #region Static Internal
+    // Thread-safe backing fields for current palette state
+    private static PaletteMode _currentGlobalPaletteMode = ThemeManager.DefaultGlobalPalette;
+    private static PaletteBase _currentGlobalPalette = GetPaletteForMode(_currentGlobalPaletteMode);
+
     /// <summary>
     /// What is the CurrentGlobalPaletteMode in use
     /// </summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public static PaletteMode CurrentGlobalPaletteMode { get; private set; } = ThemeManager.DefaultGlobalPalette;
+    public static PaletteMode CurrentGlobalPaletteMode
+    {
+        get
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _currentGlobalPaletteMode;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+        private set
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                _currentGlobalPaletteMode = value;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+    }
 
     /// <summary>
     /// Access the Current Palette
     /// </summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public static PaletteBase CurrentGlobalPalette { get; private set; } = GetPaletteForMode(CurrentGlobalPaletteMode);
+    public static PaletteBase CurrentGlobalPalette
+    {
+        get
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _currentGlobalPalette;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+        private set
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                _currentGlobalPalette = value;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+    }
 
     #endregion
 
@@ -1064,6 +1197,9 @@ public sealed class KryptonManager : Component
         // and other resources are recreated as needed.
         // TODO: Why are the greys not in this list ?
 
+        // Capture palette references to avoid race conditions during iteration
+        // Note: Palette instances are created lazily and are immutable once created,
+        // so reading the static fields is safe without a lock
         _paletteProfessionalOffice2003?.UserPreferenceChanged();
         _paletteProfessionalSystem?.UserPreferenceChanged();
         _paletteOffice2007Blue?.UserPreferenceChanged();
@@ -1097,7 +1233,7 @@ public sealed class KryptonManager : Component
     private static void OnPalettePaint(object? sender, PaletteLayoutEventArgs e)
     {
         // If the color table has changed then need to update tool strip immediately
-        if (e.NeedColorTable)
+        if (e?.NeedColorTable == true)
         {
             UpdateToolStripManager();
         }
@@ -1105,34 +1241,65 @@ public sealed class KryptonManager : Component
 
     private static void SetPalette(PaletteBase globalPalette)
     {
-        if (globalPalette != CurrentGlobalPalette)
+        _lock.EnterWriteLock();
+        try
+        {
+            SetPaletteInternal(globalPalette);
+        }
+        finally
+        {
+            _lock.ExitWriteLock();
+        }
+    }
+
+    private static void SetPaletteInternal(PaletteBase globalPalette)
+    {
+        if (globalPalette != _currentGlobalPalette)
         {
             // Unhook from current palette events
-            if (CurrentGlobalPalette != null)
+            if (_currentGlobalPalette != null)
             {
-                CurrentGlobalPalette.PalettePaintInternal -= OnPalettePaint;
+                _currentGlobalPalette.PalettePaintInternal -= OnPalettePaint;
             }
 
             // Remember the new palette
-            CurrentGlobalPalette = globalPalette;
+            _currentGlobalPalette = globalPalette;
 
             // Hook to new palette events
-            if (CurrentGlobalPalette != null)
+            if (_currentGlobalPalette != null)
             {
-                CurrentGlobalPalette.PalettePaintInternal += OnPalettePaint;
+                _currentGlobalPalette.PalettePaintInternal += OnPalettePaint;
             }
         }
     }
 
-    private static void OnGlobalUseThemeFormChromeBorderWidthChanged(EventArgs e) => GlobalUseThemeFormChromeBorderWidthChanged?.Invoke(null, e);
+    private static void OnGlobalUseThemeFormChromeBorderWidthChanged(EventArgs e)
+    {
+        // Capture event handler to avoid race condition during invocation
+        var handler = GlobalUseThemeFormChromeBorderWidthChanged;
+        handler?.Invoke(null, e);
+    }
 
     private static void OnGlobalPaletteChanged(EventArgs e)
     {
+        PaletteMode currentMode;
+        _lock.EnterReadLock();
+        try
+        {
+            currentMode = _currentGlobalPaletteMode;
+        }
+        finally
+        {
+            _lock.ExitReadLock();
+        }
+
         UpdateToolStripManager();
 
-        UpdatePaletteImages(CurrentGlobalPaletteMode);
+        UpdatePaletteImages(currentMode);
 
-        GlobalPaletteChanged?.Invoke(null, e);
+        // Capture event handler to avoid race condition during invocation
+        var handler = GlobalPaletteChanged;
+        handler?.Invoke(null, e);
     }
 
     private static void UpdatePaletteImages(PaletteMode paletteMode)
@@ -1221,7 +1388,18 @@ public sealed class KryptonManager : Component
     {
         if (_globalApplyToolstrips)
         {
-            ToolStripManager.Renderer = CurrentGlobalPalette?.GetRenderer()?.RenderToolStrip(CurrentGlobalPalette);
+            PaletteBase? currentPalette;
+            _lock.EnterReadLock();
+            try
+            {
+                currentPalette = _currentGlobalPalette;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+
+            ToolStripManager.Renderer = currentPalette?.GetRenderer()?.RenderToolStrip(currentPalette);
         }
     }
 
