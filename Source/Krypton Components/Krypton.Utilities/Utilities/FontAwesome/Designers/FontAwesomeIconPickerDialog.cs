@@ -14,12 +14,13 @@ namespace Krypton.Utilities.FontAwesome.Designers;
 /// <summary>
 /// Dialog for selecting Font Awesome icons visually.
 /// </summary>
-internal partial class FontAwesomeIconPickerDialog : KryptonForm
+internal class FontAwesomeIconPickerDialog : KryptonForm
 {
     private FontAwesomeIcon _selectedIcon;
-    private readonly ListView _iconListView;
-    private readonly TextBox _searchTextBox;
-    private readonly ComboBox _styleComboBox;
+    private ListView _iconListView;
+    private TextBox _searchTextBox;
+    private ComboBox _styleComboBox;
+    private readonly List<FontAwesomeIcon> _allIcons = new();
 
     public FontAwesomeIconPickerDialog()
     {
@@ -143,27 +144,15 @@ internal partial class FontAwesomeIconPickerDialog : KryptonForm
 
     private void LoadIcons()
     {
-        _iconListView.Items.Clear();
-
-        // Load all icons from the enum
+        _allIcons.Clear();
+        
+        // Store all icons from the enum
         foreach (FontAwesomeIcon icon in Enum.GetValues(typeof(FontAwesomeIcon)))
         {
-            var item = new ListViewItem(icon.ToString())
-            {
-                Tag = icon,
-                SubItems =
-                {
-                    icon.ToString(),
-                    $"0x{FontAwesomeHelper.GetUnicodeForIcon(icon.ToString().ToLowerInvariant(), FontAwesomeStyle.Solid):X4}"
-                }
-            };
-
-            _iconListView.Items.Add(item);
+            _allIcons.Add(icon);
         }
 
-        // Sort by name
-        _iconListView.Sorting = SortOrder.Ascending;
-        _iconListView.Sort();
+        FilterIcons();
     }
 
     private void SearchTextBox_TextChanged(object? sender, EventArgs e)
@@ -181,14 +170,41 @@ internal partial class FontAwesomeIconPickerDialog : KryptonForm
         var searchText = _searchTextBox.Text.ToLowerInvariant();
         var selectedStyle = _styleComboBox.SelectedItem?.ToString() ?? "All";
 
-        foreach (ListViewItem item in _iconListView.Items)
+        _iconListView.Items.Clear();
+        _iconListView.BeginUpdate();
+
+        try
         {
-            var iconName = item.Text.ToLowerInvariant();
-            var matchesSearch = string.IsNullOrEmpty(searchText) || iconName.Contains(searchText);
-            
-            // For now, we show all icons regardless of style filter
-            // In a full implementation, you could filter by available styles from metadata
-            item.Visible = matchesSearch;
+            foreach (var icon in _allIcons)
+            {
+                var iconName = icon.ToString().ToLowerInvariant();
+                var matchesSearch = string.IsNullOrEmpty(searchText) || iconName.Contains(searchText);
+                
+                // For now, we show all icons regardless of style filter
+                // In a full implementation, you could filter by available styles from metadata
+                if (matchesSearch)
+                {
+                    var item = new ListViewItem(icon.ToString())
+                    {
+                        Tag = icon,
+                        SubItems =
+                        {
+                            icon.ToString(),
+                            $"0x{FontAwesomeHelper.GetUnicodeForIcon(icon.ToString().ToLowerInvariant(), FontAwesomeStyle.Solid):X4}"
+                        }
+                    };
+
+                    _iconListView.Items.Add(item);
+                }
+            }
+
+            // Sort by name
+            _iconListView.Sorting = SortOrder.Ascending;
+            _iconListView.Sort();
+        }
+        finally
+        {
+            _iconListView.EndUpdate();
         }
     }
 

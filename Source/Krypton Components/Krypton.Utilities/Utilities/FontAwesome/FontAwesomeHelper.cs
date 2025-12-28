@@ -243,7 +243,18 @@ public static class FontAwesomeHelper
                 if (stream != null)
                 {
                     var fontData = new byte[stream.Length];
-                    stream.Read(fontData, 0, fontData.Length);
+                    var totalBytesRead = 0;
+                    var bytesToRead = fontData.Length;
+                    
+                    while (totalBytesRead < bytesToRead)
+                    {
+                        var bytesRead = stream.Read(fontData, totalBytesRead, bytesToRead - totalBytesRead);
+                        if (bytesRead == 0)
+                        {
+                            break; // End of stream reached
+                        }
+                        totalBytesRead += bytesRead;
+                    }
                     
                     var fontPtr = Marshal.AllocCoTaskMem(fontData.Length);
                     Marshal.Copy(fontData, 0, fontPtr, fontData.Length);
