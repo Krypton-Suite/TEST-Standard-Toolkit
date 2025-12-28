@@ -31,6 +31,8 @@ public sealed class KryptonManager : Component
     private static volatile bool _globalUseThemeFormChromeBorderWidth = true;
     private static volatile bool _globalShowAdministratorSuffix = true;
     internal static volatile bool _globalUseKryptonFileDialogs = true;
+    private static volatile bool _globalTouchscreenSupport = false;
+    private static volatile float _globalTouchscreenScaleFactor = 1.25f;
     private static Font? _baseFont;
 
     // Initialize the default modes
@@ -152,6 +154,13 @@ public sealed class KryptonManager : Component
     [Category(@"Property Changed")]
     [Description(@"Occurs when the value of the GlobalUseThemeFormChromeBorderWidth property is changed.")]
     public static event EventHandler? GlobalUseThemeFormChromeBorderWidthChanged;
+
+    /// <summary>
+    /// Occurs when the touchscreen support setting or scale factor changes.
+    /// </summary>
+    [Category(@"Property Changed")]
+    [Description(@"Occurs when the value of the GlobalTouchscreenSupport or GlobalTouchscreenScaleFactor property is changed.")]
+    public static event EventHandler? GlobalTouchscreenSupportChanged;
     #endregion
 
     #region Identity
@@ -220,7 +229,9 @@ public sealed class KryptonManager : Component
                                ShouldSerializeToolkitStrings() ||
                                ShouldSerializeUseKryptonFileDialogs() ||
                                ShouldSerializeBaseFont() ||
-                               ShouldSerializeGlobalPaletteMode());
+                               ShouldSerializeGlobalPaletteMode() ||
+                               ShouldSerializeGlobalTouchscreenSupport() ||
+                               ShouldSerializeGlobalTouchscreenScaleFactor());
 
     /// <summary>
     /// Reset All values
@@ -236,6 +247,8 @@ public sealed class KryptonManager : Component
         ResetUseKryptonFileDialogs();
         ResetBaseFont();
         ResetGlobalPaletteMode();
+        ResetGlobalTouchscreenSupport();
+        ResetGlobalTouchscreenScaleFactor();
     }
 
     /// <summary>
@@ -497,6 +510,44 @@ public sealed class KryptonManager : Component
     private bool ShouldSerializeShowAdministratorSuffix() => !UseAdministratorSuffix;
     private void ResetShowAdministratorSuffix() => UseAdministratorSuffix = true;
 
+    /// <summary>
+    /// Gets or sets a value indicating if touchscreen support is enabled, making controls larger based on the scale factor.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Should touchscreen support be enabled, making controls larger for easier touch interaction.")]
+    [DefaultValue(false)]
+    public bool GlobalTouchscreenSupport
+    {
+        get => UseTouchscreenSupport;
+        set => UseTouchscreenSupport = value; // Thread-safe via static property
+    }
+    private bool ShouldSerializeGlobalTouchscreenSupport() => GlobalTouchscreenSupport;
+    private void ResetGlobalTouchscreenSupport() => GlobalTouchscreenSupport = false;
+
+    /// <summary>
+    /// Gets or sets the scale factor applied to controls when touchscreen support is enabled.
+    /// </summary>
+    /// <remarks>
+    /// A value of 1.25 means controls will be 25% larger. Must be greater than 0.
+    /// </remarks>
+    [Category(@"Visuals")]
+    [Description(@"The scale factor applied to controls when touchscreen support is enabled. Default is 1.25 (25% larger).")]
+    [DefaultValue(1.25f)]
+    public float GlobalTouchscreenScaleFactor
+    {
+        get => TouchscreenScaleFactorValue;
+        set
+        {
+            if (value <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), value, @"Scale factor must be greater than 0.");
+            }
+            TouchscreenScaleFactorValue = value; // Thread-safe via static property
+        }
+    }
+    private bool ShouldSerializeGlobalTouchscreenScaleFactor() => Math.Abs(GlobalTouchscreenScaleFactor - 1.25f) > 0.001f;
+    private void ResetGlobalTouchscreenScaleFactor() => GlobalTouchscreenScaleFactor = 1.25f;
+
     #endregion
 
     #region Static Properties
@@ -589,6 +640,68 @@ public sealed class KryptonManager : Component
             }
         }
     }
+    #endregion
+
+    #region Static UseTouchscreenSupport
+    /// <summary>
+    /// Gets and sets the global flag that decides if touchscreen support is enabled, making controls larger based on the scale factor.
+    /// </summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public static bool UseTouchscreenSupport
+    {
+        get => _globalTouchscreenSupport;
+
+        set
+        {
+            // Only interested if the value changes
+            if (_globalTouchscreenSupport != value)
+            {
+                // Use new value (volatile write ensures visibility across threads)
+                _globalTouchscreenSupport = value;
+
+                // Fire change event to notify controls to refresh
+                OnGlobalTouchscreenSupportChanged(EventArgs.Empty);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets and sets the global scale factor applied to controls when touchscreen support is enabled.
+    /// </summary>
+    /// <remarks>
+    /// A value of 1.25 means controls will be 25% larger. Must be greater than 0.
+    /// </remarks>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public static float TouchscreenScaleFactorValue
+    {
+        get => _globalTouchscreenScaleFactor;
+
+        set
+        {
+            if (value <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), value, @"Scale factor must be greater than 0.");
+            }
+
+            // Only interested if the value changes
+            if (Math.Abs(_globalTouchscreenScaleFactor - value) > 0.001f)
+            {
+                // Use new value (volatile write ensures visibility across threads)
+                _globalTouchscreenScaleFactor = value;
+
+                // Fire change event to notify controls to refresh (only if touchscreen support is enabled)
+                if (_globalTouchscreenSupport)
+                {
+                    OnGlobalTouchscreenSupportChanged(EventArgs.Empty);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the touchscreen scale factor. Returns the configured scale factor when touchscreen support is enabled, otherwise 1.0.
+    /// </summary>
+    public static float TouchscreenScaleFactor => UseTouchscreenSupport ? _globalTouchscreenScaleFactor : 1.0f;
     #endregion
 
     #region Static Palette
@@ -1277,6 +1390,13 @@ public sealed class KryptonManager : Component
     {
         // Capture event handler to avoid race condition during invocation
         var handler = GlobalUseThemeFormChromeBorderWidthChanged;
+        handler?.Invoke(null, e);
+    }
+
+    private static void OnGlobalTouchscreenSupportChanged(EventArgs e)
+    {
+        // Capture event handler to avoid race condition during invocation
+        var handler = GlobalTouchscreenSupportChanged;
         handler?.Invoke(null, e);
     }
 

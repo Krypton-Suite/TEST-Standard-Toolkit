@@ -39,7 +39,6 @@ public abstract class VisualControlBase : Control,
     private KryptonContextMenu? _kryptonContextMenu;
     protected VisualPopupToolTip? visualBasePopupToolTip;
     private readonly ToolTipManager _toolTipManager;
-    private bool _forwardingValidationFromChild;
     #endregion
 
     #region Events
@@ -771,41 +770,17 @@ public abstract class VisualControlBase : Control,
 
     /// <summary>
     /// Forward a Validating event from a child control. This method should be called by derived classes
-    /// when forwarding validation events from internal controls to prevent duplicate validation events
-    /// when the control is marked as a ContainerControl.
+    /// when forwarding validation events from internal controls.
     /// </summary>
     /// <param name="e">A CancelEventArgs that contains the event data.</param>
-    protected void ForwardValidating(CancelEventArgs e)
-    {
-        _forwardingValidationFromChild = true;
-        try
-        {
-            OnValidating(e);
-        }
-        finally
-        {
-            _forwardingValidationFromChild = false;
-        }
-    }
+    protected void ForwardValidating(CancelEventArgs e) => OnValidating(e);
 
     /// <summary>
     /// Forward a Validated event from a child control. This method should be called by derived classes
-    /// when forwarding validation events from internal controls to prevent duplicate validation events
-    /// when the control is marked as a ContainerControl.
+    /// when forwarding validation events from internal controls.
     /// </summary>
     /// <param name="e">An EventArgs that contains the event data.</param>
-    protected void ForwardValidated(EventArgs e)
-    {
-        _forwardingValidationFromChild = true;
-        try
-        {
-            OnValidated(e);
-        }
-        finally
-        {
-            _forwardingValidationFromChild = false;
-        }
-    }
+    protected void ForwardValidated(EventArgs e) => OnValidated(e);
 
     /// <summary>
     /// Update global event attachments.
@@ -816,11 +791,13 @@ public abstract class VisualControlBase : Control,
         if (attach)
         {
             KryptonManager.GlobalPaletteChanged += OnGlobalPaletteChanged;
+            KryptonManager.GlobalTouchscreenSupportChanged += OnGlobalTouchscreenSupportChanged;
             SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
         }
         else
         {
             KryptonManager.GlobalPaletteChanged -= OnGlobalPaletteChanged;
+            KryptonManager.GlobalTouchscreenSupportChanged -= OnGlobalTouchscreenSupportChanged;
             SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         }
     }
@@ -832,51 +809,13 @@ public abstract class VisualControlBase : Control,
     /// Raises the Validating event.
     /// </summary>
     /// <param name="e">A CancelEventArgs that contains the event data.</param>
-    protected override void OnValidating(CancelEventArgs e)
-    {
-        // Root cause fix: When ContainerControl style is set, Windows Forms validation mechanism treats
-        // this control as a container and validates it separately from its children. Since these
-        // controls are wrapper controls that forward validation from their child controls via
-        // ForwardValidating(), we suppress container control validation to prevent duplicate events.
-        //
-        // The fix: When we receive a Validating event that is NOT from a forwarded child control
-        // (indicated by _forwardingValidationFromChild flag), and this control has ContainerControl
-        // style set, this is the container control validation being triggered. We suppress it because
-        // child controls already handle validation and forward it to us via ForwardValidating().
-        if (!_forwardingValidationFromChild && GetStyle(ControlStyles.ContainerControl))
-        {
-            // This is container control validation - suppress it to prevent duplicate events
-            return;
-        }
-
-        // This is either validation from a child control (forwarded) or normal validation
-        base.OnValidating(e);
-    }
+    protected override void OnValidating(CancelEventArgs e) => base.OnValidating(e);
 
     /// <summary>
     /// Raises the Validated event.
     /// </summary>
     /// <param name="e">An EventArgs that contains the event data.</param>
-    protected override void OnValidated(EventArgs e)
-    {
-        // Root cause fix: When ContainerControl style is set, Windows Forms validation mechanism treats
-        // this control as a container and validates it separately from its children. Since these
-        // controls are wrapper controls that forward validation from their child controls via
-        // ForwardValidated(), we suppress container control validation to prevent duplicate events.
-        //
-        // The fix: When we receive a Validated event that is NOT from a forwarded child control
-        // (indicated by _forwardingValidationFromChild flag), and this control has ContainerControl
-        // style set, this is the container control validation being triggered. We suppress it because
-        // child controls already handle validation and forward it to us via ForwardValidated().
-        if (!_forwardingValidationFromChild && GetStyle(ControlStyles.ContainerControl))
-        {
-            // This is container control validation - suppress it to prevent duplicate events
-            return;
-        }
-
-        // This is either validation from a child control (forwarded) or normal validation
-        base.OnValidated(e);
-    }
+    protected override void OnValidated(EventArgs e) => base.OnValidated(e);
 
     /// <summary>
     /// Raises the RightToLeftChanged event.
@@ -1167,6 +1106,21 @@ public abstract class VisualControlBase : Control,
 
             GlobalPaletteChanged?.Invoke(sender, e);
         }
+    }
+
+    /// <summary>
+    /// Occurs when the global touchscreen support setting has been changed.
+    /// </summary>
+    /// <param name="sender">Source of the event.</param>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected virtual void OnGlobalTouchscreenSupportChanged(object? sender, EventArgs e)
+    {
+        // Touchscreen support affects control sizing, so we need to relayout
+        // Need to recalculate anything relying on sizing
+        DirtyPaletteCounter++;
+
+        // A change in touchscreen support means we need to layout and redraw
+        OnNeedPaint(LocalCustomPalette, new NeedLayoutEventArgs(true));
     }
 
     /// <summary>

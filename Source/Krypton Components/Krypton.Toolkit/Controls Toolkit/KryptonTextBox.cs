@@ -428,8 +428,11 @@ public class KryptonTextBox : VisualControlBase,
     /// </summary>
     public KryptonTextBox()
     {
-        // Contains another control and needs marking as such for validation to work
-        SetStyle(ControlStyles.ContainerControl, true);
+        // NOTE: ContainerControl style removed to prevent duplicate validation events.
+        // Validation works correctly from the child InternalTextBox control without ContainerControl style.
+        // ContainerControl style caused Windows Forms to validate the wrapper control separately,
+        // resulting in duplicate Validating/Validated events. Removing it eliminates the duplicate at the source.
+        // SetStyle(ControlStyles.ContainerControl, true);
 
         // By default, we are not multiline and so the height is fixed
         SetStyle(ControlStyles.FixedHeight, true);
