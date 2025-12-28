@@ -5,11 +5,16 @@
  */
 #endregion
 
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if NET8_0_OR_GREATER
 using System.Text.Json;
+#else
+using System.Web.Script.Serialization;
+#endif
 
 namespace Krypton.Utilities.FontAwesome;
 
@@ -142,6 +147,7 @@ public static class FontAwesomeIconMetadataLoader
             try
             {
                 // Parse JSON - Font Awesome icons.json is a dictionary where keys are icon names
+#if NET8_0_OR_GREATER
                 var jsonDoc = JsonDocument.Parse(jsonContent);
                 _iconMetadata = new Dictionary<string, Dictionary<FontAwesomeStyle, FontAwesomeIconMetadata>>(System.StringComparer.OrdinalIgnoreCase);
 
@@ -204,6 +210,92 @@ public static class FontAwesomeIconMetadataLoader
                         }
                     }
                 }
+#else
+                var serializer = new JavaScriptSerializer();
+                var iconsDict = serializer.Deserialize<Dictionary<string, object>>(jsonContent);
+                _iconMetadata = new Dictionary<string, Dictionary<FontAwesomeStyle, FontAwesomeIconMetadata>>(System.StringComparer.OrdinalIgnoreCase);
+
+                foreach (var iconEntry in iconsDict)
+                {
+                    var iconName = iconEntry.Key;
+                    var iconData = iconEntry.Value as Dictionary<string, object>;
+                    if (iconData == null)
+                    {
+                        continue;
+                    }
+
+                    // Get Unicode value
+                    if (!iconData.TryGetValue("unicode", out var unicodeObj) || unicodeObj == null)
+                    {
+                        continue;
+                    }
+
+                    var unicode = unicodeObj.ToString();
+                    if (string.IsNullOrEmpty(unicode))
+                    {
+                        continue;
+                    }
+
+                    // Get styles array
+                    var styles = new List<string>();
+                    if (iconData.TryGetValue("styles", out var stylesObj) && stylesObj != null)
+                    {
+                        IEnumerable? stylesEnumerable = null;
+                        if (stylesObj is object[] objectArray)
+                        {
+                            stylesEnumerable = objectArray;
+                        }
+                        else if (stylesObj is ArrayList arrayList)
+                        {
+                            stylesEnumerable = arrayList.Cast<object>();
+                        }
+                        else if (stylesObj is IEnumerable enumerable)
+                        {
+                            stylesEnumerable = enumerable;
+                        }
+
+                        if (stylesEnumerable != null)
+                        {
+                            foreach (var styleObj in stylesEnumerable)
+                            {
+                                var style = styleObj?.ToString();
+                                if (!string.IsNullOrEmpty(style))
+                                {
+                                    styles.Add(style);
+                                }
+                            }
+                        }
+                    }
+
+                    // Get label
+                    var label = iconData.TryGetValue("label", out var labelObj) 
+                        ? labelObj?.ToString() 
+                        : null;
+
+                    var metadata = new FontAwesomeIconMetadata
+                    {
+                        Name = iconName,
+                        Label = label,
+                        Unicode = unicode,
+                        Styles = styles
+                    };
+
+                    // Map Font Awesome style strings to our enum
+                    foreach (var style in styles)
+                    {
+                        var faStyle = MapStyleStringToEnum(style);
+                        if (faStyle.HasValue)
+                        {
+                            if (!_iconMetadata.ContainsKey(iconName))
+                            {
+                                _iconMetadata[iconName] = new Dictionary<FontAwesomeStyle, FontAwesomeIconMetadata>();
+                            }
+
+                            _iconMetadata[iconName][faStyle.Value] = metadata;
+                        }
+                    }
+                }
+#endif
 
                 return true;
             }
