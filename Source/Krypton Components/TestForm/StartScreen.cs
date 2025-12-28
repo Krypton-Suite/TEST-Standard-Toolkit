@@ -65,6 +65,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("Docking Config Save/Load Test", "Test SaveConfigToArray and LoadConfigFromArray", typeof(DockingConfigSaveLoadTest));
         CreateButton("ErrorProvider", string.Empty, typeof(ErrorProviderTest));
         CreateButton("FileSystemWatcher", "Monitor file system changes with Krypton integration.", typeof(FileSystemWatcherTest));
+        CreateButton("Font Awesome Test", "Native Font Awesome icon support demonstration for buttons, navigator, and ribbon components.", typeof(FontAwesomeTest));
         CreateButton("Timer", "Test KryptonTimer with interval configuration and event tracking.", typeof(TimerTest));
         CreateButton("Splitter", "Test KryptonSplitter with vertical, horizontal, and multi-panel layouts.", typeof(SplitterTest));
         CreateButton("FlowLayoutPanel", "Test KryptonFlowLayoutPanel with dynamic control layout and flow directions.", typeof(FlowLayoutPanelTest));
