@@ -73,6 +73,10 @@ namespace TestForm
             this.lblScaleFactor = new Krypton.Toolkit.KryptonLabel();
             this.chkEnableTouchscreen = new Krypton.Toolkit.KryptonCheckBox();
             this.lblStatus = new Krypton.Toolkit.KryptonLabel();
+            this.chkEnableFontScaling = new Krypton.Toolkit.KryptonCheckBox();
+            this.lblFontScaleFactor = new Krypton.Toolkit.KryptonLabel();
+            this.trackFontScaleFactor = new Krypton.Toolkit.KryptonTrackBar();
+            this.lblFontScaleValue = new Krypton.Toolkit.KryptonLabel();
             ((System.ComponentModel.ISupportInitialize)(this.grpControls)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.grpControls.Panel)).BeginInit();
             this.grpControls.Panel.SuspendLayout();
@@ -361,7 +365,7 @@ namespace TestForm
             this.grpSettings.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.grpSettings.Location = new System.Drawing.Point(0, 561);
             this.grpSettings.Name = "grpSettings";
-            this.grpSettings.Size = new System.Drawing.Size(884, 200);
+            this.grpSettings.Size = new System.Drawing.Size(884, 350);
             this.grpSettings.TabIndex = 1;
             this.grpSettings.Values.Heading = "Touchscreen Support Settings";
             // 
@@ -377,6 +381,10 @@ namespace TestForm
             this.grpSettings.Panel.Controls.Add(this.trackScaleFactor);
             this.grpSettings.Panel.Controls.Add(this.lblScaleFactor);
             this.grpSettings.Panel.Controls.Add(this.chkEnableTouchscreen);
+            this.grpSettings.Panel.Controls.Add(this.chkEnableFontScaling);
+            this.grpSettings.Panel.Controls.Add(this.lblFontScaleFactor);
+            this.grpSettings.Panel.Controls.Add(this.trackFontScaleFactor);
+            this.grpSettings.Panel.Controls.Add(this.lblFontScaleValue);
             // 
             // chkEnableTouchscreen
             // 
@@ -453,9 +461,44 @@ namespace TestForm
             this.btnToggle.TabIndex = 8;
             this.btnToggle.Values.Text = "Toggle Support";
             // 
+            // chkEnableFontScaling
+            // 
+            this.chkEnableFontScaling.Location = new System.Drawing.Point(15, 180);
+            this.chkEnableFontScaling.Name = "chkEnableFontScaling";
+            this.chkEnableFontScaling.Size = new System.Drawing.Size(200, 20);
+            this.chkEnableFontScaling.TabIndex = 9;
+            this.chkEnableFontScaling.Values.Text = "Enable Font Scaling";
+            // 
+            // lblFontScaleFactor
+            // 
+            this.lblFontScaleFactor.Location = new System.Drawing.Point(15, 210);
+            this.lblFontScaleFactor.Name = "lblFontScaleFactor";
+            this.lblFontScaleFactor.Size = new System.Drawing.Size(200, 20);
+            this.lblFontScaleFactor.TabIndex = 10;
+            this.lblFontScaleFactor.Values.Text = "Font Scale Factor (1.0x - 3.0x):";
+            // 
+            // trackFontScaleFactor
+            // 
+            this.trackFontScaleFactor.Location = new System.Drawing.Point(15, 235);
+            this.trackFontScaleFactor.Maximum = 200;
+            this.trackFontScaleFactor.Minimum = 0;
+            this.trackFontScaleFactor.Name = "trackFontScaleFactor";
+            this.trackFontScaleFactor.Size = new System.Drawing.Size(400, 45);
+            this.trackFontScaleFactor.TabIndex = 11;
+            this.trackFontScaleFactor.TickFrequency = 25;
+            this.trackFontScaleFactor.Value = 25;
+            // 
+            // lblFontScaleValue
+            // 
+            this.lblFontScaleValue.Location = new System.Drawing.Point(430, 235);
+            this.lblFontScaleValue.Name = "lblFontScaleValue";
+            this.lblFontScaleValue.Size = new System.Drawing.Size(200, 20);
+            this.lblFontScaleValue.TabIndex = 12;
+            this.lblFontScaleValue.Values.Text = "1.25x (25.0% larger)";
+            // 
             // lblStatus
             // 
-            this.lblStatus.Location = new System.Drawing.Point(650, 130);
+            this.lblStatus.Location = new System.Drawing.Point(15, 290);
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(220, 50);
             this.lblStatus.TabIndex = 9;
@@ -544,6 +587,10 @@ namespace TestForm
         private Krypton.Toolkit.KryptonButton btnApplyPreset75;
         private Krypton.Toolkit.KryptonButton btnToggle;
         private Krypton.Toolkit.KryptonLabel lblStatus;
+        private Krypton.Toolkit.KryptonCheckBox chkEnableFontScaling;
+        private Krypton.Toolkit.KryptonLabel lblFontScaleFactor;
+        private Krypton.Toolkit.KryptonTrackBar trackFontScaleFactor;
+        private Krypton.Toolkit.KryptonLabel lblFontScaleValue;
     }
 }
 
