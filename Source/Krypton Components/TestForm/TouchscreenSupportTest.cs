@@ -93,9 +93,9 @@ public partial class TouchscreenSupportTest : KryptonForm
         progressBar.StateCommon.LongText.Color1 = Color.Blue;
 
         // Track bar
-        trackBar.Value = 50;
         trackBar.Minimum = 0;
         trackBar.Maximum = 100;
+        trackBar.Value = 50;
         trackBar.TickFrequency = 10;
 
         // Label examples
@@ -117,13 +117,22 @@ public partial class TouchscreenSupportTest : KryptonForm
     {
         // Create pages for navigator
         var page1 = new KryptonPage { Text = "Page 1", TextTitle = "First Page" };
-        page1.Controls.Add(new KryptonLabel { Text = "Navigator Page 1 - Touchscreen scaling applies to tabs and buttons", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter });
+        var label1 = new KryptonLabel { Text = "Navigator Page 1 - Touchscreen scaling applies to tabs and buttons", Dock = DockStyle.Fill };
+        label1.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
+        label1.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
+        page1.Controls.Add(label1);
 
         var page2 = new KryptonPage { Text = "Page 2", TextTitle = "Second Page" };
-        page2.Controls.Add(new KryptonLabel { Text = "Navigator Page 2 - All controls scale when touchscreen support is enabled", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter });
+        var label2 = new KryptonLabel { Text = "Navigator Page 2 - All controls scale when touchscreen support is enabled", Dock = DockStyle.Fill };
+        label2.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
+        label2.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
+        page2.Controls.Add(label2);
 
         var page3 = new KryptonPage { Text = "Page 3", TextTitle = "Third Page" };
-        page3.Controls.Add(new KryptonLabel { Text = "Navigator Page 3 - Try adjusting the scale factor to see the effect", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter });
+        var label3 = new KryptonLabel { Text = "Navigator Page 3 - Try adjusting the scale factor to see the effect", Dock = DockStyle.Fill };
+        label3.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
+        label3.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
+        page3.Controls.Add(label3);
 
         navigator.Pages.AddRange(new[] { page1, page2, page3 });
         navigator.SelectedPage = page1;
@@ -136,13 +145,19 @@ public partial class TouchscreenSupportTest : KryptonForm
         // gets touchscreen scaling support
         var cell1 = new KryptonWorkspaceCell();
         var page1 = new KryptonPage { Text = "Workspace Cell 1", TextTitle = "Cell 1" };
-        page1.Controls.Add(new KryptonLabel { Text = "Workspace Cell 1 - Workspace cells and their tabs scale with touchscreen support", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter });
+        var label1 = new KryptonLabel { Text = "Workspace Cell 1 - Workspace cells and their tabs scale with touchscreen support", Dock = DockStyle.Fill };
+        label1.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
+        label1.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
+        page1.Controls.Add(label1);
         cell1.Pages.Add(page1);
         cell1.SelectedPage = page1;
 
         var cell2 = new KryptonWorkspaceCell();
         var page2 = new KryptonPage { Text = "Workspace Cell 2", TextTitle = "Cell 2" };
-        page2.Controls.Add(new KryptonLabel { Text = "Workspace Cell 2 - Navigator, Ribbon, Workspace, and Docking all support touchscreen scaling", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleCenter });
+        var label2 = new KryptonLabel { Text = "Workspace Cell 2 - Navigator, Ribbon, Workspace, and Docking all support touchscreen scaling", Dock = DockStyle.Fill };
+        label2.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
+        label2.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
+        page2.Controls.Add(label2);
         cell2.Pages.Add(page2);
         cell2.SelectedPage = page2;
 

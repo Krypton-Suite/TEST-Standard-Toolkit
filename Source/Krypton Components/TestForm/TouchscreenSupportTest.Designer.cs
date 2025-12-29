@@ -300,10 +300,10 @@ namespace TestForm
             // 
             // navigator
             // 
-            this.navigator.Bar.BarFirstItem = null;
-            this.navigator.Bar.BarLastItem = null;
+            this.navigator.Bar.BarFirstItemInset = 0;
+            this.navigator.Bar.BarLastItemInset = 0;
             this.navigator.Bar.BarMinimumHeight = 0;
-            this.navigator.Bar.TabStyle = Krypton.Navigator.PaletteTabStyle.Standalone;
+            this.navigator.Bar.TabStyle = Krypton.Toolkit.TabStyle.StandardProfile;
             this.navigator.Button.ButtonDisplayLogic = Krypton.Navigator.ButtonDisplayLogic.None;
             this.navigator.Button.ContextButtonAction = Krypton.Navigator.ContextButtonAction.None;
             this.navigator.Dock = System.Windows.Forms.DockStyle.Left;
