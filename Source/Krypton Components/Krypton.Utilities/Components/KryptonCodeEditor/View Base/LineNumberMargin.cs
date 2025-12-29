@@ -41,7 +41,8 @@ internal class LineNumberMargin : Control
             return;
 
         var g = e.Graphics;
-        g.Clear(BackColor);
+        _editor.GetLineNumberPaletteColors(out var backColor, out var textColor);
+        g.Clear(backColor);
 
         // Get first visible line
         var firstLine = rtb.GetLineFromCharIndex(rtb.GetCharIndexFromPosition(new Point(0, 0)));
@@ -77,12 +78,15 @@ internal class LineNumberMargin : Control
                 _cachedWidths[i + 1] = width;
             }
 
-            g.DrawString(lineNumber, _font, SystemBrushes.ControlText,
-                Width - width - 5, y);
+            using (var textBrush = new SolidBrush(textColor))
+            {
+                g.DrawString(lineNumber, _font, textBrush,
+                    Width - width - 5, y);
+            }
         }
 
         // Draw separator line
-        using (var pen = new Pen(SystemColors.ControlDark))
+        using (var pen = new Pen(Color.FromArgb(90, textColor)))
         {
             g.DrawLine(pen, Width - 1, 0, Width - 1, Height);
         }

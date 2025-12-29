@@ -382,6 +382,50 @@ public class KryptonCodeEditor : VisualControlBase,
     #endregion
     
     #region Private Methods
+
+    internal void GetLineNumberPaletteColors(out Color backColor, out Color textColor)
+    {
+        var palette = GetResolvedPalette();
+        if (palette != null)
+        {
+            backColor = palette.GetBackColor1(PaletteBackStyle.PanelAlternate, PaletteState.Normal);
+            textColor = palette.GetContentShortTextColor1(PaletteContentStyle.LabelNormalPanel, PaletteState.Normal);
+        }
+        else
+        {
+            backColor = SystemColors.Control;
+            textColor = SystemColors.ControlText;
+        }
+    }
+
+    #region Win32 Redraw Suppression
+
+    private static class Win32
+    {
+        internal const uint WM_SETREDRAW = 0x000B;
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    }
+
+    private static void BeginRedraw(Control control)
+    {
+        if (control != null && control.IsHandleCreated)
+        {
+            Win32.SendMessage(control.Handle, Win32.WM_SETREDRAW, IntPtr.Zero, IntPtr.Zero);
+        }
+    }
+
+    private static void EndRedraw(Control control)
+    {
+        if (control != null && control.IsHandleCreated)
+        {
+            Win32.SendMessage(control.Handle, Win32.WM_SETREDRAW, (IntPtr)1, IntPtr.Zero);
+            control.Invalidate();
+        }
+    }
+
+    #endregion
     
     private void InitializeKeywordColors()
     {
@@ -492,20 +536,28 @@ public class KryptonCodeEditor : VisualControlBase,
             
             // Get tokens
             var tokens = Tokenize(text);
-            
-            // Apply formatting
-            _richTextBox.SelectAll();
-            _richTextBox.SelectionColor = GetColorForTokenType(TokenType.Normal);
-            _richTextBox.SelectionFont = _editorFont;
-            
-            foreach (var token in tokens)
+
+            // Apply formatting (suppress redraw to avoid flashing)
+            BeginRedraw(_richTextBox);
+            try
             {
-                if (token.Type != TokenType.Normal)
+                _richTextBox.SelectAll();
+                _richTextBox.SelectionColor = GetColorForTokenType(TokenType.Normal);
+                _richTextBox.SelectionFont = _editorFont;
+
+                foreach (var token in tokens)
                 {
-                    _richTextBox.Select(token.StartIndex, token.Length);
-                    _richTextBox.SelectionColor = GetColorForTokenType(token.Type);
-                    _richTextBox.SelectionFont = GetFontForTokenType(token.Type);
+                    if (token.Type != TokenType.Normal)
+                    {
+                        _richTextBox.Select(token.StartIndex, token.Length);
+                        _richTextBox.SelectionColor = GetColorForTokenType(token.Type);
+                        _richTextBox.SelectionFont = GetFontForTokenType(token.Type);
+                    }
                 }
+            }
+            finally
+            {
+                EndRedraw(_richTextBox);
             }
             
             // Restore selection
@@ -1349,6 +1401,14 @@ public class KryptonCodeEditor : VisualControlBase,
     {
         if (_autoCompleteEnabled && _language != Language.None)
         {
+            // If the auto-complete popup is already visible, update it in-place.
+            // Re-running ShowAutoComplete() on every keypress causes noticeable flashing.
+            if (_autoCompleteForm != null && _autoCompleteForm.Visible)
+            {
+                _autoCompleteForm.UpdateFilter(e.KeyChar);
+                return;
+            }
+
             // Show auto-complete on certain characters
             if (char.IsLetterOrDigit(e.KeyChar) || e.KeyChar == '_')
             {
@@ -1402,7 +1462,13 @@ public class KryptonCodeEditor : VisualControlBase,
         }
         
         var currentWord = GetCurrentWord();
-        _autoCompleteForm.SetItems(_autoCompleteKeywords);
+        // Only set source items once per open; filtering happens on keypress while open.
+        if (!_autoCompleteForm.Visible)
+        {
+            _autoCompleteForm.SetItems(_autoCompleteKeywords);
+        }
+
+        _autoCompleteForm.SetCurrentWordPrefix(currentWord);
         _autoCompleteForm.FilterItems(currentWord);
         
         if (_autoCompleteForm.ItemCount > 0)
@@ -1410,7 +1476,10 @@ public class KryptonCodeEditor : VisualControlBase,
             var pos = _richTextBox.GetPositionFromCharIndex(_richTextBox.SelectionStart);
             var screenPos = PointToScreen(pos);
             _autoCompleteForm.Location = new Point(screenPos.X, screenPos.Y + _richTextBox.Font.Height);
-            _autoCompleteForm.Show();
+            if (!_autoCompleteForm.Visible)
+            {
+                _autoCompleteForm.Show();
+            }
         }
         else
         {
@@ -1434,6 +1503,10 @@ public class KryptonCodeEditor : VisualControlBase,
     
     internal void ToggleFoldBlock(FoldBlock block)
     {
+        // Suppress redraw to avoid flashing while we change formatting
+        BeginRedraw(_richTextBox);
+        try
+        {
         if (block.IsFolded)
         {
             // Hide lines
@@ -1461,6 +1534,11 @@ public class KryptonCodeEditor : VisualControlBase,
                 _richTextBox.SelectionFont = _editorFont;
                 _richTextBox.SelectionLength = 0;
             }
+        }
+        }
+        finally
+        {
+            EndRedraw(_richTextBox);
         }
         
         _foldingMargin.Invalidate();
