@@ -23,11 +23,18 @@ namespace Krypton.Toolkit;
 public sealed class KryptonManager : Component
 {
     #region Static Fields
+    // Thread synchronization for thread-safe access
+    private static readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
     // Initialize the global state
-    private static bool _globalApplyToolstrips = true;
-    private static bool _globalUseThemeFormChromeBorderWidth = true;
-    private static bool _globalShowAdministratorSuffix = true;
-    internal static bool _globalUseKryptonFileDialogs = true;
+    private static volatile bool _globalApplyToolstrips = true;
+    private static volatile bool _globalUseThemeFormChromeBorderWidth = true;
+    private static volatile bool _globalShowAdministratorSuffix = true;
+    internal static volatile bool _globalUseKryptonFileDialogs = true;
+    private static volatile bool _globalTouchscreenSupport = false;
+    private static volatile float _globalTouchscreenScaleFactor = 1.25f;
+    private static volatile bool _globalTouchscreenFontScaling = true;
+    private static volatile float _globalTouchscreenFontScaleFactor = 1.25f;
     private static Font? _baseFont;
 
     // Initialize the default modes
@@ -149,6 +156,13 @@ public sealed class KryptonManager : Component
     [Category(@"Property Changed")]
     [Description(@"Occurs when the value of the GlobalUseThemeFormChromeBorderWidth property is changed.")]
     public static event EventHandler? GlobalUseThemeFormChromeBorderWidthChanged;
+
+    /// <summary>
+    /// Occurs when the touchscreen support setting or scale factor changes.
+    /// </summary>
+    [Category(@"Property Changed")]
+    [Description(@"Occurs when the value of the GlobalTouchscreenSupport or GlobalTouchscreenScaleFactor property is changed.")]
+    public static event EventHandler? GlobalTouchscreenSupportChanged;
     #endregion
 
     #region Identity
@@ -217,7 +231,8 @@ public sealed class KryptonManager : Component
                                ShouldSerializeToolkitStrings() ||
                                ShouldSerializeUseKryptonFileDialogs() ||
                                ShouldSerializeBaseFont() ||
-                               ShouldSerializeGlobalPaletteMode());
+                               ShouldSerializeGlobalPaletteMode() ||
+                               ShouldSerializeTouchscreenSettings());
 
     /// <summary>
     /// Reset All values
@@ -233,6 +248,7 @@ public sealed class KryptonManager : Component
         ResetUseKryptonFileDialogs();
         ResetBaseFont();
         ResetGlobalPaletteMode();
+        ResetTouchscreenSettings();
     }
 
     /// <summary>
@@ -246,24 +262,41 @@ public sealed class KryptonManager : Component
         get => CurrentGlobalPaletteMode;
         set
         {
-            if (value != CurrentGlobalPaletteMode)
+            _lock.EnterWriteLock();
+            try
             {
-                if (value != PaletteMode.Custom)
+                if (value != _currentGlobalPaletteMode)
                 {
-                    // Get a reference to the standard palette from its name
-                    SetPalette(GetPaletteForMode(value));
-                }
-                CurrentGlobalPaletteMode = value;
-                if (_baseFont != null)
-                {
-                    CurrentGlobalPalette.BaseFont = _baseFont;
-                }
+                    if (value != PaletteMode.Custom)
+                    {
+                        // Get a reference to the standard palette from its name
+                        SetPaletteInternal(GetPaletteForMode(value));
+                    }
+                    _currentGlobalPaletteMode = value;
+                    if (_baseFont != null)
+                    {
+                        _currentGlobalPalette.BaseFont = _baseFont;
+                    }
 
-                if (value != PaletteMode.Custom)
-                {
-                    // Raise the palette changed event
-                    OnGlobalPaletteChanged(EventArgs.Empty);
+                    if (value != PaletteMode.Custom)
+                    {
+                        // Raise the palette changed event (outside lock to avoid deadlock)
+                        var eventArgs = EventArgs.Empty;
+                        _lock.ExitWriteLock();
+                        try
+                        {
+                            OnGlobalPaletteChanged(eventArgs);
+                        }
+                        finally
+                        {
+                            _lock.EnterWriteLock();
+                        }
+                    }
                 }
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
         }
     }
@@ -278,31 +311,61 @@ public sealed class KryptonManager : Component
     [DefaultValue(null)]
     public KryptonCustomPaletteBase? GlobalCustomPalette
     {
-        get => CurrentGlobalPalette as KryptonCustomPaletteBase;
+        get
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _currentGlobalPalette as KryptonCustomPaletteBase;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
 
         set
         {
-            // Only interested in changes of value
-            if (CurrentGlobalPalette != value)
+            _lock.EnterWriteLock();
+            try
             {
-                if (value != null)
+                // Only interested in changes of value
+                if (_currentGlobalPalette != value)
                 {
-                    // If no custom palette is required
-                    CurrentGlobalPalette = value;
-                    // Use the provided palette value
-                    SetPalette(value);
-                    CurrentGlobalPaletteMode = GetModeForPalette(value);
-                    // Notify the KryptonManager that there is a custom palette assigned to it
-                    // Fixes bug: https://github.com/Krypton-Suite/Standard-Toolkit/issues/1092
-                    GlobalPaletteMode = PaletteMode.Custom;
+                    if (value != null)
+                    {
+                        // If no custom palette is required
+                        _currentGlobalPalette = value;
+                        // Use the provided palette value
+                        SetPaletteInternal(value);
+                        _currentGlobalPaletteMode = GetModeForPalette(value);
+                        // Notify the KryptonManager that there is a custom palette assigned to it
+                        // Fixes bug: https://github.com/Krypton-Suite/Standard-Toolkit/issues/1092
+                        _currentGlobalPaletteMode = PaletteMode.Custom;
+                    }
+                    else
+                    {
+                        var resetMode = ThemeManager.DefaultGlobalPalette;
+                        _currentGlobalPaletteMode = resetMode;
+                        _currentGlobalPalette = GetPaletteForMode(resetMode);
+                        SetPaletteInternal(_currentGlobalPalette);
+                    }
+                    // Raise the palette changed event (outside lock to avoid deadlock)
+                    var eventArgs = EventArgs.Empty;
+                    _lock.ExitWriteLock();
+                    try
+                    {
+                        OnGlobalPaletteChanged(eventArgs);
+                    }
+                    finally
+                    {
+                        _lock.EnterWriteLock();
+                    }
                 }
-                else
-                {
-                    ResetGlobalPaletteMode();
-                    CurrentGlobalPalette = GetPaletteForMode(GlobalPaletteMode);
-                }
-                // Raise the palette changed event
-                OnGlobalPaletteChanged(EventArgs.Empty);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
         }
     }
@@ -319,26 +382,53 @@ public sealed class KryptonManager : Component
     [AllowNull]
     public Font BaseFont
     {
-        get => _baseFont ?? CurrentGlobalPalette.BaseFont;
+        get
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _baseFont ?? CurrentGlobalPalette.BaseFont;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
 
         set
         {
-            if (value != null)
+            _lock.EnterWriteLock();
+            try
             {
-                _baseFont = value;
-                CurrentGlobalPalette.BaseFont = value;
+                if (value != null)
+                {
+                    _baseFont = value;
+                    CurrentGlobalPalette.BaseFont = value;
+                }
+                else
+                {
+                    ResetBaseFont();
+                }
             }
-            else
+            finally
             {
-                ResetBaseFont();
+                _lock.ExitWriteLock();
             }
         }
     }
 
     private void ResetBaseFont()
     {
-        _baseFont = null;
-        CurrentGlobalPalette.ResetBaseFont();
+        _lock.EnterWriteLock();
+        try
+        {
+            _baseFont = null;
+            CurrentGlobalPalette.ResetBaseFont();
+        }
+        finally
+        {
+            _lock.ExitWriteLock();
+        }
     }
     private bool ShouldSerializeBaseFont() => _baseFont != null;
 
@@ -351,7 +441,7 @@ public sealed class KryptonManager : Component
     public bool GlobalApplyToolstrips
     {
         get => ApplyToolstrips;
-        set => ApplyToolstrips = value;
+        set => ApplyToolstrips = value; // Thread-safe via static property
     }
     private bool ShouldSerializeGlobalApplyToolstrips() => !GlobalApplyToolstrips;
     private void ResetGlobalApplyToolstrips() => GlobalApplyToolstrips = true;
@@ -364,7 +454,7 @@ public sealed class KryptonManager : Component
     public bool UseKryptonFileDialogs
     {
         get => _globalUseKryptonFileDialogs;
-        set => _globalUseKryptonFileDialogs = value;
+        set => _globalUseKryptonFileDialogs = value; // volatile write ensures visibility across threads
     }
     private bool ShouldSerializeUseKryptonFileDialogs() => !UseKryptonFileDialogs;
     private void ResetUseKryptonFileDialogs() => UseKryptonFileDialogs = true;
@@ -379,7 +469,7 @@ public sealed class KryptonManager : Component
     public bool GlobalUseThemeFormChromeBorderWidth
     {
         get => UseThemeFormChromeBorderWidth;
-        set => UseThemeFormChromeBorderWidth = value;
+        set => UseThemeFormChromeBorderWidth = value; // Thread-safe via static property
     }
     private bool ShouldSerializeGlobalUseThemeFormChromeBorderWidth() => !GlobalUseThemeFormChromeBorderWidth;
     private void ResetGlobalUseThemeFormChromeBorderWidth() => GlobalUseThemeFormChromeBorderWidth = true;
@@ -415,10 +505,21 @@ public sealed class KryptonManager : Component
     public bool ShowAdministratorSuffix
     {
         get => UseAdministratorSuffix;
-        set => UseAdministratorSuffix = value;
+        set => UseAdministratorSuffix = value; // Thread-safe via static property
     }
     private bool ShouldSerializeShowAdministratorSuffix() => !UseAdministratorSuffix;
     private void ResetShowAdministratorSuffix() => UseAdministratorSuffix = true;
+
+    /// <summary>
+    /// Gets the touchscreen support settings.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Settings for touchscreen support, including control and font scaling.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public KryptonTouchscreenSettings TouchscreenSettings => Settings;
+    private bool ShouldSerializeTouchscreenSettings() => !Settings.IsDefault;
+    private void ResetTouchscreenSettings() => Settings.Reset();
 
     #endregion
 
@@ -436,6 +537,10 @@ public sealed class KryptonManager : Component
     /// <value>The colors.</value>
     public static KryptonColorStorage Colors { get; } = new KryptonColorStorage();
 
+    /// <summary>Gets the touchscreen settings.</summary>
+    /// <value>The touchscreen settings.</value>
+    public static KryptonTouchscreenSettings Settings { get; } = new KryptonTouchscreenSettings();
+
     #region Static ShowAdministratorSuffix
     /// <summary>
     /// Gets and sets the global flag that decides if administrator suffix should be shown in KryptonForm title bars.
@@ -450,7 +555,7 @@ public sealed class KryptonManager : Component
             // Only interested if the value changes
             if (_globalShowAdministratorSuffix != value)
             {
-                // Use new value
+                // Use new value (volatile write ensures visibility across threads)
                 _globalShowAdministratorSuffix = value;
             }
         }
@@ -473,7 +578,7 @@ public sealed class KryptonManager : Component
             // Only interested if the value changes
             if (_globalApplyToolstrips != value)
             {
-                // Use new value
+                // Use new value (volatile write ensures visibility across threads)
                 _globalApplyToolstrips = value;
 
                 // Change the toolstrip manager renderer as required
@@ -504,7 +609,7 @@ public sealed class KryptonManager : Component
             // Only interested if the value changes
             if (_globalUseThemeFormChromeBorderWidth != value)
             {
-                // Use new value
+                // Use new value (volatile write ensures visibility across threads)
                 _globalUseThemeFormChromeBorderWidth = value;
 
                 // Fire change event
@@ -512,6 +617,131 @@ public sealed class KryptonManager : Component
             }
         }
     }
+    #endregion
+
+    #region Static UseTouchscreenSupport
+    /// <summary>
+    /// Gets and sets the global flag that decides if touchscreen support is enabled, making controls larger based on the scale factor.
+    /// </summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public static bool UseTouchscreenSupport
+    {
+        get => _globalTouchscreenSupport;
+
+        set
+        {
+            // Only interested if the value changes
+            if (_globalTouchscreenSupport != value)
+            {
+                // Use new value (volatile write ensures visibility across threads)
+                _globalTouchscreenSupport = value;
+
+                // Fire change event to notify controls to refresh
+                OnGlobalTouchscreenSupportChanged(EventArgs.Empty);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets and sets the global scale factor applied to controls when touchscreen support is enabled.
+    /// </summary>
+    /// <remarks>
+    /// A value of 1.25 means controls will be 25% larger. Must be greater than 0.
+    /// </remarks>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public static float TouchscreenScaleFactorValue
+    {
+        get => _globalTouchscreenScaleFactor;
+
+        set
+        {
+            if (value <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), value, @"Scale factor must be greater than 0.");
+            }
+
+            // Only interested if the value changes
+            if (Math.Abs(_globalTouchscreenScaleFactor - value) > 0.001f)
+            {
+                // Use new value (volatile write ensures visibility across threads)
+                _globalTouchscreenScaleFactor = value;
+
+                // Fire change event to notify controls to refresh (only if touchscreen support is enabled)
+                if (_globalTouchscreenSupport)
+                {
+                    OnGlobalTouchscreenSupportChanged(EventArgs.Empty);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the touchscreen scale factor. Returns the configured scale factor when touchscreen support is enabled, otherwise 1.0.
+    /// </summary>
+    public static float TouchscreenScaleFactor => UseTouchscreenSupport ? _globalTouchscreenScaleFactor : 1.0f;
+
+    /// <summary>
+    /// Gets and sets the global flag that decides if font scaling is enabled when touchscreen support is enabled.
+    /// </summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public static bool UseTouchscreenFontScaling
+    {
+        get => _globalTouchscreenFontScaling;
+
+        set
+        {
+            // Only interested if the value changes
+            if (_globalTouchscreenFontScaling != value)
+            {
+                // Use new value (volatile write ensures visibility across threads)
+                _globalTouchscreenFontScaling = value;
+
+                // Fire change event to notify controls to refresh (only if touchscreen support is enabled)
+                if (_globalTouchscreenSupport)
+                {
+                    OnGlobalTouchscreenSupportChanged(EventArgs.Empty);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets and sets the global font scale factor applied to fonts when font scaling is enabled.
+    /// </summary>
+    /// <remarks>
+    /// A value of 1.25 means fonts will be 25% larger. Must be greater than 0.
+    /// </remarks>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public static float TouchscreenFontScaleFactorValue
+    {
+        get => _globalTouchscreenFontScaleFactor;
+
+        set
+        {
+            if (value <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), value, @"Font scale factor must be greater than 0.");
+            }
+
+            // Only interested if the value changes
+            if (Math.Abs(_globalTouchscreenFontScaleFactor - value) > 0.001f)
+            {
+                // Use new value (volatile write ensures visibility across threads)
+                _globalTouchscreenFontScaleFactor = value;
+
+                // Fire change event to notify controls to refresh (only if touchscreen support and font scaling are enabled)
+                if (_globalTouchscreenSupport && _globalTouchscreenFontScaling)
+                {
+                    OnGlobalTouchscreenSupportChanged(EventArgs.Empty);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the touchscreen font scale factor. Returns the configured font scale factor when touchscreen support and font scaling are enabled, otherwise 1.0.
+    /// </summary>
+    public static float TouchscreenFontScaleFactor => (UseTouchscreenSupport && UseTouchscreenFontScaling) ? _globalTouchscreenFontScaleFactor : 1.0f;
     #endregion
 
     #region Static Palette
@@ -1042,17 +1272,73 @@ public sealed class KryptonManager : Component
     #endregion
 
     #region Static Internal
+    // Thread-safe backing fields for current palette state
+    private static PaletteMode _currentGlobalPaletteMode = ThemeManager.DefaultGlobalPalette;
+    private static PaletteBase _currentGlobalPalette = GetPaletteForMode(_currentGlobalPaletteMode);
+
     /// <summary>
     /// What is the CurrentGlobalPaletteMode in use
     /// </summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public static PaletteMode CurrentGlobalPaletteMode { get; private set; } = ThemeManager.DefaultGlobalPalette;
+    public static PaletteMode CurrentGlobalPaletteMode
+    {
+        get
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _currentGlobalPaletteMode;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+        private set
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                _currentGlobalPaletteMode = value;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+    }
 
     /// <summary>
     /// Access the Current Palette
     /// </summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public static PaletteBase CurrentGlobalPalette { get; private set; } = GetPaletteForMode(CurrentGlobalPaletteMode);
+    public static PaletteBase CurrentGlobalPalette
+    {
+        get
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                return _currentGlobalPalette;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+        private set
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                _currentGlobalPalette = value;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+    }
 
     #endregion
 
@@ -1064,6 +1350,9 @@ public sealed class KryptonManager : Component
         // and other resources are recreated as needed.
         // TODO: Why are the greys not in this list ?
 
+        // Capture palette references to avoid race conditions during iteration
+        // Note: Palette instances are created lazily and are immutable once created,
+        // so reading the static fields is safe without a lock
         _paletteProfessionalOffice2003?.UserPreferenceChanged();
         _paletteProfessionalSystem?.UserPreferenceChanged();
         _paletteOffice2007Blue?.UserPreferenceChanged();
@@ -1097,7 +1386,7 @@ public sealed class KryptonManager : Component
     private static void OnPalettePaint(object? sender, PaletteLayoutEventArgs e)
     {
         // If the color table has changed then need to update tool strip immediately
-        if (e.NeedColorTable)
+        if (e?.NeedColorTable == true)
         {
             UpdateToolStripManager();
         }
@@ -1105,34 +1394,72 @@ public sealed class KryptonManager : Component
 
     private static void SetPalette(PaletteBase globalPalette)
     {
-        if (globalPalette != CurrentGlobalPalette)
+        _lock.EnterWriteLock();
+        try
+        {
+            SetPaletteInternal(globalPalette);
+        }
+        finally
+        {
+            _lock.ExitWriteLock();
+        }
+    }
+
+    private static void SetPaletteInternal(PaletteBase globalPalette)
+    {
+        if (globalPalette != _currentGlobalPalette)
         {
             // Unhook from current palette events
-            if (CurrentGlobalPalette != null)
+            if (_currentGlobalPalette != null)
             {
-                CurrentGlobalPalette.PalettePaintInternal -= OnPalettePaint;
+                _currentGlobalPalette.PalettePaintInternal -= OnPalettePaint;
             }
 
             // Remember the new palette
-            CurrentGlobalPalette = globalPalette;
+            _currentGlobalPalette = globalPalette;
 
             // Hook to new palette events
-            if (CurrentGlobalPalette != null)
+            if (_currentGlobalPalette != null)
             {
-                CurrentGlobalPalette.PalettePaintInternal += OnPalettePaint;
+                _currentGlobalPalette.PalettePaintInternal += OnPalettePaint;
             }
         }
     }
 
-    private static void OnGlobalUseThemeFormChromeBorderWidthChanged(EventArgs e) => GlobalUseThemeFormChromeBorderWidthChanged?.Invoke(null, e);
+    private static void OnGlobalUseThemeFormChromeBorderWidthChanged(EventArgs e)
+    {
+        // Capture event handler to avoid race condition during invocation
+        var handler = GlobalUseThemeFormChromeBorderWidthChanged;
+        handler?.Invoke(null, e);
+    }
+
+    private static void OnGlobalTouchscreenSupportChanged(EventArgs e)
+    {
+        // Capture event handler to avoid race condition during invocation
+        var handler = GlobalTouchscreenSupportChanged;
+        handler?.Invoke(null, e);
+    }
 
     private static void OnGlobalPaletteChanged(EventArgs e)
     {
+        PaletteMode currentMode;
+        _lock.EnterReadLock();
+        try
+        {
+            currentMode = _currentGlobalPaletteMode;
+        }
+        finally
+        {
+            _lock.ExitReadLock();
+        }
+
         UpdateToolStripManager();
 
-        UpdatePaletteImages(CurrentGlobalPaletteMode);
+        UpdatePaletteImages(currentMode);
 
-        GlobalPaletteChanged?.Invoke(null, e);
+        // Capture event handler to avoid race condition during invocation
+        var handler = GlobalPaletteChanged;
+        handler?.Invoke(null, e);
     }
 
     private static void UpdatePaletteImages(PaletteMode paletteMode)
@@ -1221,7 +1548,18 @@ public sealed class KryptonManager : Component
     {
         if (_globalApplyToolstrips)
         {
-            ToolStripManager.Renderer = CurrentGlobalPalette?.GetRenderer()?.RenderToolStrip(CurrentGlobalPalette);
+            PaletteBase? currentPalette;
+            _lock.EnterReadLock();
+            try
+            {
+                currentPalette = _currentGlobalPalette;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+
+            ToolStripManager.Renderer = currentPalette?.GetRenderer()?.RenderToolStrip(currentPalette);
         }
     }
 

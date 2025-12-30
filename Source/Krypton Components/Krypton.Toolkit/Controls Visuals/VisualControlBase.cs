@@ -769,6 +769,20 @@ public abstract class VisualControlBase : Control,
     protected virtual PaletteRedirect CreateRedirector() => new PaletteRedirect(_palette);
 
     /// <summary>
+    /// Forward a Validating event from a child control. This method should be called by derived classes
+    /// when forwarding validation events from internal controls.
+    /// </summary>
+    /// <param name="e">A CancelEventArgs that contains the event data.</param>
+    protected void ForwardValidating(CancelEventArgs e) => OnValidating(e);
+
+    /// <summary>
+    /// Forward a Validated event from a child control. This method should be called by derived classes
+    /// when forwarding validation events from internal controls.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected void ForwardValidated(EventArgs e) => OnValidated(e);
+
+    /// <summary>
     /// Update global event attachments.
     /// </summary>
     /// <param name="attach">True if attaching; otherwise false.</param>
@@ -777,11 +791,13 @@ public abstract class VisualControlBase : Control,
         if (attach)
         {
             KryptonManager.GlobalPaletteChanged += OnGlobalPaletteChanged;
+            KryptonManager.GlobalTouchscreenSupportChanged += OnGlobalTouchscreenSupportChanged;
             SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
         }
         else
         {
             KryptonManager.GlobalPaletteChanged -= OnGlobalPaletteChanged;
+            KryptonManager.GlobalTouchscreenSupportChanged -= OnGlobalTouchscreenSupportChanged;
             SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         }
     }
@@ -789,6 +805,18 @@ public abstract class VisualControlBase : Control,
     #endregion
 
     #region Protected Overrides
+    /// <summary>
+    /// Raises the Validating event.
+    /// </summary>
+    /// <param name="e">A CancelEventArgs that contains the event data.</param>
+    protected override void OnValidating(CancelEventArgs e) => base.OnValidating(e);
+
+    /// <summary>
+    /// Raises the Validated event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnValidated(EventArgs e) => base.OnValidated(e);
+
     /// <summary>
     /// Raises the RightToLeftChanged event.
     /// </summary>
@@ -1078,6 +1106,21 @@ public abstract class VisualControlBase : Control,
 
             GlobalPaletteChanged?.Invoke(sender, e);
         }
+    }
+
+    /// <summary>
+    /// Occurs when the global touchscreen support setting has been changed.
+    /// </summary>
+    /// <param name="sender">Source of the event.</param>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected virtual void OnGlobalTouchscreenSupportChanged(object? sender, EventArgs e)
+    {
+        // Touchscreen support affects control sizing, so we need to relayout
+        // Need to recalculate anything relying on sizing
+        DirtyPaletteCounter++;
+
+        // A change in touchscreen support means we need to layout and redraw
+        OnNeedPaint(LocalCustomPalette, new NeedLayoutEventArgs(true));
     }
 
     /// <summary>

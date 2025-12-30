@@ -21,6 +21,7 @@ internal class FoldingMargin : Control
         _editor = editor;
         SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
                  ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+        // BackColor will be set from palette in OnPaint
         BackColor = SystemColors.Control;
         Cursor = Cursors.Hand;
     }
@@ -34,7 +35,8 @@ internal class FoldingMargin : Control
             return;
 
         var g = e.Graphics;
-        g.Clear(BackColor);
+        _editor.GetFoldingMarginPaletteColors(out var backColor, out var indicatorFillColor, out var indicatorBorderColor, out var indicatorTextColor);
+        g.Clear(backColor);
 
         // Get first visible line
         var firstLine = rtb.GetLineFromCharIndex(rtb.GetCharIndexFromPosition(new Point(0, 0)));
@@ -52,12 +54,12 @@ internal class FoldingMargin : Control
                 var y = yOffset + (block.StartLine - firstLine) * lineHeight + lineHeight / 2;
                 var rect = new Rectangle(Width / 2 - 5, (int)y - 5, 10, 10);
 
-                using (var brush = new SolidBrush(SystemColors.ControlDark))
+                using (var brush = new SolidBrush(indicatorFillColor))
                 {
                     g.FillRectangle(brush, rect);
                 }
 
-                using (var pen = new Pen(SystemColors.ControlText))
+                using (var pen = new Pen(indicatorBorderColor))
                 {
                     g.DrawRectangle(pen, rect);
 
@@ -76,7 +78,7 @@ internal class FoldingMargin : Control
                         var indicatorY = yOffset + (block.StartLine + 1 - firstLine) * lineHeight;
                         if (block.StartLine + 1 <= lastLine && indicatorY >= 0)
                         {
-                            using (var indicatorBrush = new SolidBrush(Color.FromArgb(150, SystemColors.GrayText)))
+                            using (var indicatorBrush = new SolidBrush(indicatorTextColor))
                             {
                                 g.DrawString("...", rtb.Font, indicatorBrush, 2, indicatorY);
                             }
