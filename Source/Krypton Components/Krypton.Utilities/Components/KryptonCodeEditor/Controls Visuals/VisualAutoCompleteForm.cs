@@ -76,29 +76,43 @@ internal class VisualAutoCompleteForm : Form
     public void SetItems(List<string> items)
     {
         _items = items;
-        _currentWordPrefix = ""; // Reset prefix when items change
-        FilterItems("");
     }
 
     public void FilterItems(string filter)
     {
         _filter = filter;
-        
-        // Clear items first to prevent memory leaks
-        _listBox.Items.Clear();
-        
-        var filtered = string.IsNullOrEmpty(filter)
-            ? _items
-            : _items.Where(i => i.StartsWith(filter, StringComparison.OrdinalIgnoreCase)).ToList();
-
-        foreach (var item in filtered.Take(20)) // Limit to 20 items
+        if (_items == null)
         {
-            _listBox.Items.Add(item);
+            _listBox.Items.Clear();
+            return;
         }
 
-        if (_listBox.Items.Count > 0)
+        // Batch updates to reduce flicker while the popup is active
+        _listBox.BeginUpdate();
+        SuspendLayout();
+        try
         {
-            _listBox.SelectedIndex = 0;
+            // Clear items first to prevent memory leaks
+            _listBox.Items.Clear();
+
+            var filtered = string.IsNullOrEmpty(filter)
+                ? _items
+                : _items.Where(i => i.StartsWith(filter, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            foreach (var item in filtered.Take(20)) // Limit to 20 items
+            {
+                _listBox.Items.Add(item);
+            }
+
+            if (_listBox.Items.Count > 0)
+            {
+                _listBox.SelectedIndex = 0;
+            }
+        }
+        finally
+        {
+            ResumeLayout();
+            _listBox.EndUpdate();
         }
 
         // Resize form dynamically based on content
@@ -229,6 +243,7 @@ internal class VisualAutoCompleteForm : Form
         {
             var cp = base.CreateParams;
             cp.ExStyle |= 0x00000008; // WS_EX_TOPMOST
+            cp.ExStyle |= unchecked((int)0x08000000); // WS_EX_NOACTIVATE
             return cp;
         }
     }

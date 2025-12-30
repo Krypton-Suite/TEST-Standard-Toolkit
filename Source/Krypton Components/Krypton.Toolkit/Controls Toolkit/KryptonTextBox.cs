@@ -332,7 +332,6 @@ public class KryptonTextBox : VisualControlBase,
     private bool _showEllipsisButton;
     //private bool _isInAlphaNumericMode;
     private readonly ButtonSpecAny _editorButton;
-    private bool _processingInternalTextBoxValidation;
     #endregion
 
     #region Events
@@ -429,8 +428,15 @@ public class KryptonTextBox : VisualControlBase,
     /// </summary>
     public KryptonTextBox()
     {
-        // Contains another control and needs marking as such for validation to work
-        SetStyle(ControlStyles.ContainerControl, true);
+        // NOTE: ContainerControl style removed to prevent duplicate validation events.
+        // The fix: Do NOT subscribe to internal textbox Validating/Validated events.
+        // Windows Forms automatically validates the parent control when a child control loses focus.
+        // With ContainerControl style AND subscribing to internal validation events, validation fires twice:
+        // 1. InternalTextBox.Validating fires → we forward it → KryptonTextBox.Validating fires
+        // 2. Windows Forms validates KryptonTextBox (due to ContainerControl) → KryptonTextBox.Validating fires again
+        // By NOT subscribing to internal validation events, Windows Forms handles validation automatically
+        // and it only fires once. ContainerControl style is not needed for validation to work.
+        // SetStyle(ControlStyles.ContainerControl, true);
 
         // By default, we are not multiline and so the height is fixed
         SetStyle(ControlStyles.FixedHeight, true);
@@ -475,8 +481,11 @@ public class KryptonTextBox : VisualControlBase,
         _textBox.KeyUp += OnTextBoxKeyUp;
         _textBox.KeyPress += OnTextBoxKeyPress;
         _textBox.PreviewKeyDown += OnTextBoxPreviewKeyDown;
-        _textBox.Validating += OnTextBoxValidating;
-        _textBox.Validated += OnTextBoxValidated;
+        // NOTE: Do NOT subscribe to Validating/Validated events from internal textbox.
+        // Windows Forms automatically validates the parent control when the child loses focus.
+        // Subscribing and forwarding causes duplicate validation events.
+        // _textBox.Validating += OnTextBoxValidating;
+        // _textBox.Validated += OnTextBoxValidated;
         _textBox.Click += OnTextBoxClick;  // SKC: make sure that the default click is also routed.
 
         // Create the element that fills the remainder space and remembers fill rectangle
@@ -1752,25 +1761,6 @@ public class KryptonTextBox : VisualControlBase,
         base.OnCausesValidationChanged(e);
     }
 
-    /// <summary>
-    /// Raises the Validating event.
-    /// </summary>
-    /// <param name="e">A CancelEventArgs that contains the event data.</param>
-    protected override void OnValidating(CancelEventArgs e)
-    {
-        // If we're not processing validation from the internal TextBox, this must be
-        // the container control validation being triggered. Since the internal TextBox
-        // already handles validation and forwards it to us, we suppress this duplicate
-        // validation call from the container control mechanism.
-        if (!_processingInternalTextBoxValidation)
-        {
-            // This is container control validation - suppress it to prevent duplicate events
-            return;
-        }
-
-        // This is validation from the internal TextBox - proceed normally
-        base.OnValidating(e);
-    }
 
     /// <summary>
     /// Process Windows-based messages.
@@ -1893,21 +1883,9 @@ public class KryptonTextBox : VisualControlBase,
 
     private void OnTextBoxPreviewKeyDown(object? sender, PreviewKeyDownEventArgs e) => OnPreviewKeyDown(e);
 
-    private void OnTextBoxValidated(object? sender, EventArgs e) => OnValidated(e);
-
-    private void OnTextBoxValidating(object? sender, CancelEventArgs e)
-    {
-        // Mark that we're processing validation from the internal TextBox
-        _processingInternalTextBoxValidation = true;
-        try
-        {
-            OnValidating(e);
-        }
-        finally
-        {
-            _processingInternalTextBoxValidation = false;
-        }
-    }
+    // NOTE: OnTextBoxValidating/OnTextBoxValidated methods removed.
+    // Windows Forms automatically validates the parent control when the child loses focus,
+    // so we don't need to subscribe to and forward the internal textbox validation events.
 
     private void OnShowToolTip(object? sender, ToolTipEventArgs e)
     {
