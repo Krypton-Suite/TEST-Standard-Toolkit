@@ -22,7 +22,7 @@ namespace Krypton.Utilities;
 [Designer(typeof(KryptonCodeEditorDesigner))]
 [DesignerCategory(@"code")]
 [Description(@"Provides a native code editor with syntax highlighting, line numbering, code folding, and Krypton theming.")]
-public class KryptonCodeEditor : VisualControlBase,
+public class KryptonCodeEditor : VisualPanel,
     IContainedInputControl
 {
     #region Instance Fields
@@ -45,8 +45,23 @@ public class KryptonCodeEditor : VisualControlBase,
     private VisualAutoCompleteForm? _autoCompleteForm;
     private List<string> _autoCompleteKeywords;
     private bool _autoCompleteEnabled = true;
+    private KryptonAutoTextSuggestProvider? _autoTextSuggestProvider;
     private EditorTheme _theme;
     private EditorThemeType _themeType = EditorThemeType.Light;
+    
+    #endregion
+    
+    #region Instance Fields - State Properties
+    
+    // Line number margin state properties (using Triple for Back + Content)
+    private readonly PaletteTripleRedirect _lineNumberMarginStateCommon;
+    private readonly PaletteTriple _lineNumberMarginStateDisabled;
+    private readonly PaletteTriple _lineNumberMarginStateNormal;
+    
+    // Folding margin state properties (using Triple for Back + Content)
+    private readonly PaletteTripleRedirect _foldingMarginStateCommon;
+    private readonly PaletteTriple _foldingMarginStateDisabled;
+    private readonly PaletteTriple _foldingMarginStateNormal;
     
     #endregion
     
@@ -60,6 +75,16 @@ public class KryptonCodeEditor : VisualControlBase,
         // Default properties
         _editorFont = new Font("Consolas", 10F);
         _foldBlocks = new List<FoldBlock>();
+        
+        // Create line number margin palette storage (Back + Content for text color)
+        _lineNumberMarginStateCommon = new PaletteTripleRedirect(Redirector!, PaletteBackStyle.PanelAlternate, PaletteBorderStyle.ControlClient, PaletteContentStyle.LabelNormalPanel, NeedPaintDelegate);
+        _lineNumberMarginStateDisabled = new PaletteTriple(_lineNumberMarginStateCommon, NeedPaintDelegate);
+        _lineNumberMarginStateNormal = new PaletteTriple(_lineNumberMarginStateCommon, NeedPaintDelegate);
+        
+        // Create folding margin palette storage (Back + Content for indicator colors)
+        _foldingMarginStateCommon = new PaletteTripleRedirect(Redirector!, PaletteBackStyle.PanelClient, PaletteBorderStyle.ControlClient, PaletteContentStyle.LabelNormalPanel, NeedPaintDelegate);
+        _foldingMarginStateDisabled = new PaletteTriple(_foldingMarginStateCommon, NeedPaintDelegate);
+        _foldingMarginStateNormal = new PaletteTriple(_foldingMarginStateCommon, NeedPaintDelegate);
         
         // Initialize theme
         _theme = new EditorTheme(_themeType);
@@ -126,6 +151,13 @@ public class KryptonCodeEditor : VisualControlBase,
         
         // Set default size
         Size = new Size(300, 200);
+        
+        // Initialize background color from palette
+        var palette = GetResolvedPalette();
+        if (palette != null)
+        {
+            base.BackColor = palette.GetBackColor1(PaletteBackStyle.PanelClient, PaletteState.Normal);
+        }
         
         // Update line number margin visibility
         UpdateLineNumberMargin();
@@ -211,6 +243,12 @@ public class KryptonCodeEditor : VisualControlBase,
             {
                 _language = value;
                 UpdateAutoCompleteKeywords();
+                
+                // Update AutoTextSuggestProvider suggestions if enabled
+                if (_autoTextSuggestProvider != null && _autoTextSuggestProvider.Enabled)
+                {
+                    UpdateAutoTextSuggestProviderKeywords();
+                }
                 ApplySyntaxHighlighting();
             }
         }
@@ -251,6 +289,36 @@ public class KryptonCodeEditor : VisualControlBase,
         get => _autoCompleteEnabled;
         set => _autoCompleteEnabled = value;
     }
+    
+    /// <summary>
+    /// Gets the auto text suggest provider instance for advanced suggestion functionality.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Provides access to the auto text suggest provider for advanced suggestion functionality. Attach this to customize suggestions beyond the built-in keyword autocomplete.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public KryptonAutoTextSuggestProvider AutoTextSuggestProvider
+    {
+        get
+        {
+            if (_autoTextSuggestProvider == null)
+            {
+                _autoTextSuggestProvider = new KryptonAutoTextSuggestProvider
+                {
+                    AttachedControl = _richTextBox.RichTextBox,
+                    Enabled = false, // Disabled by default, user can enable if desired
+                    MinCharsToShow = 1,
+                    ShowDelay = 300,
+                    MaxVisibleItems = 8,
+                    PopupWidth = 250,
+                    CaseSensitive = false,
+                    MatchMode = KryptonAutoTextSuggestMatchMode.StartsWith
+                };
+            }
+            return _autoTextSuggestProvider;
+        }
+    }
+    
+    private bool ShouldSerializeAutoTextSuggestProvider() => _autoTextSuggestProvider != null && _autoTextSuggestProvider.Enabled;
     
     /// <summary>
     /// Gets and sets the editor theme for syntax highlighting.
@@ -318,6 +386,46 @@ public class KryptonCodeEditor : VisualControlBase,
     public Control ContainedControl => RichTextBox;
     
     /// <summary>
+    /// Gets access to the common RichTextBox appearance that other states can override.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining common RichTextBox appearance that other states can override.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteInputControlTripleRedirect RichTextBoxStateCommon => _richTextBox.StateCommon;
+    
+    private bool ShouldSerializeRichTextBoxStateCommon() => !_richTextBox.StateCommon.IsDefault;
+    
+    /// <summary>
+    /// Gets access to the disabled RichTextBox appearance.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining disabled RichTextBox appearance.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteInputControlTripleStates RichTextBoxStateDisabled => _richTextBox.StateDisabled;
+    
+    private bool ShouldSerializeRichTextBoxStateDisabled() => !_richTextBox.StateDisabled.IsDefault;
+    
+    /// <summary>
+    /// Gets access to the normal RichTextBox appearance.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining normal RichTextBox appearance.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteInputControlTripleStates RichTextBoxStateNormal => _richTextBox.StateNormal;
+    
+    private bool ShouldSerializeRichTextBoxStateNormal() => !_richTextBox.StateNormal.IsDefault;
+    
+    /// <summary>
+    /// Gets access to the active RichTextBox appearance.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining active RichTextBox appearance.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteInputControlTripleStates RichTextBoxStateActive => _richTextBox.StateActive;
+    
+    private bool ShouldSerializeRichTextBoxStateActive() => !_richTextBox.StateActive.IsDefault;
+    
+    /// <summary>
     /// Gets or sets the selected text.
     /// </summary>
     [Browsable(false)]
@@ -350,6 +458,82 @@ public class KryptonCodeEditor : VisualControlBase,
         set => _richTextBox.SelectionLength = value;
     }
     
+    /// <summary>
+    /// Gets or sets the background color of the control.
+    /// </summary>
+    [Browsable(false)]
+    [Bindable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public override Color BackColor
+    {
+        get
+        {
+            var palette = GetResolvedPalette();
+            return palette?.GetBackColor1(PaletteBackStyle.PanelClient, PaletteState.Normal) ?? base.BackColor;
+        }
+        set => base.BackColor = value;
+    }
+    
+    /// <summary>
+    /// Gets access to the common line number margin appearance that other states can override.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining common line number margin appearance that other states can override.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteTripleRedirect LineNumberMarginStateCommon => _lineNumberMarginStateCommon;
+    
+    private bool ShouldSerializeLineNumberMarginStateCommon() => !_lineNumberMarginStateCommon.IsDefault;
+    
+    /// <summary>
+    /// Gets access to the disabled line number margin appearance.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining disabled line number margin appearance.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteTriple LineNumberMarginStateDisabled => _lineNumberMarginStateDisabled;
+    
+    private bool ShouldSerializeLineNumberMarginStateDisabled() => !_lineNumberMarginStateDisabled.IsDefault;
+    
+    /// <summary>
+    /// Gets access to the normal line number margin appearance.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining normal line number margin appearance.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteTriple LineNumberMarginStateNormal => _lineNumberMarginStateNormal;
+    
+    private bool ShouldSerializeLineNumberMarginStateNormal() => !_lineNumberMarginStateNormal.IsDefault;
+    
+    /// <summary>
+    /// Gets access to the common folding margin appearance that other states can override.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining common folding margin appearance that other states can override.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteTripleRedirect FoldingMarginStateCommon => _foldingMarginStateCommon;
+    
+    private bool ShouldSerializeFoldingMarginStateCommon() => !_foldingMarginStateCommon.IsDefault;
+    
+    /// <summary>
+    /// Gets access to the disabled folding margin appearance.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining disabled folding margin appearance.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteTriple FoldingMarginStateDisabled => _foldingMarginStateDisabled;
+    
+    private bool ShouldSerializeFoldingMarginStateDisabled() => !_foldingMarginStateDisabled.IsDefault;
+    
+    /// <summary>
+    /// Gets access to the normal folding margin appearance.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Overrides for defining normal folding margin appearance.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public PaletteTriple FoldingMarginStateNormal => _foldingMarginStateNormal;
+    
+    private bool ShouldSerializeFoldingMarginStateNormal() => !_foldingMarginStateNormal.IsDefault;
+    
     #endregion
     
     #region Protected
@@ -361,6 +545,41 @@ public class KryptonCodeEditor : VisualControlBase,
     protected virtual void OnTextChanged(EventArgs e)
     {
         TextChanged?.Invoke(this, e);
+    }
+    
+    /// <summary>
+    /// Raises the PaletteChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs containing the event data.</param>
+    protected override void OnPaletteChanged(EventArgs e)
+    {
+        base.OnPaletteChanged(e);
+        
+        // Update the background color from palette
+        var palette = GetResolvedPalette();
+        if (palette != null)
+        {
+            base.BackColor = palette.GetBackColor1(PaletteBackStyle.PanelClient, PaletteState.Normal);
+        }
+        
+        // Invalidate line number margin and folding margin to refresh their colors
+        _lineNumberMargin?.Invalidate();
+        _foldingMargin?.Invalidate();
+        
+        Invalidate();
+    }
+    
+    /// <summary>
+    /// Raises the EnabledChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnEnabledChanged(EventArgs e)
+    {
+        base.OnEnabledChanged(e);
+        
+        // Invalidate line number margin and folding margin to refresh their colors based on enabled state
+        _lineNumberMargin?.Invalidate();
+        _foldingMargin?.Invalidate();
     }
     
     /// <summary>
@@ -382,6 +601,61 @@ public class KryptonCodeEditor : VisualControlBase,
     #endregion
     
     #region Private Methods
+
+    internal void GetLineNumberPaletteColors(out Color backColor, out Color textColor)
+    {
+        var state = Enabled ? PaletteState.Normal : PaletteState.Disabled;
+        var stateObject = Enabled ? _lineNumberMarginStateNormal : _lineNumberMarginStateDisabled;
+        
+        backColor = stateObject.Back.GetBackColor1(state);
+        textColor = stateObject.Content.GetContentShortTextColor1(state);
+    }
+    
+    internal void GetFoldingMarginPaletteColors(out Color backColor, out Color indicatorFillColor, out Color indicatorBorderColor, out Color indicatorTextColor)
+    {
+        var state = Enabled ? PaletteState.Normal : PaletteState.Disabled;
+        var stateObject = Enabled ? _foldingMarginStateNormal : _foldingMarginStateDisabled;
+        var palette = GetResolvedPalette();
+        
+        backColor = stateObject.Back.GetBackColor1(state);
+        var textColor = stateObject.Content.GetContentShortTextColor1(state);
+        
+        // For indicator fill, use ControlClient style for a button-like appearance
+        // For border/text, use the text color from content
+        // For the "..." indicator, use a semi-transparent version of text color
+        indicatorFillColor = palette?.GetBackColor1(PaletteBackStyle.ControlClient, state) ?? SystemColors.ControlDark;
+        indicatorBorderColor = textColor;
+        indicatorTextColor = Color.FromArgb(150, textColor);
+    }
+
+    #region Win32 Redraw Suppression
+
+    private static class Win32
+    {
+        internal const uint WM_SETREDRAW = 0x000B;
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    }
+
+    private static void BeginRedraw(Control control)
+    {
+        if (control != null && control.IsHandleCreated)
+        {
+            Win32.SendMessage(control.Handle, Win32.WM_SETREDRAW, IntPtr.Zero, IntPtr.Zero);
+        }
+    }
+
+    private static void EndRedraw(Control control)
+    {
+        if (control != null && control.IsHandleCreated)
+        {
+            Win32.SendMessage(control.Handle, Win32.WM_SETREDRAW, (IntPtr)1, IntPtr.Zero);
+            control.Invalidate();
+        }
+    }
+
+    #endregion
     
     private void InitializeKeywordColors()
     {
@@ -492,20 +766,28 @@ public class KryptonCodeEditor : VisualControlBase,
             
             // Get tokens
             var tokens = Tokenize(text);
-            
-            // Apply formatting
-            _richTextBox.SelectAll();
-            _richTextBox.SelectionColor = GetColorForTokenType(TokenType.Normal);
-            _richTextBox.SelectionFont = _editorFont;
-            
-            foreach (var token in tokens)
+
+            // Apply formatting (suppress redraw to avoid flashing)
+            BeginRedraw(_richTextBox);
+            try
             {
-                if (token.Type != TokenType.Normal)
+                _richTextBox.SelectAll();
+                _richTextBox.SelectionColor = GetColorForTokenType(TokenType.Normal);
+                _richTextBox.SelectionFont = _editorFont;
+
+                foreach (var token in tokens)
                 {
-                    _richTextBox.Select(token.StartIndex, token.Length);
-                    _richTextBox.SelectionColor = GetColorForTokenType(token.Type);
-                    _richTextBox.SelectionFont = GetFontForTokenType(token.Type);
+                    if (token.Type != TokenType.Normal)
+                    {
+                        _richTextBox.Select(token.StartIndex, token.Length);
+                        _richTextBox.SelectionColor = GetColorForTokenType(token.Type);
+                        _richTextBox.SelectionFont = GetFontForTokenType(token.Type);
+                    }
                 }
+            }
+            finally
+            {
+                EndRedraw(_richTextBox);
             }
             
             // Restore selection
@@ -1349,6 +1631,14 @@ public class KryptonCodeEditor : VisualControlBase,
     {
         if (_autoCompleteEnabled && _language != Language.None)
         {
+            // If the auto-complete popup is already visible, update it in-place.
+            // Re-running ShowAutoComplete() on every keypress causes noticeable flashing.
+            if (_autoCompleteForm != null && _autoCompleteForm.Visible)
+            {
+                _autoCompleteForm.UpdateFilter(e.KeyChar);
+                return;
+            }
+
             // Show auto-complete on certain characters
             if (char.IsLetterOrDigit(e.KeyChar) || e.KeyChar == '_')
             {
@@ -1369,11 +1659,16 @@ public class KryptonCodeEditor : VisualControlBase,
         UpdateAutoCompleteKeywords();
     }
     
-    private void UpdateAutoCompleteKeywords()
+    private void UpdateAutoTextSuggestProviderKeywords()
     {
-        _autoCompleteKeywords.Clear();
+        if (_autoTextSuggestProvider == null)
+        {
+            return;
+        }
         
-        _autoCompleteKeywords.AddRange(_language switch
+        _autoTextSuggestProvider.Suggestions.Clear();
+        
+        var keywords = _language switch
         {
             Language.CSharp => new[] { "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "else", "enum", "event", "explicit", "extern", "false", "finally", "fixed", "float", "for", "foreach", "goto", "if", "implicit", "in", "int", "interface", "internal", "is", "lock", "long", "namespace", "new", "null", "object", "operator", "out", "override", "params", "private", "protected", "public", "readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string", "struct", "switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void", "volatile", "while", "async", "await", "Console", "WriteLine", "ReadLine", "Math", "String", "Int32", "Double", "Boolean" },
             Language.Cpp => new[] { "auto", "bool", "break", "case", "catch", "char", "class", "const", "continue", "default", "delete", "do", "double", "else", "enum", "extern", "float", "for", "goto", "if", "int", "long", "namespace", "new", "operator", "private", "protected", "public", "return", "short", "signed", "sizeof", "static", "struct", "switch", "template", "this", "throw", "try", "typedef", "union", "unsigned", "using", "virtual", "void", "volatile", "while", "cout", "cin", "endl", "string", "vector", "map", "set" },
@@ -1390,8 +1685,18 @@ public class KryptonCodeEditor : VisualControlBase,
             Language.Kotlin => new[] { "abstract", "actual", "annotation", "as", "break", "by", "catch", "class", "companion", "const", "constructor", "continue", "crossinline", "data", "do", "dynamic", "else", "enum", "expect", "external", "final", "finally", "for", "fun", "get", "if", "import", "in", "infix", "init", "inline", "inner", "interface", "internal", "is", "lateinit", "noinline", "null", "object", "open", "operator", "out", "override", "package", "private", "protected", "public", "reified", "return", "sealed", "set", "super", "suspend", "tailrec", "this", "throw", "try", "typealias", "typeof", "val", "var", "vararg", "when", "where", "while", "Any", "Boolean", "Byte", "Char", "Double", "Float", "Int", "Long", "Short", "String", "Unit", "Nothing", "Number", "Comparable" },
             Language.Sql => new[] { "SELECT", "FROM", "WHERE", "INSERT", "UPDATE", "DELETE", "CREATE", "ALTER", "DROP", "TABLE", "INDEX", "VIEW", "PROCEDURE", "FUNCTION", "TRIGGER", "DATABASE", "SCHEMA", "GRANT", "REVOKE", "COMMIT", "ROLLBACK", "BEGIN", "END", "IF", "ELSE", "WHILE", "FOR", "LOOP", "CASE", "WHEN", "THEN", "ELSE", "END", "DECLARE", "SET", "EXEC", "EXECUTE", "UNION", "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "OUTER", "ON", "GROUP", "BY", "ORDER", "HAVING", "DISTINCT", "TOP", "LIMIT", "OFFSET", "AS", "AND", "OR", "NOT", "IN", "EXISTS", "LIKE", "BETWEEN", "IS", "NULL", "TRUE", "FALSE", "COUNT", "SUM", "AVG", "MAX", "MIN", "CAST", "CONVERT", "GETDATE", "GETUTCDATE", "YEAR", "MONTH", "DAY", "DATEPART", "DATEADD", "DATEDIFF" },
             Language.PowerShell => new[] { "if", "else", "elseif", "switch", "for", "foreach", "while", "do", "until", "break", "continue", "return", "function", "filter", "workflow", "class", "enum", "namespace", "using", "module", "param", "begin", "process", "end", "try", "catch", "finally", "throw", "trap", "Get-", "Set-", "New-", "Remove-", "Add-", "Clear-", "Copy-", "Export-", "Import-", "Move-", "Out-", "Pop-", "Push-", "Rename-", "Resolve-", "Search-", "Select-", "Send-", "Sort-", "Split-", "Start-", "Stop-", "Suspend-", "Test-", "Trace-", "Update-", "Wait-", "Write-" },
-            _ => new List<string>()
-        });
+            _ => Array.Empty<string>()
+        };
+        
+        // Convert keywords to KryptonAutoTextSuggestItem objects
+        foreach (var keyword in keywords)
+        {
+            _autoTextSuggestProvider.Suggestions.Add(new KryptonAutoTextSuggestItem
+            {
+                DisplayText = keyword,
+                InsertText = keyword
+            });
+        }
     }
     
     private void ShowAutoComplete()
@@ -1402,7 +1707,13 @@ public class KryptonCodeEditor : VisualControlBase,
         }
         
         var currentWord = GetCurrentWord();
-        _autoCompleteForm.SetItems(_autoCompleteKeywords);
+        // Only set source items once per open; filtering happens on keypress while open.
+        if (!_autoCompleteForm.Visible)
+        {
+            _autoCompleteForm.SetItems(_autoCompleteKeywords);
+        }
+
+        _autoCompleteForm.SetCurrentWordPrefix(currentWord);
         _autoCompleteForm.FilterItems(currentWord);
         
         if (_autoCompleteForm.ItemCount > 0)
@@ -1410,7 +1721,10 @@ public class KryptonCodeEditor : VisualControlBase,
             var pos = _richTextBox.GetPositionFromCharIndex(_richTextBox.SelectionStart);
             var screenPos = PointToScreen(pos);
             _autoCompleteForm.Location = new Point(screenPos.X, screenPos.Y + _richTextBox.Font.Height);
-            _autoCompleteForm.Show();
+            if (!_autoCompleteForm.Visible)
+            {
+                _autoCompleteForm.Show();
+            }
         }
         else
         {
@@ -1434,6 +1748,10 @@ public class KryptonCodeEditor : VisualControlBase,
     
     internal void ToggleFoldBlock(FoldBlock block)
     {
+        // Suppress redraw to avoid flashing while we change formatting
+        BeginRedraw(_richTextBox);
+        try
+        {
         if (block.IsFolded)
         {
             // Hide lines
@@ -1461,6 +1779,11 @@ public class KryptonCodeEditor : VisualControlBase,
                 _richTextBox.SelectionFont = _editorFont;
                 _richTextBox.SelectionLength = 0;
             }
+        }
+        }
+        finally
+        {
+            EndRedraw(_richTextBox);
         }
         
         _foldingMargin.Invalidate();
