@@ -139,6 +139,12 @@ public sealed class KryptonManager : Component
     private static RenderVisualStudio2010With2013? _renderVisualStudio2010With2013;
     private static RenderVisualStudio2010WithMicrosoft365? _renderVisualStudio2010WithMicrosoft365;
     private static RenderVisualStudio? _renderVisualStudio;
+    private static RenderVisualStudio2012? _renderVisualStudio2012;
+    private static RenderVisualStudio2013? _renderVisualStudio2013;
+    private static RenderVisualStudio2015? _renderVisualStudio2015;
+    private static RenderVisualStudio2017? _renderVisualStudio2017;
+    private static RenderVisualStudio2019? _renderVisualStudio2019;
+    private static RenderVisualStudio2022? _renderVisualStudio2022;
 
     #endregion
 
@@ -882,6 +888,14 @@ public sealed class KryptonManager : Component
                 return PaletteMaterialLightRipple;
             case PaletteMode.MaterialDarkRipple:
                 return PaletteMaterialDarkRipple;
+            case PaletteMode.Windows10AcrylicLight:
+                return PaletteWindows10AcrylicLight;
+            case PaletteMode.Windows10AcrylicDark:
+                return PaletteWindows10AcrylicDark;
+            case PaletteMode.Windows11MicaLight:
+                return PaletteWindows11MicaLight;
+            case PaletteMode.Windows11MicaDark:
+                return PaletteWindows11MicaDark;
 
             case PaletteMode.Custom:
             case PaletteMode.Global:
@@ -1169,11 +1183,19 @@ public sealed class KryptonManager : Component
     public static PaletteMaterialDark PaletteMaterialDark => _paletteMaterialDark ??= new PaletteMaterialDark();
     public static PaletteMaterialLightRipple PaletteMaterialLightRipple => _paletteMaterialLightRipple ??= new PaletteMaterialLightRipple();
     public static PaletteMaterialDarkRipple PaletteMaterialDarkRipple => _paletteMaterialDarkRipple ??= new PaletteMaterialDarkRipple();
+    public static PaletteWindows10AcrylicLight PaletteWindows10AcrylicLight => _paletteWindows10AcrylicLight ??= new PaletteWindows10AcrylicLight();
+    public static PaletteWindows10AcrylicDark PaletteWindows10AcrylicDark => _paletteWindows10AcrylicDark ??= new PaletteWindows10AcrylicDark();
+    public static PaletteWindows11MicaLight PaletteWindows11MicaLight => _paletteWindows11MicaLight ??= new PaletteWindows11MicaLight();
+    public static PaletteWindows11MicaDark PaletteWindows11MicaDark => _paletteWindows11MicaDark ??= new PaletteWindows11MicaDark();
 
     private static PaletteMaterialLight? _paletteMaterialLight;
     private static PaletteMaterialDark? _paletteMaterialDark;
     private static PaletteMaterialLightRipple? _paletteMaterialLightRipple;
     private static PaletteMaterialDarkRipple? _paletteMaterialDarkRipple;
+    private static PaletteWindows10AcrylicLight? _paletteWindows10AcrylicLight;
+    private static PaletteWindows10AcrylicDark? _paletteWindows10AcrylicDark;
+    private static PaletteWindows11MicaLight? _paletteWindows11MicaLight;
+    private static PaletteWindows11MicaDark? _paletteWindows11MicaDark;
 
     //public static PaletteBase CustomPaletteBase => _customPalette ??= new PaletteBase ();
 
@@ -1280,6 +1302,36 @@ public sealed class KryptonManager : Component
     /// Gets the single instance of the Visual Studio 2010 Office 365 renderer.
     /// </summary>
     public static RenderVisualStudio2010WithMicrosoft365 RenderVisualStudio2010WithMicrosoft365 => _renderVisualStudio2010WithMicrosoft365 ??= new RenderVisualStudio2010WithMicrosoft365();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2012 renderer.
+    /// </summary>
+    public static RenderVisualStudio2012 RenderVisualStudio2012 => _renderVisualStudio2012 ??= new RenderVisualStudio2012();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2013 renderer.
+    /// </summary>
+    public static RenderVisualStudio2013 RenderVisualStudio2013 => _renderVisualStudio2013 ??= new RenderVisualStudio2013();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2015 renderer.
+    /// </summary>
+    public static RenderVisualStudio2015 RenderVisualStudio2015 => _renderVisualStudio2015 ??= new RenderVisualStudio2015();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2017 renderer.
+    /// </summary>
+    public static RenderVisualStudio2017 RenderVisualStudio2017 => _renderVisualStudio2017 ??= new RenderVisualStudio2017();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2019 renderer.
+    /// </summary>
+    public static RenderVisualStudio2019 RenderVisualStudio2019 => _renderVisualStudio2019 ??= new RenderVisualStudio2019();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2022 renderer.
+    /// </summary>
+    public static RenderVisualStudio2022 RenderVisualStudio2022 => _renderVisualStudio2022 ??= new RenderVisualStudio2022();
 
     /// <summary>
     /// Gets the single instance of the standard renderer.

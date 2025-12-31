@@ -5735,7 +5735,7 @@ public class RenderStandard : RenderBase
 
     /// <summary>
     /// Draw background with Acrylic hover effect: Windows 10-style spotlight that follows the cursor.
-    /// Creates a bright highlight under the cursor that fades smoothly outward.
+    /// Simple, direct implementation using a radial gradient overlay.
     /// </summary>
     protected virtual void DrawBackAcrylicHover(RenderContext context,
         Rectangle rect,
@@ -5747,176 +5747,99 @@ public class RenderStandard : RenderBase
         GraphicsPath path,
         Point mousePosition)
     {
-        // Get settings
         var settings = KryptonManager.AcrylicHoverSettingsStatic;
-        
-        // Get the rectangle to use when dealing with gradients
         Rectangle gradientRect = context.GetAlignedRectangle(PaletteRectangleAlign.Local, rect);
         
-        // STEP 1: Draw the base background first (standard rendering)
+        // Step 1: Draw the normal background
         using (Brush backBrush = CreateColorBrush(gradientRect, backColor1, backColor2,
                    backColorStyle, backColorAngle, orientation))
         {
             context.Graphics.FillPath(backBrush, path);
         }
         
-        // STEP 2: Create the Acrylic spotlight overlay effect
-        // The spotlight should be a bright highlight that follows the cursor
+        // Step 2: Draw the spotlight overlay
+        // Calculate spotlight parameters
         int centerX = mousePosition.X;
         int centerY = mousePosition.Y;
         
-        // Calculate spotlight size - should be proportional to control size but not too large
-        int rectWidth = rect.Width;
-        int rectHeight = rect.Height;
-        float spotlightRadius = Math.Min(rectWidth, rectHeight) * 0.6f; // 60% of smaller dimension
+        // Spotlight size: proportional to control, but reasonable limits
+        int minDim = Math.Min(rect.Width, rect.Height);
+        float radius = minDim * 0.35f; // 35% of smaller dimension
+        radius = Math.Max(25f, Math.Min(radius, 80f)); // Clamp between 25-80 pixels
         
-        // Ensure minimum and maximum radius for visibility
-        spotlightRadius = Math.Max(30f, Math.Min(spotlightRadius, 150f));
+        // Determine highlight color
+        Color highlightColor = settings.LightColor ?? Color.White;
         
-        // Calculate the bright highlight color
-        // Windows 10 Acrylic uses a bright white/light highlight that's noticeably brighter than base
-        Color baseColor = backColor1;
-        Color highlightColor;
+        // Calculate alpha based on intensity (0.0 to 2.0 maps to 60-180 alpha)
+        float intensity = Math.Max(0.0f, Math.Min(2.0f, settings.Intensity));
+        int alpha = (int)(60 + (intensity * 60)); // 60-180 alpha range
         
-        if (settings.LightColor.HasValue)
-        {
-            highlightColor = settings.LightColor.Value;
-        }
-        else
-        {
-            // Create a bright highlight by significantly lightening the base color
-            // Windows 10 Acrylic uses a very bright, almost white highlight
-            highlightColor = ControlPaint.LightLight(baseColor);
-            
-            // Further lighten by blending with white to ensure visibility
-            // The highlight should be noticeably brighter than the base
-            float baseLuminance = GetLuminance(baseColor);
-            if (baseLuminance < 0.5f)
-            {
-                // Dark base - use more white for contrast
-                highlightColor = CommonHelper.MergeColors(highlightColor, 0.3f, Color.White, 0.7f);
-            }
-            else
-            {
-                // Light base - still add some white for visibility
-                highlightColor = CommonHelper.MergeColors(highlightColor, 0.5f, Color.White, 0.5f);
-            }
-        }
-        
-        // Apply intensity to control how bright the highlight is
-        float intensityFactor = Math.Min(2.0f, Math.Max(0.0f, settings.Intensity));
-        if (intensityFactor != 1.0f)
-        {
-            if (intensityFactor < 1.0f)
-            {
-                // Blend toward base color for lower intensity
-                highlightColor = CommonHelper.MergeColors(baseColor, 1.0f - intensityFactor, highlightColor, intensityFactor);
-            }
-            else
-            {
-                // Blend toward white for higher intensity
-                float extraIntensity = (intensityFactor - 1.0f) * 0.4f;
-                highlightColor = CommonHelper.MergeColors(highlightColor, 1.0f - extraIntensity, Color.White, extraIntensity);
-            }
-        }
-        
-        // Create a circular path for the spotlight centered at cursor
-        RectangleF spotlightRect = new RectangleF(
-            centerX - spotlightRadius,
-            centerY - spotlightRadius,
-            spotlightRadius * 2,
-            spotlightRadius * 2);
+        // Create circular spotlight path
+        RectangleF spotlightBounds = new RectangleF(
+            centerX - radius,
+            centerY - radius,
+            radius * 2,
+            radius * 2);
         
         using var spotlightPath = new GraphicsPath();
-        spotlightPath.AddEllipse(spotlightRect);
+        spotlightPath.AddEllipse(spotlightBounds);
         
-        // Use PathGradientBrush for true radial spotlight effect
-        using var pathGradient = new PathGradientBrush(spotlightPath);
-        pathGradient.CenterPoint = new PointF(centerX, centerY);
-        pathGradient.CenterColor = highlightColor;
+        // Create radial gradient brush
+        using var gradientBrush = new PathGradientBrush(spotlightPath);
+        gradientBrush.CenterPoint = new PointF(centerX, centerY);
+        gradientBrush.CenterColor = Color.FromArgb(alpha, highlightColor);
+        gradientBrush.SurroundColors = new[] { Color.Transparent };
         
-        // Use a color that's slightly lighter than base for the surround
-        // This ensures the spotlight is visible but blends naturally
-        Color surroundColor = CommonHelper.MergeColors(baseColor, 0.7f, highlightColor, 0.3f);
-        pathGradient.SurroundColors = new[] { surroundColor };
-        
-        // Set focus scales for tighter, more focused spotlight
+        // Quality-based focus scale (smaller = tighter spotlight)
         float focusScale = settings.Quality switch
         {
-            AcrylicHoverQuality.HighQuality => 0.08f,  // Very tight focus
-            AcrylicHoverQuality.Balanced => 0.15f,
-            AcrylicHoverQuality.Performance => 0.25f,
-            _ => 0.15f
+            AcrylicHoverQuality.HighQuality => 0.1f,
+            AcrylicHoverQuality.Balanced => 0.2f,
+            AcrylicHoverQuality.Performance => 0.3f,
+            _ => 0.2f
         };
-        pathGradient.FocusScales = new PointF(focusScale, focusScale);
+        gradientBrush.FocusScales = new PointF(focusScale, focusScale);
         
-        // Create smooth color blend for realistic spotlight falloff
-        float[] positions = settings.Quality switch
-        {
-            AcrylicHoverQuality.HighQuality => new[] { 0.0f, 0.12f, 0.3f, 0.55f, 0.8f, 1.0f },
-            AcrylicHoverQuality.Balanced => new[] { 0.0f, 0.15f, 0.35f, 0.6f, 1.0f },
-            AcrylicHoverQuality.Performance => new[] { 0.0f, 0.25f, 0.5f, 1.0f },
-            _ => new[] { 0.0f, 0.15f, 0.35f, 0.6f, 1.0f }
-        };
+        // Simple 3-stop gradient: bright center -> medium -> transparent edge
+        int stopCount = settings.Quality == AcrylicHoverQuality.Performance ? 3 : 4;
+        float[] positions = stopCount == 3 
+            ? new[] { 0.0f, 0.4f, 1.0f }
+            : new[] { 0.0f, 0.25f, 0.6f, 1.0f };
         
-        Color[] colors = new Color[positions.Length];
-        colors[0] = highlightColor; // Brightest at center
+        Color[] colors = new Color[stopCount];
+        colors[0] = Color.FromArgb(alpha, highlightColor);
         
-        // Create smooth fade from highlight to base color
-        for (int i = 1; i < positions.Length - 1; i++)
+        for (int i = 1; i < stopCount - 1; i++)
         {
             float t = positions[i];
-            // Use exponential falloff for more natural spotlight
-            float falloff = 1.0f - (t * t);
-            colors[i] = CommonHelper.MergeColors(surroundColor, 1.0f - falloff, highlightColor, falloff);
+            int stopAlpha = (int)(alpha * (1.0f - t));
+            colors[i] = Color.FromArgb(stopAlpha, highlightColor);
         }
-        colors[positions.Length - 1] = surroundColor; // Blend to surround at edges
+        colors[stopCount - 1] = Color.Transparent;
         
-        var blend = new ColorBlend(positions.Length)
+        gradientBrush.InterpolationColors = new ColorBlend
         {
             Colors = colors,
             Positions = positions
         };
-        pathGradient.InterpolationColors = blend;
         
-        // Save graphics state
-        var graphicsState = context.Graphics.Save();
+        // Draw the spotlight overlay
+        var state = context.Graphics.Save();
         try
         {
-            // Set high quality rendering for smooth spotlight
             context.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
-            context.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
             context.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             
-            // Clip to the original control path to keep spotlight within bounds
+            // Clip to control bounds
             using var clip = new Clipping(context.Graphics, path);
             
-            // Draw the spotlight overlay using the spotlight path
-            // This creates a bright highlight that fades outward
-            context.Graphics.FillPath(pathGradient, spotlightPath);
+            // Draw spotlight
+            context.Graphics.FillPath(gradientBrush, spotlightPath);
         }
         finally
         {
-            context.Graphics.Restore(graphicsState);
+            context.Graphics.Restore(state);
         }
-    }
-    
-    /// <summary>
-    /// Calculate the luminance (brightness) of a color.
-    /// </summary>
-    private static float GetLuminance(Color color)
-    {
-        // Using relative luminance formula
-        float r = color.R / 255f;
-        float g = color.G / 255f;
-        float b = color.B / 255f;
-        
-        // Apply gamma correction
-        r = r <= 0.03928f ? r / 12.92f : (float)Math.Pow((r + 0.055f) / 1.055f, 2.4f);
-        g = g <= 0.03928f ? g / 12.92f : (float)Math.Pow((g + 0.055f) / 1.055f, 2.4f);
-        b = b <= 0.03928f ? b / 12.92f : (float)Math.Pow((b + 0.055f) / 1.055f, 2.4f);
-        
-        return 0.2126f * r + 0.7152f * g + 0.0722f * b;
     }
     #endregion
 
