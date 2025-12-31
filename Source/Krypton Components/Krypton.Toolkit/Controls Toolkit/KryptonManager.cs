@@ -232,7 +232,8 @@ public sealed class KryptonManager : Component
                                ShouldSerializeUseKryptonFileDialogs() ||
                                ShouldSerializeBaseFont() ||
                                ShouldSerializeGlobalPaletteMode() ||
-                               ShouldSerializeTouchscreenSettings());
+                               ShouldSerializeTouchscreenSettings() ||
+                               ShouldSerializeAcrylicHoverSettings());
 
     /// <summary>
     /// Reset All values
@@ -249,6 +250,7 @@ public sealed class KryptonManager : Component
         ResetBaseFont();
         ResetGlobalPaletteMode();
         ResetTouchscreenSettings();
+        ResetAcrylicHoverSettings();
     }
 
     /// <summary>
@@ -521,6 +523,16 @@ public sealed class KryptonManager : Component
     private bool ShouldSerializeTouchscreenSettings() => !Settings.IsDefault;
     private void ResetTouchscreenSettings() => Settings.Reset();
 
+    /// <summary>
+    /// Gets the Acrylic hover effect settings.
+    /// </summary>
+    [Category(@"Acrylic Hover")]
+    [Description(@"Settings for Acrylic hover effects on interactive elements.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public AcrylicHoverSettings AcrylicHoverSettings => AcrylicHoverSettingsStatic;
+    private bool ShouldSerializeAcrylicHoverSettings() => !AcrylicHoverSettingsStatic.IsDefault;
+    private void ResetAcrylicHoverSettings() => AcrylicHoverSettingsStatic.Reset();
+
     #endregion
 
     #region Static Properties
@@ -540,6 +552,11 @@ public sealed class KryptonManager : Component
     /// <summary>Gets the touchscreen settings.</summary>
     /// <value>The touchscreen settings.</value>
     public static KryptonTouchscreenSettings Settings { get; } = new KryptonTouchscreenSettings();
+
+    /// <summary>
+    /// Gets the global Acrylic hover effect settings.
+    /// </summary>
+    public static AcrylicHoverSettings AcrylicHoverSettingsStatic { get; } = new AcrylicHoverSettings();
 
     #region Static ShowAdministratorSuffix
     /// <summary>
