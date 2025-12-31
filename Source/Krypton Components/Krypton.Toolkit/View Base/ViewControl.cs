@@ -162,6 +162,21 @@ public class ViewControl : Control
             // Create a render context for drawing the view
             using var context = new RenderContext(GetViewManager(), this, RootInstance, e.Graphics,
                 e.ClipRectangle, Renderer!);
+            
+            // Set mouse position for Acrylic hover effects
+            try
+            {
+                Point mousePos = PointToClient(MousePosition);
+                if (ClientRectangle.Contains(mousePos))
+                {
+                    context.MousePosition = mousePos;
+                }
+            }
+            catch
+            {
+                // Ignore errors when getting mouse position (e.g., control not visible)
+            }
+            
             // Ask the view to paint itself
             ViewLayoutControl.ChildView?.Render(context);
         }

@@ -391,6 +391,24 @@ public class ViewManager : GlobalId,
             // Create a render context for drawing the view
             using var context = new RenderContext(this,
                 Control, AlignControl, e.Graphics, e.ClipRectangle, renderer);
+            
+            // Set mouse position for Acrylic hover effects
+            if (Control != null && !Control.IsDisposed)
+            {
+                try
+                {
+                    Point mousePos = Control.PointToClient(Control.MousePosition);
+                    if (Control.ClientRectangle.Contains(mousePos))
+                    {
+                        context.MousePosition = mousePos;
+                    }
+                }
+                catch
+                {
+                    // Ignore errors when getting mouse position (e.g., control not visible)
+                }
+            }
+            
             Paint(context);
         }
     }

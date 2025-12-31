@@ -766,10 +766,26 @@ public class RenderStandard : RenderBase
 
                 // Use standard helper routine to create appropriate color brush
                 PaletteColorStyle colorStyle = paletteBorder.GetBorderColorStyle(state);
+                Color borderColor1 = paletteBorder.GetBorderColor1(state);
+                Color borderColor2 = paletteBorder.GetBorderColor2(state);
+                
+                // Apply Acrylic effect: darker border under cursor when tracking
+                var settings = KryptonManager.AcrylicHoverSettingsStatic;
+                if (settings.Enabled && 
+                    state == PaletteState.Tracking && 
+                    context.MousePosition.HasValue && 
+                    rect.Contains(context.MousePosition.Value))
+                {
+                    // Make border darker near cursor position, scaled by intensity
+                    float darkenFactor = 0.2f * settings.Intensity;
+                    borderColor1 = ControlPaint.Dark(borderColor1, darkenFactor);
+                    borderColor2 = ControlPaint.Dark(borderColor2, darkenFactor);
+                }
+                
                 using (var borderPen =
                        new Pen(
-                           CreateColorBrush(gradientRect, paletteBorder.GetBorderColor1(state),
-                               paletteBorder.GetBorderColor2(state), colorStyle, paletteBorder.GetBorderColorAngle(state),
+                           CreateColorBrush(gradientRect, borderColor1,
+                               borderColor2, colorStyle, paletteBorder.GetBorderColorAngle(state),
                                orientation), borderWidth))
                 {
                     if (colorStyle == PaletteColorStyle.Dashed)
@@ -1006,11 +1022,23 @@ public class RenderStandard : RenderBase
                     backColorStyle, backColorAngle, orientation, path);
                 break;
             default:
-                // Use standard helper routine to create appropriate color brush
-                using (Brush backBrush = CreateColorBrush(gradientRect, backColor1, backColor2,
-                           backColorStyle, backColorAngle, orientation))
+                // Apply Acrylic hover effect when tracking and mouse position is available
+                var settings = KryptonManager.AcrylicHoverSettingsStatic;
+                if (settings.Enabled && 
+                    state == PaletteState.Tracking && 
+                    context.MousePosition.HasValue && 
+                    rect.Contains(context.MousePosition.Value))
                 {
-                    context.Graphics.FillPath(backBrush, path);
+                    DrawBackAcrylicHover(context, rect, backColor1, backColor2, backColorStyle, backColorAngle, orientation, path, context.MousePosition.Value);
+                }
+                else
+                {
+                    // Use standard helper routine to create appropriate color brush
+                    using (Brush backBrush = CreateColorBrush(gradientRect, backColor1, backColor2,
+                               backColorStyle, backColorAngle, orientation))
+                    {
+                        context.Graphics.FillPath(backBrush, path);
+                    }
                 }
                 break;
         }
@@ -5677,7 +5705,7 @@ public class RenderStandard : RenderBase
         context.Graphics.FillPath(backBrush, path);
     }
 
-    private void DrawBackLinearShadow(RenderContext context,
+    protected virtual void DrawBackLinearShadow(RenderContext context,
         Rectangle rect,
         Rectangle gradientRect,
         Color backColor1,
@@ -5703,6 +5731,192 @@ public class RenderStandard : RenderBase
         borderBrush.CenterColor = backColor1;
         borderBrush.SurroundColors = [backColor2];
         context.Graphics.FillPath(borderBrush, path);
+    }
+
+    /// <summary>
+    /// Draw background with Acrylic hover effect: Windows 10-style spotlight that follows the cursor.
+    /// Creates a bright highlight under the cursor that fades smoothly outward.
+    /// </summary>
+    protected virtual void DrawBackAcrylicHover(RenderContext context,
+        Rectangle rect,
+        Color backColor1,
+        Color backColor2,
+        PaletteColorStyle backColorStyle,
+        float backColorAngle,
+        VisualOrientation orientation,
+        GraphicsPath path,
+        Point mousePosition)
+    {
+        // Get settings
+        var settings = KryptonManager.AcrylicHoverSettingsStatic;
+        
+        // Get the rectangle to use when dealing with gradients
+        Rectangle gradientRect = context.GetAlignedRectangle(PaletteRectangleAlign.Local, rect);
+        
+        // STEP 1: Draw the base background first (standard rendering)
+        using (Brush backBrush = CreateColorBrush(gradientRect, backColor1, backColor2,
+                   backColorStyle, backColorAngle, orientation))
+        {
+            context.Graphics.FillPath(backBrush, path);
+        }
+        
+        // STEP 2: Create the Acrylic spotlight overlay effect
+        // The spotlight should be a bright highlight that follows the cursor
+        int centerX = mousePosition.X;
+        int centerY = mousePosition.Y;
+        
+        // Calculate spotlight size - should be proportional to control size but not too large
+        int rectWidth = rect.Width;
+        int rectHeight = rect.Height;
+        float spotlightRadius = Math.Min(rectWidth, rectHeight) * 0.6f; // 60% of smaller dimension
+        
+        // Ensure minimum and maximum radius for visibility
+        spotlightRadius = Math.Max(30f, Math.Min(spotlightRadius, 150f));
+        
+        // Calculate the bright highlight color
+        // Windows 10 Acrylic uses a bright white/light highlight that's noticeably brighter than base
+        Color baseColor = backColor1;
+        Color highlightColor;
+        
+        if (settings.LightColor.HasValue)
+        {
+            highlightColor = settings.LightColor.Value;
+        }
+        else
+        {
+            // Create a bright highlight by significantly lightening the base color
+            // Windows 10 Acrylic uses a very bright, almost white highlight
+            highlightColor = ControlPaint.LightLight(baseColor);
+            
+            // Further lighten by blending with white to ensure visibility
+            // The highlight should be noticeably brighter than the base
+            float baseLuminance = GetLuminance(baseColor);
+            if (baseLuminance < 0.5f)
+            {
+                // Dark base - use more white for contrast
+                highlightColor = CommonHelper.MergeColors(highlightColor, 0.3f, Color.White, 0.7f);
+            }
+            else
+            {
+                // Light base - still add some white for visibility
+                highlightColor = CommonHelper.MergeColors(highlightColor, 0.5f, Color.White, 0.5f);
+            }
+        }
+        
+        // Apply intensity to control how bright the highlight is
+        float intensityFactor = Math.Min(2.0f, Math.Max(0.0f, settings.Intensity));
+        if (intensityFactor != 1.0f)
+        {
+            if (intensityFactor < 1.0f)
+            {
+                // Blend toward base color for lower intensity
+                highlightColor = CommonHelper.MergeColors(baseColor, 1.0f - intensityFactor, highlightColor, intensityFactor);
+            }
+            else
+            {
+                // Blend toward white for higher intensity
+                float extraIntensity = (intensityFactor - 1.0f) * 0.4f;
+                highlightColor = CommonHelper.MergeColors(highlightColor, 1.0f - extraIntensity, Color.White, extraIntensity);
+            }
+        }
+        
+        // Create a circular path for the spotlight centered at cursor
+        RectangleF spotlightRect = new RectangleF(
+            centerX - spotlightRadius,
+            centerY - spotlightRadius,
+            spotlightRadius * 2,
+            spotlightRadius * 2);
+        
+        using var spotlightPath = new GraphicsPath();
+        spotlightPath.AddEllipse(spotlightRect);
+        
+        // Use PathGradientBrush for true radial spotlight effect
+        using var pathGradient = new PathGradientBrush(spotlightPath);
+        pathGradient.CenterPoint = new PointF(centerX, centerY);
+        pathGradient.CenterColor = highlightColor;
+        
+        // Use a color that's slightly lighter than base for the surround
+        // This ensures the spotlight is visible but blends naturally
+        Color surroundColor = CommonHelper.MergeColors(baseColor, 0.7f, highlightColor, 0.3f);
+        pathGradient.SurroundColors = new[] { surroundColor };
+        
+        // Set focus scales for tighter, more focused spotlight
+        float focusScale = settings.Quality switch
+        {
+            AcrylicHoverQuality.HighQuality => 0.08f,  // Very tight focus
+            AcrylicHoverQuality.Balanced => 0.15f,
+            AcrylicHoverQuality.Performance => 0.25f,
+            _ => 0.15f
+        };
+        pathGradient.FocusScales = new PointF(focusScale, focusScale);
+        
+        // Create smooth color blend for realistic spotlight falloff
+        float[] positions = settings.Quality switch
+        {
+            AcrylicHoverQuality.HighQuality => new[] { 0.0f, 0.12f, 0.3f, 0.55f, 0.8f, 1.0f },
+            AcrylicHoverQuality.Balanced => new[] { 0.0f, 0.15f, 0.35f, 0.6f, 1.0f },
+            AcrylicHoverQuality.Performance => new[] { 0.0f, 0.25f, 0.5f, 1.0f },
+            _ => new[] { 0.0f, 0.15f, 0.35f, 0.6f, 1.0f }
+        };
+        
+        Color[] colors = new Color[positions.Length];
+        colors[0] = highlightColor; // Brightest at center
+        
+        // Create smooth fade from highlight to base color
+        for (int i = 1; i < positions.Length - 1; i++)
+        {
+            float t = positions[i];
+            // Use exponential falloff for more natural spotlight
+            float falloff = 1.0f - (t * t);
+            colors[i] = CommonHelper.MergeColors(surroundColor, 1.0f - falloff, highlightColor, falloff);
+        }
+        colors[positions.Length - 1] = surroundColor; // Blend to surround at edges
+        
+        var blend = new ColorBlend(positions.Length)
+        {
+            Colors = colors,
+            Positions = positions
+        };
+        pathGradient.InterpolationColors = blend;
+        
+        // Save graphics state
+        var graphicsState = context.Graphics.Save();
+        try
+        {
+            // Set high quality rendering for smooth spotlight
+            context.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
+            context.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+            context.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            
+            // Clip to the original control path to keep spotlight within bounds
+            using var clip = new Clipping(context.Graphics, path);
+            
+            // Draw the spotlight overlay using the spotlight path
+            // This creates a bright highlight that fades outward
+            context.Graphics.FillPath(pathGradient, spotlightPath);
+        }
+        finally
+        {
+            context.Graphics.Restore(graphicsState);
+        }
+    }
+    
+    /// <summary>
+    /// Calculate the luminance (brightness) of a color.
+    /// </summary>
+    private static float GetLuminance(Color color)
+    {
+        // Using relative luminance formula
+        float r = color.R / 255f;
+        float g = color.G / 255f;
+        float b = color.B / 255f;
+        
+        // Apply gamma correction
+        r = r <= 0.03928f ? r / 12.92f : (float)Math.Pow((r + 0.055f) / 1.055f, 2.4f);
+        g = g <= 0.03928f ? g / 12.92f : (float)Math.Pow((g + 0.055f) / 1.055f, 2.4f);
+        b = b <= 0.03928f ? b / 12.92f : (float)Math.Pow((b + 0.055f) / 1.055f, 2.4f);
+        
+        return 0.2126f * r + 0.7152f * g + 0.0722f * b;
     }
     #endregion
 
