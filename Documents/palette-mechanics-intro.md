@@ -61,7 +61,24 @@ Renderer classes in `Krypton.Toolkit.Rendering` (e.g. `RenderOffice2013`, `Rende
 
 - Subclass a common base (such as `RenderOffice2010`) which implements the bulk of drawing logic.
 - Override only the small bits of painting that differ per theme (e.g. gradients, blends, special corner treatments).
-- Are selected by the base palette’s `GetRenderer()` override.
+- Are selected by the base palette's `GetRenderer()` override.
+
+### 5.1 Visual Studio Version-Specific Renderers
+
+Visual Studio themes (2012, 2013, 2015, 2017, 2019, 2022) each have dedicated renderer implementations:
+
+- **`RenderVisualStudio2012`** through **`RenderVisualStudio2022`**: Version-specific renderers that inherit from `RenderVisualStudio`
+- Each renderer can override methods to provide version-specific rendering behavior
+- Palettes automatically select the correct renderer via `GetRenderer()` override:
+
+  ```csharp
+  // Example from PaletteVisualStudio2012Dark
+  public override IRenderer GetRenderer() => KryptonManager.RenderVisualStudio2012;
+  ```
+
+- Each renderer has a corresponding ToolStrip renderer (e.g., `KryptonVisualStudio2012Renderer`) for menu/toolbar rendering
+
+For detailed documentation, see: [Visual-Studio-Version-Specific-Renderers.md](Visual-Studio-Version-Specific-Renderers.md)
 
 ## 6. Putting It All Together
 

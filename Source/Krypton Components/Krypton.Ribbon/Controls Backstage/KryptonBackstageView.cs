@@ -483,13 +483,13 @@ public class KryptonBackstageView : KryptonPanel
     {
         if (_colors.NavigationBackgroundColor.HasValue)
         {
-            _navigationPanel.StateCommon.Back.Color1 = _colors.NavigationBackgroundColor.Value;
-            _navigationPanel.StateCommon.Back.ColorStyle = PaletteColorStyle.Solid;
+            _navigationPanel.StateCommon.Color1 = _colors.NavigationBackgroundColor.Value;
+            _navigationPanel.StateCommon.ColorStyle = PaletteColorStyle.Solid;
         }
         else
         {
             // Reset to use PanelAlternate palette
-            _navigationPanel.StateCommon.Back.ColorStyle = PaletteColorStyle.Inherit;
+            _navigationPanel.StateCommon.ColorStyle = PaletteColorStyle.Inherit;
             _navigationPanel.PanelBackStyle = PaletteBackStyle.PanelAlternate;
         }
         _navigationPanel.Invalidate();
@@ -499,13 +499,13 @@ public class KryptonBackstageView : KryptonPanel
     {
         if (_colors.ContentBackgroundColor.HasValue)
         {
-            _pageContainer.StateCommon.Back.Color1 = _colors.ContentBackgroundColor.Value;
-            _pageContainer.StateCommon.Back.ColorStyle = PaletteColorStyle.Solid;
+            _pageContainer.StateCommon.Color1 = _colors.ContentBackgroundColor.Value;
+            _pageContainer.StateCommon.ColorStyle = PaletteColorStyle.Solid;
         }
         else
         {
             // Reset to use PanelClient palette
-            _pageContainer.StateCommon.Back.ColorStyle = PaletteColorStyle.Inherit;
+            _pageContainer.StateCommon.ColorStyle = PaletteColorStyle.Inherit;
             _pageContainer.PanelBackStyle = PaletteBackStyle.PanelClient;
         }
         _pageContainer.Invalidate();

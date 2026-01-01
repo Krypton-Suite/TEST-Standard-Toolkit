@@ -84,6 +84,10 @@ public class PaletteModeStrings : GlobalId
     internal const string DEFAULT_PALETTE_MATERIAL_DARK = @"Material - Dark";
     internal const string DEFAULT_PALETTE_MATERIAL_LIGHT_RIPPLE = @"Material - Light (Ripple)";
     internal const string DEFAULT_PALETTE_MATERIAL_DARK_RIPPLE = @"Material - Dark (Ripple)";
+    internal const string DEFAULT_PALETTE_WINDOWS_10_ACRYLIC_LIGHT = @"Windows 10 Acrylic - Light";
+    internal const string DEFAULT_PALETTE_WINDOWS_10_ACRYLIC_DARK = @"Windows 10 Acrylic - Dark";
+    internal const string DEFAULT_PALETTE_WINDOWS_11_MICA_LIGHT = @"Windows 11 Mica - Light";
+    internal const string DEFAULT_PALETTE_WINDOWS_11_MICA_DARK = @"Windows 11 Mica - Dark";
     internal const string DEFAULT_PALETTE_CUSTOM = @"Custom";
 
     #endregion
@@ -170,6 +174,10 @@ public class PaletteModeStrings : GlobalId
             { DEFAULT_PALETTE_MATERIAL_DARK, PaletteMode.MaterialDark },
             { DEFAULT_PALETTE_MATERIAL_LIGHT_RIPPLE, PaletteMode.MaterialLightRipple },
             { DEFAULT_PALETTE_MATERIAL_DARK_RIPPLE, PaletteMode.MaterialDarkRipple },
+            { DEFAULT_PALETTE_WINDOWS_10_ACRYLIC_LIGHT, PaletteMode.Windows10AcrylicLight },
+            { DEFAULT_PALETTE_WINDOWS_10_ACRYLIC_DARK, PaletteMode.Windows10AcrylicDark },
+            { DEFAULT_PALETTE_WINDOWS_11_MICA_LIGHT, PaletteMode.Windows11MicaLight },
+            { DEFAULT_PALETTE_WINDOWS_11_MICA_DARK, PaletteMode.Windows11MicaDark },
             { DEFAULT_PALETTE_CUSTOM, PaletteMode.Custom }
         });
 

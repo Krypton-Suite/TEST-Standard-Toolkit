@@ -3564,6 +3564,62 @@ public abstract class PaletteMicrosoft365Base : PaletteBase
     /// <returns>Color value.</returns>
     public override Color GetRibbonQATButtonLight(PaletteState state) => _ribbonColors[(int)SchemeBaseColors.RibbonQATButtonLight];
 
+    /// <summary>
+    /// Gets the ribbon tab row gradient first color.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>The gradient first color.</returns>
+    public override Color GetRibbonTabRowGradientColor1(PaletteState state) => GlobalStaticValues.TAB_ROW_GRADIENT_FIRST_COLOR;
+
+    /// <summary>
+    /// Gets the dark rafting color for the tab background.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Color value.</returns>
+    public override Color GetRibbonTabRowBackgroundGradientRaftingDark(PaletteState state) => GlobalStaticValues.EMPTY_COLOR;
+
+    /// <summary>
+    /// Gets the light rafting color for the tab background.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Color value.</returns>
+    public override Color GetRibbonTabRowBackgroundGradientRaftingLight(PaletteState state) => GlobalStaticValues.EMPTY_COLOR;
+
+    /// <summary>
+    /// Gets the solid color for the tab background.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Color value.</returns>
+    public override Color GetRibbonTabRowBackgroundSolidColor(PaletteState state) => GlobalStaticValues.EMPTY_COLOR;
+
+    /// <summary>
+    /// Gets the ribbon tab row gradient rafting angle.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Angle value.</returns>
+    public override float GetRibbonTabRowGradientRaftingAngle(PaletteState state) => -1f;
+
+    /// <summary>
+    /// Gets the ribbon app button dark color.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>The app button dark color.</returns>
+    public override Color GetRibbonFileAppTabBottomColor(PaletteState state) => GlobalStaticValues.DEFAULT_RIBBON_FILE_APP_TAB_BOTTOM_COLOR;
+
+    /// <summary>
+    /// Gets the ribbon app button light color.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>The app button light color.</returns>
+    public override Color GetRibbonFileAppTabTopColor(PaletteState state) => GlobalStaticValues.DEFAULT_RIBBON_FILE_APP_TAB_TOP_COLOR;
+
+    /// <summary>
+    /// Gets the ribbon app button text color.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>The app button text color.</returns>
+    public override Color GetRibbonFileAppTabTextColor(PaletteState state) => GlobalStaticValues.DEFAULT_RIBBON_FILE_APP_TAB_TEXT_COLOR;
+
     #endregion RibbonGeneral
 
     #region RibbonBack
