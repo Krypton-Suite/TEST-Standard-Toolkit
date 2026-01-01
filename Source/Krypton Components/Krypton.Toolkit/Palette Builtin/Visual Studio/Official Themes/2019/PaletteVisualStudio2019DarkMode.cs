@@ -16,4 +16,8 @@ public abstract class PaletteVisualStudio2019DarkMode : PaletteVisualStudioBase
     {
         ThemeName = nameof(PaletteVisualStudio2019DarkMode);
     }
+
+    /// <summary>Gets the renderer to use for this palette.</summary>
+    /// <returns>Renderer to use for drawing palette settings.</returns>
+    public override IRenderer GetRenderer() => KryptonManager.RenderVisualStudio2019;
 }

@@ -71,6 +71,10 @@ public class PaletteVisualStudio2013Light : PaletteVisualStudioBase
         ThemeName = nameof(PaletteVisualStudio2013Light);
     }
 
+    /// <summary>Gets the renderer to use for this palette.</summary>
+    /// <returns>Renderer to use for drawing palette settings.</returns>
+    public override IRenderer GetRenderer() => KryptonManager.RenderVisualStudio2013;
+
     #endregion
 }
 

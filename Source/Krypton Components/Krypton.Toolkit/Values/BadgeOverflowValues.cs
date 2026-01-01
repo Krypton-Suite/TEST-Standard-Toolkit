@@ -56,7 +56,7 @@ namespace Krypton.Toolkit
                 if (_overflowText != value)
                 {
                     _overflowText = value;
-                    _needPaint?.Invoke(true);
+                    _needPaint?.Invoke(this, new NeedLayoutEventArgs(true));
                 }
             }
         }
@@ -90,7 +90,7 @@ namespace Krypton.Toolkit
                 if (_overflowNumber != value)
                 {
                     _overflowNumber = value;
-                    _needPaint?.Invoke(true);
+                    _needPaint?.Invoke(this, new NeedLayoutEventArgs(true));
                 }
             }
         }

@@ -152,14 +152,14 @@ public class PaletteWindows11MicaDark : PaletteWindows11MicaBase
 
         _radioButtonArray =
         [
-            Office2010RadioButtonImageResources.RadioButton2010BlackD,
-            Office2010RadioButtonImageResources.RadioButton2010BlackN,
-            Office2010RadioButtonImageResources.RadioButton2010BlackT,
-            Office2010RadioButtonImageResources.RadioButton2010BlackP,
-            Office2010RadioButtonImageResources.RadioButton2010BlackDC,
-            Office2010RadioButtonImageResources.RadioButton2010BlackNC,
-            Office2010RadioButtonImageResources.RadioButton2010BlackTC,
-            Office2010RadioButtonImageResources.RadioButton2010BlackPC
+            Office2010RadioButtonImageResources.RadioButton2010BlueD,
+            Office2010RadioButtonImageResources.RadioButton2010SilverN,
+            Office2010RadioButtonImageResources.RadioButton2010BlueT,
+            Office2010RadioButtonImageResources.RadioButton2010BlueP,
+            Office2010RadioButtonImageResources.RadioButton2010BlueDC,
+            Office2010RadioButtonImageResources.RadioButton2010SilverNC,
+            Office2010RadioButtonImageResources.RadioButton2010SilverTC,
+            Office2010RadioButtonImageResources.RadioButton2010SilverPC
         ];
     }
 

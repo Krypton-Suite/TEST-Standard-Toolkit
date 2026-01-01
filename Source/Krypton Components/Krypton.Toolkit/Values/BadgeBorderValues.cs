@@ -60,7 +60,7 @@ namespace Krypton.Toolkit
                 if (_borderColor != value)
                 {
                     _borderColor = value;
-                    _needPaint?.Invoke(true);
+                    _needPaint?.Invoke(this, new NeedLayoutEventArgs(true));
                 }
             }
         }
@@ -94,7 +94,7 @@ namespace Krypton.Toolkit
                 if (_borderSize != value)
                 {
                     _borderSize = value;
-                    _needPaint?.Invoke(true);
+                    _needPaint?.Invoke(this, new NeedLayoutEventArgs(true));
                 }
             }
         }
@@ -123,7 +123,7 @@ namespace Krypton.Toolkit
                 if (_borderBevel != value)
                 {
                     _borderBevel = value;
-                    _needPaint?.Invoke(true);
+                    _needPaint?.Invoke(this, new NeedLayoutEventArgs(true));
                 }
             }
         }

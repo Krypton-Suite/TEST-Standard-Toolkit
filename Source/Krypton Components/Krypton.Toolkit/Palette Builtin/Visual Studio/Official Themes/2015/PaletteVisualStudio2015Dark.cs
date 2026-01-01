@@ -71,6 +71,10 @@ public class PaletteVisualStudio2015Dark : PaletteVisualStudioBase
         ThemeName = nameof(PaletteVisualStudio2015Dark);
     }
 
+    /// <summary>Gets the renderer to use for this palette.</summary>
+    /// <returns>Renderer to use for drawing palette settings.</returns>
+    public override IRenderer GetRenderer() => KryptonManager.RenderVisualStudio2015;
+
     #endregion
 }
 
