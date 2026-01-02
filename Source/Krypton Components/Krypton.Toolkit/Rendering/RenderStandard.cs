@@ -12538,6 +12538,7 @@ public class RenderStandard : RenderBase
                     break;
 
                 case OverlayImageScaleMode.Percentage:
+                {
                     // Scale as percentage of main image size, maintaining aspect ratio
                     // Use the smaller dimension to ensure overlay fits within main image
                     float mainImageMinDim = Math.Min(mainImageRect.Width, mainImageRect.Height);
@@ -12552,6 +12553,7 @@ public class RenderStandard : RenderBase
                         (int)(originalOverlaySize.Width * scale),
                         (int)(originalOverlaySize.Height * scale));
                     break;
+                }
 
                 case OverlayImageScaleMode.FixedSize:
                     // Use fixed size
@@ -12559,19 +12561,21 @@ public class RenderStandard : RenderBase
                     break;
 
                 case OverlayImageScaleMode.ProportionalToMain:
+                {
                     // Scale proportionally to maintain aspect ratio, using smaller dimension of main image as reference
-                    float mainImageMinDim = Math.Min(mainImageRect.Width, mainImageRect.Height);
-                    float targetSize = mainImageMinDim * OverlayImageScaleFactor;
+                    float propMainImageMinDim = Math.Min(mainImageRect.Width, mainImageRect.Height);
+                    float propTargetSize = propMainImageMinDim * OverlayImageScaleFactor;
                     
                     // Calculate scale to fit target size while maintaining aspect ratio
-                    float scale = Math.Min(
-                        targetSize / originalOverlaySize.Width,
-                        targetSize / originalOverlaySize.Height);
+                    float propScale = Math.Min(
+                        propTargetSize / originalOverlaySize.Width,
+                        propTargetSize / originalOverlaySize.Height);
                     
                     overlaySize = new Size(
-                        (int)(originalOverlaySize.Width * scale),
-                        (int)(originalOverlaySize.Height * scale));
+                        (int)(originalOverlaySize.Width * propScale),
+                        (int)(originalOverlaySize.Height * propScale));
                     break;
+                }
             }
 
             // Ensure minimum size of 1x1
