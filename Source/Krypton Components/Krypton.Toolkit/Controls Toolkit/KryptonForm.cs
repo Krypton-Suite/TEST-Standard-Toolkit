@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -140,6 +140,7 @@ public class KryptonForm : VisualForm,
     private KryptonSystemMenu? _kryptonSystemMenu;
     // SystemMenu context menu components
     private KryptonContextMenu _systemMenuContextMenu;
+    private readonly TaskbarOverlayIconValues _taskbarOverlayIcon;
     #endregion
 
     #region Identity
@@ -264,6 +265,10 @@ public class KryptonForm : VisualForm,
         _systemMenuContextMenu = new();
         SystemMenuValues = new(_systemMenuContextMenu);
         _kryptonSystemMenu = GetSystemMenu();
+
+        // Taskbar overlay icon
+        _taskbarOverlayIcon = new TaskbarOverlayIconValues(NeedPaintDelegate);
+        _taskbarOverlayIcon.OnTaskbarOverlayChanged += UpdateTaskbarOverlayIcon;
     }
     #endregion
 
@@ -708,8 +713,8 @@ public class KryptonForm : VisualForm,
                 _internalKryptonPanel.ClientSize = ClientSize;
             }
 
-            // Route to base.Controls when MDI is enabled
-            return base.IsMdiContainer ? base.Controls : _internalKryptonPanel.Controls;
+            // Route to base.Controls when MDI is enabled or when SetInheritedControlOverride is called
+            return (base.IsMdiContainer || _internalPanelState == InheritBool.True) ? base.Controls : _internalKryptonPanel.Controls;
         }
     }
 
@@ -720,6 +725,25 @@ public class KryptonForm : VisualForm,
     public SystemMenuValues SystemMenuValues { get; }
     public bool ShouldSerializeSystemMenuValues() => !SystemMenuValues.IsDefault;
     public void ResetSystemMenuValues() => SystemMenuValues.Reset();
+
+    /// <summary>
+    /// Gets access to the taskbar overlay icon values.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Taskbar overlay icon to display on the taskbar button.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public TaskbarOverlayIconValues TaskbarOverlayIcon => _taskbarOverlayIcon;
+
+    /// <summary>
+    /// Resets the TaskbarOverlayIcon property to its default value.
+    /// </summary>
+    public void ResetTaskbarOverlayIcon() => TaskbarOverlayIcon.Reset();
+
+    /// <summary>
+    /// Indicates whether the TaskbarOverlayIcon property should be serialized.
+    /// </summary>
+    /// <returns>true if the TaskbarOverlayIcon property should be serialized; otherwise, false.</returns>
+    public bool ShouldSerializeTaskbarOverlayIcon() => !TaskbarOverlayIcon.IsDefault;
 
     /// <summary>
     /// Toggles display of the minimize button.
@@ -1371,6 +1395,48 @@ public class KryptonForm : VisualForm,
     /// <returns>Title string.</returns>
     public string GetLongText() => TextExtra!;
 
+    /// <summary>
+    /// Gets the overlay image.
+    /// </summary>
+    /// <param name="state">The state for which the overlay image is needed.</param>
+    /// <returns>Overlay image value, or null if no overlay image is set.</returns>
+    public Image? GetOverlayImage(PaletteState state) => null;
+
+    /// <summary>
+    /// Gets the overlay image color that should be transparent.
+    /// </summary>
+    /// <param name="state">The state for which the overlay image is needed.</param>
+    /// <returns>Color value.</returns>
+    public Color GetOverlayImageTransparentColor(PaletteState state) => GlobalStaticValues.EMPTY_COLOR;
+
+    /// <summary>
+    /// Gets the position of the overlay image relative to the main image.
+    /// </summary>
+    /// <param name="state">The state for which the overlay position is needed.</param>
+    /// <returns>Overlay image position.</returns>
+    public OverlayImagePosition GetOverlayImagePosition(PaletteState state) => OverlayImagePosition.TopRight;
+
+    /// <summary>
+    /// Gets the scaling mode for the overlay image.
+    /// </summary>
+    /// <param name="state">The state for which the overlay scale mode is needed.</param>
+    /// <returns>Overlay image scale mode.</returns>
+    public OverlayImageScaleMode GetOverlayImageScaleMode(PaletteState state) => OverlayImageScaleMode.None;
+
+    /// <summary>
+    /// Gets the scale factor for the overlay image (used when scale mode is Percentage or ProportionalToMain).
+    /// </summary>
+    /// <param name="state">The state for which the overlay scale factor is needed.</param>
+    /// <returns>Scale factor (0.0 to 2.0).</returns>
+    public float GetOverlayImageScaleFactor(PaletteState state) => 0.5f;
+
+    /// <summary>
+    /// Gets the fixed size for the overlay image (used when scale mode is FixedSize).
+    /// </summary>
+    /// <param name="state">The state for which the overlay fixed size is needed.</param>
+    /// <returns>Fixed size.</returns>
+    public Size GetOverlayImageFixedSize(PaletteState state) => new Size(16, 16);
+
     #endregion
 
     #region Protected/Internal Override
@@ -1745,6 +1811,9 @@ public class KryptonForm : VisualForm,
     {
         base.OnHandleCreated(e);
 
+        // Update taskbar overlay icon if set
+        UpdateTaskbarOverlayIcon();
+
         // Differ on MdiContainer first
         if (IsMdiContainer)
         {
@@ -2106,6 +2175,49 @@ public class KryptonForm : VisualForm,
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Updates the taskbar overlay icon using Windows ITaskbarList3 API.
+    /// </summary>
+    private void UpdateTaskbarOverlayIcon()
+    {
+        // Only update at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Check if Windows 7+ (ITaskbarList3 requires Windows 7+)
+            if (Environment.OSVersion.Version.Major < 6 || 
+                (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor < 1))
+            {
+                return; // Not supported on Windows Vista or earlier
+            }
+
+            // Create TaskbarList COM object
+            var taskbarList = (PI.ITaskbarList3)new PI.TaskbarList();
+            taskbarList.HrInit();
+
+            // Get icon handle
+            IntPtr hIcon = IntPtr.Zero;
+            if (_taskbarOverlayIcon.Icon != null)
+            {
+                hIcon = _taskbarOverlayIcon.Icon.Handle;
+            }
+
+            // Set overlay icon (passing null clears it)
+            string description = _taskbarOverlayIcon.Description ?? string.Empty;
+            taskbarList.SetOverlayIcon(Handle, hIcon, description);
+        }
+        catch (Exception ex)
+        {
+            // Silently fail if taskbar API is not available
+            // This can happen on older Windows versions or if COM registration fails
+            KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+        }
     }
 
     private void SetHeaderStyle(ViewDrawDocker drawDocker,
