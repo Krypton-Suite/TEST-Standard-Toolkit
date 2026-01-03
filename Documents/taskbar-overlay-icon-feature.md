@@ -28,6 +28,7 @@ The Taskbar Overlay Icon feature allows you to display a small overlay icon on t
 - **Automatic Updates**: Overlay icon updates automatically when properties change
 - **Tooltip Support**: Optional description text shown in taskbar tooltip
 - **Error Handling**: Gracefully handles unsupported platforms and errors
+- **Fixed Position**: Overlay icon is always displayed at the lower-right corner of the taskbar button (controlled by Windows, cannot be changed)
 
 ### Use Cases
 
@@ -88,7 +89,7 @@ Storage class for taskbar overlay icon value information. This class uses `Expan
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `Icon` | `Icon?` | `null` | The overlay icon to display on the taskbar button. Typically a small 16x16 icon. |
+| `Icon` | `Icon?` | `null` | The overlay icon to display on the taskbar button. Typically a small 16x16 icon. The icon is always positioned at the lower-right corner of the taskbar button by Windows (position cannot be changed). |
 | `Description` | `string` | `""` | Description text for the overlay icon, shown in the taskbar tooltip. |
 
 #### Methods
@@ -444,6 +445,8 @@ taskbarList.HrInit();
 taskbarList.SetOverlayIcon(Handle, hIcon, description);
 ```
 
+**Important Note on Position**: The `SetOverlayIcon` method does not accept a position parameter. Windows automatically positions the overlay icon at the **lower-right corner** of the taskbar button. This position is fixed by the Windows shell and cannot be changed programmatically. If you need control over overlay position, consider using the [Overlay Image Feature](./overlay-image-feature.md) for control-level overlays instead.
+
 ### Update Mechanism
 
 The overlay icon is automatically updated:
@@ -469,6 +472,15 @@ The implementation includes comprehensive error handling:
 - **Transparency**: Icons should use transparency for best visual effect
 - **DPI Awareness**: Icons are automatically scaled by Windows based on DPI
 
+### Position Limitations
+
+**Important**: The overlay icon position is **fixed by Windows** and cannot be changed:
+
+- **Fixed Position**: The overlay icon is always displayed at the **lower-right corner** of the taskbar button
+- **No Position Control**: The Windows `ITaskbarList3::SetOverlayIcon` API does not provide any position parameters
+- **System-Controlled**: This is a limitation of the Windows shell, not the Krypton Toolkit
+- **Alternative**: If you need position control, use the [Overlay Image Feature](./overlay-image-feature.md) for control-level overlays which supports TopLeft, TopRight, BottomLeft, and BottomRight positions
+
 ### Performance Considerations
 
 - **Icon Caching**: Cache icon instances instead of creating new ones repeatedly
@@ -485,6 +497,7 @@ The implementation includes comprehensive error handling:
 - **Transparency**: Ensure icons have proper transparency for clean overlay effect
 - **Contrast**: Use high-contrast colors for visibility on various backgrounds
 - **Simplicity**: Keep icons simple and recognizable at small sizes
+- **Position Awareness**: Design icons knowing they will always appear in the lower-right corner of the taskbar button (Windows limitation)
 
 ### 2. Icon Management
 
@@ -672,6 +685,17 @@ private void SafeUpdateOverlayIcon(Icon? icon, string description)
 3. **DPI Scaling**: Windows handles DPI scaling automatically
 4. **Icon Quality**: Use high-quality icons designed for small sizes
 
+### Icon Position Cannot Be Changed
+
+**Problem**: Need to position overlay icon in a different location (e.g., top-left, top-right).
+
+**Explanation**: The Windows `ITaskbarList3::SetOverlayIcon` API does not support position parameters. The overlay icon is **always** displayed at the lower-right corner of the taskbar button by the Windows shell. This is a system limitation and cannot be changed programmatically.
+
+**Alternatives**:
+1. **Control-Level Overlays**: Use the [Overlay Image Feature](./overlay-image-feature.md) for `KryptonButton`, `KryptonLabel`, and other controls, which supports full position control (TopLeft, TopRight, BottomLeft, BottomRight)
+2. **Custom Taskbar Implementation**: Not recommended - would require extensive Windows shell integration
+3. **Accept Limitation**: Design your overlay icons to work well in the lower-right corner position
+
 ### Performance Issues
 
 **Problem**: Slow performance when updating overlay icon frequently.
@@ -748,5 +772,7 @@ The implementation gracefully handles unsupported platforms:
 The Taskbar Overlay Icon feature provides a powerful way to display status indicators, notification badges, and other visual cues directly on the Windows taskbar button. With full designer support, automatic updates, and comprehensive error handling, it enables rich user experiences while maintaining simplicity for common use cases.
 
 The feature is developer-controlled, meaning you have full programmatic control over when and how overlay icons are displayed, making it suitable for a wide range of application scenarios.
+
+**Important Limitation**: The overlay icon position is fixed by Windows at the lower-right corner of the taskbar button and cannot be changed. This is a limitation of the Windows `ITaskbarList3` API, not the Krypton Toolkit. If you need position control, consider using the [Overlay Image Feature](./overlay-image-feature.md) for control-level overlays instead.
 
 For questions or issues, please refer to [GitHub Issue #1214](https://github.com/Krypton-Suite/Standard-Toolkit/issues/1214).

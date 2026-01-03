@@ -1914,65 +1914,7 @@ public class KryptonRichTextBox : VisualControlBase,
     /// <param name="e">An NeedLayoutEventArgs containing event data.</param>
     protected override void OnNeedPaint(object? sender, NeedLayoutEventArgs e)
     {
-        if (!e.NeedLayout)
-        {
-            _richTextBox.Invalidate();
-        }
-        else
-        {
-            ForceControlLayout();
-        }
-
-        if (!IsDisposed && !Disposing)
-        {
-            // Update the back/fore/font from the palette settings
-            UpdateStateAndPalettes();
-            IPaletteTriple triple = GetTripleState();
-            PaletteState state = _drawDockerOuter.State;
-
-            Color backColor = triple.PaletteBack.GetBackColor1(state);
-            if (_richTextBox.BackColor != backColor)
-            {
-                _richTextBox.BackColor = backColor;
-            }
-
-            Color foreColor = triple.PaletteContent!.GetContentShortTextColor1(state);
-            if (_richTextBox.ForeColor != foreColor)
-            {
-                _richTextBox.ForeColor = foreColor;
-            }
-
-            // Only set the font if the rich text box has been created
-            // IMPORTANT: Do not set Font property if RichTextBox has RTF formatting,
-            // as setting Font will reset all RTF formatting. Only set font for plain text.
-            Font? font = triple.PaletteContent.GetContentShortTextFont(state);
-            if ((_richTextBox.Handle != IntPtr.Zero) && font != null && !_richTextBox.Font.Equals(font))
-            {
-                // Check if the RichTextBox has RTF formatting by examining the Rtf property
-                // If Rtf contains character-level formatting codes, preserve formatting
-                string? rtf = _richTextBox.Rtf;
-                bool hasRtfFormatting = false;
-                
-                if (!string.IsNullOrEmpty(rtf) && _richTextBox.TextLength > 0)
-                {
-                    // Check for character-level formatting codes that indicate rich formatting
-                    // Basic RTF structure without formatting: {\rtf1\ansi\deff0 ... \par }
-                    // Formatting codes: \b (bold), \i (italic), \ul (underline), \fs (font size),
-                    // \cf (foreground color), \highlight (background color), \f (font family override)
-                    hasRtfFormatting = rtf.Contains(@"\b") || rtf.Contains(@"\i") || rtf.Contains(@"\ul") || 
-                                       rtf.Contains(@"\fs") || rtf.Contains(@"\cf") || rtf.Contains(@"\highlight") ||
-                                       (rtf.Contains(@"\f") && !rtf.Contains(@"\f0")); // \f0 is default font, \fN is custom
-                }
-
-                if (!hasRtfFormatting)
-                {
-                    // Only set font for plain text to avoid losing RTF formatting
-                    _richTextBox.Font = font;
-                }
-            }
-        }
-
-        base.OnNeedPaint(sender, e);
+            base.OnNeedPaint(sender, e);
     }
 
     /// <summary>

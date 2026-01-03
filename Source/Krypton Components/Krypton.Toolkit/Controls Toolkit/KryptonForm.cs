@@ -140,7 +140,6 @@ public class KryptonForm : VisualForm,
     private KryptonSystemMenu? _kryptonSystemMenu;
     // SystemMenu context menu components
     private KryptonContextMenu _systemMenuContextMenu;
-    private readonly TaskbarOverlayIconValues _taskbarOverlayIcon;
     #endregion
 
     #region Identity
@@ -265,10 +264,6 @@ public class KryptonForm : VisualForm,
         _systemMenuContextMenu = new();
         SystemMenuValues = new(_systemMenuContextMenu);
         _kryptonSystemMenu = GetSystemMenu();
-
-        // Taskbar overlay icon
-        _taskbarOverlayIcon = new TaskbarOverlayIconValues(NeedPaintDelegate);
-        _taskbarOverlayIcon.OnTaskbarOverlayChanged += UpdateTaskbarOverlayIcon;
     }
     #endregion
 
@@ -725,25 +720,6 @@ public class KryptonForm : VisualForm,
     public SystemMenuValues SystemMenuValues { get; }
     public bool ShouldSerializeSystemMenuValues() => !SystemMenuValues.IsDefault;
     public void ResetSystemMenuValues() => SystemMenuValues.Reset();
-
-    /// <summary>
-    /// Gets access to the taskbar overlay icon values.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Taskbar overlay icon to display on the taskbar button.")]
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public TaskbarOverlayIconValues TaskbarOverlayIcon => _taskbarOverlayIcon;
-
-    /// <summary>
-    /// Resets the TaskbarOverlayIcon property to its default value.
-    /// </summary>
-    public void ResetTaskbarOverlayIcon() => TaskbarOverlayIcon.Reset();
-
-    /// <summary>
-    /// Indicates whether the TaskbarOverlayIcon property should be serialized.
-    /// </summary>
-    /// <returns>true if the TaskbarOverlayIcon property should be serialized; otherwise, false.</returns>
-    public bool ShouldSerializeTaskbarOverlayIcon() => !TaskbarOverlayIcon.IsDefault;
 
     /// <summary>
     /// Toggles display of the minimize button.
@@ -1811,9 +1787,6 @@ public class KryptonForm : VisualForm,
     {
         base.OnHandleCreated(e);
 
-        // Update taskbar overlay icon if set
-        UpdateTaskbarOverlayIcon();
-
         // Differ on MdiContainer first
         if (IsMdiContainer)
         {
@@ -2180,46 +2153,6 @@ public class KryptonForm : VisualForm,
     /// <summary>
     /// Updates the taskbar overlay icon using Windows ITaskbarList3 API.
     /// </summary>
-    private void UpdateTaskbarOverlayIcon()
-    {
-        // Only update at runtime, not in designer
-        if (CommonHelper.DesignMode() || !IsHandleCreated)
-        {
-            return;
-        }
-
-        try
-        {
-            // Check if Windows 7+ (ITaskbarList3 requires Windows 7+)
-            if (Environment.OSVersion.Version.Major < 6 || 
-                (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor < 1))
-            {
-                return; // Not supported on Windows Vista or earlier
-            }
-
-            // Create TaskbarList COM object
-            var taskbarList = (PI.ITaskbarList3)new PI.TaskbarList();
-            taskbarList.HrInit();
-
-            // Get icon handle
-            IntPtr hIcon = IntPtr.Zero;
-            if (_taskbarOverlayIcon.Icon != null)
-            {
-                hIcon = _taskbarOverlayIcon.Icon.Handle;
-            }
-
-            // Set overlay icon (passing null clears it)
-            string description = _taskbarOverlayIcon.Description ?? string.Empty;
-            taskbarList.SetOverlayIcon(Handle, hIcon, description);
-        }
-        catch (Exception ex)
-        {
-            // Silently fail if taskbar API is not available
-            // This can happen on older Windows versions or if COM registration fails
-            KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
-        }
-    }
-
     private void SetHeaderStyle(ViewDrawDocker drawDocker,
         PaletteTripleMetricRedirect palette,
         HeaderStyle style)
