@@ -66,6 +66,8 @@ public class TaskbarOverlayIconValues : Storage
             {
                 _icon = value;
                 PerformNeedPaint(true);
+                // Notify parent form to update taskbar overlay
+                OnTaskbarOverlayChanged?.Invoke();
             }
         }
     }

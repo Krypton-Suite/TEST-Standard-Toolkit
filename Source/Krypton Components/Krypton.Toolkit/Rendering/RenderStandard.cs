@@ -1386,7 +1386,10 @@ public class RenderStandard : RenderBase
         }
 
         // Draw overlay image if present
-        if (standard.DrawOverlayImage && standard.OverlayImage != null)
+        if (standard.DrawOverlayImage && standard.OverlayImage != null && 
+            !standard.OverlayImageRect.IsEmpty && 
+            standard.OverlayImageRect.Width > 0 && 
+            standard.OverlayImageRect.Height > 0)
         {
             DrawImageHelper(context,
                 standard.OverlayImage,
@@ -6492,6 +6495,19 @@ public class RenderStandard : RenderBase
         if (memento.DrawImage && (drawHImage == alignH) && (drawVImage == alignV))
         {
             memento.ImageRect.Location = PositionCellContent(rtl, posHImage, drawVImage, memento.ImageRect.Size, spacingGap, ref cellRect);
+            
+            // Recalculate overlay image position now that main image location is set
+            if (memento.DrawOverlayImage && memento.OverlayImage != null)
+            {
+                try
+                {
+                    memento.CalculateOverlayImagePosition();
+                }
+                catch
+                {
+                    memento.DrawOverlayImage = false;
+                }
+            }
         }
 
         // Do we need to position the short text?
@@ -12526,8 +12542,21 @@ public class RenderStandard : RenderBase
 
             // Get original overlay image size
             Size originalOverlaySize = OverlayImage.Size;
+            
+            // Validate overlay image has valid size
+            if (originalOverlaySize.Width <= 0 || originalOverlaySize.Height <= 0)
+            {
+                return;
+            }
+            
             Size overlaySize = originalOverlaySize;
             Rectangle mainImageRect = ImageRect;
+
+            // Validate main image rectangle has valid size
+            if (mainImageRect.Width <= 0 || mainImageRect.Height <= 0)
+            {
+                return;
+            }
 
             // Apply scaling based on scale mode
             switch (OverlayImageScaleMode)
@@ -12544,14 +12573,18 @@ public class RenderStandard : RenderBase
                     float mainImageMinDim = Math.Min(mainImageRect.Width, mainImageRect.Height);
                     float targetSize = mainImageMinDim * OverlayImageScaleFactor;
                     
-                    // Calculate scale to fit target size while maintaining aspect ratio
-                    float scale = Math.Min(
-                        targetSize / originalOverlaySize.Width,
-                        targetSize / originalOverlaySize.Height);
-                    
-                    overlaySize = new Size(
-                        (int)(originalOverlaySize.Width * scale),
-                        (int)(originalOverlaySize.Height * scale));
+                    // Validate target size and overlay dimensions before division
+                    if (targetSize > 0 && originalOverlaySize.Width > 0 && originalOverlaySize.Height > 0)
+                    {
+                        // Calculate scale to fit target size while maintaining aspect ratio
+                        float scale = Math.Min(
+                            targetSize / originalOverlaySize.Width,
+                            targetSize / originalOverlaySize.Height);
+                        
+                        overlaySize = new Size(
+                            (int)(originalOverlaySize.Width * scale),
+                            (int)(originalOverlaySize.Height * scale));
+                    }
                     break;
                 }
 
@@ -12566,14 +12599,18 @@ public class RenderStandard : RenderBase
                     float propMainImageMinDim = Math.Min(mainImageRect.Width, mainImageRect.Height);
                     float propTargetSize = propMainImageMinDim * OverlayImageScaleFactor;
                     
-                    // Calculate scale to fit target size while maintaining aspect ratio
-                    float propScale = Math.Min(
-                        propTargetSize / originalOverlaySize.Width,
-                        propTargetSize / originalOverlaySize.Height);
-                    
-                    overlaySize = new Size(
-                        (int)(originalOverlaySize.Width * propScale),
-                        (int)(originalOverlaySize.Height * propScale));
+                    // Validate target size and overlay dimensions before division
+                    if (propTargetSize > 0 && originalOverlaySize.Width > 0 && originalOverlaySize.Height > 0)
+                    {
+                        // Calculate scale to fit target size while maintaining aspect ratio
+                        float propScale = Math.Min(
+                            propTargetSize / originalOverlaySize.Width,
+                            propTargetSize / originalOverlaySize.Height);
+                        
+                        overlaySize = new Size(
+                            (int)(originalOverlaySize.Width * propScale),
+                            (int)(originalOverlaySize.Height * propScale));
+                    }
                     break;
                 }
             }

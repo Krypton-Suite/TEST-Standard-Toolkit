@@ -45,7 +45,7 @@ The Overlay Image feature allows you to display a secondary image (overlay) on t
 ```csharp
 // Create a button with an overlay image
 var button = new KryptonButton();
-button.Image = mainImage; // Your main button image
+button.Values.Image = mainImage; // Your main button image
 
 // Configure overlay image
 button.Values.OverlayImage.Image = overlayImage; // Your overlay/badge image
@@ -297,7 +297,7 @@ Size GetOverlayImageFixedSize(PaletteState state);
 var button = new KryptonButton
 {
     Text = "Messages",
-    Image = Properties.Resources.MailIcon
+    Values = { Image = Properties.Resources.MailIcon }
 };
 
 // Add notification badge overlay
@@ -312,7 +312,7 @@ button.Values.OverlayImage.FixedSize = new Size(24, 24);
 ```csharp
 var button = new KryptonButton
 {
-    Image = mainIcon
+    Values = { Image = mainIcon }
 };
 
 // Overlay scales to 30% of main image size
@@ -372,7 +372,7 @@ private Image CreateBadgeImage(int count, Color color)
 var label = new KryptonLabel
 {
     Text = "Status: Online",
-    Image = statusIcon
+    Values = { Image = statusIcon }
 };
 
 // Add online indicator overlay
@@ -481,6 +481,25 @@ this.button1.Values.OverlayImage.ScaleFactor = 0.3F;
 ---
 
 ## Implementation Details
+
+### Control Implementation
+
+#### KryptonButton and KryptonDropButton
+
+`KryptonButton` inherits from `KryptonDropButton`, which implements the `IContentValues` interface. The overlay image methods in `KryptonDropButton` delegate to the `Values` property (which is a `ButtonValues` instance):
+
+```csharp
+public Image? GetOverlayImage(PaletteState state) => Values.GetOverlayImage(state);
+public Color GetOverlayImageTransparentColor(PaletteState state) => Values.GetOverlayImageTransparentColor(state);
+public OverlayImagePosition GetOverlayImagePosition(PaletteState state) => Values.GetOverlayImagePosition(state);
+// ... other overlay methods
+```
+
+This means all button types (`KryptonButton`, `KryptonDropButton`, etc.) automatically support overlay images through their `Values.OverlayImage` property.
+
+#### KryptonLabel
+
+`KryptonLabel` also implements `IContentValues` and delegates overlay image methods to its `Values` property (which is a `LabelValues` instance).
 
 ### Rendering Pipeline
 
@@ -658,11 +677,13 @@ private void UpdateNotificationBadge(int count)
 **Problem**: Overlay image is not visible.
 
 **Solutions**:
-1. Verify `Image` property is set (not null)
-2. Check that main image exists (overlay only shows when main image is present)
-3. Ensure overlay image is not transparent or same color as background
-4. Check `ScaleMode` and `ScaleFactor` settings
-5. Verify control is not disabled (overlay may be hidden in disabled state)
+1. **For KryptonButton**: Verify `Values.Image` property is set (not `Image` - use `button.Values.Image = mainImage`)
+2. **For KryptonLabel**: Verify `Values.Image` property is set (not `Image` - use `label.Values.Image = mainImage`)
+3. Check that main image exists (overlay only shows when main image is present)
+4. Ensure overlay image is not transparent or same color as background
+5. Check `ScaleMode` and `ScaleFactor` settings
+6. Verify control is not disabled (overlay may be hidden in disabled state)
+7. Ensure overlay image is set via `Values.OverlayImage.Image` property
 
 ### Overlay Position Incorrect
 
@@ -739,7 +760,7 @@ public class NotificationButton : KryptonButton
     public NotificationButton()
     {
         // Set main image
-        Image = Properties.Resources.MailIcon;
+        Values.Image = Properties.Resources.MailIcon;
         Text = "Messages";
         
         // Configure overlay defaults
