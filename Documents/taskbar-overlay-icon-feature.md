@@ -209,15 +209,18 @@ private Icon CreateBadgeIcon(int count, Color color)
             g.DrawEllipse(pen, 0, 0, 15, 15);
         }
         
-        // Count text
+        // Count text (centered)
         var text = count > 99 ? "99+" : count.ToString();
         using (var font = new Font("Arial", 7, FontStyle.Bold))
         using (var brush = new SolidBrush(Color.White))
+        using (var sf = new StringFormat
         {
-            var textSize = g.MeasureString(text, font);
-            g.DrawString(text, font, brush,
-                (16 - textSize.Width) / 2,
-                (16 - textSize.Height) / 2);
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center
+        })
+        {
+            var rect = new RectangleF(0, 0, 16, 16);
+            g.DrawString(text, font, brush, rect, sf);
         }
     }
     return Icon.FromHandle(bitmap.GetHicon());

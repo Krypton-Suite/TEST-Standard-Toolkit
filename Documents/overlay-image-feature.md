@@ -354,12 +354,15 @@ private Image CreateBadgeImage(int count, Color color)
         }
         using (var font = new Font("Arial", 10, FontStyle.Bold))
         using (var brush = new SolidBrush(Color.White))
+        using (var sf = new StringFormat
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center
+        })
         {
             var text = count > 99 ? "99+" : count.ToString();
-            var textSize = g.MeasureString(text, font);
-            g.DrawString(text, font, brush,
-                (24 - textSize.Width) / 2,
-                (24 - textSize.Height) / 2);
+            var rect = new RectangleF(0, 0, 24, 24);
+            g.DrawString(text, font, brush, rect, sf);
         }
     }
     return bitmap;
@@ -803,15 +806,18 @@ public class NotificationButton : KryptonButton
                 g.DrawEllipse(pen, 1, 1, 22, 22);
             }
             
-            // Count text
+            // Count text (centered)
             var text = count > 99 ? "99+" : count.ToString();
             using (var font = new Font("Arial", 9, FontStyle.Bold))
             using (var brush = new SolidBrush(Color.White))
+            using (var sf = new StringFormat
             {
-                var textSize = g.MeasureString(text, font);
-                g.DrawString(text, font, brush,
-                    (24 - textSize.Width) / 2,
-                    (24 - textSize.Height) / 2);
+                Alignment = StringAlignment.Center,
+                LineAlignment = StringAlignment.Center
+            })
+            {
+                var rect = new RectangleF(0, 0, 24, 24);
+                g.DrawString(text, font, brush, rect, sf);
             }
         }
         return bitmap;
