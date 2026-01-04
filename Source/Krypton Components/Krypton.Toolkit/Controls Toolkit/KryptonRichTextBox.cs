@@ -2131,11 +2131,11 @@ public class KryptonRichTextBox : VisualControlBase,
                 if (isDarkModeBlackTheme && _originalRtf != null)
                 {
                     // In dark mode black themes, check if original RTF contains black text
-                    // If so, remove black color codes so text uses palette default (visible) color
+                    // If so, replace black color codes with white for visibility
                     bool hasBlackText = HasBlackTextInRtf(_originalRtf);
                     if (hasBlackText)
                     {
-                        // Remove black color codes from original RTF to allow palette default color
+                        // Replace black color codes with white in original RTF
                         rtfToRestore = RemoveBlackColorCodes(_originalRtf);
                     }
                     else
@@ -2361,10 +2361,10 @@ public class KryptonRichTextBox : VisualControlBase,
     }
 
     /// <summary>
-    /// Removes black color codes (\cf0) from RTF to allow palette default color (visible on dark backgrounds).
+    /// Replaces black color codes (\cf0) and default black color with white color in RTF for visibility on dark backgrounds.
     /// </summary>
     /// <param name="rtf">The RTF content to modify.</param>
-    /// <returns>RTF with black color codes removed.</returns>
+    /// <returns>RTF with black color codes replaced with white.</returns>
     private static string RemoveBlackColorCodes(string rtf)
     {
         if (string.IsNullOrEmpty(rtf))
@@ -2372,31 +2372,199 @@ public class KryptonRichTextBox : VisualControlBase,
             return rtf;
         }
 
-        // Remove \cf0 (black color index) - this allows text to use palette default color
-        // We need to be careful to only remove \cf0 when it's a complete color code
-        var result = new System.Text.StringBuilder(rtf);
-        
-        // Scan backwards to avoid index shifting issues when removing
-        for (int i = result.Length - 4; i >= 0; i--)
+        // Find or add white color to color table
+        int colorTableStart = rtf.IndexOf(@"{\colortbl", StringComparison.Ordinal);
+        int whiteColorIndex = -1;
+        string modifiedRtf = rtf;
+
+        if (colorTableStart >= 0)
         {
-            if (result[i] == '\\' && result[i + 1] == 'c' && result[i + 2] == 'f' && result[i + 3] == '0')
+            // Find the end of color table
+            int braceCount = 0;
+            int colorTableEnd = colorTableStart;
+            bool inColorTable = false;
+            
+            for (int i = colorTableStart; i < rtf.Length; i++)
             {
-                // Verify it's a complete color code (followed by space, backslash, or end)
-                if (i + 4 >= result.Length || 
-                    result[i + 4] == ' ' || 
-                    result[i + 4] == '\\' || 
-                    result[i + 4] == '\r' || 
-                    result[i + 4] == '\n' ||
-                    result[i + 4] == '\t' ||
-                    !char.IsDigit(result[i + 4]))
+                if (rtf[i] == '{')
                 {
-                    // Remove \cf0 (4 characters)
-                    result.Remove(i, 4);
+                    braceCount++;
+                    inColorTable = true;
+                }
+                else if (rtf[i] == '}')
+                {
+                    braceCount--;
+                    if (inColorTable && braceCount == 0)
+                    {
+                        colorTableEnd = i;
+                        break;
+                    }
+                }
+            }
+
+            if (colorTableEnd > colorTableStart)
+            {
+                string colorTable = rtf.Substring(colorTableStart, colorTableEnd - colorTableStart + 1);
+                
+                // Check if white color already exists: \red255\green255\blue255
+                bool hasWhite = colorTable.Contains(@"\red255\green255\blue255") || 
+                               colorTable.Contains(@"\red255 \green255 \blue255");
+                
+                if (hasWhite)
+                {
+                    // Find the index of white color
+                    // Count colors before white (each color ends with ;)
+                    int whitePos = colorTable.IndexOf(@"\red255", StringComparison.Ordinal);
+                    if (whitePos > 0)
+                    {
+                        string beforeWhite = colorTable.Substring(0, whitePos);
+                        whiteColorIndex = CountColorTableEntries(beforeWhite);
+                    }
+                }
+                else
+                {
+                    // White color doesn't exist, add it to color table
+                    // Insert before the closing brace
+                    string whiteColorDef = @";\red255\green255\blue255";
+                    modifiedRtf = rtf.Insert(colorTableEnd, whiteColorDef);
+                    
+                    // Calculate white color index (count existing colors)
+                    whiteColorIndex = CountColorTableEntries(colorTable);
+                }
+                
+                // IMPORTANT: Replace the default color (index 0, black) with white in the color table
+                // This makes all text without explicit color codes use white instead of black
+                if (whiteColorIndex >= 0)
+                {
+                    // Find the first color definition (index 0) and replace it with white
+                    // Pattern: {\colortbl ;\red0\green0\blue0;... or {\colortbl ;\red0 \green0 \blue0;...
+                    int firstColorStart = colorTable.IndexOf(';') + 1;
+                    if (firstColorStart > 0 && firstColorStart < colorTable.Length)
+                    {
+                        // Find where the first color ends (next semicolon or closing brace)
+                        int firstColorEnd = colorTable.IndexOf(';', firstColorStart);
+                        if (firstColorEnd < 0)
+                        {
+                            firstColorEnd = colorTable.IndexOf('}', firstColorStart);
+                        }
+                        
+                        if (firstColorEnd > firstColorStart)
+                        {
+                            // Replace the first color (black) with white
+                            string newColorTable = colorTable.Substring(0, firstColorStart) + 
+                                                  @"\red255\green255\blue255" + 
+                                                  colorTable.Substring(firstColorEnd);
+                            
+                            // Replace the color table in the RTF
+                            modifiedRtf = rtf.Substring(0, colorTableStart) + 
+                                         newColorTable + 
+                                         rtf.Substring(colorTableEnd + 1);
+                            
+                            // White is now at index 0
+                            whiteColorIndex = 0;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            // No color table exists, create one with white as default
+            // Find insertion point after font table
+            int fontTableEnd = rtf.IndexOf(@"}\n", StringComparison.Ordinal);
+            if (fontTableEnd < 0)
+            {
+                fontTableEnd = rtf.IndexOf(@"}\r\n", StringComparison.Ordinal);
+            }
+            if (fontTableEnd < 0)
+            {
+                fontTableEnd = rtf.IndexOf('}');
+            }
+            
+            if (fontTableEnd >= 0)
+            {
+                // Create color table with white as index 0 (default color)
+                string colorTable = @"{\colortbl ;\red255\green255\blue255;}";
+                modifiedRtf = rtf.Insert(fontTableEnd + 1, colorTable);
+                whiteColorIndex = 0; // White is now the default (index 0)
+            }
+        }
+
+        // If we couldn't determine white color index, default to removing \cf0
+        if (whiteColorIndex < 0)
+        {
+            // Fallback: just remove \cf0
+            var result = new System.Text.StringBuilder(modifiedRtf);
+            for (int i = result.Length - 4; i >= 0; i--)
+            {
+                if (result[i] == '\\' && result[i + 1] == 'c' && result[i + 2] == 'f' && result[i + 3] == '0')
+                {
+                    if (i + 4 >= result.Length || 
+                        result[i + 4] == ' ' || 
+                        result[i + 4] == '\\' || 
+                        result[i + 4] == '\r' || 
+                        result[i + 4] == '\n' ||
+                        result[i + 4] == '\t' ||
+                        !char.IsDigit(result[i + 4]))
+                    {
+                        result.Remove(i, 4);
+                    }
+                }
+            }
+            return result.ToString();
+        }
+
+        // Replace \cf0 with \cf{whiteColorIndex} (which is now 0, but we keep the code for clarity)
+        var finalResult = new System.Text.StringBuilder(modifiedRtf);
+        string replacement = $@"\cf{whiteColorIndex}";
+        
+        // Scan backwards to avoid index shifting issues
+        for (int i = finalResult.Length - 4; i >= 0; i--)
+        {
+            if (finalResult[i] == '\\' && finalResult[i + 1] == 'c' && finalResult[i + 2] == 'f' && finalResult[i + 3] == '0')
+            {
+                // Verify it's a complete color code
+                if (i + 4 >= finalResult.Length || 
+                    finalResult[i + 4] == ' ' || 
+                    finalResult[i + 4] == '\\' || 
+                    finalResult[i + 4] == '\r' || 
+                    finalResult[i + 4] == '\n' ||
+                    finalResult[i + 4] == '\t' ||
+                    !char.IsDigit(finalResult[i + 4]))
+                {
+                    // Replace \cf0 with white color code
+                    finalResult.Remove(i, 4);
+                    finalResult.Insert(i, replacement);
                 }
             }
         }
 
-        return result.ToString();
+        return finalResult.ToString();
+    }
+
+    /// <summary>
+    /// Counts the number of color entries in a color table string.
+    /// </summary>
+    /// <param name="colorTable">The color table string to count.</param>
+    /// <returns>The number of color entries (semicolons indicate entries).</returns>
+    private static int CountColorTableEntries(string colorTable)
+    {
+        if (string.IsNullOrEmpty(colorTable))
+        {
+            return 0;
+        }
+
+        int count = 0;
+        for (int i = 0; i < colorTable.Length; i++)
+        {
+            if (colorTable[i] == ';')
+            {
+                count++;
+            }
+        }
+        
+        // First semicolon is after the opening brace, so subtract 1
+        return Math.Max(0, count - 1);
     }
 
     private void OnShowToolTip(object? sender, ToolTipEventArgs e)
