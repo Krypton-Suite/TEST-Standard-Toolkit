@@ -51,6 +51,7 @@ namespace TestForm
             this.kbtnLoadLongRtf = new Krypton.Toolkit.KryptonButton();
             this.kbtnLoadMinimalRtf = new Krypton.Toolkit.KryptonButton();
             this.kbtnLoadComplexFormatting = new Krypton.Toolkit.KryptonButton();
+            this.kbtnLoadBlackTextTest = new Krypton.Toolkit.KryptonButton();
             this.kbtnVerifyFormatting = new Krypton.Toolkit.KryptonButton();
             this.kbtnPerformanceTest = new Krypton.Toolkit.KryptonButton();
             this.kbtnClear = new Krypton.Toolkit.KryptonButton();
@@ -146,6 +147,7 @@ namespace TestForm
             // 
             this.kryptonPanel3.Controls.Add(this.klblStatus);
             this.kryptonPanel3.Controls.Add(this.kbtnPerformanceTest);
+            this.kryptonPanel3.Controls.Add(this.kbtnLoadBlackTextTest);
             this.kryptonPanel3.Controls.Add(this.kbtnLoadComplexFormatting);
             this.kryptonPanel3.Controls.Add(this.kbtnLoadMinimalRtf);
             this.kryptonPanel3.Controls.Add(this.kbtnLoadLongRtf);
@@ -199,10 +201,19 @@ namespace TestForm
             // 
             this.kbtnLoadComplexFormatting.Location = new System.Drawing.Point(516, 10);
             this.kbtnLoadComplexFormatting.Name = "kbtnLoadComplexFormatting";
-            this.kbtnLoadComplexFormatting.Size = new System.Drawing.Size(150, 25);
+            this.kbtnLoadComplexFormatting.Size = new System.Drawing.Size(120, 25);
             this.kbtnLoadComplexFormatting.TabIndex = 7;
-            this.kbtnLoadComplexFormatting.Values.Text = "Load Complex Formatting";
+            this.kbtnLoadComplexFormatting.Values.Text = "Load Complex";
             this.kbtnLoadComplexFormatting.Click += new System.EventHandler(this.KbtnLoadComplexFormatting_Click);
+            // 
+            // kbtnLoadBlackTextTest
+            // 
+            this.kbtnLoadBlackTextTest.Location = new System.Drawing.Point(642, 10);
+            this.kbtnLoadBlackTextTest.Name = "kbtnLoadBlackTextTest";
+            this.kbtnLoadBlackTextTest.Size = new System.Drawing.Size(120, 25);
+            this.kbtnLoadBlackTextTest.TabIndex = 9;
+            this.kbtnLoadBlackTextTest.Values.Text = "Load Black Text";
+            this.kbtnLoadBlackTextTest.Click += new System.EventHandler(this.KbtnLoadBlackTextTest_Click);
             // 
             // kbtnVerifyFormatting
             // 
@@ -289,6 +300,7 @@ namespace TestForm
         private Krypton.Toolkit.KryptonButton kbtnLoadLongRtf;
         private Krypton.Toolkit.KryptonButton kbtnLoadMinimalRtf;
         private Krypton.Toolkit.KryptonButton kbtnLoadComplexFormatting;
+        private Krypton.Toolkit.KryptonButton kbtnLoadBlackTextTest;
         private Krypton.Toolkit.KryptonButton kbtnVerifyFormatting;
         private Krypton.Toolkit.KryptonButton kbtnPerformanceTest;
         private Krypton.Toolkit.KryptonButton kbtnClear;

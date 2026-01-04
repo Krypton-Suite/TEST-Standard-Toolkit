@@ -49,13 +49,16 @@ public partial class RichTextBoxFormattingTest : KryptonForm
         kcmbPalette.Items.Add("Office 2010 - Blue");
         kcmbPalette.Items.Add("Office 2010 - Silver");
         kcmbPalette.Items.Add("Office 2010 - Black");
+        kcmbPalette.Items.Add("Office 2010 - Black (Dark Mode)");
         kcmbPalette.Items.Add("Office 2013 - White");
         kcmbPalette.Items.Add("Office 2013 - Dark Gray");
         kcmbPalette.Items.Add("Office 2013 - Light Gray");
         kcmbPalette.Items.Add("Office 365 - Blue");
         kcmbPalette.Items.Add("Office 365 - Silver");
         kcmbPalette.Items.Add("Office 365 - Black");
+        kcmbPalette.Items.Add("Office 365 - Black (Dark Mode)");
         kcmbPalette.Items.Add("Office 365 - White");
+        kcmbPalette.Items.Add("Office 2007 - Black (Dark Mode)");
         kcmbPalette.Items.Add("Sparkle - Blue");
         kcmbPalette.Items.Add("Sparkle - Orange");
         kcmbPalette.Items.Add("Sparkle - Purple");
@@ -118,13 +121,16 @@ public partial class RichTextBoxFormattingTest : KryptonForm
             "Office 2010 - Blue" => PaletteMode.Office2010Blue,
             "Office 2010 - Silver" => PaletteMode.Office2010Silver,
             "Office 2010 - Black" => PaletteMode.Office2010Black,
+            "Office 2010 - Black (Dark Mode)" => PaletteMode.Office2010BlackDarkMode,
             "Office 2013 - White" => PaletteMode.Office2013White,
             "Office 2013 - Dark Gray" => PaletteMode.Office2013DarkGray,
             "Office 2013 - Light Gray" => PaletteMode.Office2013LightGray,
             "Office 365 - Blue" => PaletteMode.Office365Blue,
             "Office 365 - Silver" => PaletteMode.Office365Silver,
             "Office 365 - Black" => PaletteMode.Office365Black,
+            "Office 365 - Black (Dark Mode)" => PaletteMode.Microsoft365BlackDarkMode,
             "Office 365 - White" => PaletteMode.Office365White,
+            "Office 2007 - Black (Dark Mode)" => PaletteMode.Office2007BlackDarkMode,
             "Sparkle - Blue" => PaletteMode.SparkleBlue,
             "Sparkle - Orange" => PaletteMode.SparkleOrange,
             "Sparkle - Purple" => PaletteMode.SparklePurple,
@@ -163,7 +169,7 @@ public partial class RichTextBoxFormattingTest : KryptonForm
 
     private void LoadSampleRtfContent()
     {
-        // Create RTF content with various formatting
+        // Create RTF content with various formatting, including black text to test dark mode visibility
         string rtfContent = @"{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;} {\f1 Arial;} {\f2 Courier New;}}
 {\colortbl ;\red255\green0\blue0;\red0\green128\blue0;\red0\green0\blue255;\red255\green165\blue0;}
 \f0\fs24 This is a \b bold \b0 sample text with \i italic \i0 formatting.\par
@@ -183,10 +189,13 @@ public partial class RichTextBoxFormattingTest : KryptonForm
 \b4. \b0 \cf1 Colored text should remain colored\cf0\par
 \b5. \b0 Different font sizes should be preserved\par
 \par
-\fs16\cf2 Success! \cf0 If you can see all the formatting above after changing palettes, the fix is working correctly.}";
+\fs16\cf2 Success! \cf0 If you can see all the formatting above after changing palettes, the fix is working correctly.\par
+\par
+\b\fs18 Black Text Test:\b0\par
+\cf0 This is black text (\cf0). It should be visible on light themes and automatically use palette color on dark mode black themes (Office 2007/2010/365 Black Dark Mode).\par}";
 
         krtbRichTextBox.Rtf = rtfContent;
-        UpdateStatus("Sample RTF content loaded with bold, italic, underline, colors, and different fonts.");
+        UpdateStatus("Sample RTF content loaded with bold, italic, underline, colors, different fonts, and black text for dark mode testing.");
     }
 
     private void UpdateStatus(string message)
@@ -324,6 +333,29 @@ public partial class RichTextBoxFormattingTest : KryptonForm
 
         krtbRichTextBox.Rtf = complexRtf;
         UpdateStatus("Complex RTF loaded with all formatting types (bold, italic, underline, colors, highlights, custom fonts).");
+    }
+
+    private void KbtnLoadBlackTextTest_Click(object? sender, EventArgs e)
+    {
+        // RTF with black text to test dark mode black theme visibility fix
+        string blackTextRtf = @"{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;} {\f1 Arial;} {\f2 Courier New;}}
+{\colortbl ;\red0\green0\blue0;\red255\green255\blue255;\red255\green0\blue0;\red0\green128\blue0;}
+\f0\fs24\b Black Text Visibility Test:\b0\par
+\par
+\cf0 This paragraph uses black text (\cf0). On light themes, it should be visible.\par
+\par
+\cf0 On dark mode black themes (Office 2007/2010/365 Black Dark Mode), this black text should automatically use the palette default color to remain visible.\par
+\par
+\cf1 Red text \cf2 Green text \cf0 Black text mixed with colors.\par
+\par
+\b\cf0 Bold black text \b0\cf0 should also be visible on dark themes.\par
+\par
+\i\cf0 Italic black text \i0\cf0 and \ul\cf0 underlined black text \ul0\cf0 should work too.\par
+\par
+\fs18\cf0 Test: Switch to a dark mode black theme and verify all black text becomes visible!\par}";
+
+        krtbRichTextBox.Rtf = blackTextRtf;
+        UpdateStatus("Black text RTF loaded. Switch to dark mode black themes (Office 2007/2010/365 Black Dark Mode) to test visibility fix.");
     }
 
     private void KbtnPerformanceTest_Click(object? sender, EventArgs e)

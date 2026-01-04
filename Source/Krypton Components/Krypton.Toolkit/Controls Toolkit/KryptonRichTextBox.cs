@@ -297,6 +297,7 @@ public class KryptonRichTextBox : VisualControlBase,
     private bool _alwaysActive;
     private bool _trackingMouseEnter;
     private bool _firstPaint;
+    private string? _originalRtf; // Store original RTF to restore when switching away from dark mode black themes
     #endregion
 
     #region Events
@@ -754,6 +755,36 @@ public class KryptonRichTextBox : VisualControlBase,
 
         set
         {
+            // Store original RTF only when it's truly new content (not just restoration)
+            // Compare with current text to detect if content has actually changed
+            if (!string.IsNullOrEmpty(value))
+            {
+                string currentText = _richTextBox.Text;
+                bool isNewContent = _originalRtf == null;
+                
+                // If we have stored original, check if this is significantly different
+                // (palette modifications won't change text content, only RTF codes)
+                if (!isNewContent && _originalRtf != null)
+                {
+                    // If RTF is very different in length or structure, it's likely new content
+                    // Small differences are likely just palette-related modifications
+                    int lengthDiff = Math.Abs(value.Length - _originalRtf.Length);
+                    if (lengthDiff > 100) // Significant difference suggests new content
+                    {
+                        isNewContent = true;
+                    }
+                }
+
+                if (isNewContent)
+                {
+                    _originalRtf = value;
+                }
+            }
+            else
+            {
+                _originalRtf = null;
+            }
+
             PerformNeedPaint(true);
             _richTextBox.Rtf = value;
         }
@@ -2064,13 +2095,73 @@ public class KryptonRichTextBox : VisualControlBase,
             // This ensures formatting is preserved even if BackColor/ForeColor changes reset it
             if (hasRtfFormatting && !string.IsNullOrEmpty(savedRtf) && _richTextBox.Handle != IntPtr.Zero)
             {
+                // Store original RTF if not already stored or if RTF content has changed
+                // We need to detect if this is a new RTF (different from stored original)
+                // by checking if the text content matches (RTF might be modified but text is same)
+                string currentText = _richTextBox.Text;
+                bool isNewRtf = _originalRtf == null;
+                
+                // If we have stored original, check if text matches to determine if it's the same RTF
+                if (!isNewRtf && _originalRtf != null)
+                {
+                    // Try to get text from original RTF to compare
+                    // If text doesn't match, it's a new RTF
+                    // For simplicity, we'll compare the saved RTF with original
+                    // If they're significantly different, it's likely new content
+                    if (savedRtf != _originalRtf && Math.Abs(savedRtf.Length - _originalRtf.Length) > 50)
+                    {
+                        isNewRtf = true;
+                    }
+                }
+
+                if (isNewRtf)
+                {
+                    // Store the original RTF before any modifications
+                    _originalRtf = savedRtf;
+                }
+
+                // Check if we're in a dark mode black theme that requires black text handling
+                PaletteMode currentMode = KryptonManager.CurrentGlobalPaletteMode;
+                bool isDarkModeBlackTheme = currentMode == PaletteMode.Office2007BlackDarkMode ||
+                                            currentMode == PaletteMode.Office2010BlackDarkMode ||
+                                            currentMode == PaletteMode.Microsoft365BlackDarkMode;
+
+                string rtfToRestore;
+
+                if (isDarkModeBlackTheme && _originalRtf != null)
+                {
+                    // In dark mode black themes, check if original RTF contains black text
+                    // If so, remove black color codes so text uses palette default (visible) color
+                    bool hasBlackText = HasBlackTextInRtf(_originalRtf);
+                    if (hasBlackText)
+                    {
+                        // Remove black color codes from original RTF to allow palette default color
+                        rtfToRestore = RemoveBlackColorCodes(_originalRtf);
+                    }
+                    else
+                    {
+                        // No black text, use original RTF
+                        rtfToRestore = _originalRtf;
+                    }
+                }
+                else
+                {
+                    // Not in dark mode black theme - restore original RTF with all formatting
+                    rtfToRestore = _originalRtf ?? savedRtf;
+                }
+
                 // Check if RTF was modified (lost formatting) and restore it
                 string currentRtf = _richTextBox.Rtf;
-                if (currentRtf != savedRtf)
+                if (currentRtf != rtfToRestore)
                 {
-                    // Restore the original RTF to preserve formatting
-                    _richTextBox.Rtf = savedRtf;
+                    // Restore the RTF (either modified for dark mode or original)
+                    _richTextBox.Rtf = rtfToRestore;
                 }
+            }
+            else if (!hasRtfFormatting)
+            {
+                // Plain text - clear stored original RTF
+                _originalRtf = null;
             }
         }
 
@@ -2232,6 +2323,81 @@ public class KryptonRichTextBox : VisualControlBase,
     private void OnRichTextBoxValidated(object? sender, EventArgs e) => ForwardValidated(e);
 
     private void OnRichTextBoxValidating(object? sender, CancelEventArgs e) => ForwardValidating(e);
+
+    /// <summary>
+    /// Checks if RTF contains black text (color index 0, which is typically black).
+    /// </summary>
+    /// <param name="rtf">The RTF content to check.</param>
+    /// <returns>True if black text is detected, false otherwise.</returns>
+    private static bool HasBlackTextInRtf(string rtf)
+    {
+        if (string.IsNullOrEmpty(rtf))
+        {
+            return false;
+        }
+
+        // Check for \cf0 (color index 0, which is typically black in RTF)
+        // This is the most common way black text is specified in RTF
+        // We check for \cf0 followed by space, digit, backslash, or end of string
+        for (int i = 0; i < rtf.Length - 3; i++)
+        {
+            if (rtf[i] == '\\' && rtf[i + 1] == 'c' && rtf[i + 2] == 'f' && rtf[i + 3] == '0')
+            {
+                // Verify it's a complete color code (followed by space, backslash, or end)
+                if (i + 4 >= rtf.Length || 
+                    rtf[i + 4] == ' ' || 
+                    rtf[i + 4] == '\\' || 
+                    rtf[i + 4] == '\r' || 
+                    rtf[i + 4] == '\n' ||
+                    rtf[i + 4] == '\t' ||
+                    !char.IsDigit(rtf[i + 4]))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Removes black color codes (\cf0) from RTF to allow palette default color (visible on dark backgrounds).
+    /// </summary>
+    /// <param name="rtf">The RTF content to modify.</param>
+    /// <returns>RTF with black color codes removed.</returns>
+    private static string RemoveBlackColorCodes(string rtf)
+    {
+        if (string.IsNullOrEmpty(rtf))
+        {
+            return rtf;
+        }
+
+        // Remove \cf0 (black color index) - this allows text to use palette default color
+        // We need to be careful to only remove \cf0 when it's a complete color code
+        var result = new System.Text.StringBuilder(rtf);
+        
+        // Scan backwards to avoid index shifting issues when removing
+        for (int i = result.Length - 4; i >= 0; i--)
+        {
+            if (result[i] == '\\' && result[i + 1] == 'c' && result[i + 2] == 'f' && result[i + 3] == '0')
+            {
+                // Verify it's a complete color code (followed by space, backslash, or end)
+                if (i + 4 >= result.Length || 
+                    result[i + 4] == ' ' || 
+                    result[i + 4] == '\\' || 
+                    result[i + 4] == '\r' || 
+                    result[i + 4] == '\n' ||
+                    result[i + 4] == '\t' ||
+                    !char.IsDigit(result[i + 4]))
+                {
+                    // Remove \cf0 (4 characters)
+                    result.Remove(i, 4);
+                }
+            }
+        }
+
+        return result.ToString();
+    }
 
     private void OnShowToolTip(object? sender, ToolTipEventArgs e)
     {
