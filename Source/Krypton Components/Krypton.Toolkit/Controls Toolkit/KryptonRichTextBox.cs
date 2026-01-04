@@ -1912,9 +1912,169 @@ public class KryptonRichTextBox : VisualControlBase,
     /// </summary>
     /// <param name="sender">Source of notification.</param>
     /// <param name="e">An NeedLayoutEventArgs containing event data.</param>
+    /// <summary>
+    /// Processes a notification from palette storage of a paint and optional layout required.
+    /// </summary>
+    /// <param name="sender">Source of notification.</param>
+    /// <param name="e">An NeedLayoutEventArgs containing event data.</param>
     protected override void OnNeedPaint(object? sender, NeedLayoutEventArgs e)
     {
-            base.OnNeedPaint(sender, e);
+        if (!e.NeedLayout)
+        {
+            _richTextBox.Invalidate();
+        }
+        else
+        {
+            ForceControlLayout();
+        }
+
+        if (!IsDisposed && !Disposing)
+        {
+            // IMPORTANT: Save RTF content BEFORE any property changes that might reset formatting
+            // Setting BackColor, ForeColor, or Font can reset RTF formatting in RichTextBox
+            string? savedRtf = null;
+            bool hasRtfFormatting = false;
+            
+            if (_richTextBox.Handle != IntPtr.Zero && _richTextBox.TextLength > 0)
+            {
+                savedRtf = _richTextBox.Rtf;
+                
+                // Check if the RichTextBox has RTF formatting by examining the Rtf property
+                // If Rtf contains character-level formatting codes, preserve formatting
+                if (!string.IsNullOrEmpty(savedRtf))
+                {
+                    int rtfLength = savedRtf.Length;
+                    string plainText = _richTextBox.Text;
+                    int plainTextLength = plainText?.Length ?? 0;
+                    
+                    // Quick length check first (fastest check - O(1))
+                    bool rtfMuchLonger = plainTextLength > 0 && rtfLength > (plainTextLength + 200);
+                    if (rtfMuchLonger)
+                    {
+                        hasRtfFormatting = true;
+                    }
+                    else
+                    {
+                        // Single-pass character scan for maximum efficiency (O(n) worst case, but exits early)
+                        // Look for backslash followed by formatting codes: \b, \i, \ul, \fs, \cf, \highlight, or \f[1-9]
+                        bool foundFormatting = false;
+                        bool foundCustomFont = false;
+                        
+                        // Exit early once we find either formatting or custom font (either indicates RTF formatting)
+                        for (int i = 0; i < rtfLength - 1 && !foundFormatting && !foundCustomFont; i++)
+                        {
+                            if (savedRtf[i] == '\\')
+                            {
+                                char nextChar = savedRtf[i + 1];
+                                
+                                // Check for formatting codes: b, i, u, f, c, h, s
+                                switch (nextChar)
+                                {
+                                    case 'b': // \b (bold)
+                                    case 'i': // \i (italic)
+                                        foundFormatting = true;
+                                        break;
+                                    case 'u': // \ul (underline) - check for 'l' next
+                                        if (i + 2 < rtfLength && savedRtf[i + 2] == 'l')
+                                        {
+                                            foundFormatting = true;
+                                        }
+                                        break;
+                                    case 'f': // \f (font) - check for non-zero digit
+                                        if (i + 2 < rtfLength)
+                                        {
+                                            char fontDigit = savedRtf[i + 2];
+                                            if (char.IsDigit(fontDigit) && fontDigit != '0')
+                                            {
+                                                foundCustomFont = true;
+                                            }
+                                        }
+                                        break;
+                                    case 'c': // \cf (color) - check for 'f' next
+                                        if (i + 2 < rtfLength && savedRtf[i + 2] == 'f')
+                                        {
+                                            foundFormatting = true;
+                                        }
+                                        break;
+                                    case 'h': // \highlight - check character by character to avoid Substring
+                                        if (i + 9 < rtfLength)
+                                        {
+                                            // Check for "highlight" without Substring allocation
+                                            if (savedRtf[i + 2] == 'i' && savedRtf[i + 3] == 'g' &&
+                                                savedRtf[i + 4] == 'h' && savedRtf[i + 5] == 'l' &&
+                                                savedRtf[i + 6] == 'i' && savedRtf[i + 7] == 'g' &&
+                                                savedRtf[i + 8] == 'h' && savedRtf[i + 9] == 't')
+                                            {
+                                                foundFormatting = true;
+                                            }
+                                        }
+                                        break;
+                                    case 's': // \fs (font size) - check for digit after 's'
+                                        if (i + 2 < rtfLength && char.IsDigit(savedRtf[i + 2]))
+                                        {
+                                            foundFormatting = true;
+                                        }
+                                        break;
+                                }
+                            }
+                        }
+                        
+                        hasRtfFormatting = foundFormatting || foundCustomFont;
+                    }
+                }
+                else if (!string.IsNullOrEmpty(savedRtf))
+                {
+                    // Even if text length is 0, if RTF exists and has structure beyond minimal, preserve it
+                    // This handles edge cases where text might be empty but RTF structure exists
+                    hasRtfFormatting = savedRtf.Length > 50; // Minimal RTF is usually ~30-40 chars
+                }
+            }
+
+            // Update the back/fore/font from the palette settings
+            UpdateStateAndPalettes();
+            IPaletteTriple triple = GetTripleState();
+            PaletteState state = _drawDockerOuter.State;
+
+            Color backColor = triple.PaletteBack.GetBackColor1(state);
+            if (_richTextBox.BackColor != backColor)
+            {
+                _richTextBox.BackColor = backColor;
+            }
+
+            Color foreColor = triple.PaletteContent!.GetContentShortTextColor1(state);
+            if (_richTextBox.ForeColor != foreColor)
+            {
+                _richTextBox.ForeColor = foreColor;
+            }
+
+            // Only set the font if the rich text box has been created
+            // IMPORTANT: Do not set Font property if RichTextBox has RTF formatting,
+            // as setting Font will reset all RTF formatting. Only set font for plain text.
+            Font? font = triple.PaletteContent.GetContentShortTextFont(state);
+            if ((_richTextBox.Handle != IntPtr.Zero) && font != null && !_richTextBox.Font.Equals(font))
+            {
+                if (!hasRtfFormatting)
+                {
+                    // Only set font for plain text to avoid losing RTF formatting
+                    _richTextBox.Font = font;
+                }
+            }
+
+            // If we detected RTF formatting, restore it after property changes
+            // This ensures formatting is preserved even if BackColor/ForeColor changes reset it
+            if (hasRtfFormatting && !string.IsNullOrEmpty(savedRtf) && _richTextBox.Handle != IntPtr.Zero)
+            {
+                // Check if RTF was modified (lost formatting) and restore it
+                string currentRtf = _richTextBox.Rtf;
+                if (currentRtf != savedRtf)
+                {
+                    // Restore the original RTF to preserve formatting
+                    _richTextBox.Rtf = savedRtf;
+                }
+            }
+        }
+
+        base.OnNeedPaint(sender, e);
     }
 
     /// <summary>
