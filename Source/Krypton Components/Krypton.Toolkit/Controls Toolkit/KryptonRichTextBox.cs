@@ -2434,14 +2434,23 @@ public class KryptonRichTextBox : VisualControlBase,
                 
                 // IMPORTANT: Replace the default color (index 0, black) with white in the color table
                 // This makes all text without explicit color codes use white instead of black
-                if (whiteColorIndex >= 0)
+                // In RTF, index 0 is the first entry after the opening semicolon
+                // Pattern: {\colortbl ;\red0\green0\blue0;... or {\colortbl ;... (implicit black)
+                int firstSemicolon = colorTable.IndexOf(';');
+                if (firstSemicolon >= 0)
                 {
-                    // Find the first color definition (index 0) and replace it with white
-                    // Pattern: {\colortbl ;\red0\green0\blue0;... or {\colortbl ;\red0 \green0 \blue0;...
-                    int firstColorStart = colorTable.IndexOf(';') + 1;
-                    if (firstColorStart > 0 && firstColorStart < colorTable.Length)
+                    // Find where the first color definition starts (after the semicolon)
+                    int firstColorStart = firstSemicolon + 1;
+                    
+                    // Check if there's an explicit color definition for index 0
+                    // Look for \red, \green, \blue patterns
+                    bool hasExplicitFirstColor = colorTable.IndexOf(@"\red", firstColorStart, StringComparison.Ordinal) >= 0 &&
+                                                 colorTable.IndexOf(@"\red", firstColorStart, StringComparison.Ordinal) < 
+                                                 (colorTable.IndexOf(';', firstColorStart) > 0 ? colorTable.IndexOf(';', firstColorStart) : colorTable.Length);
+                    
+                    if (hasExplicitFirstColor)
                     {
-                        // Find where the first color ends (next semicolon or closing brace)
+                        // Find where the first explicit color ends (next semicolon or closing brace)
                         int firstColorEnd = colorTable.IndexOf(';', firstColorStart);
                         if (firstColorEnd < 0)
                         {
@@ -2450,7 +2459,7 @@ public class KryptonRichTextBox : VisualControlBase,
                         
                         if (firstColorEnd > firstColorStart)
                         {
-                            // Replace the first color (black) with white
+                            // Replace the explicit first color (black) with white
                             string newColorTable = colorTable.Substring(0, firstColorStart) + 
                                                   @"\red255\green255\blue255" + 
                                                   colorTable.Substring(firstColorEnd);
@@ -2463,6 +2472,23 @@ public class KryptonRichTextBox : VisualControlBase,
                             // White is now at index 0
                             whiteColorIndex = 0;
                         }
+                    }
+                    else
+                    {
+                        // Index 0 is implicit (no explicit color definition)
+                        // Insert white as the explicit first color
+                        string whiteColorDef = @"\red255\green255\blue255";
+                        string newColorTable = colorTable.Substring(0, firstColorStart) + 
+                                              whiteColorDef + 
+                                              colorTable.Substring(firstColorStart);
+                        
+                        // Replace the color table in the RTF
+                        modifiedRtf = rtf.Substring(0, colorTableStart) + 
+                                     newColorTable + 
+                                     rtf.Substring(colorTableEnd + 1);
+                        
+                        // White is now at index 0
+                        whiteColorIndex = 0;
                     }
                 }
             }
