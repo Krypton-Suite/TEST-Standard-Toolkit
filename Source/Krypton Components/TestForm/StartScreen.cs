@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -64,6 +64,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("Control Styles", string.Empty, typeof(ControlStylesForm));
         CreateButton("DateTime Example", string.Empty, typeof(DateTimeExample));
         CreateButton("Docking Config Save/Load Test", "Test SaveConfigToArray and LoadConfigFromArray", typeof(DockingConfigSaveLoadTest));
+        CreateButton("Floating Window Test", "Comprehensive test for floating window bug fix (Issue #2721)", typeof(FloatingWindowTest));
         CreateButton("ErrorProvider", string.Empty, typeof(ErrorProviderTest));
         CreateButton("FileSystemWatcher", "Monitor file system changes with Krypton integration.", typeof(FileSystemWatcherTest));
         CreateButton("Font Awesome Test", "Native Font Awesome icon support demonstration for buttons, navigator, and ribbon components.", typeof(FontAwesomeTest));
@@ -99,6 +100,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("Ribbon", string.Empty, typeof(RibbonTest));
         CreateButton("TextBox", string.Empty, typeof(TextBoxEventTest));
         CreateButton("TextBox Validating Test", "Tests fix for Validating event duplication bug #2801", typeof(KryptonTextBoxValidatingTest));
+        CreateButton("RichTextBox Formatting Test", "Tests fix for RichTextBox formatting preservation when palette changes (Issue #2832)", typeof(RichTextBoxFormattingTest));
         CreateButton("Touchscreen Support Test", "Comprehensive demonstration of touchscreen support with real-time scale factor adjustment.", typeof(TouchscreenSupportTest));
         CreateButton("TreeView", string.Empty, typeof(TreeViewExample));
         CreateButton("Panel Form", string.Empty, typeof(PanelForm));
@@ -106,6 +108,8 @@ public partial class StartScreen : KryptonForm
         CreateButton("Powered By Button", string.Empty, typeof(PoweredByButtonExample));
         CreateButton("Krypton Task Dialog Demo", string.Empty, typeof(KryptonTaskDialogDemoForm));
         CreateButton("Krypton MDI Window", "KryptonForm MDI Container with both KForm and WForm children", typeof(MdiWindow));
+        CreateButton("Overlay Image Test", "Comprehensive demonstration of overlay images on KryptonButton and KryptonLabel with configurable positions and scaling modes.", typeof(OverlayImageTest));
+        CreateButton("Taskbar Overlay Icon Test", "Comprehensive demonstration of taskbar overlay icons on KryptonForm with configurable icons, descriptions, and interactive examples.", typeof(TaskbarOverlayIconTest));
     }
 
     private void OnFormClosing(object? sender, FormClosingEventArgs e)

@@ -46,7 +46,7 @@ public abstract class PaletteWindows10AcrylicBase : PaletteMicrosoft365Base
     /// <returns>
     /// Renderer to use for drawing palette settings.
     /// </returns>
-    public override IRenderer GetRenderer() => KryptonManager.RenderMicrosoft365;
+    public override IRenderer GetRenderer() => KryptonManager.RenderWindows10Acrylic;
 
     #endregion Renderer
 }

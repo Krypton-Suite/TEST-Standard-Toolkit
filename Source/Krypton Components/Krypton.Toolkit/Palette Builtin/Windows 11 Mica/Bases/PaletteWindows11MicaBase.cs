@@ -46,7 +46,7 @@ public abstract class PaletteWindows11MicaBase : PaletteMicrosoft365Base
     /// <returns>
     /// Renderer to use for drawing palette settings.
     /// </returns>
-    public override IRenderer GetRenderer() => KryptonManager.RenderMicrosoft365;
+    public override IRenderer GetRenderer() => KryptonManager.RenderWindows11Mica;
 
     #endregion Renderer
 }
