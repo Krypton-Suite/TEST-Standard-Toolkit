@@ -102,6 +102,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("TextBox Validating Test", "Tests fix for Validating event duplication bug #2801", typeof(KryptonTextBoxValidatingTest));
         CreateButton("RichTextBox Formatting Test", "Tests fix for RichTextBox formatting preservation when palette changes (Issue #2832)", typeof(RichTextBoxFormattingTest));
         CreateButton("Touchscreen Support Test", "Comprehensive demonstration of touchscreen support with real-time scale factor adjustment.", typeof(TouchscreenSupportTest));
+        CreateButton("Touchscreen + High DPI Demo", "Comprehensive demonstration of touchscreen support with per-monitor high DPI scaling (Issue #2844).", typeof(TouchscreenHighDpiDemo));
         CreateButton("TreeView", string.Empty, typeof(TreeViewExample));
         CreateButton("Panel Form", string.Empty, typeof(PanelForm));
         CreateButton("Palette Viewer", string.Empty, typeof(PaletteViewerForm));

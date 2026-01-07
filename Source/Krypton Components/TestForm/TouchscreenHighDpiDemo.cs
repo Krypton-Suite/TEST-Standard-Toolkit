@@ -7,22 +7,26 @@
  */
 #endregion
 
+using System.Runtime.InteropServices;
 using Krypton.Navigator;
 using Krypton.Ribbon;
+using Krypton.Toolkit;
 using Krypton.Workspace;
+using PI = Krypton.Toolkit.PlatformInvoke;
 
-namespace TestForm; 
+namespace TestForm;
 
 /// <summary>
-/// Comprehensive test form demonstrating touchscreen support functionality.
-/// Shows how controls scale when touchscreen support is enabled and allows
-/// real-time adjustment of scale factors.
+/// Comprehensive demonstration of touchscreen support with high DPI scaling.
+/// Shows per-monitor DPI awareness, combined scaling factors (DPI × Touchscreen),
+/// and real-time monitoring of DPI changes when windows move between monitors.
 /// </summary>
-public partial class TouchscreenSupportTest : KryptonForm
+public partial class TouchscreenHighDpiDemo : KryptonForm
 {
+    private readonly Timer _dpiMonitorTimer;
     private bool _updatingFromEvent;
 
-    public TouchscreenSupportTest()
+    public TouchscreenHighDpiDemo()
     {
         InitializeComponent();
         InitializeForm();
@@ -32,6 +36,11 @@ public partial class TouchscreenSupportTest : KryptonForm
     {
         // Subscribe to touchscreen support changes
         KryptonManager.GlobalTouchscreenSupportChanged += OnGlobalTouchscreenSupportChanged;
+
+        // Setup DPI monitoring timer
+        _dpiMonitorTimer = new Timer { Interval = 500 };
+        _dpiMonitorTimer.Tick += DpiMonitorTimer_Tick;
+        _dpiMonitorTimer.Start();
 
         // Initialize UI with current settings
         UpdateUIFromSettings();
@@ -49,28 +58,31 @@ public partial class TouchscreenSupportTest : KryptonForm
         btnApplyPreset50.Click += BtnApplyPreset50_Click;
         btnApplyPreset75.Click += BtnApplyPreset75_Click;
         btnToggle.Click += BtnToggle_Click;
+        btnRefreshDpi.Click += BtnRefreshDpi_Click;
+
+        // Handle form move/resize to detect monitor changes
+        this.Move += (s, e) => UpdateDpiInfo();
+        this.Resize += (s, e) => UpdateDpiInfo();
+        this.DpiChanged += (s, e) => OnDpiChanged(e);
 
         // Update status
         UpdateStatus();
-        
-        // Add DPI cache invalidation on form resize/move to handle monitor changes
-        this.Resize += (s, e) => KryptonManager.InvalidateDpiCache();
-        this.Move += (s, e) => KryptonManager.InvalidateDpiCache();
+        UpdateDpiInfo();
     }
 
     private void SetupDemoControls()
     {
         // Button examples
         btnStandard.Text = "Standard Button";
-        btnStandard.Click += (s, e) => KryptonMessageBox.Show("Standard button clicked!", "Touchscreen Test");
+        btnStandard.Click += (s, e) => KryptonMessageBox.Show("Standard button clicked!", "High DPI + Touchscreen Demo");
 
         btnPrimary.Text = "Primary Button";
         btnPrimary.ButtonStyle = ButtonStyle.Command;
-        btnPrimary.Click += (s, e) => KryptonMessageBox.Show("Primary button clicked!", "Touchscreen Test");
+        btnPrimary.Click += (s, e) => KryptonMessageBox.Show("Primary button clicked!", "High DPI + Touchscreen Demo");
 
         btnSuccess.Text = "Success Button";
         btnSuccess.StateCommon.Content.ShortText.Color1 = Color.Green;
-        btnSuccess.Click += (s, e) => KryptonMessageBox.Show("Success button clicked!", "Touchscreen Test");
+        btnSuccess.Click += (s, e) => KryptonMessageBox.Show("Success button clicked!", "High DPI + Touchscreen Demo");
 
         // Checkbox examples
         chkOption1.Text = "Option 1";
@@ -102,71 +114,17 @@ public partial class TouchscreenSupportTest : KryptonForm
         trackBar.Value = 50;
         trackBar.TickFrequency = 10;
 
-        // Label examples
-        lblInfo.Text = "This label demonstrates text scaling";
-        lblInfo.StateCommon.ShortText.Color1 = Color.DarkBlue;
+        // Navigator example
+        var label1 = new KryptonLabel { Text = "Navigator Page 1 - High DPI + Touchscreen scaling applies to tabs and buttons", Dock = DockStyle.Fill };
+        var label2 = new KryptonLabel { Text = "Navigator Page 2 - All controls scale when touchscreen support is enabled on high DPI displays", Dock = DockStyle.Fill };
+        navigator.Pages[0].Controls.Add(label1);
+        navigator.Pages[1].Controls.Add(label2);
 
-        // Link label
-        linkLabel.Text = "Click this link";
-        linkLabel.LinkClicked += (s, e) => KryptonMessageBox.Show("Link clicked!", "Touchscreen Test");
-
-        // Setup Navigator
-        SetupNavigator();
-
-        // Setup Workspace
-        SetupWorkspace();
-    }
-
-    private void SetupNavigator()
-    {
-        // Create pages for navigator
-        var page1 = new KryptonPage { Text = "Page 1", TextTitle = "First Page" };
-        var label1 = new KryptonLabel { Text = "Navigator Page 1 - Touchscreen scaling applies to tabs and buttons", Dock = DockStyle.Fill };
-        label1.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
-        label1.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
-        page1.Controls.Add(label1);
-
-        var page2 = new KryptonPage { Text = "Page 2", TextTitle = "Second Page" };
-        var label2 = new KryptonLabel { Text = "Navigator Page 2 - All controls scale when touchscreen support is enabled", Dock = DockStyle.Fill };
-        label2.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
-        label2.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
-        page2.Controls.Add(label2);
-
-        var page3 = new KryptonPage { Text = "Page 3", TextTitle = "Third Page" };
-        var label3 = new KryptonLabel { Text = "Navigator Page 3 - Try adjusting the scale factor to see the effect", Dock = DockStyle.Fill };
-        label3.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
-        label3.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
-        page3.Controls.Add(label3);
-
-        navigator.Pages.AddRange(new[] { page1, page2, page3 });
-        navigator.SelectedPage = page1;
-    }
-
-    private void SetupWorkspace()
-    {
-        // Create workspace cells with pages
-        // Note: KryptonWorkspaceCell inherits from KryptonNavigator, so it automatically
-        // gets touchscreen scaling support
-        var cell1 = new KryptonWorkspaceCell();
-        var page1 = new KryptonPage { Text = "Workspace Cell 1", TextTitle = "Cell 1" };
-        var label1 = new KryptonLabel { Text = "Workspace Cell 1 - Workspace cells and their tabs scale with touchscreen support", Dock = DockStyle.Fill };
-        label1.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
-        label1.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
-        page1.Controls.Add(label1);
-        cell1.Pages.Add(page1);
-        cell1.SelectedPage = page1;
-
-        var cell2 = new KryptonWorkspaceCell();
-        var page2 = new KryptonPage { Text = "Workspace Cell 2", TextTitle = "Cell 2" };
-        var label2 = new KryptonLabel { Text = "Workspace Cell 2 - Navigator, Ribbon, Workspace, and Docking all support touchscreen scaling", Dock = DockStyle.Fill };
-        label2.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
-        label2.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
-        page2.Controls.Add(label2);
-        cell2.Pages.Add(page2);
-        cell2.SelectedPage = page2;
-
-        workspace.Root.Children.Add(cell1);
-        workspace.Root.Children.Add(cell2);
+        // Workspace example
+        var label1w = new KryptonLabel { Text = "Workspace Cell 1 - Workspace cells and their tabs scale with touchscreen support on high DPI", Dock = DockStyle.Fill };
+        var label2w = new KryptonLabel { Text = "Workspace Cell 2 - Navigator, Ribbon, Workspace, and Docking all support touchscreen scaling with per-monitor DPI", Dock = DockStyle.Fill };
+        workspace.Cell0?.Controls.Add(label1w);
+        workspace.Cell1?.Controls.Add(label2w);
     }
 
     private void ChkEnableTouchscreen_CheckedChanged(object? sender, EventArgs e)
@@ -177,6 +135,7 @@ public partial class TouchscreenSupportTest : KryptonForm
         {
             KryptonManager.TouchscreenSettings.Enabled = chkEnableTouchscreen.Checked;
             UpdateStatus();
+            UpdateDpiInfo();
         }
         catch (Exception ex)
         {
@@ -190,10 +149,11 @@ public partial class TouchscreenSupportTest : KryptonForm
 
         try
         {
-            // Convert trackbar value (0-200) to scale factor (1.0 - 3.0)
             float scaleFactor = 1.0f + (trackScaleFactor.Value / 100f);
             KryptonManager.TouchscreenSettings.ControlScaleFactor = scaleFactor;
+            lblScaleValue.Text = $"{scaleFactor:F2}x ({(scaleFactor * 100 - 100):F1}% larger)";
             UpdateStatus();
+            UpdateDpiInfo();
         }
         catch (Exception ex)
         {
@@ -223,9 +183,9 @@ public partial class TouchscreenSupportTest : KryptonForm
 
         try
         {
-            // Convert trackbar value (0-200) to scale factor (1.0 - 3.0)
             float scaleFactor = 1.0f + (trackFontScaleFactor.Value / 100f);
             KryptonManager.TouchscreenSettings.FontScaleFactor = scaleFactor;
+            lblFontScaleValue.Text = $"{scaleFactor:F2}x ({(scaleFactor * 100 - 100):F1}% larger)";
             UpdateStatus();
         }
         catch (Exception ex)
@@ -242,6 +202,7 @@ public partial class TouchscreenSupportTest : KryptonForm
             KryptonManager.TouchscreenSettings.FontScaleFactor = 1.25f; // Default 25% larger
             UpdateUIFromSettings();
             UpdateStatus();
+            UpdateDpiInfo();
         }
         catch (Exception ex)
         {
@@ -251,17 +212,17 @@ public partial class TouchscreenSupportTest : KryptonForm
 
     private void BtnApplyPreset25_Click(object? sender, EventArgs e)
     {
-        ApplyPreset(1.25f, "25% larger");
+        ApplyPreset(1.25f, "25% larger (1.25x)");
     }
 
     private void BtnApplyPreset50_Click(object? sender, EventArgs e)
     {
-        ApplyPreset(1.5f, "50% larger");
+        ApplyPreset(1.50f, "50% larger (1.50x)");
     }
 
     private void BtnApplyPreset75_Click(object? sender, EventArgs e)
     {
-        ApplyPreset(1.75f, "75% larger");
+        ApplyPreset(1.75f, "75% larger (1.75x)");
     }
 
     private void ApplyPreset(float scaleFactor, string description)
@@ -273,6 +234,7 @@ public partial class TouchscreenSupportTest : KryptonForm
             KryptonManager.TouchscreenSettings.FontScaleFactor = scaleFactor; // Match font scale to control scale
             UpdateUIFromSettings();
             UpdateStatus();
+            UpdateDpiInfo();
             KryptonMessageBox.Show($"Applied preset: {description}", "Touchscreen Support", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
@@ -288,11 +250,33 @@ public partial class TouchscreenSupportTest : KryptonForm
             KryptonManager.TouchscreenSettings.Enabled = !KryptonManager.UseTouchscreenSupport;
             UpdateUIFromSettings();
             UpdateStatus();
+            UpdateDpiInfo();
         }
         catch (Exception ex)
         {
             KryptonMessageBox.Show($"Error: {ex.Message}", "Touchscreen Support", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    private void BtnRefreshDpi_Click(object? sender, EventArgs e)
+    {
+        // Invalidate DPI cache and refresh
+        KryptonManager.InvalidateDpiCache();
+        UpdateDpiInfo();
+    }
+
+    private void OnDpiChanged(DpiChangedEventArgs e)
+    {
+        // DPI changed - invalidate cache and update info
+        KryptonManager.InvalidateDpiCache();
+        UpdateDpiInfo();
+        UpdateStatus();
+    }
+
+    private void DpiMonitorTimer_Tick(object? sender, EventArgs e)
+    {
+        // Periodically update DPI info to catch monitor changes
+        UpdateDpiInfo();
     }
 
     private void OnGlobalTouchscreenSupportChanged(object? sender, EventArgs e)
@@ -302,11 +286,13 @@ public partial class TouchscreenSupportTest : KryptonForm
         {
             Invoke(new Action(UpdateUIFromSettings));
             Invoke(new Action(UpdateStatus));
+            Invoke(new Action(UpdateDpiInfo));
         }
         else
         {
             UpdateUIFromSettings();
             UpdateStatus();
+            UpdateDpiInfo();
         }
     }
 
@@ -358,14 +344,6 @@ public partial class TouchscreenSupportTest : KryptonForm
         bool fontScalingEnabled = settings.FontScalingEnabled && isEnabled;
         float fontScaleFactor = KryptonManager.TouchscreenFontScaleFactor;
         
-        // Get DPI information
-        float dpiX = KryptonManager.GetDpiFactorX();
-        float dpiY = KryptonManager.GetDpiFactorY();
-        float dpiAvg = KryptonManager.GetDpiFactor();
-        float combinedX = KryptonManager.GetCombinedScaleFactorX();
-        float combinedY = KryptonManager.GetCombinedScaleFactorY();
-        float combinedAvg = KryptonManager.GetCombinedScaleFactor();
-        
         string statusText;
         if (isEnabled)
         {
@@ -378,13 +356,10 @@ public partial class TouchscreenSupportTest : KryptonForm
             {
                 statusText += " | Font Scaling: DISABLED";
             }
-            
-            // Add DPI and combined scaling info
-            statusText += $" | DPI: {dpiAvg:F2}x ({dpiX:F2}x, {dpiY:F2}y) | Combined: {combinedAvg:F2}x ({combinedX:F2}x, {combinedY:F2}y)";
         }
         else
         {
-            statusText = $"Touchscreen Support: DISABLED - Controls at normal size | DPI: {dpiAvg:F2}x ({dpiX:F2}x, {dpiY:F2}y)";
+            statusText = $"Touchscreen Support: DISABLED - Controls at normal size";
         }
         
         lblStatus.Text = statusText;
@@ -394,66 +369,94 @@ public partial class TouchscreenSupportTest : KryptonForm
         btnToggle.Text = isEnabled ? "Disable Touchscreen Support" : "Enable Touchscreen Support";
     }
 
-    /// <summary>
-    /// Demonstrates the DPI-aware helper methods available in KryptonManager.
-    /// This method shows examples of how to use the scaling helpers for various types.
-    /// </summary>
-    private void DemonstrateDpiHelperMethods()
+    private void UpdateDpiInfo()
     {
-        // Example 1: Get DPI factors
-        float dpiX = KryptonManager.GetDpiFactorX();
-        float dpiY = KryptonManager.GetDpiFactorY();
-        float dpiAvg = KryptonManager.GetDpiFactor();
+        if (!IsHandleCreated) return;
+
+        IntPtr hWnd = Handle;
+
+        // Get primary monitor DPI (legacy method)
+        float dpiXPrimary = KryptonManager.GetDpiFactorX();
+        float dpiYPrimary = KryptonManager.GetDpiFactorY();
+        float dpiAvgPrimary = KryptonManager.GetDpiFactor();
+
+        // Get per-monitor DPI (window-aware method)
+        float dpiXPerMonitor = KryptonManager.GetDpiFactorX(hWnd);
+        float dpiYPerMonitor = KryptonManager.GetDpiFactorY(hWnd);
+        float dpiAvgPerMonitor = KryptonManager.GetDpiFactor(hWnd);
+
+        // Get combined scaling factors (DPI × Touchscreen)
+        float combinedXPrimary = KryptonManager.GetCombinedScaleFactorX();
+        float combinedYPrimary = KryptonManager.GetCombinedScaleFactorY();
+        float combinedAvgPrimary = KryptonManager.GetCombinedScaleFactor();
+
+        float combinedXPerMonitor = KryptonManager.GetCombinedScaleFactorX(hWnd);
+        float combinedYPerMonitor = KryptonManager.GetCombinedScaleFactorY(hWnd);
+        float combinedAvgPerMonitor = KryptonManager.GetCombinedScaleFactor(hWnd);
+
+        // Get actual DPI value from Windows API
+        uint actualDpi = 0;
+        try
+        {
+            actualDpi = PI.GetDpiForWindow(hWnd);
+        }
+        catch
+        {
+            // API not available
+        }
+
+        // Update DPI info labels
+        lblDpiPrimary.Text = $"Primary Monitor DPI: {dpiAvgPrimary:F2}x ({dpiXPrimary:F2}x, {dpiYPrimary:F2}y)";
+        lblDpiPerMonitor.Text = $"Per-Monitor DPI: {dpiAvgPerMonitor:F2}x ({dpiXPerMonitor:F2}x, {dpiYPerMonitor:F2}y)";
         
-        // Example 2: Get combined scaling (DPI × Touchscreen)
-        float combinedX = KryptonManager.GetCombinedScaleFactorX();
-        float combinedY = KryptonManager.GetCombinedScaleFactorY();
-        float combinedAvg = KryptonManager.GetCombinedScaleFactor();
-        
-        // Example 3: Scale a single value by DPI
+        if (actualDpi > 0)
+        {
+            lblDpiActual.Text = $"Windows API DPI: {actualDpi} ({actualDpi / 96f:F2}x)";
+            lblDpiActual.StateCommon.ShortText.Color1 = Color.Blue;
+        }
+        else
+        {
+            lblDpiActual.Text = "Windows API DPI: Not available (Windows 10 1607+ required)";
+            lblDpiActual.StateCommon.ShortText.Color1 = Color.Gray;
+        }
+
+        // Update combined scaling info
+        lblCombinedPrimary.Text = $"Combined (Primary): {combinedAvgPrimary:F2}x ({combinedXPrimary:F2}x, {combinedYPrimary:F2}y)";
+        lblCombinedPerMonitor.Text = $"Combined (Per-Monitor): {combinedAvgPerMonitor:F2}x ({combinedXPerMonitor:F2}x, {combinedYPerMonitor:F2}y)";
+
+        // Highlight if there's a difference (multi-monitor scenario)
+        if (Math.Abs(dpiAvgPrimary - dpiAvgPerMonitor) > 0.01f)
+        {
+            lblDpiPerMonitor.StateCommon.ShortText.Color1 = Color.Orange;
+            lblCombinedPerMonitor.StateCommon.ShortText.Color1 = Color.Orange;
+            lblDpiWarning.Text = "⚠ Multi-monitor detected: Per-monitor DPI differs from primary monitor";
+            lblDpiWarning.StateCommon.ShortText.Color1 = Color.Orange;
+        }
+        else
+        {
+            lblDpiPerMonitor.StateCommon.ShortText.Color1 = Color.Black;
+            lblCombinedPerMonitor.StateCommon.ShortText.Color1 = Color.Black;
+            lblDpiWarning.Text = "✓ Single monitor or matching DPI";
+            lblDpiWarning.StateCommon.ShortText.Color1 = Color.Green;
+        }
+
+        // Show scaling example
         int baseSize = 100;
         int scaledByDpi = KryptonManager.ScaleValueByDpi(baseSize);
-        float scaledByDpiFloat = KryptonManager.ScaleValueByDpi(100f);
-        
-        // Example 4: Scale a value by combined DPI and touchscreen
         int scaledByBoth = KryptonManager.ScaleValueByDpiAndTouchscreen(baseSize);
-        float scaledByBothFloat = KryptonManager.ScaleValueByDpiAndTouchscreen(100f);
-        
-        // Example 5: Scale a Size
-        Size baseSizeObj = new Size(200, 100);
-        Size scaledByDpiSize = KryptonManager.ScaleSizeByDpi(baseSizeObj);
-        Size scaledByBothSize = KryptonManager.ScaleSizeByDpiAndTouchscreen(baseSizeObj);
-        
-        // Example 6: Scale a Point
-        Point basePoint = new Point(50, 75);
-        Point scaledByDpiPoint = KryptonManager.ScalePointByDpi(basePoint);
-        Point scaledByBothPoint = KryptonManager.ScalePointByDpiAndTouchscreen(basePoint);
-        
-        // Example 7: Scale a Rectangle
-        Rectangle baseRect = new Rectangle(10, 20, 200, 100);
-        Rectangle scaledByDpiRect = KryptonManager.ScaleRectangleByDpi(baseRect);
-        Rectangle scaledByBothRect = KryptonManager.ScaleRectangleByDpiAndTouchscreen(baseRect);
-        
-        // Example 8: Invalidate DPI cache when moving to a different monitor
-        // KryptonManager.InvalidateDpiCache(); // Call this when DPI changes
-        
-        // Display results (for demonstration purposes)
-        string message = $"DPI Helper Methods Demo:\n\n" +
-                        $"DPI Factors: X={dpiX:F2}, Y={dpiY:F2}, Avg={dpiAvg:F2}\n" +
-                        $"Combined Factors: X={combinedX:F2}, Y={combinedY:F2}, Avg={combinedAvg:F2}\n\n" +
-                        $"Base Size: {baseSize} → Scaled by DPI: {scaledByDpi}, Scaled by Both: {scaledByBoth}\n" +
-                        $"Base Size Object: {baseSizeObj} → Scaled by DPI: {scaledByDpiSize}, Scaled by Both: {scaledByBothSize}\n" +
-                        $"Base Point: {basePoint} → Scaled by DPI: {scaledByDpiPoint}, Scaled by Both: {scaledByBothPoint}\n" +
-                        $"Base Rectangle: {baseRect} → Scaled by DPI: {scaledByDpiRect}, Scaled by Both: {scaledByBothRect}";
-        
-        KryptonMessageBox.Show(message, "DPI Helper Methods Demo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        int scaledByBothPerMonitor = (int)Math.Round(baseSize * combinedAvgPerMonitor);
+
+        lblScalingExample.Text = $"Scaling Example (base={baseSize}px): DPI only={scaledByDpi}px, DPI+Touchscreen={scaledByBoth}px, Per-Monitor={scaledByBothPerMonitor}px";
     }
 
-    protected override void OnFormClosed(FormClosedEventArgs e)
+    protected override void Dispose(bool disposing)
     {
-        // Unsubscribe from events
-        KryptonManager.GlobalTouchscreenSupportChanged -= OnGlobalTouchscreenSupportChanged;
-        base.OnFormClosed(e);
+        if (disposing)
+        {
+            _dpiMonitorTimer?.Stop();
+            _dpiMonitorTimer?.Dispose();
+            KryptonManager.GlobalTouchscreenSupportChanged -= OnGlobalTouchscreenSupportChanged;
+        }
+        base.Dispose(disposing);
     }
 }
-
