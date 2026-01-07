@@ -12,7 +12,6 @@ using Krypton.Navigator;
 using Krypton.Ribbon;
 using Krypton.Toolkit;
 using Krypton.Workspace;
-using PI = Krypton.Toolkit.PlatformInvoke;
 
 namespace TestForm;
 
@@ -114,17 +113,60 @@ public partial class TouchscreenHighDpiDemo : KryptonForm
         trackBar.Value = 50;
         trackBar.TickFrequency = 10;
 
-        // Navigator example
-        var label1 = new KryptonLabel { Text = "Navigator Page 1 - High DPI + Touchscreen scaling applies to tabs and buttons", Dock = DockStyle.Fill };
-        var label2 = new KryptonLabel { Text = "Navigator Page 2 - All controls scale when touchscreen support is enabled on high DPI displays", Dock = DockStyle.Fill };
-        navigator.Pages[0].Controls.Add(label1);
-        navigator.Pages[1].Controls.Add(label2);
+        // Navigator example - Create pages first
+        var page1 = new KryptonPage { Text = "Page 1", TextTitle = "First Page" };
+        var label1 = new KryptonLabel 
+        { 
+            Text = "Navigator Page 1 - High DPI + Touchscreen scaling applies to tabs and buttons", 
+            Dock = DockStyle.Fill 
+        };
+        label1.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
+        label1.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
+        page1.Controls.Add(label1);
+        navigator.Pages.Add(page1);
 
-        // Workspace example
-        var label1w = new KryptonLabel { Text = "Workspace Cell 1 - Workspace cells and their tabs scale with touchscreen support on high DPI", Dock = DockStyle.Fill };
-        var label2w = new KryptonLabel { Text = "Workspace Cell 2 - Navigator, Ribbon, Workspace, and Docking all support touchscreen scaling with per-monitor DPI", Dock = DockStyle.Fill };
-        workspace.Cell0?.Controls.Add(label1w);
-        workspace.Cell1?.Controls.Add(label2w);
+        var page2 = new KryptonPage { Text = "Page 2", TextTitle = "Second Page" };
+        var label2 = new KryptonLabel 
+        { 
+            Text = "Navigator Page 2 - All controls scale when touchscreen support is enabled on high DPI displays", 
+            Dock = DockStyle.Fill 
+        };
+        label2.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
+        label2.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
+        page2.Controls.Add(label2);
+        navigator.Pages.Add(page2);
+        
+        navigator.SelectedPage = page1;
+
+        // Workspace example - Create cells with pages
+        var cell1 = new KryptonWorkspaceCell();
+        var page1 = new KryptonPage { Text = "Workspace Cell 1", TextTitle = "Cell 1" };
+        var label1w = new KryptonLabel 
+        { 
+            Text = "Workspace Cell 1 - Workspace cells and their tabs scale with touchscreen support on high DPI", 
+            Dock = DockStyle.Fill 
+        };
+        label1w.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
+        label1w.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
+        page1.Controls.Add(label1w);
+        cell1.Pages.Add(page1);
+        cell1.SelectedPage = page1;
+
+        var cell2 = new KryptonWorkspaceCell();
+        var page2 = new KryptonPage { Text = "Workspace Cell 2", TextTitle = "Cell 2" };
+        var label2w = new KryptonLabel 
+        { 
+            Text = "Workspace Cell 2 - Navigator, Ribbon, Workspace, and Docking all support touchscreen scaling with per-monitor DPI", 
+            Dock = DockStyle.Fill 
+        };
+        label2w.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
+        label2w.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
+        page2.Controls.Add(label2w);
+        cell2.Pages.Add(page2);
+        cell2.SelectedPage = page2;
+
+        workspace.Root.Children.Add(cell1);
+        workspace.Root.Children.Add(cell2);
     }
 
     private void ChkEnableTouchscreen_CheckedChanged(object? sender, EventArgs e)
@@ -394,31 +436,16 @@ public partial class TouchscreenHighDpiDemo : KryptonForm
         float combinedYPerMonitor = KryptonManager.GetCombinedScaleFactorY(hWnd);
         float combinedAvgPerMonitor = KryptonManager.GetCombinedScaleFactor(hWnd);
 
-        // Get actual DPI value from Windows API
-        uint actualDpi = 0;
-        try
-        {
-            actualDpi = PI.GetDpiForWindow(hWnd);
-        }
-        catch
-        {
-            // API not available
-        }
+        // Calculate actual DPI value from the per-monitor factor (DPI = factor * 96)
+        int actualDpi = (int)Math.Round(dpiAvgPerMonitor * 96f);
 
         // Update DPI info labels
         lblDpiPrimary.Text = $"Primary Monitor DPI: {dpiAvgPrimary:F2}x ({dpiXPrimary:F2}x, {dpiYPrimary:F2}y)";
         lblDpiPerMonitor.Text = $"Per-Monitor DPI: {dpiAvgPerMonitor:F2}x ({dpiXPerMonitor:F2}x, {dpiYPerMonitor:F2}y)";
         
-        if (actualDpi > 0)
-        {
-            lblDpiActual.Text = $"Windows API DPI: {actualDpi} ({actualDpi / 96f:F2}x)";
-            lblDpiActual.StateCommon.ShortText.Color1 = Color.Blue;
-        }
-        else
-        {
-            lblDpiActual.Text = "Windows API DPI: Not available (Windows 10 1607+ required)";
-            lblDpiActual.StateCommon.ShortText.Color1 = Color.Gray;
-        }
+        // Display the calculated DPI value
+        lblDpiActual.Text = $"Calculated DPI: {actualDpi} ({dpiAvgPerMonitor:F2}x)";
+        lblDpiActual.StateCommon.ShortText.Color1 = Color.Blue;
 
         // Update combined scaling info
         lblCombinedPrimary.Text = $"Combined (Primary): {combinedAvgPrimary:F2}x ({combinedXPrimary:F2}x, {combinedYPrimary:F2}y)";
