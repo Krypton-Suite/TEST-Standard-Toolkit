@@ -85,8 +85,10 @@ public abstract class VisualSimpleBase : VisualControlBase
             // but in .NET it does, so we need to add it explicitly here for consistency.
             // Note: proposedSize represents available space, not current control size,
             // so we always add padding to the content size to get the total required size.
+#if !NETFRAMEWORK
             retSize.Width += Padding.Horizontal;
             retSize.Height += Padding.Vertical;
+#endif
 
             // For AutoSize with GrowAndShrink, ensure we never return a size smaller than what
             // the base class would return, to prevent incorrect shrinking behavior.

@@ -75,8 +75,10 @@ public abstract class VisualSimple : VisualControl
             // Add padding to ensure consistent behavior between .NET Framework and .NET
             // In .NET Framework, Control.GetPreferredSize() didn't include Padding,
             // but in .NET it does, so we need to add it explicitly here for consistency
+#if !NETFRAMEWORK
             retSize.Width += Padding.Horizontal;
             retSize.Height += Padding.Vertical;
+#endif
 
             // Apply the maximum sizing
             if (MaximumSize.Width > 0)
