@@ -1,6 +1,4 @@
 # Krypton Toolkit - WinForms Controls & Features Audit
-**Date:** October 29, 2025 (Updated: December 2025)  
-**Repository:** Standard-Toolkit
 
 ## Executive Summary
 
@@ -410,10 +408,9 @@ This audit compares the Krypton Toolkit against standard Windows Forms controls 
 **Status:** IMPLEMENTED as KryptonBreadCrumb
 
 #### **Split Button** ✅
+**Status:** ✅ **FULLY IMPLEMENTED** - `KryptonSplitButton` provides a true split button implementation.  
 **Impact:** MEDIUM  
 **Description:** Button with a primary action and a dropdown for secondary actions.  
-**Status:** ✅ **FULLY IMPLEMENTED** - `KryptonSplitButton` provides a true split button implementation.  
-**Status:** ✅ **FULLY IMPLEMENTED** - `KryptonSplitButton` provides a true split button implementation.
 **Description:** `KryptonSplitButton` inherits from `KryptonDropButton` and provides:
 - Always-on split button behavior (Splitter and DropDown always enabled)
 - Main button area triggers Click event
@@ -431,10 +428,24 @@ This audit compares the Krypton Toolkit against standard Windows Forms controls 
 
 ### Touch & Modern Input
 
-#### **Touch Gesture Support** ❓
-**Status:** Unknown - needs investigation
+#### **Touch Gesture Support / Touchscreen Support** ✅
+**Status:** ✅ **FULLY IMPLEMENTED** - Touchscreen support is implemented via `KryptonManager` with control and font scaling capabilities.
 **Impact:** MEDIUM  
-**Description:** Support for touch gestures on touch-enabled devices.
+**Description:** Support for touch-enabled devices with automatic control and font scaling.  
+**Features:**
+- Global touchscreen support flag (`KryptonManager.UseTouchscreenSupport`)
+- Configurable control scale factor (default: 1.25, making controls 25% larger)
+- Optional font scaling (`KryptonManager.UseTouchscreenFontScaling`)
+- Configurable font scale factor (default: 1.25)
+- `KryptonTouchscreenSettings` class for centralized configuration
+- `GlobalTouchscreenSupportChanged` event for runtime updates
+- Designer support via `KryptonManager.TouchscreenSettings` property
+**Use Cases:**
+- Touch-enabled devices (tablets, touchscreens)
+- Applications requiring larger touch targets
+- Accessibility improvements for users with motor difficulties
+- Responsive UI scaling based on input method
+**Notes:** Implemented in `KryptonManager.cs`. Controls automatically scale when touchscreen support is enabled. The scale factor can be adjusted per application needs. Font scaling can be enabled/disabled independently.
 
 #### **High DPI / Scaling Support** ❓
 **Status:** Partial - needs audit
