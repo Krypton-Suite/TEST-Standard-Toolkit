@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
  *  © Component Factory Pty Ltd, 2006 - 2016, All rights reserved.
@@ -73,7 +73,7 @@ public class KryptonRibbon : VisualSimple,
 	private ViewDrawRibbonQATBorder _qatBelowRibbon;
 	private ViewLayoutRibbonQATFromRibbon _qatBelowContents;
 	private ViewDrawRibbonMinimizeBar _minimizeBar;
-	private ViewDrawRibbonNotificationBar _notificationBar;
+	private ViewDrawRibbonNotificationBanner _notificationBanner;
 
 	// User ButtonSpecs
 
@@ -209,6 +209,20 @@ public class KryptonRibbon : VisualSimple,
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	[Browsable(false)]
 	public event EventHandler? DesignTimeAddTab;
+
+	/// <summary>
+	/// Occurs when the notification banner action button is clicked.
+	/// </summary>
+	[Category(@"Ribbon")]
+	[Description(@"Occurs when the notification banner action button is clicked.")]
+	public event EventHandler? NotificationBannerActionClicked;
+
+	/// <summary>
+	/// Occurs when the notification banner dismiss button is clicked.
+	/// </summary>
+	[Category(@"Ribbon")]
+	[Description(@"Occurs when the notification banner dismiss button is clicked.")]
+	public event EventHandler? NotificationBannerDismissClicked;
 	#endregion
 
 	#region Identity
@@ -760,6 +774,29 @@ public class KryptonRibbon : VisualSimple,
 	[DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
 	[Localizable(true)]
 	public RibbonFileAppButton RibbonFileAppButton { get; private set; }
+
+	/// <summary>
+	/// Gets or sets the notification banner data. Null hides the banner.
+	/// </summary>
+	[Category(@"Values")]
+	[Description(@"The notification banner data. Null hides the banner.")]
+	[DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+	[DefaultValue(null)]
+	public RibbonNotificationBannerData? NotificationBannerData
+	{
+		get => _notificationBanner.BannerData;
+		set
+		{
+			if (_notificationBanner.BannerData != value)
+			{
+				_notificationBanner.BannerData = value;
+				PerformNeedPaint(true);
+			}
+		}
+	}
+
+	private bool ShouldSerializeNotificationBannerData() => NotificationBannerData != null;
+	private void ResetNotificationBannerData() => NotificationBannerData = null;
 
 	/// <summary>
 	/// Gets the set of ribbon application button display strings.
@@ -2911,20 +2948,18 @@ public class KryptonRibbon : VisualSimple,
 			Visible = false
 		};
 
-		// Create notification bar
-		_notificationBar = new ViewDrawRibbonNotificationBar(this, NeedPaintDelegate)
+		// Create notification banner (initially hidden)
+		_notificationBanner = new ViewDrawRibbonNotificationBanner(this, NeedPaintDelegate)
 		{
-			Visible = false,
-			NotificationData = _notificationBarData
+			Visible = false
 		};
-		_notificationBar.ButtonClick += OnNotificationBarButtonClick;
 
 		// Connect up the various view elements
 		MainPanel.Add(_ribbonDocker);
 		_ribbonDocker.Add(GroupsArea, ViewDockStyle.Fill);
 		_ribbonDocker.Add(_minimizeBar, ViewDockStyle.Bottom);
 		_ribbonDocker.Add(_qatBelowRibbon, ViewDockStyle.Bottom);
-		_ribbonDocker.Add(_notificationBar, ViewDockStyle.Bottom);
+		_ribbonDocker.Add(_notificationBanner, ViewDockStyle.Top);
 		_ribbonDocker.Add(TabsArea, ViewDockStyle.Top);
 		_ribbonDocker.Add(CaptionArea, ViewDockStyle.Top);
 

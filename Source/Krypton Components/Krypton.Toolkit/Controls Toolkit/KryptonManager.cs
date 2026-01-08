@@ -145,6 +145,8 @@ public sealed class KryptonManager : Component
     private static RenderVisualStudio2017? _renderVisualStudio2017;
     private static RenderVisualStudio2019? _renderVisualStudio2019;
     private static RenderVisualStudio2022? _renderVisualStudio2022;
+    private static RenderWindows10Acrylic? _renderWindows10Acrylic;
+    private static RenderWindows11Mica? _renderWindows11Mica;
 
     #endregion
 
@@ -1332,6 +1334,16 @@ public sealed class KryptonManager : Component
     /// Gets the single instance of the Visual Studio 2022 renderer.
     /// </summary>
     public static RenderVisualStudio2022 RenderVisualStudio2022 => _renderVisualStudio2022 ??= new RenderVisualStudio2022();
+
+    /// <summary>
+    /// Gets the single instance of the Windows 10 Acrylic renderer.
+    /// </summary>
+    public static RenderWindows10Acrylic RenderWindows10Acrylic => _renderWindows10Acrylic ??= new RenderWindows10Acrylic();
+
+    /// <summary>
+    /// Gets the single instance of the Windows 11 Mica renderer.
+    /// </summary>
+    public static RenderWindows11Mica RenderWindows11Mica => _renderWindows11Mica ??= new RenderWindows11Mica();
 
     /// <summary>
     /// Gets the single instance of the standard renderer.
