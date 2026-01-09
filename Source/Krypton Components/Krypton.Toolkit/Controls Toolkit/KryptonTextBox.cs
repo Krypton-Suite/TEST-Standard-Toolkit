@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -1495,6 +1495,12 @@ public class KryptonTextBox : VisualControlBase,
     /// <returns>A new instance of Control.ControlCollection assigned to the control.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     protected override ControlCollection CreateControlsInstance() => new KryptonReadOnlyControls(this);
+
+    /// <summary>
+    /// Creates the accessibility object for the KryptonTextBox control.
+    /// </summary>
+    /// <returns>A new KryptonTextBoxAccessibleObject instance for the control.</returns>
+    protected override AccessibleObject CreateAccessibilityInstance() => new KryptonTextBoxAccessibleObject(this);
 
     /// <summary>
     /// Raises the HandleCreated event.

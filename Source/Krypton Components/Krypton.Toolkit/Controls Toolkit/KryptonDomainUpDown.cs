@@ -1543,11 +1543,17 @@ public class KryptonDomainUpDown : VisualControlBase,
 
     #region Protected Overrides
     /// <summary>
-    /// Creates a new instance of the control collection for the KryptonTextBox.
+    /// Creates a new instance of the control collection for the KryptonDomainUpDown.
     /// </summary>
     /// <returns>A new instance of Control.ControlCollection assigned to the control.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     protected override ControlCollection CreateControlsInstance() => new KryptonReadOnlyControls(this);
+
+    /// <summary>
+    /// Creates the accessibility object for the KryptonDomainUpDown control.
+    /// </summary>
+    /// <returns>A new KryptonDomainUpDownAccessibleObject instance for the control.</returns>
+    protected override AccessibleObject CreateAccessibilityInstance() => new KryptonDomainUpDownAccessibleObject(this);
 
     /// <summary>
     /// Raises the HandleCreated event.

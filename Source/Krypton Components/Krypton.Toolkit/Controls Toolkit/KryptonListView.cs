@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
  *  Modifications by Peter Wagner(aka Wagnerp) & Simon Coghlan(aka Smurf-IV), tobitege et al. 2021 - 2026. All rights reserved.
@@ -1475,6 +1475,12 @@ public class KryptonListView : VisualControlBase,
     /// <returns>A new instance of Control.ControlCollection assigned to the control.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     protected override ControlCollection CreateControlsInstance() => new KryptonReadOnlyControls(this);
+
+    /// <summary>
+    /// Creates the accessibility object for the KryptonListView control.
+    /// </summary>
+    /// <returns>A new KryptonListViewAccessibleObject instance for the control.</returns>
+    protected override AccessibleObject CreateAccessibilityInstance() => new KryptonListViewAccessibleObject(this);
 
     /// <summary>
     /// Raises the PaletteChanged event.
