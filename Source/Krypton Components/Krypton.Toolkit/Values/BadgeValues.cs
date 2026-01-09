@@ -395,10 +395,10 @@ public class BadgeValues : Storage
 
     #region BadgeDiameter
     /// <summary>
-    /// Gets and sets the badge diameter (for circle shape only). 0 means auto-size based on content.
+    /// Gets and sets the badge diameter (size for all shapes). 0 means auto-size based on content.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"The diameter of the badge when Shape is Circle. 0 means auto-size based on content.")]
+    [Description(@"The diameter/size of the badge for all shapes. 0 means auto-size based on content.")]
     [RefreshProperties(RefreshProperties.All)]
     [DefaultValue(0)]
     public int BadgeDiameter

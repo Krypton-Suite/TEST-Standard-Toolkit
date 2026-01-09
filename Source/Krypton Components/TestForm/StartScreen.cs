@@ -55,6 +55,7 @@ public partial class StartScreen : KryptonForm
     /// </summary>
     private void AddButtons()
     {
+        CreateButton("Accessibility Test (UIA Providers)", "Comprehensive demo and test for UIA Provider implementation (Issue #762). Tests all 10 controls with accessibility support, organized by category with detailed results.", typeof(AccessibilityTest));
         CreateButton("AboutBox", "Try this About Box for a change", typeof(AboutBoxTest));
         CreateButton("Acrylic Hover Renderer", "Comprehensive demonstration of Acrylic hover effects with configurable intensity, colors, quality profiles, and animation settings.", typeof(AcrylicHoverRendererTest));
         CreateButton("Badge Test", "Comprehensive badge functionality demonstration for KryptonButton and KryptonCheckButton.", typeof(BadgeTest));

@@ -9,6 +9,7 @@
 
 using Krypton.Navigator;
 using Krypton.Ribbon;
+using Krypton.Toolkit;
 using Krypton.Workspace;
 
 namespace TestForm; 
@@ -32,6 +33,7 @@ public partial class TouchscreenSupportTest : KryptonForm
     {
         // Subscribe to touchscreen support changes
         KryptonManager.GlobalTouchscreenSupportChanged += OnGlobalTouchscreenSupportChanged;
+        KryptonManager.TouchscreenAvailabilityChanged += OnTouchscreenAvailabilityChanged;
 
         // Initialize UI with current settings
         UpdateUIFromSettings();
@@ -49,6 +51,9 @@ public partial class TouchscreenSupportTest : KryptonForm
         btnApplyPreset50.Click += BtnApplyPreset50_Click;
         btnApplyPreset75.Click += BtnApplyPreset75_Click;
         btnToggle.Click += BtnToggle_Click;
+        chkAutoDetect.CheckedChanged += ChkAutoDetect_CheckedChanged;
+        numDetectionInterval.ValueChanged += NumDetectionInterval_ValueChanged;
+        btnCheckAvailability.Click += BtnCheckAvailability_Click;
 
         // Update status
         UpdateStatus();
@@ -339,6 +344,17 @@ public partial class TouchscreenSupportTest : KryptonForm
             trackFontScaleFactor.Enabled = fontScalingEnabled;
             lblFontScaleFactor.Enabled = touchscreenEnabled;
             lblFontScaleValue.Enabled = touchscreenEnabled;
+
+            // Automatic detection controls
+            chkAutoDetect.Checked = settings.AutomaticallyDetectTouchscreen;
+            numDetectionInterval.Value = settings.DetectionInterval;
+            numDetectionInterval.Enabled = settings.AutomaticallyDetectTouchscreen;
+            lblDetectionInterval.Enabled = settings.AutomaticallyDetectTouchscreen;
+            
+            // Update maximum touch contacts display
+            int maxContacts = settings.MaximumTouchContacts;
+            lblMaxTouchContacts.Text = $"Maximum Touch Contacts: {maxContacts}";
+            lblMaxTouchContacts.StateCommon.ShortText.Color1 = maxContacts > 0 ? Color.Green : Color.Gray;
         }
         finally
         {
@@ -353,6 +369,8 @@ public partial class TouchscreenSupportTest : KryptonForm
         float controlScaleFactor = KryptonManager.TouchscreenScaleFactor;
         bool fontScalingEnabled = settings.FontScalingEnabled && isEnabled;
         float fontScaleFactor = KryptonManager.TouchscreenFontScaleFactor;
+        bool autoDetect = settings.AutomaticallyDetectTouchscreen;
+        bool isAvailable = KryptonManager.IsTouchscreenAvailable();
         
         string statusText;
         if (isEnabled)
@@ -371,6 +389,16 @@ public partial class TouchscreenSupportTest : KryptonForm
         {
             statusText = "Touchscreen Support: DISABLED - Controls at normal size";
         }
+
+        if (autoDetect)
+        {
+            statusText += $" | Auto-Detect: ON (Interval: {settings.DetectionInterval}ms)";
+            statusText += $" | Touchscreen: {(isAvailable ? "DETECTED" : "NOT DETECTED")}";
+        }
+        else
+        {
+            statusText += " | Auto-Detect: OFF";
+        }
         
         lblStatus.Text = statusText;
         lblStatus.StateCommon.ShortText.Color1 = isEnabled ? Color.Green : Color.Gray;
@@ -379,10 +407,89 @@ public partial class TouchscreenSupportTest : KryptonForm
         btnToggle.Text = isEnabled ? "Disable Touchscreen Support" : "Enable Touchscreen Support";
     }
 
+    private void ChkAutoDetect_CheckedChanged(object? sender, EventArgs e)
+    {
+        if (_updatingFromEvent) return;
+
+        try
+        {
+            KryptonManager.TouchscreenSettings.AutomaticallyDetectTouchscreen = chkAutoDetect.Checked;
+            UpdateStatus();
+        }
+        catch (Exception ex)
+        {
+            KryptonMessageBox.Show($"Error: {ex.Message}", "Touchscreen Support", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private void NumDetectionInterval_ValueChanged(object? sender, EventArgs e)
+    {
+        if (_updatingFromEvent) return;
+
+        try
+        {
+            int interval = (int)numDetectionInterval.Value;
+            KryptonManager.TouchscreenSettings.DetectionInterval = interval;
+            UpdateStatus();
+        }
+        catch (Exception ex)
+        {
+            KryptonMessageBox.Show($"Error: {ex.Message}", "Touchscreen Support", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            // Restore previous value
+            UpdateUIFromSettings();
+        }
+    }
+
+    private void BtnCheckAvailability_Click(object? sender, EventArgs e)
+    {
+        bool isAvailable = KryptonManager.IsTouchscreenAvailable();
+        int maxContacts = KryptonManager.GetMaximumTouchContacts();
+
+        string message = $"Touchscreen Detection Results:\n\n";
+        message += $"Available: {(isAvailable ? "Yes" : "No")}\n";
+        message += $"Maximum Touch Contacts: {maxContacts}";
+
+        KryptonMessageBox.Show(message, "Touchscreen Detection", MessageBoxButtons.OK, 
+            isAvailable ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+    }
+
+    private void OnTouchscreenAvailabilityChanged(object? sender, TouchscreenAvailabilityChangedEventArgs e)
+    {
+        // Update UI on the UI thread
+        if (InvokeRequired)
+        {
+            Invoke(new Action(UpdateUIFromSettings));
+            Invoke(new Action(UpdateStatus));
+        }
+        else
+        {
+            UpdateUIFromSettings();
+            UpdateStatus();
+        }
+
+        // Show notification
+        string message = e.IsAvailable 
+            ? $"Touchscreen connected!\nMaximum contacts: {e.MaximumTouchContacts}\nTouchscreen support has been automatically enabled."
+            : "Touchscreen disconnected.\nTouchscreen support has been automatically disabled.";
+
+        if (InvokeRequired)
+        {
+            Invoke(new Action(() => 
+                KryptonMessageBox.Show(message, "Touchscreen Availability Changed", MessageBoxButtons.OK, 
+                    e.IsAvailable ? MessageBoxIcon.Information : MessageBoxIcon.Warning)));
+        }
+        else
+        {
+            KryptonMessageBox.Show(message, "Touchscreen Availability Changed", MessageBoxButtons.OK, 
+                e.IsAvailable ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+        }
+    }
+
     protected override void OnFormClosed(FormClosedEventArgs e)
     {
         // Unsubscribe from events
         KryptonManager.GlobalTouchscreenSupportChanged -= OnGlobalTouchscreenSupportChanged;
+        KryptonManager.TouchscreenAvailabilityChanged -= OnTouchscreenAvailabilityChanged;
         base.OnFormClosed(e);
     }
 }
