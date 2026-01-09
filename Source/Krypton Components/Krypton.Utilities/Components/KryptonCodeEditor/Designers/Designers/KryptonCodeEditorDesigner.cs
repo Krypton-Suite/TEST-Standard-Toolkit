@@ -37,17 +37,6 @@ internal class KryptonCodeEditorDesigner : ControlDesigner
         // Cast to correct type
         _codeEditor = component as KryptonCodeEditor;
 
-        if (_codeEditor != null)
-        {
-            // Hook into code editor events
-            var viewManager = _codeEditor.GetViewManager();
-            if (viewManager != null)
-            {
-                viewManager.MouseUpProcessed += OnCodeEditorMouseUp;
-                viewManager.DoubleClickProcessed += OnCodeEditorDoubleClick;
-            }
-        }
-
         // Get access to the design services
         _designerHost = GetService(typeof(IDesignerHost)) as IDesignerHost;
         _selectionService = GetService(typeof(ISelectionService)) as ISelectionService;
@@ -86,54 +75,6 @@ internal class KryptonCodeEditorDesigner : ControlDesigner
         }
     }
 
-    /// <summary>
-    /// Receives a call when the mouse leaves the control. 
-    /// </summary>
-    protected override void OnMouseLeave()
-    {
-        _codeEditor?.DesignerMouseLeave();
-
-        base.OnMouseLeave();
-    }
-    #endregion
-
-    #region Implementation
-    private void OnCodeEditorMouseUp(object? sender, MouseEventArgs e)
-    {
-        if ((_codeEditor != null) && (e.Button == MouseButtons.Left))
-        {
-            // Get any component associated with the current mouse position
-            var component = _codeEditor.DesignerComponentFromPoint(new Point(e.X, e.Y));
-
-            if (component != null)
-            {
-                // Force the layout to be updated for any change in selection
-                _codeEditor.PerformLayout();
-
-                // Select the component
-                var selectionList = new ArrayList
-                {
-                    component
-                };
-                _selectionService?.SetSelectedComponents(selectionList, SelectionTypes.Auto);
-            }
-        }
-    }
-
-    private void OnCodeEditorDoubleClick(object sender, Point pt)
-    {
-        // Get any component associated with the current mouse position
-        var component = _codeEditor?.DesignerComponentFromPoint(pt);
-
-        if (component != null)
-        {
-            // Get the designer for the component
-            var designer = _designerHost?.GetDesigner(component);
-
-            // Request code for the default event be generated
-            designer?.DoDefaultAction();
-        }
-    }
     #endregion
 }
 

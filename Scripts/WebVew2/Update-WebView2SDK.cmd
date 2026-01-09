@@ -37,12 +37,12 @@ echo.
 echo Updating WebView2 SDK to version %WEBVIEW2_VERSION%...
 
 REM Temporarily add the latest version via NuGet
-dotnet add "Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj" package Microsoft.Web.WebView2 --version %WEBVIEW2_VERSION%
+dotnet add "Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj" package Microsoft.Web.WebView2 --version %WEBVIEW2_VERSION%
 
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo Restoring NuGet packages to ensure WebView2 SDK is downloaded...
-    dotnet restore "Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj"
+    dotnet restore "Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj"
     
     if %ERRORLEVEL% NEQ 0 (
         echo ERROR: Failed to restore NuGet packages
@@ -119,7 +119,7 @@ if %ERRORLEVEL% EQU 0 (
     )
     
     REM Remove the NuGet package reference
-    dotnet remove "Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj" package Microsoft.Web.WebView2
+    dotnet remove "Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj" package Microsoft.Web.WebView2
     
     REM Update project file with the latest version
     echo Updating project file with latest version...

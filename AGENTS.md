@@ -8,7 +8,7 @@
 - Do not run build scripts unless instructed to do so
 
 ## Project Structure & Module Organization
-- `Source/Krypton Components`: Core libraries (`Krypton.Toolkit`, `Krypton.Ribbon`, `Krypton.Navigator`, `Krypton.Workspace`, `Krypton.Docking`) and the solution `Krypton Toolkit Suite 2022 - VS2022.sln`
+- `Source/Krypton Components`: Core libraries (`Krypton.Toolkit`, `Krypton.Ribbon`, `Krypton.Navigator`, `Krypton.Workspace`, `Krypton.Docking`) and the solution `Krypton Toolkit Suite - VS2022.sln`
 - `Source/Krypton Components/TestForm`: WinForms sample app used to validate changes
 - `Source/TestHarnesses`: Small repro/test harnesses (e.g., `ThemeSwapRepro`)
 - `Scripts/`: Build and packaging scripts (`build-stable.cmd`, `build-canary.cmd`, `build-nightly.cmd`, `build.proj`)
@@ -17,7 +17,7 @@
 
 ## Build, Test, and Development Commands
 - Build solution (Debug):
-  - `dotnet build "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.sln" -c Debug`
+  - `dotnet build "Source/Krypton Components/Krypton Toolkit Suite - VS2022.sln" -c Debug`
 - Run sample app:
   - `dotnet run --project "Source/Krypton Components/TestForm/TestForm.csproj" -c Debug`
 - Preset builds (Windows cmd):

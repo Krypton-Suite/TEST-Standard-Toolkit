@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<!-- Target Framework Selection: Determines which .NET versions to build for based on configuration -->
 	<Choose>
@@ -40,6 +40,7 @@
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<NeutralLanguage>en</NeutralLanguage>
 		<DisableImplicitNamespaceImports>true</DisableImplicitNamespaceImports>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 		<Configurations>Debug;Release;Installer;Nightly;Canary</Configurations>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<Nullable>enable</Nullable>
@@ -61,6 +62,8 @@
 		<Compile Include="Components\KryptonAutoTextSuggestProvider\Controls Visuals\KryptonAutoTextSuggestPopup.cs" />
 		<Compile Include="Components\KryptonAutoTextSuggestProvider\EventArgs\KryptonAutoTextSuggestEventArgs.cs" />
 		<Compile Include="Components\KryptonAutoTextSuggestProvider\General\KryptonAutoTextSuggestItem.cs" />
+		<Compile Include="Components\KryptonCountdownButton\Controls Toolkit\KryptonCountdownButton.cs" />
+		<Compile Include="Components\**\*.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -128,7 +131,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit 2022.csproj" />
+	  <ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

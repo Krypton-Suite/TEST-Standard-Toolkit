@@ -35,6 +35,10 @@ public sealed class KryptonManager : Component
     private static volatile float _globalTouchscreenScaleFactor = 1.25f;
     private static volatile bool _globalTouchscreenFontScaling = true;
     private static volatile float _globalTouchscreenFontScaleFactor = 1.25f;
+    private static volatile bool _globalAutomaticallyDetectTouchscreen = false;
+    private static volatile int _globalTouchscreenDetectionInterval = 2000; // Default 2 seconds
+    private static System.Threading.Timer? _touchscreenDetectionTimer;
+    private static bool _lastDetectedTouchscreenState = false;
     private static Font? _baseFont;
 
     // Initialize the default modes
@@ -139,6 +143,14 @@ public sealed class KryptonManager : Component
     private static RenderVisualStudio2010With2013? _renderVisualStudio2010With2013;
     private static RenderVisualStudio2010WithMicrosoft365? _renderVisualStudio2010WithMicrosoft365;
     private static RenderVisualStudio? _renderVisualStudio;
+    private static RenderVisualStudio2012? _renderVisualStudio2012;
+    private static RenderVisualStudio2013? _renderVisualStudio2013;
+    private static RenderVisualStudio2015? _renderVisualStudio2015;
+    private static RenderVisualStudio2017? _renderVisualStudio2017;
+    private static RenderVisualStudio2019? _renderVisualStudio2019;
+    private static RenderVisualStudio2022? _renderVisualStudio2022;
+    private static RenderWindows10Acrylic? _renderWindows10Acrylic;
+    private static RenderWindows11Mica? _renderWindows11Mica;
 
     #endregion
 
@@ -163,6 +175,15 @@ public sealed class KryptonManager : Component
     [Category(@"Property Changed")]
     [Description(@"Occurs when the value of the GlobalTouchscreenSupport or GlobalTouchscreenScaleFactor property is changed.")]
     public static event EventHandler? GlobalTouchscreenSupportChanged;
+
+    /// <summary>
+    /// Occurs when touchscreen availability changes (detected or removed).
+    /// This event is fired when AutomaticallyDetectTouchscreen is enabled and the system detects
+    /// that a touchscreen has been connected or disconnected.
+    /// </summary>
+    [Category(@"Property Changed")]
+    [Description(@"Occurs when touchscreen availability changes (detected or removed).")]
+    public static event EventHandler<TouchscreenAvailabilityChangedEventArgs>? TouchscreenAvailabilityChanged;
     #endregion
 
     #region Identity
@@ -232,7 +253,8 @@ public sealed class KryptonManager : Component
                                ShouldSerializeUseKryptonFileDialogs() ||
                                ShouldSerializeBaseFont() ||
                                ShouldSerializeGlobalPaletteMode() ||
-                               ShouldSerializeTouchscreenSettings());
+                               ShouldSerializeTouchscreenSettings() ||
+                               ShouldSerializeAcrylicHoverSettings());
 
     /// <summary>
     /// Reset All values
@@ -249,6 +271,7 @@ public sealed class KryptonManager : Component
         ResetBaseFont();
         ResetGlobalPaletteMode();
         ResetTouchscreenSettings();
+        ResetAcrylicHoverSettings();
     }
 
     /// <summary>
@@ -521,6 +544,16 @@ public sealed class KryptonManager : Component
     private bool ShouldSerializeTouchscreenSettings() => !Settings.IsDefault;
     private void ResetTouchscreenSettings() => Settings.Reset();
 
+    /// <summary>
+    /// Gets the Acrylic hover effect settings.
+    /// </summary>
+    [Category(@"Acrylic Hover")]
+    [Description(@"Settings for Acrylic hover effects on interactive elements.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public AcrylicHoverSettings AcrylicHoverSettings => AcrylicHoverSettingsStatic;
+    private bool ShouldSerializeAcrylicHoverSettings() => !AcrylicHoverSettingsStatic.IsDefault;
+    private void ResetAcrylicHoverSettings() => AcrylicHoverSettingsStatic.Reset();
+
     #endregion
 
     #region Static Properties
@@ -540,6 +573,11 @@ public sealed class KryptonManager : Component
     /// <summary>Gets the touchscreen settings.</summary>
     /// <value>The touchscreen settings.</value>
     public static KryptonTouchscreenSettings Settings { get; } = new KryptonTouchscreenSettings();
+
+    /// <summary>
+    /// Gets the global Acrylic hover effect settings.
+    /// </summary>
+    public static AcrylicHoverSettings AcrylicHoverSettingsStatic { get; } = new AcrylicHoverSettings();
 
     #region Static ShowAdministratorSuffix
     /// <summary>
@@ -741,7 +779,216 @@ public sealed class KryptonManager : Component
     /// <summary>
     /// Gets the touchscreen font scale factor. Returns the configured font scale factor when touchscreen support and font scaling are enabled, otherwise 1.0.
     /// </summary>
-    public static float TouchscreenFontScaleFactor => (UseTouchscreenSupport && UseTouchscreenFontScaling) ? _globalTouchscreenFontScaleFactor : 1.0f;
+    public static float TouchscreenFontScaleFactor => (UseTouchscreenFontScaling && UseTouchscreenSupport) ? _globalTouchscreenFontScaleFactor : 1.0f;
+
+    /// <summary>
+    /// Gets and sets a value indicating whether touchscreen support should be automatically detected and enabled.
+    /// When set to true, the system will automatically check for touchscreen capability and enable/disable touchscreen support accordingly.
+    /// Periodic polling will be enabled to detect hot-plug scenarios.
+    /// </summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public static bool AutomaticallyDetectTouchscreen
+    {
+        get => _globalAutomaticallyDetectTouchscreen;
+        set
+        {
+            if (_globalAutomaticallyDetectTouchscreen != value)
+            {
+                _globalAutomaticallyDetectTouchscreen = value;
+                
+                if (value)
+                {
+                    // Initialize last detected state
+                    _lastDetectedTouchscreenState = IsTouchscreenAvailable();
+                    
+                    // Perform detection immediately
+                    PerformTouchscreenDetection();
+                    
+                    // Start periodic polling
+                    StartTouchscreenDetectionTimer();
+                }
+                else
+                {
+                    // Stop periodic polling
+                    StopTouchscreenDetectionTimer();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets and sets the interval (in milliseconds) for periodic touchscreen detection polling.
+    /// This is used when AutomaticallyDetectTouchscreen is enabled to detect hot-plug scenarios.
+    /// Default is 2000ms (2 seconds). Minimum value is 500ms.
+    /// </summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public static int TouchscreenDetectionInterval
+    {
+        get => _globalTouchscreenDetectionInterval;
+        set
+        {
+            if (value < 500)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), value, @"Detection interval must be at least 500 milliseconds.");
+            }
+
+            if (_globalTouchscreenDetectionInterval != value)
+            {
+                _globalTouchscreenDetectionInterval = value;
+                
+                // Restart timer with new interval if auto-detection is enabled
+                if (_globalAutomaticallyDetectTouchscreen)
+                {
+                    StartTouchscreenDetectionTimer();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Performs touchscreen detection and updates the Enabled property if AutomaticallyDetectTouchscreen is true.
+    /// This method is called automatically when AutomaticallyDetectTouchscreen is enabled, but can also be called manually.
+    /// </summary>
+    private static void PerformTouchscreenDetection()
+    {
+        if (!_globalAutomaticallyDetectTouchscreen)
+        {
+            return; // Auto-detection is disabled
+        }
+
+        bool isTouchscreenAvailable = IsTouchscreenAvailable();
+        int maximumTouchContacts = GetMaximumTouchContacts();
+        
+        // Check if availability has changed
+        bool availabilityChanged = _lastDetectedTouchscreenState != isTouchscreenAvailable;
+        
+        // Only update if the current state differs from detected state
+        if (_globalTouchscreenSupport != isTouchscreenAvailable)
+        {
+            // Update the enabled state without triggering change events (we'll fire it once at the end)
+            _globalTouchscreenSupport = isTouchscreenAvailable;
+            
+            // Fire change event to notify controls to refresh
+            OnGlobalTouchscreenSupportChanged(EventArgs.Empty);
+        }
+
+        // Fire availability changed event if the detected state changed
+        if (availabilityChanged)
+        {
+            _lastDetectedTouchscreenState = isTouchscreenAvailable;
+            OnTouchscreenAvailabilityChanged(new TouchscreenAvailabilityChangedEventArgs(isTouchscreenAvailable, maximumTouchContacts));
+        }
+    }
+
+    /// <summary>
+    /// Starts periodic touchscreen detection polling.
+    /// </summary>
+    private static void StartTouchscreenDetectionTimer()
+    {
+        StopTouchscreenDetectionTimer();
+
+        if (!_globalAutomaticallyDetectTouchscreen)
+        {
+            return;
+        }
+
+        _touchscreenDetectionTimer = new System.Threading.Timer(TouchscreenDetectionTimer_Tick, null, _globalTouchscreenDetectionInterval, _globalTouchscreenDetectionInterval);
+    }
+
+    /// <summary>
+    /// Stops periodic touchscreen detection polling.
+    /// </summary>
+    private static void StopTouchscreenDetectionTimer()
+    {
+        if (_touchscreenDetectionTimer != null)
+        {
+            _touchscreenDetectionTimer.Dispose();
+            _touchscreenDetectionTimer = null;
+        }
+    }
+
+    /// <summary>
+    /// Timer callback for periodic touchscreen detection.
+    /// </summary>
+    private static void TouchscreenDetectionTimer_Tick(object? state)
+    {
+        PerformTouchscreenDetection();
+    }
+
+    /// <summary>
+    /// Raises the TouchscreenAvailabilityChanged event.
+    /// </summary>
+    /// <param name="e">A TouchscreenAvailabilityChangedEventArgs containing the event data.</param>
+    private static void OnTouchscreenAvailabilityChanged(TouchscreenAvailabilityChangedEventArgs e)
+    {
+        var handler = TouchscreenAvailabilityChanged;
+        handler?.Invoke(null, e);
+    }
+
+    /// <summary>
+    /// Detects if the system has touchscreen capability.
+    /// Uses GetSystemMetrics(SM_DIGITIZER) to check for digitizer input support.
+    /// Note: This detects system-wide touchscreen capability, not per-monitor.
+    /// For per-monitor detection, you may need to check the monitor's capabilities separately.
+    /// </summary>
+    /// <returns>True if a touchscreen is detected; otherwise false.</returns>
+    public static bool IsTouchscreenAvailable()
+    {
+        try
+        {
+            // SM_DIGITIZER = 94
+            // NID_READY = 0x80 (bit 7) indicates the digitizer is ready
+            int digitizerInfo = PI.GetSystemMetrics(PI.SM_.DIGITIZER);
+            return (digitizerInfo & 0x80) != 0; // Check NID_READY bit
+        }
+        catch
+        {
+            // API may not be available on older Windows versions
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the maximum number of simultaneous touch contacts supported by the system.
+    /// Returns 0 if no touchscreen is available or the API is not supported.
+    /// </summary>
+    /// <returns>The maximum number of simultaneous touches, or 0 if not available.</returns>
+    public static int GetMaximumTouchContacts()
+    {
+        try
+        {
+            // SM_MAXIMUMTOUCHES = 95
+            return PI.GetSystemMetrics(PI.SM_.MAXIMUMTOUCHES);
+        }
+        catch
+        {
+            // API may not be available on older Windows versions
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Automatically enables touchscreen support if a touchscreen is detected.
+    /// This is a convenience method that calls IsTouchscreenAvailable() and enables support if detected.
+    /// </summary>
+    /// <param name="scaleFactor">The scale factor to use if touchscreen is detected. Default is 1.25f (25% larger).</param>
+    /// <param name="enableFontScaling">Whether to enable font scaling. Default is true.</param>
+    /// <returns>True if touchscreen was detected and support was enabled; otherwise false.</returns>
+    public static bool AutoEnableTouchscreenSupport(float scaleFactor = 1.25f, bool enableFontScaling = true)
+    {
+        if (IsTouchscreenAvailable())
+        {
+            TouchscreenSettings.Enabled = true;
+            TouchscreenSettings.ControlScaleFactor = scaleFactor;
+            TouchscreenSettings.FontScalingEnabled = enableFontScaling;
+            if (enableFontScaling)
+            {
+                TouchscreenSettings.FontScaleFactor = scaleFactor;
+            }
+            return true;
+        }
+        return false;
+    }
     #endregion
 
     #region Static Palette
@@ -865,6 +1112,14 @@ public sealed class KryptonManager : Component
                 return PaletteMaterialLightRipple;
             case PaletteMode.MaterialDarkRipple:
                 return PaletteMaterialDarkRipple;
+            case PaletteMode.Windows10AcrylicLight:
+                return PaletteWindows10AcrylicLight;
+            case PaletteMode.Windows10AcrylicDark:
+                return PaletteWindows10AcrylicDark;
+            case PaletteMode.Windows11MicaLight:
+                return PaletteWindows11MicaLight;
+            case PaletteMode.Windows11MicaDark:
+                return PaletteWindows11MicaDark;
 
             case PaletteMode.Custom:
             case PaletteMode.Global:
@@ -1152,11 +1407,19 @@ public sealed class KryptonManager : Component
     public static PaletteMaterialDark PaletteMaterialDark => _paletteMaterialDark ??= new PaletteMaterialDark();
     public static PaletteMaterialLightRipple PaletteMaterialLightRipple => _paletteMaterialLightRipple ??= new PaletteMaterialLightRipple();
     public static PaletteMaterialDarkRipple PaletteMaterialDarkRipple => _paletteMaterialDarkRipple ??= new PaletteMaterialDarkRipple();
+    public static PaletteWindows10AcrylicLight PaletteWindows10AcrylicLight => _paletteWindows10AcrylicLight ??= new PaletteWindows10AcrylicLight();
+    public static PaletteWindows10AcrylicDark PaletteWindows10AcrylicDark => _paletteWindows10AcrylicDark ??= new PaletteWindows10AcrylicDark();
+    public static PaletteWindows11MicaLight PaletteWindows11MicaLight => _paletteWindows11MicaLight ??= new PaletteWindows11MicaLight();
+    public static PaletteWindows11MicaDark PaletteWindows11MicaDark => _paletteWindows11MicaDark ??= new PaletteWindows11MicaDark();
 
     private static PaletteMaterialLight? _paletteMaterialLight;
     private static PaletteMaterialDark? _paletteMaterialDark;
     private static PaletteMaterialLightRipple? _paletteMaterialLightRipple;
     private static PaletteMaterialDarkRipple? _paletteMaterialDarkRipple;
+    private static PaletteWindows10AcrylicLight? _paletteWindows10AcrylicLight;
+    private static PaletteWindows10AcrylicDark? _paletteWindows10AcrylicDark;
+    private static PaletteWindows11MicaLight? _paletteWindows11MicaLight;
+    private static PaletteWindows11MicaDark? _paletteWindows11MicaDark;
 
     //public static PaletteBase CustomPaletteBase => _customPalette ??= new PaletteBase ();
 
@@ -1263,6 +1526,46 @@ public sealed class KryptonManager : Component
     /// Gets the single instance of the Visual Studio 2010 Office 365 renderer.
     /// </summary>
     public static RenderVisualStudio2010WithMicrosoft365 RenderVisualStudio2010WithMicrosoft365 => _renderVisualStudio2010WithMicrosoft365 ??= new RenderVisualStudio2010WithMicrosoft365();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2012 renderer.
+    /// </summary>
+    public static RenderVisualStudio2012 RenderVisualStudio2012 => _renderVisualStudio2012 ??= new RenderVisualStudio2012();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2013 renderer.
+    /// </summary>
+    public static RenderVisualStudio2013 RenderVisualStudio2013 => _renderVisualStudio2013 ??= new RenderVisualStudio2013();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2015 renderer.
+    /// </summary>
+    public static RenderVisualStudio2015 RenderVisualStudio2015 => _renderVisualStudio2015 ??= new RenderVisualStudio2015();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2017 renderer.
+    /// </summary>
+    public static RenderVisualStudio2017 RenderVisualStudio2017 => _renderVisualStudio2017 ??= new RenderVisualStudio2017();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2019 renderer.
+    /// </summary>
+    public static RenderVisualStudio2019 RenderVisualStudio2019 => _renderVisualStudio2019 ??= new RenderVisualStudio2019();
+
+    /// <summary>
+    /// Gets the single instance of the Visual Studio 2022 renderer.
+    /// </summary>
+    public static RenderVisualStudio2022 RenderVisualStudio2022 => _renderVisualStudio2022 ??= new RenderVisualStudio2022();
+
+    /// <summary>
+    /// Gets the single instance of the Windows 10 Acrylic renderer.
+    /// </summary>
+    public static RenderWindows10Acrylic RenderWindows10Acrylic => _renderWindows10Acrylic ??= new RenderWindows10Acrylic();
+
+    /// <summary>
+    /// Gets the single instance of the Windows 11 Mica renderer.
+    /// </summary>
+    public static RenderWindows11Mica RenderWindows11Mica => _renderWindows11Mica ??= new RenderWindows11Mica();
 
     /// <summary>
     /// Gets the single instance of the standard renderer.

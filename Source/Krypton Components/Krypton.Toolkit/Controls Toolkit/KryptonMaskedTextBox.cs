@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -1475,11 +1475,17 @@ public class KryptonMaskedTextBox : VisualControlBase,
 
     #region Protected Overrides
     /// <summary>
-    /// Creates a new instance of the control collection for the KryptonTextBox.
+    /// Creates a new instance of the control collection for the KryptonMaskedTextBox.
     /// </summary>
     /// <returns>A new instance of Control.ControlCollection assigned to the control.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     protected override ControlCollection CreateControlsInstance() => new KryptonReadOnlyControls(this);
+
+    /// <summary>
+    /// Creates the accessibility object for the KryptonMaskedTextBox control.
+    /// </summary>
+    /// <returns>A new KryptonMaskedTextBoxAccessibleObject instance for the control.</returns>
+    protected override AccessibleObject CreateAccessibilityInstance() => new KryptonMaskedTextBoxAccessibleObject(this);
 
     /// <summary>
     /// Raises the HandleCreated event.

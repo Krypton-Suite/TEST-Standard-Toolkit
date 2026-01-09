@@ -187,6 +187,38 @@ internal class KryptonAutoTextSuggestPopup : VisualPopup
     }
     #endregion
 
+    #region Protected Override
+    /// <summary>
+    /// Processes Windows messages.
+    /// </summary>
+    /// <param name="m">The Windows Message to process.</param>
+    protected override void WndProc(ref Message m)
+    {
+        // Forward keyboard messages to the attached control if it has focus
+        // This allows typing to continue in the text control while the popup is visible
+        Control? attachedControl = _provider.AttachedControl;
+        if (attachedControl != null && attachedControl.IsHandleCreated && attachedControl.Focused)
+        {
+            // Check if this is a keyboard message
+            if (m.Msg == (int)PI.WM_.KEYDOWN ||
+                m.Msg == (int)PI.WM_.KEYUP ||
+                m.Msg == (int)PI.WM_.CHAR ||
+                m.Msg == (int)PI.WM_.SYSKEYDOWN ||
+                m.Msg == (int)PI.WM_.SYSKEYUP ||
+                m.Msg == (int)PI.WM_.SYSCHAR ||
+                m.Msg == (int)PI.WM_.DEADCHAR ||
+                m.Msg == (int)PI.WM_.SYSDEADCHAR)
+            {
+                // Forward the message to the attached control using SendMessage
+                PI.SendMessage(attachedControl.Handle, m.Msg, m.WParam, m.LParam);
+                return;
+            }
+        }
+
+        base.WndProc(ref m);
+    }
+    #endregion
+
     #region Implementation
     private void AdjustSize()
     {
