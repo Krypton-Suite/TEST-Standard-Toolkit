@@ -12,11 +12,14 @@ namespace TestForm;
 public partial class FlowLayoutPanelTest : KryptonForm
 {
     private int _controlCounter;
+    private KryptonContextMenu? _contextMenu;
 
     public FlowLayoutPanelTest()
     {
         InitializeComponent();
         InitializeComboBoxes();
+        InitializeContextMenu();
+        SetupAdditionalPanels();
         UpdateUIState();
     }
 
@@ -52,6 +55,52 @@ public partial class FlowLayoutPanelTest : KryptonForm
         kcmbPaletteMode.SelectedIndex = 0; // "Global"
     }
 
+    private void InitializeContextMenu()
+    {
+        _contextMenu = new KryptonContextMenu();
+        var items = new KryptonContextMenuItems();
+        
+        var addButtonItem = new KryptonContextMenuItem("Add Button");
+        addButtonItem.Click += (s, e) => kbtnAddButton_Click(s!, e);
+        items.Items.Add(addButtonItem);
+        
+        var addLabelItem = new KryptonContextMenuItem("Add Label");
+        addLabelItem.Click += (s, e) => kbtnAddLabel_Click(s!, e);
+        items.Items.Add(addLabelItem);
+        
+        var addTextBoxItem = new KryptonContextMenuItem("Add TextBox");
+        addTextBoxItem.Click += (s, e) => kbtnAddTextBox_Click(s!, e);
+        items.Items.Add(addTextBoxItem);
+        
+        items.Items.Add(new KryptonContextMenuSeparator());
+        
+        var clearItem = new KryptonContextMenuItem("Clear All");
+        clearItem.Click += (s, e) => kbtnClear_Click(s!, e);
+        items.Items.Add(clearItem);
+        
+        _contextMenu.Items.Add(items);
+        kflpDemo.KryptonContextMenu = _contextMenu;
+    }
+
+    private void SetupAdditionalPanels()
+    {
+        // Add some initial sample controls to demonstrate flow layout
+        for (int i = 0; i < 3; i++)
+        {
+            var button = new KryptonButton
+            {
+                Text = $"Sample {++_controlCounter}",
+                Size = new Size(90, 30),
+                Margin = new Padding(5)
+            };
+            button.Click += (s, e) => 
+            {
+                AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] {button.Text} clicked");
+            };
+            kflpDemo.Controls.Add(button);
+        }
+    }
+
     private void UpdateUIState()
     {
         if (kflpDemo != null)
@@ -61,6 +110,7 @@ public partial class FlowLayoutPanelTest : KryptonForm
             klblAutoSize.Text = $"Auto Size: {kflpDemo.AutoSize}";
             klblControlCount.Text = $"Control Count: {kflpDemo.Controls.Count}";
             klblPanelBackStyleStatus.Text = $"Panel Back Style: {kflpDemo.PanelBackStyle}";
+            kchkEnabled.Checked = kflpDemo.Enabled;
         }
     }
 
@@ -80,6 +130,65 @@ public partial class FlowLayoutPanelTest : KryptonForm
         kflpDemo.Controls.Add(button);
         UpdateUIState();
         AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] Added {button.Text}");
+    }
+
+    private void kbtnAddCheckBox_Click(object sender, EventArgs e)
+    {
+        var checkBox = new KryptonCheckBox
+        {
+            Text = $"CheckBox {++_controlCounter}",
+            Size = new Size(120, 25),
+            Margin = new Padding(5),
+            Checked = _controlCounter % 2 == 0
+        };
+        checkBox.CheckedChanged += (s, e) => 
+        {
+            AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] {checkBox.Text} checked: {checkBox.Checked}");
+        };
+
+        kflpDemo.Controls.Add(checkBox);
+        UpdateUIState();
+        AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] Added {checkBox.Text}");
+    }
+
+    private void kbtnAddRadioButton_Click(object sender, EventArgs e)
+    {
+        var radioButton = new KryptonRadioButton
+        {
+            Text = $"Radio {++_controlCounter}",
+            Size = new Size(100, 25),
+            Margin = new Padding(5)
+        };
+        radioButton.CheckedChanged += (s, e) => 
+        {
+            if (radioButton.Checked)
+            {
+                AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] {radioButton.Text} selected");
+            }
+        };
+
+        kflpDemo.Controls.Add(radioButton);
+        UpdateUIState();
+        AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] Added {radioButton.Text}");
+    }
+
+    private void kbtnAddComboBox_Click(object sender, EventArgs e)
+    {
+        var comboBox = new KryptonComboBox
+        {
+            Text = $"ComboBox {++_controlCounter}",
+            Size = new Size(120, 25),
+            Margin = new Padding(5)
+        };
+        comboBox.Items.AddRange(new[] { "Item 1", "Item 2", "Item 3", "Item 4" });
+        comboBox.SelectedIndexChanged += (s, e) => 
+        {
+            AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] {comboBox.Text} selection changed: {comboBox.SelectedItem}");
+        };
+
+        kflpDemo.Controls.Add(comboBox);
+        UpdateUIState();
+        AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] Added {comboBox.Text}");
     }
 
     private void kbtnAddLabel_Click(object sender, EventArgs e)
@@ -299,6 +408,87 @@ public partial class FlowLayoutPanelTest : KryptonForm
 
         UpdateUIState();
         AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] Added 8 sample controls");
+    }
+
+    private void kbtnAddMixedControls_Click(object sender, EventArgs e)
+    {
+        // Add a comprehensive mix of different control types
+        var button = new KryptonButton
+        {
+            Text = $"Button {++_controlCounter}",
+            Size = new Size(100, 30),
+            Margin = new Padding(5)
+        };
+        kflpDemo.Controls.Add(button);
+
+        var checkBox = new KryptonCheckBox
+        {
+            Text = $"Check {++_controlCounter}",
+            Size = new Size(100, 25),
+            Margin = new Padding(5)
+        };
+        kflpDemo.Controls.Add(checkBox);
+
+        var radioButton = new KryptonRadioButton
+        {
+            Text = $"Radio {++_controlCounter}",
+            Size = new Size(100, 25),
+            Margin = new Padding(5)
+        };
+        kflpDemo.Controls.Add(radioButton);
+
+        var textBox = new KryptonTextBox
+        {
+            Text = $"TextBox {++_controlCounter}",
+            Size = new Size(120, 25),
+            Margin = new Padding(5)
+        };
+        kflpDemo.Controls.Add(textBox);
+
+        var comboBox = new KryptonComboBox
+        {
+            Text = $"Combo {++_controlCounter}",
+            Size = new Size(120, 25),
+            Margin = new Padding(5)
+        };
+        comboBox.Items.AddRange(new[] { "Option 1", "Option 2", "Option 3" });
+        kflpDemo.Controls.Add(comboBox);
+
+        var label = new KryptonLabel
+        {
+            Text = $"Label {++_controlCounter}",
+            Size = new Size(80, 25),
+            Margin = new Padding(5),
+            LabelStyle = LabelStyle.NormalControl
+        };
+        kflpDemo.Controls.Add(label);
+
+        UpdateUIState();
+        AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] Added 6 mixed controls");
+    }
+
+    private void kchkEnabled_CheckedChanged(object sender, EventArgs e)
+    {
+        if (kflpDemo != null)
+        {
+            kflpDemo.Enabled = kchkEnabled.Checked;
+            UpdateUIState();
+            AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] Panel Enabled: {kflpDemo.Enabled}");
+        }
+    }
+
+    private void knudMargin_ValueChanged(object sender, EventArgs e)
+    {
+        if (kflpDemo != null)
+        {
+            var margin = (int)knudMargin.Value;
+            // Update all existing controls' margins
+            foreach (Control control in kflpDemo.Controls)
+            {
+                control.Margin = new Padding(margin);
+            }
+            AddEventToList($"[{DateTime.Now:HH:mm:ss.fff}] Control Margin: {margin}");
+        }
     }
 }
 

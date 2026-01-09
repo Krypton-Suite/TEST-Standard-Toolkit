@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -48,6 +48,7 @@ public abstract class VisualForm : Form,
     private ShadowManager _shadowManager;
     private BlurValues _blurValues;
     private BlurManager _blurManager;
+    private readonly TaskbarOverlayIconValues _taskbarOverlayIcon;
     private readonly object lockObject = new();
     #endregion
 
@@ -128,6 +129,10 @@ public abstract class VisualForm : Form,
 
         ShadowValues = new ShadowValues();
         BlurValues = new BlurValues();
+
+        // Taskbar overlay icon
+        _taskbarOverlayIcon = new TaskbarOverlayIconValues(NeedPaintDelegate);
+        _taskbarOverlayIcon.OnTaskbarOverlayChanged += UpdateTaskbarOverlayIcon;
 
 #if !NET462
         DpiChanged += OnDpiChanged;
@@ -396,6 +401,25 @@ public abstract class VisualForm : Form,
     /// Resets the <see cref="KryptonForm"/> blur values.
     /// </summary>
     public void ResetBlurValues() => _blurValues.Reset();
+
+    /// <summary>
+    /// Gets access to the taskbar overlay icon values.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Taskbar overlay icon to display on the taskbar button.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public TaskbarOverlayIconValues TaskbarOverlayIcon => _taskbarOverlayIcon;
+
+    /// <summary>
+    /// Resets the TaskbarOverlayIcon property to its default value.
+    /// </summary>
+    public void ResetTaskbarOverlayIcon() => TaskbarOverlayIcon.Reset();
+
+    /// <summary>
+    /// Indicates whether the TaskbarOverlayIcon property should be serialized.
+    /// </summary>
+    /// <returns>true if the TaskbarOverlayIcon property should be serialized; otherwise, false.</returns>
+    public bool ShouldSerializeTaskbarOverlayIcon() => !TaskbarOverlayIcon.IsDefault;
 
     /// <summary>
     /// Gets and sets the custom palette implementation.
@@ -786,6 +810,9 @@ public abstract class VisualForm : Form,
         //}
 
         base.OnHandleCreated(e);
+
+        // Update taskbar overlay icon if set
+        UpdateTaskbarOverlayIcon();
     }
 
     /// <summary>
@@ -1760,5 +1787,48 @@ public abstract class VisualForm : Form,
         ClientSize = new Size(284, 261);
         Name = "VisualForm";
         ResumeLayout(false);
+    }
+
+    /// <summary>
+    /// Updates the taskbar overlay icon using the Windows ITaskbarList3 API.
+    /// </summary>
+    private void UpdateTaskbarOverlayIcon()
+    {
+        // Only update at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Check if Windows 7+ (ITaskbarList3 requires Windows 7+)
+            if (Environment.OSVersion.Version.Major < 6 || 
+                (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor < 1))
+            {
+                return; // Not supported on Windows Vista or earlier
+            }
+
+            // Create TaskbarList COM object
+            var taskbarList = (PI.ITaskbarList3)new PI.TaskbarList();
+            taskbarList.HrInit();
+
+            // Get icon handle
+            IntPtr hIcon = IntPtr.Zero;
+            if (_taskbarOverlayIcon.Icon != null)
+            {
+                hIcon = _taskbarOverlayIcon.Icon.Handle;
+            }
+
+            // Set overlay icon (passing null clears it)
+            string description = _taskbarOverlayIcon.Description ?? string.Empty;
+            taskbarList.SetOverlayIcon(Handle, hIcon, description);
+        }
+        catch (Exception ex)
+        {
+            // Silently fail if taskbar API is not available
+            // This can happen on older Windows versions or if COM registration fails
+            KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+        }
     }
 }

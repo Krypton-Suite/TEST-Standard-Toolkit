@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
  *  © Component Factory Pty Ltd, 2006 - 2016, (Version 4.5.0.0) All rights reserved.
@@ -766,10 +766,26 @@ public class RenderStandard : RenderBase
 
                 // Use standard helper routine to create appropriate color brush
                 PaletteColorStyle colorStyle = paletteBorder.GetBorderColorStyle(state);
+                Color borderColor1 = paletteBorder.GetBorderColor1(state);
+                Color borderColor2 = paletteBorder.GetBorderColor2(state);
+                
+                // Apply Acrylic effect: darker border under cursor when tracking
+                var settings = KryptonManager.AcrylicHoverSettingsStatic;
+                if (settings.Enabled && 
+                    state == PaletteState.Tracking && 
+                    context.MousePosition.HasValue && 
+                    rect.Contains(context.MousePosition.Value))
+                {
+                    // Make border darker near cursor position, scaled by intensity
+                    float darkenFactor = 0.2f * settings.Intensity;
+                    borderColor1 = ControlPaint.Dark(borderColor1, darkenFactor);
+                    borderColor2 = ControlPaint.Dark(borderColor2, darkenFactor);
+                }
+                
                 using (var borderPen =
                        new Pen(
-                           CreateColorBrush(gradientRect, paletteBorder.GetBorderColor1(state),
-                               paletteBorder.GetBorderColor2(state), colorStyle, paletteBorder.GetBorderColorAngle(state),
+                           CreateColorBrush(gradientRect, borderColor1,
+                               borderColor2, colorStyle, paletteBorder.GetBorderColorAngle(state),
                                orientation), borderWidth))
                 {
                     if (colorStyle == PaletteColorStyle.Dashed)
@@ -1006,11 +1022,23 @@ public class RenderStandard : RenderBase
                     backColorStyle, backColorAngle, orientation, path);
                 break;
             default:
-                // Use standard helper routine to create appropriate color brush
-                using (Brush backBrush = CreateColorBrush(gradientRect, backColor1, backColor2,
-                           backColorStyle, backColorAngle, orientation))
+                // Apply Acrylic hover effect when tracking and mouse position is available
+                var settings = KryptonManager.AcrylicHoverSettingsStatic;
+                if (settings.Enabled && 
+                    state == PaletteState.Tracking && 
+                    context.MousePosition.HasValue && 
+                    rect.Contains(context.MousePosition.Value))
                 {
-                    context.Graphics.FillPath(backBrush, path);
+                    DrawBackAcrylicHover(context, rect, backColor1, backColor2, backColorStyle, backColorAngle, orientation, path, context.MousePosition.Value);
+                }
+                else
+                {
+                    // Use standard helper routine to create appropriate color brush
+                    using (Brush backBrush = CreateColorBrush(gradientRect, backColor1, backColor2,
+                               backColorStyle, backColorAngle, orientation))
+                    {
+                        context.Graphics.FillPath(backBrush, path);
+                    }
                 }
                 break;
         }
@@ -1351,6 +1379,22 @@ public class RenderStandard : RenderBase
                 standard.Image,
                 standard.ImageTransparentColor,
                 standard.ImageRect,
+                orientation,
+                palette.GetContentImageEffect(state),
+                palette.GetContentImageColorMap(state),
+                palette.GetContentImageColorTo(state));
+        }
+
+        // Draw overlay image if present
+        if (standard.DrawOverlayImage && standard.OverlayImage != null && 
+            !standard.OverlayImageRect.IsEmpty && 
+            standard.OverlayImageRect.Width > 0 && 
+            standard.OverlayImageRect.Height > 0)
+        {
+            DrawImageHelper(context,
+                standard.OverlayImage,
+                standard.OverlayImageTransparentColor,
+                standard.OverlayImageRect,
                 orientation,
                 palette.GetContentImageEffect(state),
                 palette.GetContentImageColorMap(state),
@@ -5677,7 +5721,7 @@ public class RenderStandard : RenderBase
         context.Graphics.FillPath(backBrush, path);
     }
 
-    private void DrawBackLinearShadow(RenderContext context,
+    protected virtual void DrawBackLinearShadow(RenderContext context,
         Rectangle rect,
         Rectangle gradientRect,
         Color backColor1,
@@ -5703,6 +5747,115 @@ public class RenderStandard : RenderBase
         borderBrush.CenterColor = backColor1;
         borderBrush.SurroundColors = [backColor2];
         context.Graphics.FillPath(borderBrush, path);
+    }
+
+    /// <summary>
+    /// Draw background with Acrylic hover effect: Windows 10-style spotlight that follows the cursor.
+    /// Simple, direct implementation using a radial gradient overlay.
+    /// </summary>
+    protected virtual void DrawBackAcrylicHover(RenderContext context,
+        Rectangle rect,
+        Color backColor1,
+        Color backColor2,
+        PaletteColorStyle backColorStyle,
+        float backColorAngle,
+        VisualOrientation orientation,
+        GraphicsPath path,
+        Point mousePosition)
+    {
+        var settings = KryptonManager.AcrylicHoverSettingsStatic;
+        Rectangle gradientRect = context.GetAlignedRectangle(PaletteRectangleAlign.Local, rect);
+        
+        // Step 1: Draw the normal background
+        using (Brush backBrush = CreateColorBrush(gradientRect, backColor1, backColor2,
+                   backColorStyle, backColorAngle, orientation))
+        {
+            context.Graphics.FillPath(backBrush, path);
+        }
+        
+        // Step 2: Draw the spotlight overlay
+        // Calculate spotlight parameters
+        int centerX = mousePosition.X;
+        int centerY = mousePosition.Y;
+        
+        // Spotlight size: proportional to control, but reasonable limits
+        int minDim = Math.Min(rect.Width, rect.Height);
+        float radius = minDim * 0.35f; // 35% of smaller dimension
+        radius = Math.Max(25f, Math.Min(radius, 80f)); // Clamp between 25-80 pixels
+        
+        // Determine highlight color
+        Color highlightColor = settings.LightColor ?? Color.White;
+        
+        // Calculate alpha based on intensity (0.0 to 2.0 maps to 60-180 alpha)
+        float intensity = Math.Max(0.0f, Math.Min(2.0f, settings.Intensity));
+        int alpha = (int)(60 + (intensity * 60)); // 60-180 alpha range
+        
+        // Create circular spotlight path
+        RectangleF spotlightBounds = new RectangleF(
+            centerX - radius,
+            centerY - radius,
+            radius * 2,
+            radius * 2);
+        
+        using var spotlightPath = new GraphicsPath();
+        spotlightPath.AddEllipse(spotlightBounds);
+        
+        // Create radial gradient brush
+        using var gradientBrush = new PathGradientBrush(spotlightPath);
+        gradientBrush.CenterPoint = new PointF(centerX, centerY);
+        gradientBrush.CenterColor = Color.FromArgb(alpha, highlightColor);
+        gradientBrush.SurroundColors = new[] { Color.Transparent };
+        
+        // Quality-based focus scale (smaller = tighter spotlight)
+        float focusScale = settings.Quality switch
+        {
+            AcrylicHoverQuality.HighQuality => 0.1f,
+            AcrylicHoverQuality.Balanced => 0.2f,
+            AcrylicHoverQuality.Performance => 0.3f,
+            _ => 0.2f
+        };
+        gradientBrush.FocusScales = new PointF(focusScale, focusScale);
+        
+        // Simple 3-stop gradient: bright center -> medium -> transparent edge
+        int stopCount = settings.Quality == AcrylicHoverQuality.Performance ? 3 : 4;
+        float[] positions = stopCount == 3 
+            ? new[] { 0.0f, 0.4f, 1.0f }
+            : new[] { 0.0f, 0.25f, 0.6f, 1.0f };
+        
+        Color[] colors = new Color[stopCount];
+        colors[0] = Color.FromArgb(alpha, highlightColor);
+        
+        for (int i = 1; i < stopCount - 1; i++)
+        {
+            float t = positions[i];
+            int stopAlpha = (int)(alpha * (1.0f - t));
+            colors[i] = Color.FromArgb(stopAlpha, highlightColor);
+        }
+        colors[stopCount - 1] = Color.Transparent;
+        
+        gradientBrush.InterpolationColors = new ColorBlend
+        {
+            Colors = colors,
+            Positions = positions
+        };
+        
+        // Draw the spotlight overlay
+        var state = context.Graphics.Save();
+        try
+        {
+            context.Graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
+            context.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            
+            // Clip to control bounds
+            using var clip = new Clipping(context.Graphics, path);
+            
+            // Draw spotlight
+            context.Graphics.FillPath(gradientBrush, spotlightPath);
+        }
+        finally
+        {
+            context.Graphics.Restore(state);
+        }
     }
     #endregion
 
@@ -5842,6 +5995,32 @@ public class RenderStandard : RenderBase
                 // Image is not valid, so do not use it!
                 //memento.Image = null;
                 memento.DrawImage = false;
+            }
+        }
+
+        // Calculate overlay image if main image exists
+        memento.DrawOverlayImage = false;
+        if (memento.DrawImage)
+        {
+            memento.OverlayImage = contentValues.GetOverlayImage(state);
+            memento.OverlayImageTransparentColor = contentValues.GetOverlayImageTransparentColor(state);
+            memento.OverlayImagePosition = contentValues.GetOverlayImagePosition(state);
+            memento.OverlayImageScaleMode = contentValues.GetOverlayImageScaleMode(state);
+            memento.OverlayImageScaleFactor = contentValues.GetOverlayImageScaleFactor(state);
+            memento.OverlayImageFixedSize = contentValues.GetOverlayImageFixedSize(state);
+
+            if (memento.OverlayImage != null)
+            {
+                try
+                {
+                    // Calculate overlay position and size based on main image rectangle, position, and scale mode
+                    memento.CalculateOverlayImagePosition();
+                    memento.DrawOverlayImage = true;
+                }
+                catch
+                {
+                    memento.DrawOverlayImage = false;
+                }
             }
         }
     }
@@ -6316,6 +6495,19 @@ public class RenderStandard : RenderBase
         if (memento.DrawImage && (drawHImage == alignH) && (drawVImage == alignV))
         {
             memento.ImageRect.Location = PositionCellContent(rtl, posHImage, drawVImage, memento.ImageRect.Size, spacingGap, ref cellRect);
+            
+            // Recalculate overlay image position now that main image location is set
+            if (memento.DrawOverlayImage && memento.OverlayImage != null)
+            {
+                try
+                {
+                    memento.CalculateOverlayImagePosition();
+                }
+                catch
+                {
+                    memento.DrawOverlayImage = false;
+                }
+            }
         }
 
         // Do we need to position the short text?
@@ -12170,6 +12362,14 @@ public class RenderStandard : RenderBase
         public Image? Image;
         public Color ImageTransparentColor;
         public Rectangle ImageRect;
+        public bool DrawOverlayImage;
+        public Image? OverlayImage;
+        public Color OverlayImageTransparentColor;
+        public Rectangle OverlayImageRect;
+        public OverlayImagePosition OverlayImagePosition;
+        public OverlayImageScaleMode OverlayImageScaleMode;
+        public float OverlayImageScaleFactor;
+        public Size OverlayImageFixedSize;
         public PaletteTextTrim ShortTextTrimming;
         public AccurateTextMemento? ShortTextMemento;
         public Rectangle ShortTextRect;
@@ -12188,6 +12388,10 @@ public class RenderStandard : RenderBase
             LongTextTrimming = PaletteTextTrim.EllipsisCharacter;
             ShortTextTrimming = PaletteTextTrim.EllipsisCharacter;
             Orientation = VisualOrientation.Top;
+            OverlayImagePosition = OverlayImagePosition.TopRight;
+            OverlayImageScaleMode = OverlayImageScaleMode.None;
+            OverlayImageScaleFactor = 0.5f;
+            OverlayImageFixedSize = new Size(16, 16);
         }
 
         /// <summary>
@@ -12231,6 +12435,12 @@ public class RenderStandard : RenderBase
                         ImageRect.Y = displayRect.Bottom - ImageRect.Height - (ImageRect.Y - displayRect.Top);
                     }
 
+                    // Reposition the overlay image relative to the main image
+                    if (DrawOverlayImage && DrawImage)
+                    {
+                        CalculateOverlayImagePosition();
+                    }
+
                     // Reposition the short text relative the display rectangle
                     if (DrawShortText)
                     {
@@ -12254,6 +12464,12 @@ public class RenderStandard : RenderBase
                         var x = ImageRect.Y - displayRect.Top;
                         ImageRect.Y = displayRect.Top + displayRect.Width - ImageRect.Width - (ImageRect.X - displayRect.X);
                         ImageRect.X = x + displayRect.Left;
+                    }
+
+                    // Reposition the overlay image relative to the main image
+                    if (DrawOverlayImage && DrawImage)
+                    {
+                        CalculateOverlayImagePosition();
                     }
 
                     // Reposition the short text relative the display rectangle
@@ -12285,6 +12501,12 @@ public class RenderStandard : RenderBase
                         ImageRect.Y = y + displayRect.Top;
                     }
 
+                    // Reposition the overlay image relative to the main image
+                    if (DrawOverlayImage && DrawImage)
+                    {
+                        CalculateOverlayImagePosition();
+                    }
+
                     // Reposition the short text relative the display rectangle
                     if (DrawShortText)
                     {
@@ -12307,6 +12529,121 @@ public class RenderStandard : RenderBase
         }
 
         private static void SwapRectangleSizes(ref Rectangle rect) => (rect.Width, rect.Height) = (rect.Height, rect.Width);
+
+        /// <summary>
+        /// Calculate the overlay image position and size based on the main image rectangle, overlay position, and scale mode.
+        /// </summary>
+        private void CalculateOverlayImagePosition()
+        {
+            if (OverlayImage == null || !DrawImage)
+            {
+                return;
+            }
+
+            // Get original overlay image size
+            Size originalOverlaySize = OverlayImage.Size;
+            
+            // Validate overlay image has valid size
+            if (originalOverlaySize.Width <= 0 || originalOverlaySize.Height <= 0)
+            {
+                return;
+            }
+            
+            Size overlaySize = originalOverlaySize;
+            Rectangle mainImageRect = ImageRect;
+
+            // Validate main image rectangle has valid size
+            if (mainImageRect.Width <= 0 || mainImageRect.Height <= 0)
+            {
+                return;
+            }
+
+            // Apply scaling based on scale mode
+            switch (OverlayImageScaleMode)
+            {
+                case OverlayImageScaleMode.None:
+                    // Use actual size
+                    overlaySize = originalOverlaySize;
+                    break;
+
+                case OverlayImageScaleMode.Percentage:
+                {
+                    // Scale as percentage of main image size, maintaining aspect ratio
+                    // Use the smaller dimension to ensure overlay fits within main image
+                    float mainImageMinDim = Math.Min(mainImageRect.Width, mainImageRect.Height);
+                    float targetSize = mainImageMinDim * OverlayImageScaleFactor;
+                    
+                    // Validate target size and overlay dimensions before division
+                    if (targetSize > 0 && originalOverlaySize.Width > 0 && originalOverlaySize.Height > 0)
+                    {
+                        // Calculate scale to fit target size while maintaining aspect ratio
+                        float scale = Math.Min(
+                            targetSize / originalOverlaySize.Width,
+                            targetSize / originalOverlaySize.Height);
+                        
+                        overlaySize = new Size(
+                            (int)(originalOverlaySize.Width * scale),
+                            (int)(originalOverlaySize.Height * scale));
+                    }
+                    break;
+                }
+
+                case OverlayImageScaleMode.FixedSize:
+                    // Use fixed size
+                    overlaySize = OverlayImageFixedSize;
+                    break;
+
+                case OverlayImageScaleMode.ProportionalToMain:
+                {
+                    // Scale proportionally to maintain aspect ratio, using smaller dimension of main image as reference
+                    float propMainImageMinDim = Math.Min(mainImageRect.Width, mainImageRect.Height);
+                    float propTargetSize = propMainImageMinDim * OverlayImageScaleFactor;
+                    
+                    // Validate target size and overlay dimensions before division
+                    if (propTargetSize > 0 && originalOverlaySize.Width > 0 && originalOverlaySize.Height > 0)
+                    {
+                        // Calculate scale to fit target size while maintaining aspect ratio
+                        float propScale = Math.Min(
+                            propTargetSize / originalOverlaySize.Width,
+                            propTargetSize / originalOverlaySize.Height);
+                        
+                        overlaySize = new Size(
+                            (int)(originalOverlaySize.Width * propScale),
+                            (int)(originalOverlaySize.Height * propScale));
+                    }
+                    break;
+                }
+            }
+
+            // Ensure minimum size of 1x1
+            overlaySize = new Size(Math.Max(1, overlaySize.Width), Math.Max(1, overlaySize.Height));
+            
+            // Calculate position based on main image rectangle and overlay position
+            int overlayX = 0;
+            int overlayY = 0;
+
+            switch (OverlayImagePosition)
+            {
+                case OverlayImagePosition.TopLeft:
+                    overlayX = mainImageRect.Left;
+                    overlayY = mainImageRect.Top;
+                    break;
+                case OverlayImagePosition.TopRight:
+                    overlayX = mainImageRect.Right - overlaySize.Width;
+                    overlayY = mainImageRect.Top;
+                    break;
+                case OverlayImagePosition.BottomLeft:
+                    overlayX = mainImageRect.Left;
+                    overlayY = mainImageRect.Bottom - overlaySize.Height;
+                    break;
+                case OverlayImagePosition.BottomRight:
+                    overlayX = mainImageRect.Right - overlaySize.Width;
+                    overlayY = mainImageRect.Bottom - overlaySize.Height;
+                    break;
+            }
+
+            OverlayImageRect = new Rectangle(overlayX, overlayY, overlaySize.Width, overlaySize.Height);
+        }
     }
     #endregion
 }

@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -2052,11 +2052,17 @@ public class KryptonCheckedListBox : VisualControlBase,
 
     #region Protected Overrides
     /// <summary>
-    /// Creates a new instance of the control collection for the KryptonTextBox.
+    /// Creates a new instance of the control collection for the KryptonCheckedListBox.
     /// </summary>
     /// <returns>A new instance of Control.ControlCollection assigned to the control.</returns>
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     protected override ControlCollection CreateControlsInstance() => new KryptonReadOnlyControls(this);
+
+    /// <summary>
+    /// Creates the accessibility object for the KryptonCheckedListBox control.
+    /// </summary>
+    /// <returns>A new KryptonCheckedListBoxAccessibleObject instance for the control.</returns>
+    protected override AccessibleObject CreateAccessibilityInstance() => new KryptonCheckedListBoxAccessibleObject(this);
 
     /// <summary>
     /// Raises the PaletteChanged event.
