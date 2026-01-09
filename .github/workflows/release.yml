@@ -156,7 +156,7 @@ jobs:
             exit 0
           }
           
-          $packages = Get-ChildItem "Bin/Packages/Release/*.nupkg" -ErrorAction SilentlyContinue
+          $packages = Get-ChildItem "Artefacts/Packages/Release/*.nupkg" -ErrorAction SilentlyContinue
           $publishedAny = $false
           
           if ($packages) {
@@ -195,7 +195,7 @@ jobs:
           
           # Try to get version from the built assembly (most reliable)
           try {
-            $dllPath = Get-ChildItem "Bin/Release/net48/Krypton.Toolkit.dll" -ErrorAction Stop
+            $dllPath = Get-ChildItem "Artefacts/Release/net48/Krypton.Toolkit.dll" -ErrorAction Stop
             $assemblyVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dllPath.FullName).Version
             $version = $assemblyVersion.ToString()
             Write-Host "Got version from assembly: $version"
@@ -381,7 +381,7 @@ jobs:
             exit 0
           }
           
-          $packages = Get-ChildItem "Bin/Packages/Release/*.nupkg" -ErrorAction SilentlyContinue
+          $packages = Get-ChildItem "Artefacts/Packages/Release/*.nupkg" -ErrorAction SilentlyContinue
           $publishedAny = $false
           
           if ($packages) {
@@ -420,7 +420,7 @@ jobs:
           
           # Try to get version from the built assembly (most reliable)
           try {
-            $dllPath = Get-ChildItem "Bin/Release/net48/Krypton.Toolkit.dll" -ErrorAction Stop
+            $dllPath = Get-ChildItem "Artefacts/Release/net48/Krypton.Toolkit.dll" -ErrorAction Stop
             $assemblyVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dllPath.FullName).Version
             $version = $assemblyVersion.ToString()
             Write-Host "Got version from assembly: $version"
@@ -591,7 +591,7 @@ jobs:
             exit 0
           }
           
-          $packages = Get-ChildItem "Bin/Packages/Release/*.nupkg" -ErrorAction SilentlyContinue
+          $packages = Get-ChildItem "Artefacts/Packages/Release/*.nupkg" -ErrorAction SilentlyContinue
           $publishedAny = $false
           
           if ($packages) {
@@ -630,7 +630,7 @@ jobs:
           
           # Try to get version from the built assembly (most reliable)
           try {
-            $dllPath = Get-ChildItem "Bin/Release/net48/Krypton.Toolkit.dll" -ErrorAction Stop
+            $dllPath = Get-ChildItem "Artefacts/Release/net48/Krypton.Toolkit.dll" -ErrorAction Stop
             $assemblyVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dllPath.FullName).Version
             $version = $assemblyVersion.ToString()
             Write-Host "Got version from assembly: $version"
@@ -855,7 +855,7 @@ jobs:
             exit 0
           }
           
-          $packages = Get-ChildItem "Bin/Packages/Canary/*.nupkg" -ErrorAction SilentlyContinue
+          $packages = Get-ChildItem "Artefacts/Packages/Canary/*.nupkg" -ErrorAction SilentlyContinue
           $publishedAny = $false
           
           if ($packages) {
@@ -894,7 +894,7 @@ jobs:
           
           # Try to get version from the built assembly (most reliable)
           try {
-            $dllPath = Get-ChildItem "Bin/Canary/net48/Krypton.Toolkit.dll" -ErrorAction Stop
+            $dllPath = Get-ChildItem "Artefacts/Canary/net48/Krypton.Toolkit.dll" -ErrorAction Stop
             $assemblyVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dllPath.FullName).Version
             $version = $assemblyVersion.ToString()
             Write-Host "Got version from assembly: $version"
