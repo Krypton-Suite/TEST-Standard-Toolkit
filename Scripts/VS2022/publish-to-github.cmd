@@ -1,3 +1,3 @@
 @echo off
 
-dotnet nuget push "../bin/Release/*.nupkg" --source "github"
+dotnet nuget push "../Artefacts/Release/*.nupkg" --source "github"

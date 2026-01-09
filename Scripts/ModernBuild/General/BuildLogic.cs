@@ -941,7 +941,7 @@ internal static class BuildLogic
     {
         try
         {
-            string bin = Path.Combine(state.RootPath, "Bin", "Release");
+            string bin = Path.Combine(state.RootPath, "Artefacts", "Release");
             if (!Directory.Exists(bin))
             {
                 state.OnOutput?.Invoke($"ZIP: folder not found: {bin}");
@@ -949,7 +949,7 @@ internal static class BuildLogic
             }
             string date = DateTime.Now.ToString("yyyyMMdd");
             string name = $"{date}_NuGet_Packages.zip";
-            string zipPath = Path.Combine(state.RootPath, "Bin", name);
+            string zipPath = Path.Combine(state.RootPath, "Artefacts", name);
             if (File.Exists(zipPath))
             {
                 try { File.Delete(zipPath); } catch { }
@@ -1246,7 +1246,7 @@ internal static class BuildLogic
     {
         /*
         // Should packages ever be expected in their own channel output bin folders:
-        string bin = Path.Combine(state.RootPath, "Bin");
+        string bin = Path.Combine(state.RootPath, "Artefacts");
         var list = new List<string>(5);
         switch (state.Channel)
         {
@@ -1266,8 +1266,8 @@ internal static class BuildLogic
         list.Add(Path.Combine(bin, "Debug"));
         return list.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         */
-        // Packages are always produced into Bin/Release regardless of channel
-        string binRelease = Path.Combine(state.RootPath, "Bin", "Release");
+        // Packages are always produced into Artefacts/Release regardless of channel
+        string binRelease = Path.Combine(state.RootPath, "Artefacts", "Release");
         return new[] { binRelease };
     }
 

@@ -223,7 +223,7 @@ jobs:
             exit 0
           }
           
-          $packages = Get-ChildItem "Bin/Packages/Nightly/*.nupkg" -ErrorAction SilentlyContinue
+          $packages = Get-ChildItem "Artefacts/Packages/Nightly/*.nupkg" -ErrorAction SilentlyContinue
           $publishedAny = $false
           
           if ($packages) {
@@ -261,7 +261,7 @@ jobs:
           
           # Try to get version from the built assembly (most reliable)
           try {
-            $dllPath = Get-ChildItem "Bin/Nightly/net48/Krypton.Toolkit.dll" -ErrorAction Stop
+            $dllPath = Get-ChildItem "Artefacts/Nightly/net48/Krypton.Toolkit.dll" -ErrorAction Stop
             $assemblyVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dllPath.FullName).Version
             $version = $assemblyVersion.ToString()
             Write-Host "Got version from assembly: $version"
