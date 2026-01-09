@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <Choose>
 	<When Condition="'$(Configuration)' == 'Nightly' Or '$(Configuration)' == 'Canary' Or '$(Configuration)' == 'Debug'">
@@ -104,7 +104,7 @@
   </ItemGroup>
   <PropertyGroup>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
-	<OutputPath>..\..\..\Bin\$(Configuration)\</OutputPath>
+	<OutputPath>..\..\..\Artefacts\$(Configuration)\</OutputPath>
   </PropertyGroup>
   <PropertyGroup>
 	<NoWarn>1701;1702</NoWarn>
