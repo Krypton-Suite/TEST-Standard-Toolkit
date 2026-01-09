@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -685,6 +685,12 @@ public class KryptonLinkWrapLabel : LinkLabel
     /// </summary>
     /// <param name="charCode">The mnemonic character entered.</param>
     /// <returns>true if the mnemonic was processed; otherwise, false.</returns>
+    /// <summary>
+    /// Creates the accessibility object for the KryptonLinkWrapLabel control.
+    /// </summary>
+    /// <returns>A new KryptonLinkWrapLabelAccessibleObject instance for the control.</returns>
+    protected override AccessibleObject CreateAccessibilityInstance() => new KryptonLinkWrapLabelAccessibleObject(this);
+
     protected override bool ProcessMnemonic(char charCode)
     {
         // Are we allowed to process mnemonic?

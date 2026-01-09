@@ -70,7 +70,7 @@ Because every step runs dynamically, PaletteViewer automatically adapts to new T
 
 The project targets **.NET Framework 4.7.2** and has no dependencies beyond the Krypton Toolkit packages. In Visual Studio 2022:
 
-1. Open `Krypton Toolkit Suite 2022 - VS2022.sln`.
+1. Open `Krypton Toolkit Suite - VS2022.sln`.
 2. Set **TestForm** as the startup project.
 3. Build and run.
 4. In the running application select *PaletteViewer* from the test harness menu.

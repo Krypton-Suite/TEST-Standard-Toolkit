@@ -393,6 +393,26 @@ public enum PaletteMode
     MaterialDarkRipple,
 
     /// <summary>
+    /// Specifies the Light color variant of the Windows 10 Acrylic appearance.
+    /// </summary>
+    Windows10AcrylicLight,
+
+    /// <summary>
+    /// Specifies the Dark color variant of the Windows 10 Acrylic appearance.
+    /// </summary>
+    Windows10AcrylicDark,
+
+    /// <summary>
+    /// Specifies the Light color variant of the Windows 11 Mica appearance.
+    /// </summary>
+    Windows11MicaLight,
+
+    /// <summary>
+    /// Specifies the Dark color variant of the Windows 11 Mica appearance.
+    /// </summary>
+    Windows11MicaDark,
+
+    /// <summary>
     /// Specifies a custom palette be used.
     /// </summary>
     Custom

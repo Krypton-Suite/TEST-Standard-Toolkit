@@ -66,12 +66,19 @@ namespace TestForm
             this.klblFlowDirectionStatus = new Krypton.Toolkit.KryptonLabel();
             this.kpgbControls = new Krypton.Toolkit.KryptonGroupBox();
             this.kpnlControls = new Krypton.Toolkit.KryptonPanel();
+            this.kbtnAddMixedControls = new Krypton.Toolkit.KryptonButton();
+            this.kbtnAddComboBox = new Krypton.Toolkit.KryptonButton();
+            this.kbtnAddRadioButton = new Krypton.Toolkit.KryptonButton();
+            this.kbtnAddCheckBox = new Krypton.Toolkit.KryptonButton();
             this.kbtnAddSampleControls = new Krypton.Toolkit.KryptonButton();
             this.kbtnRemoveLast = new Krypton.Toolkit.KryptonButton();
             this.kbtnClear = new Krypton.Toolkit.KryptonButton();
             this.kbtnAddTextBox = new Krypton.Toolkit.KryptonButton();
             this.kbtnAddLabel = new Krypton.Toolkit.KryptonButton();
             this.kbtnAddButton = new Krypton.Toolkit.KryptonButton();
+            this.kchkEnabled = new Krypton.Toolkit.KryptonCheckBox();
+            this.knudMargin = new Krypton.Toolkit.KryptonNumericUpDown();
+            this.klblMargin = new Krypton.Toolkit.KryptonLabel();
             this.kpnlEvents = new Krypton.Toolkit.KryptonPanel();
             this.kpgbEvents = new Krypton.Toolkit.KryptonGroupBox();
             this.klstEvents = new Krypton.Toolkit.KryptonListBox();
@@ -223,7 +230,7 @@ namespace TestForm
             // 
             this.kscRight.Panel2.Controls.Add(this.kpnlEvents);
             this.kscRight.Size = new System.Drawing.Size(396, 650);
-            this.kscRight.SplitterDistance = 400;
+            this.kscRight.SplitterDistance = 425;
             this.kscRight.TabIndex = 0;
             // 
             // kpnlProperties
@@ -235,7 +242,7 @@ namespace TestForm
             this.kpnlProperties.Location = new System.Drawing.Point(0, 0);
             this.kpnlProperties.Name = "kpnlProperties";
             this.kpnlProperties.PanelBackStyle = Krypton.Toolkit.PaletteBackStyle.PanelClient;
-            this.kpnlProperties.Size = new System.Drawing.Size(396, 400);
+            this.kpnlProperties.Size = new System.Drawing.Size(396, 425);
             this.kpnlProperties.TabIndex = 0;
             // 
             // kpgbProperties
@@ -247,12 +254,34 @@ namespace TestForm
             // kpgbProperties.Panel
             // 
             this.kpgbProperties.Panel.Controls.Add(this.kpnlProps);
-            this.kpgbProperties.Size = new System.Drawing.Size(396, 200);
+            this.kpgbProperties.Size = new System.Drawing.Size(396, 225);
             this.kpgbProperties.TabIndex = 0;
             this.kpgbProperties.Values.Heading = "Properties";
             // 
+            // kpnlControls
+            // 
+            this.kpnlControls.Controls.Add(this.kbtnAddMixedControls);
+            this.kpnlControls.Controls.Add(this.kbtnAddComboBox);
+            this.kpnlControls.Controls.Add(this.kbtnAddRadioButton);
+            this.kpnlControls.Controls.Add(this.kbtnAddCheckBox);
+            this.kpnlControls.Controls.Add(this.kbtnAddSampleControls);
+            this.kpnlControls.Controls.Add(this.kbtnRemoveLast);
+            this.kpnlControls.Controls.Add(this.kbtnClear);
+            this.kpnlControls.Controls.Add(this.kbtnAddTextBox);
+            this.kpnlControls.Controls.Add(this.kbtnAddLabel);
+            this.kpnlControls.Controls.Add(this.kbtnAddButton);
+            this.kpnlControls.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.kpnlControls.Location = new System.Drawing.Point(0, 0);
+            this.kpnlControls.Name = "kpnlControls";
+            this.kpnlControls.PanelBackStyle = Krypton.Toolkit.PaletteBackStyle.PanelClient;
+            this.kpnlControls.Size = new System.Drawing.Size(392, 100);
+            this.kpnlControls.TabIndex = 0;
+            // 
             // kpnlProps
             // 
+            this.kpnlProps.Controls.Add(this.knudMargin);
+            this.kpnlProps.Controls.Add(this.klblMargin);
+            this.kpnlProps.Controls.Add(this.kchkEnabled);
             this.kpnlProps.Controls.Add(this.knudPadding);
             this.kpnlProps.Controls.Add(this.klblPadding);
             this.kpnlProps.Controls.Add(this.kcmbPaletteMode);
@@ -267,7 +296,7 @@ namespace TestForm
             this.kpnlProps.Location = new System.Drawing.Point(0, 0);
             this.kpnlProps.Name = "kpnlProps";
             this.kpnlProps.PanelBackStyle = Krypton.Toolkit.PaletteBackStyle.PanelClient;
-            this.kpnlProps.Size = new System.Drawing.Size(392, 175);
+            this.kpnlProps.Size = new System.Drawing.Size(392, 200);
             this.kpnlProps.TabIndex = 0;
             // 
             // knudPadding
@@ -370,13 +399,13 @@ namespace TestForm
             // kpgbStatus
             // 
             this.kpgbStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.kpgbStatus.Location = new System.Drawing.Point(0, 200);
+            this.kpgbStatus.Location = new System.Drawing.Point(0, 225);
             this.kpgbStatus.Name = "kpgbStatus";
             // 
             // kpgbStatus.Panel
             // 
             this.kpgbStatus.Panel.Controls.Add(this.kpnlStatus);
-            this.kpgbStatus.Size = new System.Drawing.Size(396, 100);
+            this.kpgbStatus.Size = new System.Drawing.Size(396, 75);
             this.kpgbStatus.TabIndex = 1;
             this.kpgbStatus.Values.Heading = "Status";
             // 
@@ -443,12 +472,16 @@ namespace TestForm
             // kpgbControls.Panel
             // 
             this.kpgbControls.Panel.Controls.Add(this.kpnlControls);
-            this.kpgbControls.Size = new System.Drawing.Size(396, 100);
+            this.kpgbControls.Size = new System.Drawing.Size(396, 125);
             this.kpgbControls.TabIndex = 2;
             this.kpgbControls.Values.Heading = "Controls";
             // 
             // kpnlControls
             // 
+            this.kpnlControls.Controls.Add(this.kbtnAddMixedControls);
+            this.kpnlControls.Controls.Add(this.kbtnAddComboBox);
+            this.kpnlControls.Controls.Add(this.kbtnAddRadioButton);
+            this.kpnlControls.Controls.Add(this.kbtnAddCheckBox);
             this.kpnlControls.Controls.Add(this.kbtnAddSampleControls);
             this.kpnlControls.Controls.Add(this.kbtnRemoveLast);
             this.kpnlControls.Controls.Add(this.kbtnClear);
@@ -459,53 +492,8 @@ namespace TestForm
             this.kpnlControls.Location = new System.Drawing.Point(0, 0);
             this.kpnlControls.Name = "kpnlControls";
             this.kpnlControls.PanelBackStyle = Krypton.Toolkit.PaletteBackStyle.PanelClient;
-            this.kpnlControls.Size = new System.Drawing.Size(392, 75);
+            this.kpnlControls.Size = new System.Drawing.Size(392, 100);
             this.kpnlControls.TabIndex = 0;
-            // 
-            // kbtnAddSampleControls
-            // 
-            this.kbtnAddSampleControls.Location = new System.Drawing.Point(0, 50);
-            this.kbtnAddSampleControls.Name = "kbtnAddSampleControls";
-            this.kbtnAddSampleControls.Size = new System.Drawing.Size(130, 25);
-            this.kbtnAddSampleControls.TabIndex = 5;
-            this.kbtnAddSampleControls.Values.Text = "Add Sample (8)";
-            this.kbtnAddSampleControls.Click += new System.EventHandler(this.kbtnAddSampleControls_Click);
-            // 
-            // kbtnRemoveLast
-            // 
-            this.kbtnRemoveLast.Location = new System.Drawing.Point(260, 25);
-            this.kbtnRemoveLast.Name = "kbtnRemoveLast";
-            this.kbtnRemoveLast.Size = new System.Drawing.Size(130, 25);
-            this.kbtnRemoveLast.TabIndex = 4;
-            this.kbtnRemoveLast.Values.Text = "Remove Last";
-            this.kbtnRemoveLast.Click += new System.EventHandler(this.kbtnRemoveLast_Click);
-            // 
-            // kbtnClear
-            // 
-            this.kbtnClear.Location = new System.Drawing.Point(130, 25);
-            this.kbtnClear.Name = "kbtnClear";
-            this.kbtnClear.Size = new System.Drawing.Size(130, 25);
-            this.kbtnClear.TabIndex = 3;
-            this.kbtnClear.Values.Text = "Clear All";
-            this.kbtnClear.Click += new System.EventHandler(this.kbtnClear_Click);
-            // 
-            // kbtnAddTextBox
-            // 
-            this.kbtnAddTextBox.Location = new System.Drawing.Point(260, 0);
-            this.kbtnAddTextBox.Name = "kbtnAddTextBox";
-            this.kbtnAddTextBox.Size = new System.Drawing.Size(130, 25);
-            this.kbtnAddTextBox.TabIndex = 2;
-            this.kbtnAddTextBox.Values.Text = "Add TextBox";
-            this.kbtnAddTextBox.Click += new System.EventHandler(this.kbtnAddTextBox_Click);
-            // 
-            // kbtnAddLabel
-            // 
-            this.kbtnAddLabel.Location = new System.Drawing.Point(130, 0);
-            this.kbtnAddLabel.Name = "kbtnAddLabel";
-            this.kbtnAddLabel.Size = new System.Drawing.Size(130, 25);
-            this.kbtnAddLabel.TabIndex = 1;
-            this.kbtnAddLabel.Values.Text = "Add Label";
-            this.kbtnAddLabel.Click += new System.EventHandler(this.kbtnAddLabel_Click);
             // 
             // kbtnAddButton
             // 
@@ -515,6 +503,129 @@ namespace TestForm
             this.kbtnAddButton.TabIndex = 0;
             this.kbtnAddButton.Values.Text = "Add Button";
             this.kbtnAddButton.Click += new System.EventHandler(this.kbtnAddButton_Click);
+            // 
+            // kbtnAddCheckBox
+            // 
+            this.kbtnAddCheckBox.Location = new System.Drawing.Point(130, 0);
+            this.kbtnAddCheckBox.Name = "kbtnAddCheckBox";
+            this.kbtnAddCheckBox.Size = new System.Drawing.Size(130, 25);
+            this.kbtnAddCheckBox.TabIndex = 6;
+            this.kbtnAddCheckBox.Values.Text = "Add CheckBox";
+            this.kbtnAddCheckBox.Click += new System.EventHandler(this.kbtnAddCheckBox_Click);
+            // 
+            // kbtnAddRadioButton
+            // 
+            this.kbtnAddRadioButton.Location = new System.Drawing.Point(260, 0);
+            this.kbtnAddRadioButton.Name = "kbtnAddRadioButton";
+            this.kbtnAddRadioButton.Size = new System.Drawing.Size(130, 25);
+            this.kbtnAddRadioButton.TabIndex = 7;
+            this.kbtnAddRadioButton.Values.Text = "Add RadioButton";
+            this.kbtnAddRadioButton.Click += new System.EventHandler(this.kbtnAddRadioButton_Click);
+            // 
+            // kbtnAddLabel
+            // 
+            this.kbtnAddLabel.Location = new System.Drawing.Point(0, 25);
+            this.kbtnAddLabel.Name = "kbtnAddLabel";
+            this.kbtnAddLabel.Size = new System.Drawing.Size(130, 25);
+            this.kbtnAddLabel.TabIndex = 1;
+            this.kbtnAddLabel.Values.Text = "Add Label";
+            this.kbtnAddLabel.Click += new System.EventHandler(this.kbtnAddLabel_Click);
+            // 
+            // kbtnAddTextBox
+            // 
+            this.kbtnAddTextBox.Location = new System.Drawing.Point(130, 25);
+            this.kbtnAddTextBox.Name = "kbtnAddTextBox";
+            this.kbtnAddTextBox.Size = new System.Drawing.Size(130, 25);
+            this.kbtnAddTextBox.TabIndex = 2;
+            this.kbtnAddTextBox.Values.Text = "Add TextBox";
+            this.kbtnAddTextBox.Click += new System.EventHandler(this.kbtnAddTextBox_Click);
+            // 
+            // kbtnAddComboBox
+            // 
+            this.kbtnAddComboBox.Location = new System.Drawing.Point(260, 25);
+            this.kbtnAddComboBox.Name = "kbtnAddComboBox";
+            this.kbtnAddComboBox.Size = new System.Drawing.Size(130, 25);
+            this.kbtnAddComboBox.TabIndex = 8;
+            this.kbtnAddComboBox.Values.Text = "Add ComboBox";
+            this.kbtnAddComboBox.Click += new System.EventHandler(this.kbtnAddComboBox_Click);
+            // 
+            // kbtnClear
+            // 
+            this.kbtnClear.Location = new System.Drawing.Point(0, 50);
+            this.kbtnClear.Name = "kbtnClear";
+            this.kbtnClear.Size = new System.Drawing.Size(130, 25);
+            this.kbtnClear.TabIndex = 3;
+            this.kbtnClear.Values.Text = "Clear All";
+            this.kbtnClear.Click += new System.EventHandler(this.kbtnClear_Click);
+            // 
+            // kbtnRemoveLast
+            // 
+            this.kbtnRemoveLast.Location = new System.Drawing.Point(130, 50);
+            this.kbtnRemoveLast.Name = "kbtnRemoveLast";
+            this.kbtnRemoveLast.Size = new System.Drawing.Size(130, 25);
+            this.kbtnRemoveLast.TabIndex = 4;
+            this.kbtnRemoveLast.Values.Text = "Remove Last";
+            this.kbtnRemoveLast.Click += new System.EventHandler(this.kbtnRemoveLast_Click);
+            // 
+            // kbtnAddSampleControls
+            // 
+            this.kbtnAddSampleControls.Location = new System.Drawing.Point(260, 50);
+            this.kbtnAddSampleControls.Name = "kbtnAddSampleControls";
+            this.kbtnAddSampleControls.Size = new System.Drawing.Size(130, 25);
+            this.kbtnAddSampleControls.TabIndex = 5;
+            this.kbtnAddSampleControls.Values.Text = "Add Sample (8)";
+            this.kbtnAddSampleControls.Click += new System.EventHandler(this.kbtnAddSampleControls_Click);
+            // 
+            // kbtnAddMixedControls
+            // 
+            this.kbtnAddMixedControls.Location = new System.Drawing.Point(0, 75);
+            this.kbtnAddMixedControls.Name = "kbtnAddMixedControls";
+            this.kbtnAddMixedControls.Size = new System.Drawing.Size(130, 25);
+            this.kbtnAddMixedControls.TabIndex = 9;
+            this.kbtnAddMixedControls.Values.Text = "Add Mixed (6)";
+            this.kbtnAddMixedControls.Click += new System.EventHandler(this.kbtnAddMixedControls_Click);
+            // 
+            // kchkEnabled
+            // 
+            this.kchkEnabled.Checked = true;
+            this.kchkEnabled.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.kchkEnabled.Location = new System.Drawing.Point(280, 0);
+            this.kchkEnabled.Name = "kchkEnabled";
+            this.kchkEnabled.Size = new System.Drawing.Size(100, 23);
+            this.kchkEnabled.TabIndex = 10;
+            this.kchkEnabled.Values.Text = "Enabled";
+            this.kchkEnabled.CheckedChanged += new System.EventHandler(this.kchkEnabled_CheckedChanged);
+            // 
+            // knudMargin
+            // 
+            this.knudMargin.Location = new System.Drawing.Point(120, 150);
+            this.knudMargin.Maximum = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            this.knudMargin.Minimum = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.knudMargin.Name = "knudMargin";
+            this.knudMargin.Size = new System.Drawing.Size(80, 25);
+            this.knudMargin.TabIndex = 11;
+            this.knudMargin.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.knudMargin.ValueChanged += new System.EventHandler(this.knudMargin_ValueChanged);
+            // 
+            // klblMargin
+            // 
+            this.klblMargin.Location = new System.Drawing.Point(10, 152);
+            this.klblMargin.Name = "klblMargin";
+            this.klblMargin.Size = new System.Drawing.Size(100, 23);
+            this.klblMargin.TabIndex = 12;
+            this.klblMargin.Values.Text = "Control Margin:";
             // 
             // kpnlEvents
             // 
@@ -635,6 +746,7 @@ namespace TestForm
             ((System.ComponentModel.ISupportInitialize)(this.kcmbPaletteMode)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.kcmbPanelBackStyle)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.kcmbFlowDirection)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.knudMargin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.kpgbStatus.Panel)).EndInit();
             this.kpgbStatus.Panel.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.kpgbStatus)).EndInit();
@@ -696,6 +808,13 @@ namespace TestForm
         private Krypton.Toolkit.KryptonButton kbtnClear;
         private Krypton.Toolkit.KryptonButton kbtnRemoveLast;
         private Krypton.Toolkit.KryptonButton kbtnAddSampleControls;
+        private Krypton.Toolkit.KryptonButton kbtnAddCheckBox;
+        private Krypton.Toolkit.KryptonButton kbtnAddRadioButton;
+        private Krypton.Toolkit.KryptonButton kbtnAddComboBox;
+        private Krypton.Toolkit.KryptonButton kbtnAddMixedControls;
+        private Krypton.Toolkit.KryptonCheckBox kchkEnabled;
+        private Krypton.Toolkit.KryptonNumericUpDown knudMargin;
+        private Krypton.Toolkit.KryptonLabel klblMargin;
         private Krypton.Toolkit.KryptonPanel kpnlEvents;
         private Krypton.Toolkit.KryptonGroupBox kpgbEvents;
         private Krypton.Toolkit.KryptonListBox klstEvents;
