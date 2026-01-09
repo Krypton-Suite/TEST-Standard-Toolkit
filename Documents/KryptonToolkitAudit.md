@@ -73,8 +73,7 @@ This audit compares the Krypton Toolkit against standard Windows Forms controls 
 - ✅ **KryptonGroupBox** - Traditional groupbox
 - ✅ **KryptonHeader** - Section header
 - ✅ **KryptonHeaderGroup** - Panel with header
-- ✅ **KryptonSplitContainer** - Splitter panel
-- ✅ **KryptonSplitter** - Standalone splitter control for resizing docked controls
+- ✅ **KryptonSplitContainer** - Splitter panel (replaces KryptonSplitter)
 - ✅ **KryptonTableLayoutPanel** - Table layout
 - ✅ **KryptonFlowLayoutPanel** - Flow layout panel
 - ✅ **KryptonBreadCrumb** - Breadcrumb navigation
@@ -510,7 +509,7 @@ This audit compares the Krypton Toolkit against standard Windows Forms controls 
 - ✅ **FlowLayoutPanel** - Implemented as KryptonFlowLayoutPanel
 - ✅ **TableLayoutPanel** - Implemented as KryptonTableLayoutPanel
 - ✅ **SplitContainer** - Implemented as KryptonSplitContainer
-- ✅ **Splitter** - Implemented as KryptonSplitter (standalone splitter control)
+- ⚠️ **Splitter** - Removed (use KryptonSplitContainer or KryptonSeparator instead)
 - ✅ **Panel** - Implemented as KryptonPanel
 
 ---
@@ -571,7 +570,7 @@ This audit compares the Krypton Toolkit against standard Windows Forms controls 
 - ✅ NotifyIcon - Implemented as KryptonNotifyIcon
 - ✅ HelpProvider - Implemented as KryptonHelpProvider
 - ✅ FlowLayoutPanel - Implemented as KryptonFlowLayoutPanel
-- ✅ Splitter - Implemented as KryptonSplitter
+- ⚠️ Splitter - Removed (use KryptonSplitContainer or KryptonSeparator instead)
 - ✅ FileSystemWatcher - Implemented as KryptonFileSystemWatcher
 
 ### Controls That Work with Krypton Renderer
@@ -685,7 +684,7 @@ The Krypton Toolkit provides **excellent coverage** of standard WinForms control
 4. ✅ Simple TabControl - Implemented as KryptonTabControl (with full tab header theming)
 5. ✅ NotifyIcon - Implemented as KryptonNotifyIcon
 6. ✅ HelpProvider - Implemented as KryptonHelpProvider
-7. ✅ Splitter - Implemented as KryptonSplitter
+7. ⚠️ Splitter - Removed (use KryptonSplitContainer or KryptonSeparator instead)
 8. ✅ FileSystemWatcher - Implemented as KryptonFileSystemWatcher
 
 ### Overall Assessment
@@ -699,7 +698,7 @@ The Krypton Toolkit provides **excellent coverage** of standard WinForms control
 2. ✅ Implement KryptonToolTip - **COMPLETED**
 3. ✅ Implement KryptonFlowLayoutPanel - **ALREADY EXISTS**
 4. ✅ Implement KryptonTabControl - **COMPLETED** (with full tab header theming via OwnerDraw)
-5. ✅ Implement KryptonSplitter - **COMPLETED**
+5. ⚠️ Implement KryptonSplitter - **REMOVED** (use KryptonSplitContainer or KryptonSeparator instead)
 6. ✅ Implement KryptonFileSystemWatcher - **COMPLETED**
 7. Conduct accessibility audit
 8. Conduct DPI scaling audit
@@ -736,7 +735,7 @@ The Krypton Toolkit provides **excellent coverage** of standard WinForms control
 | Panel | KryptonPanel | ✅ | Full featured |
 | GroupBox | KryptonGroupBox | ✅ | Full featured |
 | SplitContainer | KryptonSplitContainer | ✅ | Full featured |
-| Splitter | KryptonSplitter | ✅ | Full featured with Krypton palette integration |
+| Splitter | KryptonSplitContainer / KryptonSeparator | ⚠️ | KryptonSplitter removed - use KryptonSplitContainer (recommended) or KryptonSeparator (for custom layouts) |
 | TabControl | KryptonTabControl | ✅ | Full featured with Krypton theming (including tab headers) |
 | TabControl (Advanced) | KryptonNavigator | ✅ | Full replacement with 15+ modes |
 | TableLayoutPanel | KryptonTableLayoutPanel | ✅ | Full featured |
