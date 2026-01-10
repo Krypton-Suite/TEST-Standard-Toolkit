@@ -1,66 +1,78 @@
-# Fix KryptonRichTextBox formatting preservation when palette changes (#2832)
+# Fix badge transparent border color issue and add margin property (#2783)
 
 ## Description
 
-Fixes issue where `KryptonRichTextBox` loses its RTF formatting (bold, italic, underline, colors, fonts) when the palette or `InputControlStyle` is changed.
+Fixes an issue where badge borders with transparent color incorrectly render as visible colored borders during pulse animation, and adds a configurable `BadgeMargin` property for badge positioning.
 
 ## Problem
 
-When the palette or `InputControlStyle` property changed, the `OnNeedPaint` method would update the `Font` property of the underlying `RichTextBox` control. Setting the `Font` property on a `RichTextBox` in Windows Forms resets all RTF formatting, causing users to lose their formatted text.
+1. **Transparent Border Color Issue**: When using pulse animation on a badge with `RoundedRectangle` shape and `badgeBorderColor: Transparent` (with no bevel effect), the transparent border was incorrectly being rendered as a semi-transparent version of the badge color during animation. The opacity calculation was applying to transparent colors, creating an incorrect visible color instead of remaining transparent.
 
-Additionally, setting `BackColor` or `ForeColor` properties could also reset RTF formatting in some scenarios.
+2. **Missing Margin/Padding Control**: The badge offset from the button edge was hardcoded as a constant (5 pixels), preventing customization of badge positioning per instance.
 
 ## Solution
 
-The fix implements a comprehensive RTF formatting detection and preservation mechanism:
+### 1. Transparent Border Color Fix
 
-1. **Early RTF Detection**: Before any property changes, the RTF content is saved and analyzed for formatting codes
-2. **Formatting Detection**: Detects RTF formatting through multiple indicators:
-   - Explicit formatting codes (`\b`, `\i`, `\ul`, `\fs`, `\cf`, `\highlight`)
-   - Custom font references (beyond default `\f0`)
-   - RTF length comparison (formatted RTF is significantly longer than plain text)
-3. **Conditional Font Setting**: Only sets the `Font` property if no RTF formatting is detected (plain text mode)
-4. **RTF Restoration**: After property updates, if formatting was detected and the RTF was modified, it is restored to preserve formatting
+- Added transparency check in `DrawBadgeBorder` method to skip drawing when border color alpha is 0
+- Fixed opacity calculation to properly use the color's alpha channel: `Color.FromArgb((int)(opacity * borderColor.A), ...)` instead of hardcoded 255
+- Added similar transparency check in `DrawBevelBorder` method for safety
+
+### 2. Margin Property Addition
+
+- Added `BadgeMargin` property to `BadgeContentValues` class with default value of 5 pixels (maintaining backward compatibility)
+- Updated `ViewDrawBadge.CalculateBadgeLocation` to use `_badgeValues.BadgeContentValues.BadgeMargin` instead of hardcoded `BADGE_OFFSET` constant
+- Removed unused `BADGE_OFFSET` constant
 
 ## Changes Made
 
-### Core Fix
-- **`KryptonRichTextBox.cs`**: Modified `OnNeedPaint` method to:
-  - Save RTF content before any property changes
-  - Detect RTF formatting using multiple heuristics
-  - Skip setting `Font` property when formatting is detected
-  - Restore RTF if it was modified during updates
+### Core Fixes
+- **`ViewDrawBadge.cs`**: 
+  - Modified `DrawBadgeBorder` method to check for transparent colors (A=0) and skip drawing
+  - Fixed opacity calculation to respect color's alpha channel
+  - Modified `DrawBevelBorder` method with transparency check
+  - Updated `CalculateBadgeLocation` to use configurable margin property
+  - Removed unused `BADGE_OFFSET` constant
 
-### Test Form
-- **`RichTextBoxFormattingTest.cs`**: Comprehensive test form demonstrating the fix
-  - Pre-loaded RTF content with various formatting (bold, italic, underline, colors, fonts)
-  - Palette selection combo box (40+ palette options)
-  - InputControlStyle selection combo box (7 style options)
-  - Buttons to load sample RTF, plain text, verify formatting, and clear
-  - Status messages and instructions
+### New Feature
+- **`BadgeContentValues.cs`**: 
+  - Added `DEFAULT_BADGE_MARGIN` constant (5 pixels)
+  - Added `_badgeMargin` instance field
+  - Added `BadgeMargin` property with validation (minimum 0)
+  - Updated `IsDefault` check to include badge margin
+  - Added `ShouldSerializeBadgeMargin` and `ResetBadgeMargin` methods
 
-- **`RichTextBoxFormattingTest.Designer.cs`**: Designer file for the test form
+## Usage
 
-- **`StartScreen.cs`**: Added menu entry for the new test form
+### Setting Custom Margin
+```csharp
+// Set custom margin/offset from button edge
+button.BadgeValues.BadgeContentValues.BadgeMargin = 5;
+
+// Reset to default (5 pixels)
+button.BadgeValues.BadgeContentValues.ResetBadgeMargin();
+```
 
 ## Testing
 
 The fix has been tested with:
-- ✅ Multiple palette changes (Office 2010, Office 2013, Office 365, Sparkle, Professional variants)
-- ✅ InputControlStyle changes (Standalone, Ribbon, Custom1-3, PanelClient, PanelAlternate)
-- ✅ RTF content with bold, italic, underline, colors, and custom fonts
-- ✅ Plain text (which correctly uses palette font)
-- ✅ Mixed formatting scenarios
+- ✅ Badge with transparent border color and pulse animation (RoundedRectangle shape)
+- ✅ Badge with transparent border color and pulse animation (Circle and Square shapes)
+- ✅ Badge with transparent border color and bevel effects
+- ✅ Badge with transparent border color and fade animation
+- ✅ Badge with non-transparent border colors (verifying no regression)
+- ✅ BadgeMargin property with various values (0, 3, 5, 10 pixels)
+- ✅ Multiple badges with different margin values on the same form
 
 ## Behavior
 
-- **Plain text**: Correctly uses palette font when palette/style changes (as expected)
-- **RTF formatted text**: Formatting is preserved when palette/style changes (fix verified)
+- **Transparent border with animation**: Border remains transparent throughout animation cycle (fix verified)
+- **Non-transparent border with animation**: Border opacity animates correctly as before
+- **BadgeMargin property**: Default value (5) maintains backward compatibility, custom values allow fine-tuning badge position
 
 ## Breaking Changes
 
-None. This is a bug fix that maintains backward compatibility. Plain text behavior is unchanged, and RTF formatting is now preserved as expected.
-
-## Related Issue
-
-Fixes #2832
+None. This is a bug fix and feature addition that maintains backward compatibility:
+- The transparent border fix only affects cases where borders were incorrectly visible
+- The badge margin property defaults to 5 pixels (same as previous hardcoded value)
+- Existing code continues to work without modification

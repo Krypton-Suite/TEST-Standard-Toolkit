@@ -77,6 +77,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("Markdown Editor/Viewer", "Full-featured markdown editor with custom Krypton rendering and HTML preview.", typeof(MarkdownEditorViewer));
         CreateButton("Code Editor", "Native code editor with syntax highlighting, line numbering, code folding, and auto-completion.", typeof(CodeEditorTest));
         CreateButton("FormBorder Test", string.Empty, typeof(FormBorderTest));
+        CreateButton("Help Button Test", "Comprehensive demonstration of KryptonForm Help button functionality. Tests Help button visibility, HelpRequested event, and HelpProvider integration.", typeof(HelpButtonTest));
         CreateButton("Header Examples", string.Empty, typeof(HeaderExamples));
         CreateButton("Menu/Tool/Status Strips", string.Empty, typeof(MenuToolBarStatusStripTest));
         CreateButton("NotifyIcon", "Comprehensive demonstration of KryptonNotifyIcon with all events, balloon tips, and context menu support.", typeof(NotifyIconTest));

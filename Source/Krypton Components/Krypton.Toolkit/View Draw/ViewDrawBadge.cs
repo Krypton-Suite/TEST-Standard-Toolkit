@@ -33,7 +33,6 @@ public class ViewDrawBadge : ViewLeaf
     private bool _animationDirection = true; // true = increasing, false = decreasing
     private const int DEFAULT_BADGE_SIZE = 18;
     private const int BADGE_MIN_SIZE = 16;
-    private const int BADGE_OFFSET = 3;
     private const int ANIMATION_INTERVAL = 50; // ms between animation frames
     private const float FADE_MIN_OPACITY = 0.3f;
     private const float FADE_MAX_OPACITY = 1.0f;
@@ -218,7 +217,7 @@ public class ViewDrawBadge : ViewLeaf
 
     private Point CalculateBadgeLocation(Rectangle parentRect, Size badgeSize)
     {
-        int offset = BADGE_OFFSET;
+        int offset = _badgeValues.Margin;
         Point location;
 
         switch (_badgeValues.Position)
@@ -448,9 +447,17 @@ public class ViewDrawBadge : ViewLeaf
         if (_badgeValues.Border.BorderSize > 0 && _badgeValues.Border.BorderColor != Color.Empty)
         {
             Color borderColor = _badgeValues.Border.BorderColor;
+            
+            // Skip drawing if border color is transparent (A=0)
+            // Don't apply opacity to transparent colors as it would create an incorrect visible color
+            if (borderColor.A == 0)
+            {
+                return;
+            }
+            
             if (opacity < 1.0f)
             {
-                borderColor = Color.FromArgb((int)(opacity * 255), borderColor.R, borderColor.G, borderColor.B);
+                borderColor = Color.FromArgb((int)(opacity * borderColor.A), borderColor.R, borderColor.G, borderColor.B);
             }
 
             // Adjust rectangle to account for pen width (pen draws centered on edge)
@@ -491,14 +498,20 @@ public class ViewDrawBadge : ViewLeaf
 
     private void DrawBevelBorder(Graphics g, Rectangle borderRect, Color baseColor, float opacity)
     {
+        // Skip if base color is transparent
+        if (baseColor.A == 0)
+        {
+            return;
+        }
+        
         // Create lighter and darker colors for bevel effect
         Color lightColor = ControlPaint.Light(baseColor);
         Color darkColor = ControlPaint.Dark(baseColor);
         
         if (opacity < 1.0f)
         {
-            lightColor = Color.FromArgb((int)(opacity * 255), lightColor.R, lightColor.G, lightColor.B);
-            darkColor = Color.FromArgb((int)(opacity * 255), darkColor.R, darkColor.G, darkColor.B);
+            lightColor = Color.FromArgb((int)(opacity * lightColor.A), lightColor.R, lightColor.G, lightColor.B);
+            darkColor = Color.FromArgb((int)(opacity * darkColor.A), darkColor.R, darkColor.G, darkColor.B);
         }
 
         int borderSize = _badgeValues.Border.BorderSize;
