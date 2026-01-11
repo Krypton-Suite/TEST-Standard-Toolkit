@@ -40,6 +40,7 @@ public abstract class VisualForm : Form,
     private bool _captured;
     private bool _disposing;
     private int _ignoreCount;
+    private bool _resizing;
     private KryptonCustomPaletteBase? _localCustomPalette;
     private PaletteBase _palette;
     private PaletteMode _paletteMode;
@@ -827,6 +828,16 @@ public abstract class VisualForm : Form,
     }
 
     /// <summary>
+    /// Raises the ResizeBegin event.
+    /// </summary>
+    /// <param name="e">An EventArgs containing the event data.</param>
+    protected override void OnResizeBegin(EventArgs e)
+    {
+        _resizing = true;
+        base.OnResizeBegin(e);
+    }
+
+    /// <summary>
     /// Raises the Resize event.
     /// </summary>
     /// <param name="e">An EventArgs containing the event data.</param>
@@ -837,15 +848,43 @@ public abstract class VisualForm : Form,
 
         base.OnResize(e);
 
+        // During resize, only mark layout as needed but don't trigger immediate paint
+        // to prevent flicker. Paint will be performed at resize end.
+        if (!_resizing)
+        {
+            if (!((MdiParent != null)
+                  && CommonHelper.IsFormMaximized(this))
+               )
+            {
+                PerformNeedPaint(true);
+            }
+        }
+        else
+        {
+            // Just mark that layout is needed, but don't invalidate during resize
+            NeedLayout = true;
+        }
+
+        // Reverse the resume from earlier
+        SuspendPaint();
+    }
+
+    /// <summary>
+    /// Raises the ResizeEnd event.
+    /// </summary>
+    /// <param name="e">An EventArgs containing the event data.</param>
+    protected override void OnResizeEnd(EventArgs e)
+    {
+        _resizing = false;
+        base.OnResizeEnd(e);
+
+        // Now perform the deferred paint that was skipped during resize
         if (!((MdiParent != null)
               && CommonHelper.IsFormMaximized(this))
            )
         {
             PerformNeedPaint(true);
         }
-
-        // Reverse the resume from earlier
-        SuspendPaint();
     }
 
     /// <summary>
@@ -1111,6 +1150,21 @@ public abstract class VisualForm : Form,
                     processed = OnWM_NCLBUTTONDBLCLK(ref m);
                     break;
 
+                case PI.WM_.ENTERSIZEMOVE:
+                    // User has started resizing or moving the window
+                    _resizing = true;
+                    break;
+                case PI.WM_.EXITSIZEMOVE:
+                    // User has finished resizing or moving the window
+                    _resizing = false;
+                    // Perform deferred paint that was skipped during resize
+                    if (!((MdiParent != null)
+                          && CommonHelper.IsFormMaximized(this))
+                       )
+                    {
+                        PerformNeedPaint(true);
+                    }
+                    break;
                 case PI.WM_.SYSCOMMAND:
                 {
                     var sc = (PI.SC_)m.WParam.ToInt64();

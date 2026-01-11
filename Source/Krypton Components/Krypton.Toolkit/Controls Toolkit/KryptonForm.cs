@@ -164,6 +164,13 @@ public class KryptonForm : VisualForm,
         // Yes, we want to be drawn double buffered by default
         base.DoubleBuffered = true;
 
+#if NET10_0_OR_GREATER
+        // Fix for issue #2862: .NET 10 introduced FormCornerPreference which causes flicker
+        // during resize when using custom chrome. Set to DoNotRound since KryptonForm
+        // handles its own border rendering with custom chrome.
+        FormCornerPreference = FormCornerPreference.DoNotRound;
+#endif
+
         // Create storage objects
         ButtonSpecs = new FormButtonSpecCollection(this);
         var buttonSpecsFixed = new FormFixedButtonSpecCollection(this);
@@ -172,7 +179,8 @@ public class KryptonForm : VisualForm,
         ButtonSpecMin = new ButtonSpecFormWindowMin(this);
         ButtonSpecMax = new ButtonSpecFormWindowMax(this);
         ButtonSpecClose = new ButtonSpecFormWindowClose(this);
-        buttonSpecsFixed.AddRange([ButtonSpecMin, ButtonSpecMax, ButtonSpecClose]);
+        ButtonSpecHelp = new ButtonSpecFormWindowHelp(this);
+        buttonSpecsFixed.AddRange([ButtonSpecMin, ButtonSpecMax, ButtonSpecClose, ButtonSpecHelp]);
 
         // Create the palette storage
         StateCommon = new PaletteFormRedirect(Redirector, NeedPaintDelegate, this);
@@ -509,6 +517,7 @@ public class KryptonForm : VisualForm,
             ButtonSpecMin.Dispose();
             ButtonSpecMax.Dispose();
             ButtonSpecClose.Dispose();
+            ButtonSpecHelp.Dispose();
 
             // Dispose the click timer
             _clickTimer?.Dispose();
@@ -773,12 +782,36 @@ public class KryptonForm : VisualForm,
     public new bool CloseBox 
     {
         get => base.CloseBox;
-
+ 
         set
         { 
             if (base.CloseBox != value)
             {
                 base.CloseBox = value;
+                _buttonManager.PerformNeedPaint(true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Toggles display of the Help button.
+    /// </summary>
+    /// <remarks>
+    /// The Help button only appears when both MinimizeBox and MaximizeBox are false.
+    /// </remarks>
+    [DefaultValue(false)]
+    [Category("Window Style")]
+    [Description("Toggles display of the help button. Only shows when MinimizeBox and MaximizeBox are false.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public new bool HelpButton
+    {
+        get => base.HelpButton;
+
+        set
+        {
+            if (base.HelpButton != value)
+            {
+                base.HelpButton = value;
                 _buttonManager.PerformNeedPaint(true);
             }
         }
@@ -1059,12 +1092,20 @@ public class KryptonForm : VisualForm,
     public ButtonSpecFormWindowMax ButtonSpecMax { get; }
 
     /// <summary>
-    /// Gets access to the minimize button spec.
+    /// Gets access to the close button spec.
     /// </summary>
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ButtonSpecFormWindowClose ButtonSpecClose { get; }
+
+    /// <summary>
+    /// Gets access to the help button spec.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ButtonSpecFormWindowHelp ButtonSpecHelp { get; }
 
     /// <summary>
     /// Gets and sets a value indicating if the border should be inert to changes.
@@ -1660,6 +1701,18 @@ public class KryptonForm : VisualForm,
             {
                 Help.ShowHelp(targetControl, provider.HelpNamespace, provider.GetHelpNavigator(targetControl),
                     provider.GetHelpKeyword(targetControl));
+            }
+
+            // Also trigger HelpRequested event for standard Windows Forms behavior
+            // This allows applications to handle help without using HelpProvider
+            var helpEventArgs = new HelpEventArgs(screenPos);
+            OnHelpRequested(helpEventArgs);
+
+            // If the event was handled, mark the message as processed
+            if (helpEventArgs.Handled)
+            {
+                m.Result = IntPtr.Zero;
+                return;
             }
 
             m.Result = IntPtr.Zero;
