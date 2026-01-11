@@ -517,6 +517,7 @@ public class KryptonForm : VisualForm,
             ButtonSpecMin.Dispose();
             ButtonSpecMax.Dispose();
             ButtonSpecClose.Dispose();
+            ButtonSpecHelp.Dispose();
 
             // Dispose the click timer
             _clickTimer?.Dispose();
