@@ -23,7 +23,7 @@ public class KryptonPrintDocument : PrintDocument
 
     private PaletteBase? _palette;
     private PaletteMode _paletteMode = PaletteMode.Global;
-    private KryptonCustomPaletteBase? _customPalette;
+    private PaletteBase? _localPalette;
     private PaletteContentStyle _textStyle = PaletteContentStyle.LabelNormalPanel;
     private PaletteBackStyle _backgroundStyle = PaletteBackStyle.PanelClient;
     private bool _usePaletteColors = true;
@@ -87,7 +87,7 @@ public class KryptonPrintDocument : PrintDocument
             if (_paletteMode != value)
             {
                 _paletteMode = value;
-                _customPalette = null;
+                _localPalette = null;
 
                 if (value == PaletteMode.Custom)
                 {
@@ -117,15 +117,41 @@ public class KryptonPrintDocument : PrintDocument
     [DefaultValue(null)]
     public PaletteBase? Palette
     {
-        get => _customPalette;
+        get => _localPalette;
         set
         {
-            if (_customPalette != value)
+            // Only interested in changes of value
+            if (_localPalette != value)
             {
-                _customPalette = value;
-                _paletteMode = value == null ? PaletteMode.Global : PaletteMode.Custom;
-                SetPalette(value ?? KryptonManager.CurrentGlobalPalette);
-                OnPaletteChanged(EventArgs.Empty);
+                // Remember the starting palette
+                PaletteBase? old = _localPalette;
+
+                // Use the provided palette value
+                SetPalette(value);
+
+                // If no custom palette is required
+                if (value == null)
+                {
+                    // No custom palette, so revert back to the global setting
+                    _paletteMode = PaletteMode.Global;
+
+                    // Get the appropriate palette for the global mode
+                    _localPalette = null;
+                    SetPalette(KryptonManager.GetPaletteForMode(_paletteMode));
+                }
+                else
+                {
+                    // No longer using a standard palette
+                    _localPalette = value;
+                    _paletteMode = PaletteMode.Custom;
+                }
+
+                // If real change has occurred
+                if (old != _localPalette)
+                {
+                    // Raise the change event
+                    OnPaletteChanged(EventArgs.Empty);
+                }
             }
         }
     }
