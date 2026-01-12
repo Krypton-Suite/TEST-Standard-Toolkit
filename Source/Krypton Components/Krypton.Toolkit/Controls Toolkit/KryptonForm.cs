@@ -39,20 +39,56 @@ public class KryptonForm : VisualForm,
             _kryptonForm = kryptonForm;
         }
 
-        public override PaletteRelativeAlign GetContentShortTextH(PaletteContentStyle style, PaletteState state) => style switch
+        public override PaletteRelativeAlign GetContentShortTextH(PaletteContentStyle style, PaletteState state)
         {
-            PaletteContentStyle.HeaderForm
+            // Handle header styles
+            if (style is PaletteContentStyle.HeaderForm
                 or PaletteContentStyle.HeaderPrimary
                 or PaletteContentStyle.HeaderDockInactive
                 or PaletteContentStyle.HeaderDockActive
                 or PaletteContentStyle.HeaderSecondary
                 or PaletteContentStyle.HeaderCustom1
                 or PaletteContentStyle.HeaderCustom2
-                or PaletteContentStyle.HeaderCustom3 => _kryptonForm._formTitleAlign != PaletteRelativeAlign.Inherit
+                or PaletteContentStyle.HeaderCustom3)
+            {
+                // In RTL mode with RightToLeftLayout enabled, position title to the left of icon (Near)
+                // so the order is: [Buttons] [Title] [Icon]
+                if (_kryptonForm.RightToLeft == RightToLeft.Yes && _kryptonForm.RightToLeftLayout)
+                {
+                    // Title should be Near (left side in RTL layout) so it comes before the icon
+                    return PaletteRelativeAlign.Near;
+                }
+
+                // Use custom title align if set, otherwise use base
+                return _kryptonForm._formTitleAlign != PaletteRelativeAlign.Inherit
                     ? _kryptonForm._formTitleAlign
-                    : base.GetContentShortTextH(style, state),
-            _ => base.GetContentShortTextH(style, state)
-        };
+                    : base.GetContentShortTextH(style, state);
+            }
+
+            return base.GetContentShortTextH(style, state);
+        }
+
+        public override PaletteRelativeAlign GetContentImageH(PaletteContentStyle style, PaletteState state)
+        {
+            // In RTL mode with RightToLeftLayout enabled, position icon on the right (Far)
+            if (_kryptonForm.RightToLeft == RightToLeft.Yes && _kryptonForm.RightToLeftLayout)
+            {
+                return style switch
+                {
+                    PaletteContentStyle.HeaderForm
+                        or PaletteContentStyle.HeaderPrimary
+                        or PaletteContentStyle.HeaderDockInactive
+                        or PaletteContentStyle.HeaderDockActive
+                        or PaletteContentStyle.HeaderSecondary
+                        or PaletteContentStyle.HeaderCustom1
+                        or PaletteContentStyle.HeaderCustom2
+                        or PaletteContentStyle.HeaderCustom3 => PaletteRelativeAlign.Far,
+                    _ => base.GetContentImageH(style, state)
+                };
+            }
+
+            return base.GetContentImageH(style, state);
+        }
     }
 
     /// <summary>
@@ -1273,6 +1309,26 @@ public class KryptonForm : VisualForm,
             }
         }
     }
+
+    /// <summary>
+    /// Gets and sets the RightToLeft property.
+    /// </summary>
+    [Browsable(true)]
+    [DefaultValue(RightToLeft.No)]
+    [EditorBrowsable(EditorBrowsableState.Always)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public override RightToLeft RightToLeft
+    {
+        get => base.RightToLeft;
+        set
+        {
+            if (base.RightToLeft != value)
+            {
+                base.RightToLeft = value;
+                OnRightToLeftChanged(EventArgs.Empty);
+            }
+        }
+    }
     
     #endregion
 
@@ -1628,6 +1684,30 @@ public class KryptonForm : VisualForm,
     /// <summary>
     /// When border style changes via property, force non-client repaint so grippie updates immediately.
     /// </summary>
+    /// <summary>
+    /// Raises the RightToLeftChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnRightToLeftChanged(EventArgs e)
+    {
+        base.OnRightToLeftChanged(e);
+        
+        // Recreate buttons when RTL changes to update their positions
+        _buttonManager?.RecreateButtons();
+    }
+
+    /// <summary>
+    /// Raises the RightToLeftLayoutChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnRightToLeftLayoutChanged(EventArgs e)
+    {
+        base.OnRightToLeftLayoutChanged(e);
+        
+        // Recreate buttons when RTL layout changes to update their positions
+        _buttonManager?.RecreateButtons();
+    }
+
     protected override void OnStyleChanged(EventArgs e)
     {
         base.OnStyleChanged(e);
