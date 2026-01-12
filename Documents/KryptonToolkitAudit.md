@@ -272,7 +272,7 @@ This audit compares the Krypton Toolkit against standard Windows Forms controls 
 **Description:** Page setup dialog for printing.  
 **Notes:** Printing dialogs are less commonly themed.
 
-#### **PrintPreviewDialog** ❌
+#### **PrintPreviewDialog** ✅
 **Impact:** LOW  
 **Description:** Print preview dialog.  
 **Notes:** Printing dialogs are less commonly themed.
@@ -603,7 +603,7 @@ This audit compares the Krypton Toolkit against standard Windows Forms controls 
 
 ### Low Priority
 15. **KryptonPageSetupDialog**
-16. **KryptonPrintPreviewDialog**
+16. ✅ **KryptonPrintPreviewDialog** - Print preview dialog with Krypton theming - **IMPLEMENTED**
 17. ✅ **KryptonBindingNavigator** - Navigation UI for data-bound controls - **IMPLEMENTED**
 18. **KryptonChart** - Basic charting (or recommend third-party)
 
@@ -761,6 +761,7 @@ The Krypton Toolkit provides **excellent coverage** of standard WinForms control
 | Markdown Editor | KryptonMarkdownEditor | ✅ | Markdown editor with formatting capabilities and Krypton theming |
 | Markdown Preview | KryptonMarkdownPreview | ✅ | Markdown preview with custom Krypton rendering and HTML preview modes |
 | PrintDialog | KryptonPrintDialog | ✅ | Full featured |
+| PrintPreviewDialog | KryptonPrintPreviewDialog | ✅ | Full featured |
 | OpenFileDialog | KryptonOpenFileDialog | ✅ | Full featured |
 | SaveFileDialog | KryptonSaveFileDialog | ✅ | Full featured |
 | FolderBrowserDialog | KryptonFolderBrowserDialog | ✅ | Full featured |

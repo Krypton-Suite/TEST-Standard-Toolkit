@@ -199,6 +199,15 @@ public class ViewDrawBadge : ViewLeaf
         {
             SizeF textSize = g.MeasureString(text, measureFont);
             
+            // For capsule shape, use width-based sizing to create pill shape
+            if (_badgeValues.Shape == BadgeShape.Capsule)
+            {
+                int padding = 8; // Padding for capsule
+                int height = Math.Max(BADGE_MIN_SIZE, (int)textSize.Height + padding);
+                int width = Math.Max(height, (int)textSize.Width + padding); // Width should be at least height, but wider if text is wider
+                return new Size(width, height);
+            }
+            
             // For non-circle shapes, we might want different sizing
             int padding = _badgeValues.Shape == BadgeShape.Circle ? 8 : 6;
             int diameter = Math.Max(BADGE_MIN_SIZE, (int)Math.Max(textSize.Width, textSize.Height) + padding);
@@ -351,6 +360,10 @@ public class ViewDrawBadge : ViewLeaf
                         int radius = Math.Min(drawRect.Width, drawRect.Height) / 4;
                         FillRoundedRectangle(g, badgeBrush, drawRect, radius);
                         break;
+                    case BadgeShape.Capsule:
+                        int capsuleRadius = Math.Min(drawRect.Width, drawRect.Height) / 2;
+                        FillRoundedRectangle(g, badgeBrush, drawRect, capsuleRadius);
+                        break;
                 }
             }
 
@@ -490,6 +503,10 @@ public class ViewDrawBadge : ViewLeaf
                             int borderRadius = Math.Min(borderRect.Width, borderRect.Height) / 4;
                             DrawRoundedRectangle(g, borderPen, borderRect, borderRadius);
                             break;
+                        case BadgeShape.Capsule:
+                            int capsuleBorderRadius = Math.Min(borderRect.Width, borderRect.Height) / 2;
+                            DrawRoundedRectangle(g, borderPen, borderRect, capsuleBorderRadius);
+                            break;
                     }
                 }
             }
@@ -546,6 +563,10 @@ public class ViewDrawBadge : ViewLeaf
                 case BadgeShape.RoundedRectangle:
                     int borderRadius = Math.Min(borderRect.Width, borderRect.Height) / 4;
                     DrawBevelRoundedRectangle(g, borderRect, borderRadius, topLeftPen, bottomRightPen);
+                    break;
+                case BadgeShape.Capsule:
+                    int capsuleBorderRadius = Math.Min(borderRect.Width, borderRect.Height) / 2;
+                    DrawBevelRoundedRectangle(g, borderRect, capsuleBorderRadius, topLeftPen, bottomRightPen);
                     break;
             }
         }
