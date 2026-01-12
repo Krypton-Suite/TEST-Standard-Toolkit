@@ -51,12 +51,13 @@ public class KryptonForm : VisualForm,
                 or PaletteContentStyle.HeaderCustom2
                 or PaletteContentStyle.HeaderCustom3)
             {
-                // In RTL mode with RightToLeftLayout enabled, position title to the left of icon (Near)
+                // In RTL mode with RightToLeftLayout enabled, position title on the right (Far)
+                // The content layout system will position text before image when both are Far,
                 // so the order is: [Buttons] [Title] [Icon]
                 if (_kryptonForm.RightToLeft == RightToLeft.Yes && _kryptonForm.RightToLeftLayout)
                 {
-                    // Title should be Near (left side in RTL layout) so it comes before the icon
-                    return PaletteRelativeAlign.Near;
+                    // Title should be Far (right side) so it appears on the right before the icon
+                    return PaletteRelativeAlign.Far;
                 }
 
                 // Use custom title align if set, otherwise use base
