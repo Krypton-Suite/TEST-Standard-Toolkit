@@ -11,11 +11,11 @@ namespace Krypton.Toolkit
         private void InitializeComponent()
         {
             this._toolbarPanel = new Krypton.Toolkit.KryptonPanel();
-            this._previewControl = new System.Windows.Forms.PrintPreviewControl();
+            this._previewControl = new Krypton.Toolkit.KryptonPrintPreviewControl();
             this._btnPrint = new Krypton.Toolkit.KryptonButton();
             this._btnZoomIn = new Krypton.Toolkit.KryptonButton();
             this._btnZoomOut = new Krypton.Toolkit.KryptonButton();
-            this._zoomScrollBar = new Krypton.Toolkit.KryptonScrollBar();
+            this._zoomTrackBar = new Krypton.Toolkit.KryptonTrackBar();
             this._btnOnePage = new Krypton.Toolkit.KryptonButton();
             this._btnTwoPages = new Krypton.Toolkit.KryptonButton();
             this._btnThreePages = new Krypton.Toolkit.KryptonButton();
@@ -36,7 +36,7 @@ namespace Krypton.Toolkit
             this._toolbarPanel.Controls.Add(this._btnThreePages);
             this._toolbarPanel.Controls.Add(this._btnTwoPages);
             this._toolbarPanel.Controls.Add(this._btnOnePage);
-            this._toolbarPanel.Controls.Add(this._zoomScrollBar);
+            this._toolbarPanel.Controls.Add(this._zoomTrackBar);
             this._toolbarPanel.Controls.Add(this._btnZoomOut);
             this._toolbarPanel.Controls.Add(this._btnZoomIn);
             this._toolbarPanel.Controls.Add(this._btnPrint);
@@ -82,19 +82,17 @@ namespace Krypton.Toolkit
             this._btnZoomOut.Values.Text = "Zoom Out";
             this._btnZoomOut.Click += new System.EventHandler(this.BtnZoomOut_Click);
             // 
-            // _zoomScrollBar
+            // _zoomTrackBar
             // 
-            this._zoomScrollBar.Location = new System.Drawing.Point(251, 8);
-            this._zoomScrollBar.Name = "_zoomScrollBar";
-            this._zoomScrollBar.Orientation = Krypton.Toolkit.ScrollBarOrientation.Horizontal;
-            this._zoomScrollBar.Size = new System.Drawing.Size(75, 25);
-            this._zoomScrollBar.TabIndex = 10;
-            this._zoomScrollBar.Minimum = 25;
-            this._zoomScrollBar.Maximum = 500;
-            this._zoomScrollBar.Value = 100;
-            this._zoomScrollBar.SmallChange = 5;
-            this._zoomScrollBar.LargeChange = 25;
-            this._zoomScrollBar.Scroll += new System.Windows.Forms.ScrollEventHandler(this.ZoomScrollBar_Scroll);
+            this._zoomTrackBar.Location = new System.Drawing.Point(251, 8);
+            this._zoomTrackBar.Name = "_zoomTrackBar";
+            this._zoomTrackBar.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            this._zoomTrackBar.Size = new System.Drawing.Size(75, 25);
+            this._zoomTrackBar.TabIndex = 10;
+            this._zoomTrackBar.Minimum = 25;
+            this._zoomTrackBar.Maximum = 500;
+            this._zoomTrackBar.Value = 100;
+            this._zoomTrackBar.ValueChanged += new System.EventHandler(this.ZoomTrackBar_ValueChanged);
             // 
             // _btnOnePage
             // 
@@ -182,11 +180,11 @@ namespace Krypton.Toolkit
         #endregion
 
         private KryptonPanel _toolbarPanel;
-        private PrintPreviewControl _previewControl;
+        private KryptonPrintPreviewControl _previewControl;
         private KryptonButton _btnPrint;
         private KryptonButton _btnZoomIn;
         private KryptonButton _btnZoomOut;
-        private KryptonScrollBar _zoomScrollBar;
+        private KryptonTrackBar _zoomTrackBar;
         private KryptonButton _btnOnePage;
         private KryptonButton _btnTwoPages;
         private KryptonButton _btnThreePages;

@@ -57,9 +57,14 @@ internal partial class VisualPrintPreviewForm : KryptonForm
     }
 
     /// <summary>
-    /// Gets the PrintPreviewControl contained in this form.
+    /// Gets the KryptonPrintPreviewControl contained in this form.
     /// </summary>
-    public PrintPreviewControl PrintPreviewControl => _previewControl;
+    public KryptonPrintPreviewControl PrintPreviewControl => _previewControl;
+
+    /// <summary>
+    /// Gets the underlying PrintPreviewControl for compatibility.
+    /// </summary>
+    public PrintPreviewControl? PrintPreviewControlBase => _previewControl?.PrintPreviewControl;
 
     /// <summary>
     /// Gets or sets whether to use anti-aliasing.
@@ -83,16 +88,16 @@ internal partial class VisualPrintPreviewForm : KryptonForm
         // Ensure proper spacing and layout
         _toolbarPanel.Padding = new Padding(4);
         
-        // Initialize zoom scrollbar with current zoom value
-        UpdateZoomScrollBar();
+        // Initialize zoom trackbar with current zoom value
+        UpdateZoomTrackBar();
     }
 
-    private void UpdateZoomScrollBar()
+    private void UpdateZoomTrackBar()
     {
-        // Map zoom (double, e.g., 0.25-5.0) to scrollbar value (int, e.g., 25-500)
-        int scrollValue = (int)(_previewControl.Zoom * 100);
-        scrollValue = Math.Max(_zoomScrollBar.Minimum, Math.Min(_zoomScrollBar.Maximum, scrollValue));
-        _zoomScrollBar.Value = scrollValue;
+        // Map zoom (double, e.g., 0.25-5.0) to trackbar value (int, e.g., 25-500)
+        int trackValue = (int)(_previewControl.Zoom * 100);
+        trackValue = Math.Max(_zoomTrackBar.Minimum, Math.Min(_zoomTrackBar.Maximum, trackValue));
+        _zoomTrackBar.Value = trackValue;
     }
 
     private void BtnPrint_Click(object? sender, EventArgs e)
@@ -113,7 +118,7 @@ internal partial class VisualPrintPreviewForm : KryptonForm
     private void BtnZoomIn_Click(object? sender, EventArgs e)
     {
         _previewControl.Zoom += 0.25;
-        UpdateZoomScrollBar();
+        UpdateZoomTrackBar();
     }
 
     private void BtnZoomOut_Click(object? sender, EventArgs e)
@@ -121,14 +126,14 @@ internal partial class VisualPrintPreviewForm : KryptonForm
         if (_previewControl.Zoom > 0.25)
         {
             _previewControl.Zoom -= 0.25;
-            UpdateZoomScrollBar();
+            UpdateZoomTrackBar();
         }
     }
 
-    private void ZoomScrollBar_Scroll(object? sender, ScrollEventArgs e)
+    private void ZoomTrackBar_ValueChanged(object? sender, EventArgs e)
     {
-        // Map scrollbar value (int, e.g., 25-500) to zoom (double, e.g., 0.25-5.0)
-        double zoom = e.NewValue / 100.0;
+        // Map trackbar value (int, e.g., 25-500) to zoom (double, e.g., 0.25-5.0)
+        double zoom = _zoomTrackBar.Value / 100.0;
         _previewControl.Zoom = zoom;
     }
 

@@ -76,11 +76,18 @@ public class KryptonPrintPreviewDialog : Component, IDisposable
     }
 
     /// <summary>
-    /// Gets the <see cref='PrintPreviewControl'/> contained in this form.
+    /// Gets the <see cref='KryptonPrintPreviewControl'/> contained in this form.
     /// </summary>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public PrintPreviewControl? PrintPreviewControl => _previewForm?.PrintPreviewControl;
+    public KryptonPrintPreviewControl? PrintPreviewControl => _previewForm?.PrintPreviewControl;
+
+    /// <summary>
+    /// Gets the underlying <see cref='PrintPreviewControl'/> for compatibility.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public PrintPreviewControl? PrintPreviewControlBase => _previewForm?.PrintPreviewControlBase;
 
     /// <summary>
     /// Gets or sets a value indicating whether printing uses anti-aliasing.
