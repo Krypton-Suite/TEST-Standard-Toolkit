@@ -138,6 +138,9 @@ public class KryptonPrintPreviewControl : VisualControlBase
 
         // Create the internal print preview control
         _previewControl = new InternalPrintPreviewControl(this);
+        
+        // Set initial background color from palette
+        UpdatePreviewControlBackColor();
 
         // Create the element that fills the remainder space and remembers fill rectangle
         _layoutFill = new ViewLayoutFill(_previewControl);
@@ -160,6 +163,12 @@ public class KryptonPrintPreviewControl : VisualControlBase
         // Add print preview control to the controls collection
         ((KryptonReadOnlyControls)Controls).AddInternal(_previewControl);
     }
+
+    /// <summary>
+    /// Creates a new instance of the control collection for the control.
+    /// </summary>
+    /// <returns>A new instance of Control.ControlCollection assigned to the control.</returns>
+    protected override ControlCollection CreateControlsInstance() => new KryptonReadOnlyControls(this);
 
     /// <summary>
     /// Clean up any resources being used.
@@ -363,6 +372,32 @@ public class KryptonPrintPreviewControl : VisualControlBase
     #region Protected
 
     /// <summary>
+    /// Raises the Layout event.
+    /// </summary>
+    /// <param name="levent">A LayoutEventArgs that contains the event data.</param>
+    protected override void OnLayout(LayoutEventArgs levent)
+    {
+        // Let base class calculate fill rectangle first
+        base.OnLayout(levent);
+
+        if (!IsDisposed && !Disposing)
+        {
+            // Only use layout logic if control is fully initialized or if being forced
+            // to allow a relayout or if in design mode.
+            if (IsHandleCreated || DesignMode)
+            {
+                Rectangle fillRect = _layoutFill.FillRect;
+                
+                // Position the internal print preview control to fill the available space
+                if (fillRect.Width > 0 && fillRect.Height > 0)
+                {
+                    _previewControl.SetBounds(fillRect.X, fillRect.Y, fillRect.Width, fillRect.Height);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Raises the EnabledChanged event.
     /// </summary>
     /// <param name="e">An EventArgs that contains the event data.</param>
@@ -375,6 +410,9 @@ public class KryptonPrintPreviewControl : VisualControlBase
         // Update with latest enabled state
         _drawDockerOuter.Enabled = Enabled;
         _previewControl.Enabled = Enabled;
+        
+        // Update background color to match new state
+        UpdatePreviewControlBackColor();
 
         // Change in enabled state requires a layout and repaint
         PerformNeedPaint(true);
@@ -390,7 +428,23 @@ public class KryptonPrintPreviewControl : VisualControlBase
     protected override void OnPaletteChanged(EventArgs e)
     {
         _stateCommon.SetRedirector(Redirector);
+        UpdatePreviewControlBackColor();
         base.OnPaletteChanged(e);
+    }
+
+    /// <summary>
+    /// Updates the internal PrintPreviewControl's background color to match the themed background.
+    /// </summary>
+    private void UpdatePreviewControlBackColor()
+    {
+        if (_previewControl != null && !IsDisposed && !Disposing)
+        {
+            var backColor = Enabled
+                ? _stateNormal!.Back.GetBackColor1(PaletteState.Normal)
+                : _stateDisabled!.Back.GetBackColor1(PaletteState.Disabled);
+            
+            _previewControl.BackColor = backColor;
+        }
     }
 
     #endregion
