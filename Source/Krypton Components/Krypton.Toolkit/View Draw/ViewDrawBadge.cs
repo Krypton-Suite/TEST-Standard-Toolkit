@@ -199,12 +199,13 @@ public class ViewDrawBadge : ViewLeaf
         {
             SizeF textSize = g.MeasureString(text, measureFont);
             
-            // For capsule shape, use width-based sizing to create pill shape
+            // For capsule shape, use width-based sizing to create pill shape with minimum width
             if (_badgeValues.Shape == BadgeShape.Capsule)
             {
+                const int CAPSULE_MIN_WIDTH = 22;
                 int padding = 8; // Padding for capsule
                 int height = Math.Max(BADGE_MIN_SIZE, (int)textSize.Height + padding);
-                int width = Math.Max(height, (int)textSize.Width + padding); // Width should be at least height, but wider if text is wider
+                int width = Math.Max(CAPSULE_MIN_WIDTH, Math.Max(height, (int)textSize.Width + padding)); // Width should be at least 22px or height, but wider if text is wider
                 return new Size(width, height);
             }
             
