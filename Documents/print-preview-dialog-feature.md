@@ -1,4 +1,4 @@
-# KryptonPrintPreviewDialog Feature
+# KryptonPrintPreviewDialog
 
 ## Table of Contents
 
@@ -28,7 +28,8 @@ The `KryptonPrintPreviewDialog` is a fully-themed replacement for the standard W
 - **Full Krypton Theming**: All controls use Krypton styling and respect the current global palette
 - **Integrated Toolbar**: Built-in toolbar with print, zoom, and page layout controls using Krypton buttons
 - **Print Integration**: Seamlessly integrates with `KryptonPrintDialog` for printing
-- **PrintPreviewControl Access**: Direct access to the underlying `PrintPreviewControl` for advanced customization
+- **KryptonPrintPreviewControl Access**: Direct access to the underlying `KryptonPrintPreviewControl` for advanced customization
+- **PrintPreviewControl Compatibility**: Access to the underlying standard `PrintPreviewControl` for compatibility scenarios
 - **Anti-aliasing Support**: Configurable anti-aliasing for smoother preview rendering
 - **Modal Dialog**: Standard modal dialog behavior with owner window support
 - **Window State Control**: Configurable initial window state (Normal, Maximized, Minimized)
@@ -128,13 +129,13 @@ previewDialog.ShowDialog();
 
 ### PrintPreviewControl
 
-Gets the `PrintPreviewControl` contained in this dialog.
+Gets the `KryptonPrintPreviewControl` contained in this dialog.
 
-**Type:** `PrintPreviewControl?`
+**Type:** `KryptonPrintPreviewControl?`
 
 **Browsable:** `false`
 
-**Description:** Provides direct access to the underlying `PrintPreviewControl` for advanced customization. This property is `null` until the dialog has been shown at least once.
+**Description:** Provides direct access to the underlying `KryptonPrintPreviewControl` for advanced customization. This property is `null` until the dialog has been shown at least once.
 
 **Example:**
 
@@ -155,6 +156,38 @@ if (control != null)
 - The control is only available after the dialog has been displayed
 - You can modify properties of the control even while the dialog is shown
 - Changes to the control properties are immediately reflected in the preview
+- This returns a `KryptonPrintPreviewControl` which wraps the standard `PrintPreviewControl` with Krypton theming
+
+---
+
+### PrintPreviewControlBase
+
+Gets the underlying standard `PrintPreviewControl` for compatibility scenarios.
+
+**Type:** `PrintPreviewControl?`
+
+**Browsable:** `false`
+
+**Description:** Provides access to the underlying standard `PrintPreviewControl` when direct access to the base control is needed. This property is `null` until the dialog has been shown at least once.
+
+**Example:**
+
+```csharp
+previewDialog.ShowDialog();
+
+// Access the underlying standard control if needed
+var baseControl = previewDialog.PrintPreviewControlBase;
+if (baseControl != null)
+{
+    // Use standard PrintPreviewControl APIs
+    baseControl.InvalidatePreview();
+}
+```
+
+**Remarks:**
+- Use this property only when you need direct access to the standard `PrintPreviewControl`
+- For most scenarios, use `PrintPreviewControl` instead to get the `KryptonPrintPreviewControl`
+- The control is only available after the dialog has been displayed
 
 ---
 
@@ -590,6 +623,14 @@ The `KryptonPrintPreviewDialog` includes a comprehensive toolbar with the follow
 - **Function:** Decreases zoom level by 25% (0.25)
 - **Behavior:** Stops at minimum zoom of 25% (0.25)
 
+#### Zoom TrackBar
+- **Type:** `KryptonTrackBar`
+- **Function:** Provides continuous zoom control between 25% and 500%
+- **Range:** 25 (25%) to 500 (500%)
+- **Default Value:** 100 (100%)
+- **Behavior:** Real-time zoom adjustment as the trackbar is moved
+- **Position:** Located between Zoom Out and One Page buttons
+
 ### Page Layout Controls
 
 #### One Page
@@ -621,11 +662,13 @@ The `KryptonPrintPreviewDialog` includes a comprehensive toolbar with the follow
 
 ---
 
-## PrintPreviewControl Access
+## KryptonPrintPreviewControl Access
 
-While the dialog provides a user-friendly interface, you can access the underlying `PrintPreviewControl` for advanced customization:
+While the dialog provides a user-friendly interface, you can access the underlying `KryptonPrintPreviewControl` for advanced customization:
 
 ### Available Properties
+
+The `KryptonPrintPreviewControl` exposes the same properties as the standard `PrintPreviewControl`:
 
 - **Zoom** (`double`): Zoom factor (1.0 = 100%)
 - **Columns** (`int`): Number of pages displayed horizontally
@@ -633,6 +676,7 @@ While the dialog provides a user-friendly interface, you can access the underlyi
 - **UseAntiAlias** (`bool`): Anti-aliasing setting
 - **Document** (`PrintDocument?`): The document being previewed
 - **StartPage** (`int`): The first page to display
+- **PrintPreviewControl** (`PrintPreviewControl?`): Access to the underlying standard control
 
 ### Example: Programmatic Control
 
@@ -660,13 +704,21 @@ if (control != null)
 
     // Set start page
     control.StartPage = 0;
+    
+    // Access underlying standard control if needed
+    var baseControl = control.PrintPreviewControl;
+    if (baseControl != null)
+    {
+        baseControl.InvalidatePreview();
+    }
 }
 ```
 
 **Remarks:**
-- The `PrintPreviewControl` is only available after `ShowDialog()` has been called at least once
+- The `KryptonPrintPreviewControl` is only available after `ShowDialog()` has been called at least once
 - Changes to the control properties are immediately reflected
 - You can modify properties while the dialog is shown for dynamic updates
+- The control wraps the standard `PrintPreviewControl` with Krypton theming support
 
 ---
 
@@ -716,10 +768,11 @@ The `KryptonPrintPreviewDialog` uses a component-based architecture:
    - Manages dialog lifecycle
    - Exposes properties and methods
 
-2. **Internal Form Class**: `KryptonPrintPreviewForm` (inherits from `KryptonForm`)
+2. **Internal Form Class**: `VisualPrintPreviewForm` (inherits from `KryptonForm`)
    - Contains the actual UI
    - Manages toolbar and preview control
    - Handles user interactions
+   - Located in `Controls Visuals` directory
 
 ### Key Design Decisions
 
@@ -727,7 +780,7 @@ The `KryptonPrintPreviewDialog` uses a component-based architecture:
 
 2. **Form Creation**: A new form instance is created each time `ShowDialog()` is called, ensuring clean state for each preview session.
 
-3. **Toolbar Integration**: The toolbar uses native Krypton controls (`KryptonButton`, `KryptonLabel`, `KryptonPanel`) for full theming support.
+3. **Toolbar Integration**: The toolbar uses native Krypton controls (`KryptonButton`, `KryptonLabel`, `KryptonPanel`, `KryptonTrackBar`) for full theming support.
 
 4. **Print Integration**: The Print button directly uses `KryptonPrintDialog` for consistency.
 
@@ -869,8 +922,10 @@ preview.ShowDialog();
 ```csharp
 // Fix
 preview.ShowDialog();  // Show dialog first
-var control = preview.PrintPreviewControl;  // Now it's available
+var control = preview.PrintPreviewControl;  // Now it's available (returns KryptonPrintPreviewControl)
 ```
+
+**Note:** The `PrintPreviewControl` property now returns a `KryptonPrintPreviewControl`. If you need the underlying standard `PrintPreviewControl`, use `PrintPreviewControlBase` instead.
 
 ---
 
@@ -955,9 +1010,15 @@ The standard .NET `PrintDocument` class is used to define what will be printed/p
 
 **MSDN Documentation:** [PrintDocument Class](https://docs.microsoft.com/en-us/dotnet/api/system.drawing.printing.printdocument)
 
+### KryptonPrintPreviewControl
+
+The `KryptonPrintPreviewControl` wraps the standard `PrintPreviewControl` with Krypton theming support.
+
+**Related Documentation:** See `KryptonPrintPreviewControl` class documentation.
+
 ### PrintPreviewControl
 
-The underlying `PrintPreviewControl` provides the actual preview rendering.
+The underlying standard `PrintPreviewControl` provides the actual preview rendering.
 
 **MSDN Documentation:** [PrintPreviewControl Class](https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.printpreviewcontrol)
 
@@ -997,9 +1058,10 @@ The dialog respects the global palette mode set via `KryptonManager`.
 The `KryptonPrintPreviewDialog` provides a fully-themed, feature-rich print preview experience that integrates seamlessly with the Krypton Toolkit. It offers:
 
 - ✅ Full Krypton theming support
-- ✅ Comprehensive toolbar with print, zoom, and layout controls
+- ✅ Comprehensive toolbar with print, zoom (buttons + trackbar), and layout controls
 - ✅ Integration with `KryptonPrintDialog`
-- ✅ Access to underlying `PrintPreviewControl` for advanced scenarios
+- ✅ Access to underlying `KryptonPrintPreviewControl` for advanced scenarios
+- ✅ Compatibility access to standard `PrintPreviewControl` via `PrintPreviewControlBase`
 - ✅ Configurable appearance and behavior
 - ✅ Proper resource management
 - ✅ Designer support

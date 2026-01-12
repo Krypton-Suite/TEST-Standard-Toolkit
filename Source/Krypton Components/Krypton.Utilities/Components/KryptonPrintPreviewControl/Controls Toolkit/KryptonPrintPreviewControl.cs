@@ -40,6 +40,11 @@ public class KryptonPrintPreviewControl : VisualPanel
     private readonly PaletteDouble? _stateDisabled;
     private readonly PaletteDouble? _stateNormal;
     private readonly PaletteDouble? _stateActive;
+    private PaletteBackStyle _pageBackStyle = PaletteBackStyle.PanelAlternate;
+    private PaletteDoubleRedirect? _pageStateCommon;
+    private PaletteDouble? _pageStateNormal;
+    private PaletteDouble? _pageStateDisabled;
+    private PaletteBackStyle _pageBackStyle = PaletteBackStyle.PanelAlternate;
 
     #endregion
 
@@ -66,11 +71,17 @@ public class KryptonPrintPreviewControl : VisualPanel
                  ControlStyles.OptimizedDoubleBuffer |
                  ControlStyles.ResizeRedraw, true);
 
-        // Create the palette storage
+        // Create the palette storage for control background
         _stateCommon = new PaletteDoubleRedirect(Redirector!, PaletteBackStyle.PanelClient, PaletteBorderStyle.ControlClient, NeedPaintDelegate);
         _stateDisabled = new PaletteDouble(_stateCommon, NeedPaintDelegate);
         _stateNormal = new PaletteDouble(_stateCommon, NeedPaintDelegate);
         _stateActive = new PaletteDouble(_stateCommon, NeedPaintDelegate);
+        
+        // Create separate palette for page backgrounds
+        var pagePaletteRedirect = new PaletteRedirect(Redirector!);
+        _pageStateCommon = new PaletteDoubleRedirect(pagePaletteRedirect, _pageBackStyle, PaletteBorderStyle.ControlClient, NeedPaintDelegate);
+        _pageStateDisabled = new PaletteDouble(_pageStateCommon, NeedPaintDelegate);
+        _pageStateNormal = new PaletteDouble(_pageStateCommon, NeedPaintDelegate);
 
         // Initialize page cache
         _pageCache = new PrintPreviewPageCache();
@@ -285,6 +296,33 @@ public class KryptonPrintPreviewControl : VisualPanel
     [Browsable(false)]
     public int PageCount => _pageCache.PageCount;
 
+    /// <summary>
+    /// Gets and sets the panel style for page backgrounds.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Panel style for page backgrounds.")]
+    [DefaultValue(PaletteBackStyle.PanelAlternate)]
+    public PaletteBackStyle PageBackStyle
+    {
+        get => _pageBackStyle;
+        set
+        {
+            if (_pageBackStyle != value)
+            {
+                _pageBackStyle = value;
+                if (_pageStateCommon != null)
+                {
+                    _pageStateCommon.BackStyle = value;
+                    Invalidate();
+                }
+            }
+        }
+    }
+
+    private bool ShouldSerializePageBackStyle() => PageBackStyle != PaletteBackStyle.PanelAlternate;
+
+    private void ResetPageBackStyle() => PageBackStyle = PaletteBackStyle.PanelAlternate;
+
     #endregion
 
     #region Protected
@@ -382,6 +420,11 @@ public class KryptonPrintPreviewControl : VisualPanel
     protected override void OnPaletteChanged(EventArgs e)
     {
         _stateCommon.SetRedirector(Redirector);
+        if (_pageStateCommon != null)
+        {
+            var pagePaletteRedirect = new PaletteRedirect(Redirector!);
+            _pageStateCommon.SetRedirector(pagePaletteRedirect);
+        }
         Invalidate();
         base.OnPaletteChanged(e);
     }
@@ -607,8 +650,11 @@ public class KryptonPrintPreviewControl : VisualPanel
                         g.FillRectangle(shadowBrush, shadowRect);
                     }
 
-                    // Draw page background (white)
-                    using (var pageBrush = new SolidBrush(Color.White))
+                    // Draw page background using palette color (PanelAlternate style)
+                    var pageBackColor = Enabled
+                        ? _pageStateNormal!.Back.GetBackColor1(PaletteState.Normal)
+                        : _pageStateDisabled!.Back.GetBackColor1(PaletteState.Disabled);
+                    using (var pageBrush = new SolidBrush(pageBackColor))
                     {
                         g.FillRectangle(pageBrush, pageRect);
                     }

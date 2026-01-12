@@ -60,9 +60,69 @@ public class KryptonPrintPreviewControl : VisualControlBase
                         base.WndProc(ref m);
                     }
                     break;
+                case PI.WM_.ERASEBKGND:
+                    // Prevent background erasing to avoid flicker
+                    m.Result = (IntPtr)1;
+                    break;
+                case PI.WM_.PRINTCLIENT:
+                case PI.WM_.PAINT:
+                    WmPaint(ref m);
+                    break;
                 default:
                     base.WndProc(ref m);
                     break;
+            }
+        }
+
+        /// <summary>
+        /// Handles WM_PAINT message to apply palette colors to pages.
+        /// </summary>
+        /// <param name="m">A Windows-based message.</param>
+        private void WmPaint(ref Message m)
+        {
+            var ps = new PI.PAINTSTRUCT();
+            var hdc = m.WParam == IntPtr.Zero ? PI.BeginPaint(Handle, ref ps) : m.WParam;
+
+            try
+            {
+                using Graphics g = Graphics.FromHdc(hdc);
+                
+                // Get control background color
+                var controlBackColor = _kryptonPrintPreviewControl.Enabled
+                    ? _kryptonPrintPreviewControl._stateNormalInternal!.Back.GetBackColor1(PaletteState.Normal)
+                    : _kryptonPrintPreviewControl._stateDisabledInternal!.Back.GetBackColor1(PaletteState.Disabled);
+
+                PI.GetClientRect(Handle, out PI.RECT rect);
+                var clientRect = new Rectangle(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+                
+                // Fill control background with palette color
+                using (var brush = new SolidBrush(controlBackColor))
+                {
+                    g.FillRectangle(brush, clientRect);
+                }
+
+                // Let the base control draw the preview pages
+                // Note: PrintPreviewControl renders pages with white backgrounds internally.
+                // The control background uses PanelAlternate style, but page backgrounds remain white.
+                // For full control over page background colors (including PanelAlternate), 
+                // use Krypton.Utilities.KryptonPrintPreviewControl
+                if (m.WParam == IntPtr.Zero)
+                {
+                    m.WParam = hdc;
+                    DefWndProc(ref m);
+                    m.WParam = IntPtr.Zero;
+                }
+                else
+                {
+                    DefWndProc(ref m);
+                }
+            }
+            finally
+            {
+                if (m.WParam == IntPtr.Zero)
+                {
+                    PI.EndPaint(Handle, ref ps);
+                }
             }
         }
         #endregion
@@ -78,6 +138,11 @@ public class KryptonPrintPreviewControl : VisualControlBase
     private readonly PaletteDoubleRedirect _stateCommon;
     private readonly PaletteDouble? _stateDisabled;
     private readonly PaletteDouble? _stateNormal;
+    private PaletteBackStyle _panelBackStyle = PaletteBackStyle.PanelAlternate;
+
+    // Expose state fields to internal class
+    internal PaletteDouble? _stateNormalInternal => _stateNormal;
+    internal PaletteDouble? _stateDisabledInternal => _stateDisabled;
 
     #endregion
 
@@ -132,7 +197,7 @@ public class KryptonPrintPreviewControl : VisualControlBase
         SetStyle(ControlStyles.Selectable | ControlStyles.StandardClick, false);
 
         // Create the palette storage
-        _stateCommon = new PaletteDoubleRedirect(Redirector!, PaletteBackStyle.PanelClient, PaletteBorderStyle.ControlClient, NeedPaintDelegate);
+        _stateCommon = new PaletteDoubleRedirect(Redirector!, _panelBackStyle, PaletteBorderStyle.ControlClient, NeedPaintDelegate);
         _stateDisabled = new PaletteDouble(_stateCommon, NeedPaintDelegate);
         _stateNormal = new PaletteDouble(_stateCommon, NeedPaintDelegate);
 
@@ -186,6 +251,32 @@ public class KryptonPrintPreviewControl : VisualControlBase
     #endregion
 
     #region Public
+
+    /// <summary>
+    /// Gets and sets the panel style.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Panel style.")]
+    [DefaultValue(PaletteBackStyle.PanelAlternate)]
+    public PaletteBackStyle PanelBackStyle
+    {
+        get => _panelBackStyle;
+        set
+        {
+            if (_panelBackStyle != value)
+            {
+                _panelBackStyle = value;
+                _stateCommon.BackStyle = value;
+                UpdatePreviewControlBackColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializePanelBackStyle() => PanelBackStyle != PaletteBackStyle.PanelAlternate;
+
+    private void ResetPanelBackStyle() => PanelBackStyle = PaletteBackStyle.PanelAlternate;
+
 
     /// <summary>
     /// Gets access to the common print preview control appearance that other states can override.
