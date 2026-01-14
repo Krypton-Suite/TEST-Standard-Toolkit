@@ -115,6 +115,8 @@ public partial class StartScreen : KryptonForm
         CreateButton("Krypton MDI Window", "KryptonForm MDI Container with both KForm and WForm children", typeof(MdiWindow));
         CreateButton("Overlay Image Test", "Comprehensive demonstration of overlay images on KryptonButton and KryptonLabel with configurable positions and scaling modes.", typeof(OverlayImageTest));
         CreateButton("Taskbar Overlay Icon Test", "Comprehensive demonstration of taskbar overlay icons on KryptonForm with configurable icons, descriptions, and interactive examples.", typeof(TaskbarOverlayIconTest));
+        CreateButton("Taskbar Progress Test", "Comprehensive demonstration of taskbar progress indicators on KryptonForm with different states, animated progress, and interactive examples.", typeof(TaskbarProgressTest));
+        CreateButton("Jump List Test", "Comprehensive demonstration of jump lists on KryptonForm with user tasks, custom categories, known categories, and interactive examples.", typeof(JumpListTest));
     }
 
     private void OnFormClosing(object? sender, FormClosingEventArgs e)

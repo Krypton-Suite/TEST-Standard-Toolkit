@@ -51,6 +51,7 @@ public class KryptonProgressBar : Control, IContentValues
     private Color _textShadowColor;
     private bool _showTextBackdrop;
     private Color _textBackdropColor;
+    private bool _syncWithTaskbar;
 
     #endregion
 
@@ -131,6 +132,7 @@ public class KryptonProgressBar : Control, IContentValues
         _textShadowColor = Color.Empty;
         _showTextBackdrop = false;
         _textBackdropColor = Color.Empty;
+        _syncWithTaskbar = false;
 
         OnlayoutInternal();
     }
@@ -140,6 +142,12 @@ public class KryptonProgressBar : Control, IContentValues
     {
         if (disposing)
         {
+            // Clear taskbar progress if sync is enabled
+            if (_syncWithTaskbar)
+            {
+                ClearTaskbarProgress();
+            }
+
             if (_mementoContent != null)
             {
                 _mementoContent.Dispose();
@@ -176,6 +184,21 @@ public class KryptonProgressBar : Control, IContentValues
         }
 
         base.Dispose(disposing);
+    }
+
+    /// <summary>
+    /// Raises the ParentChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnParentChanged(EventArgs e)
+    {
+        base.OnParentChanged(e);
+
+        // If sync is enabled, update taskbar progress when parent changes
+        if (_syncWithTaskbar)
+        {
+            SyncTaskbarProgress();
+        }
     }
 
     #endregion
@@ -255,6 +278,12 @@ public class KryptonProgressBar : Control, IContentValues
             {
                 Invalidate();
                 _marqueeTimer.Stop();
+            }
+
+            // Sync with taskbar if enabled
+            if (_syncWithTaskbar)
+            {
+                SyncTaskbarProgress();
             }
         }
     }
@@ -436,6 +465,12 @@ public class KryptonProgressBar : Control, IContentValues
 
             _maximum = value;
             Invalidate();
+
+            // Sync with taskbar if enabled
+            if (_syncWithTaskbar)
+            {
+                SyncTaskbarProgress();
+            }
         }
     }
 
@@ -468,6 +503,12 @@ public class KryptonProgressBar : Control, IContentValues
 
             _minimum = value;
             Invalidate();
+
+            // Sync with taskbar if enabled
+            if (_syncWithTaskbar)
+            {
+                SyncTaskbarProgress();
+            }
         }
     }
 
@@ -516,6 +557,12 @@ public class KryptonProgressBar : Control, IContentValues
             }
 
             Invalidate();
+
+            // Sync with taskbar if enabled
+            if (_syncWithTaskbar)
+            {
+                SyncTaskbarProgress();
+            }
         }
     }
 
@@ -568,6 +615,12 @@ public class KryptonProgressBar : Control, IContentValues
         }
 
         Invalidate();
+
+        // Sync with taskbar if enabled
+        if (_syncWithTaskbar)
+        {
+            SyncTaskbarProgress();
+        }
     }
 
     /// <summary>Advances the current position of the progress bar by the amount of the <see cref="P:System.Windows.Forms.ProgressBar.Step" /> property.</summary>
@@ -582,6 +635,120 @@ public class KryptonProgressBar : Control, IContentValues
     /// <returns>A string that represents the current <see cref="T:System.Windows.Forms.ProgressBar" />.</returns>
     public override string ToString() =>
         $"{base.ToString()}, Minimum: {Minimum.ToString(CultureInfo.CurrentCulture)}, Maximum: {Maximum.ToString(CultureInfo.CurrentCulture)}, Value: {Value.ToString(CultureInfo.CurrentCulture)}";
+
+    /// <summary>
+    /// Gets or sets whether the progress bar should automatically sync with the parent form's taskbar progress indicator.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Whether to automatically sync progress bar value with the parent form's taskbar progress indicator.")]
+    [DefaultValue(false)]
+    public bool SyncWithTaskbar
+    {
+        get => _syncWithTaskbar;
+        set
+        {
+            if (_syncWithTaskbar != value)
+            {
+                _syncWithTaskbar = value;
+                if (_syncWithTaskbar)
+                {
+                    SyncTaskbarProgress();
+                }
+                else
+                {
+                    // Clear taskbar progress when sync is disabled
+                    ClearTaskbarProgress();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Syncs the progress bar state with the parent form's taskbar progress indicator.
+    /// </summary>
+    private void SyncTaskbarProgress()
+    {
+        // Only sync at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Find parent form
+            var parentForm = FindForm();
+            if (parentForm is not VisualForm visualForm)
+            {
+                return;
+            }
+
+            // Map ProgressBarStyle to TaskbarProgressState
+            TaskbarProgressState state = _style switch
+            {
+                ProgressBarStyle.Marquee => TaskbarProgressState.Indeterminate,
+                ProgressBarStyle.Continuous => TaskbarProgressState.Normal,
+                ProgressBarStyle.Blocks => TaskbarProgressState.Normal,
+                _ => TaskbarProgressState.Normal
+            };
+
+            // Set taskbar progress state
+            visualForm.Taskbar.Progress.State = state;
+
+            // For non-indeterminate styles, set the progress value
+            if (state != TaskbarProgressState.Indeterminate)
+            {
+                // Calculate effective range (accounting for minimum)
+                int effectiveRange = _maximum - _minimum;
+                if (effectiveRange > 0)
+                {
+                    // Calculate progress value relative to minimum
+                    int effectiveValue = _value - _minimum;
+                    visualForm.Taskbar.Progress.Maximum = (ulong)effectiveRange;
+                    visualForm.Taskbar.Progress.Value = (ulong)effectiveValue;
+                }
+                else
+                {
+                    // Range is zero or invalid, set to no progress
+                    visualForm.Taskbar.Progress.State = TaskbarProgressState.NoProgress;
+                }
+            }
+        }
+        catch
+        {
+            // Silently fail if parent form doesn't support taskbar progress
+            // or if there's any other error
+        }
+    }
+
+    /// <summary>
+    /// Clears the taskbar progress indicator.
+    /// </summary>
+    private void ClearTaskbarProgress()
+    {
+        // Only clear at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Find parent form
+            var parentForm = FindForm();
+            if (parentForm is not VisualForm visualForm)
+            {
+                return;
+            }
+
+            // Clear taskbar progress
+            visualForm.Taskbar.Progress.State = TaskbarProgressState.NoProgress;
+        }
+        catch
+        {
+            // Silently fail if parent form doesn't support taskbar progress
+        }
+    }
 
     /// <summary>
     /// Gets and sets the visual orientation of the control.

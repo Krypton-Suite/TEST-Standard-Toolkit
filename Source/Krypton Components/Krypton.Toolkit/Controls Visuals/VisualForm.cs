@@ -48,7 +48,7 @@ public abstract class VisualForm : Form,
     private ShadowManager _shadowManager;
     private BlurValues _blurValues;
     private BlurManager _blurManager;
-    private readonly TaskbarOverlayIconValues _taskbarOverlayIcon;
+    private readonly TaskbarValues _taskbar;
     private readonly object lockObject = new();
     #endregion
 
@@ -127,9 +127,11 @@ public abstract class VisualForm : Form,
         ShadowValues = new ShadowValues();
         BlurValues = new BlurValues();
 
-        // Taskbar overlay icon
-        _taskbarOverlayIcon = new TaskbarOverlayIconValues(NeedPaintDelegate);
-        _taskbarOverlayIcon.OnTaskbarOverlayChanged += UpdateTaskbarOverlayIcon;
+        // Taskbar (overlay icon, progress, jump list)
+        _taskbar = new TaskbarValues(NeedPaintDelegate);
+        _taskbar.OverlayIcon.OnTaskbarOverlayChanged += UpdateTaskbarOverlayIcon;
+        _taskbar.Progress.OnTaskbarProgressChanged += UpdateTaskbarProgress;
+        _taskbar.JumpList.OnJumpListChanged += UpdateJumpList;
 
 #if !NET462
         DpiChanged += OnDpiChanged;
@@ -395,23 +397,23 @@ public abstract class VisualForm : Form,
     public void ResetBlurValues() => _blurValues.Reset();
 
     /// <summary>
-    /// Gets access to the taskbar overlay icon values.
+    /// Gets access to the taskbar values (overlay icon, progress, and jump list).
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Taskbar overlay icon to display on the taskbar button.")]
+    [Description(@"Taskbar-related settings including overlay icon, progress indicator, and jump list.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public TaskbarOverlayIconValues TaskbarOverlayIcon => _taskbarOverlayIcon;
+    public TaskbarValues Taskbar => _taskbar;
 
     /// <summary>
-    /// Resets the TaskbarOverlayIcon property to its default value.
+    /// Resets the Taskbar property to its default value.
     /// </summary>
-    public void ResetTaskbarOverlayIcon() => TaskbarOverlayIcon.Reset();
+    public void ResetTaskbar() => Taskbar.Reset();
 
     /// <summary>
-    /// Indicates whether the TaskbarOverlayIcon property should be serialized.
+    /// Indicates whether the Taskbar property should be serialized.
     /// </summary>
-    /// <returns>true if the TaskbarOverlayIcon property should be serialized; otherwise, false.</returns>
-    public bool ShouldSerializeTaskbarOverlayIcon() => !TaskbarOverlayIcon.IsDefault;
+    /// <returns>true if the Taskbar property should be serialized; otherwise, false.</returns>
+    public bool ShouldSerializeTaskbar() => !Taskbar.IsDefault;
 
     /// <summary>
     /// Gets and sets the custom palette implementation.
@@ -805,6 +807,9 @@ public abstract class VisualForm : Form,
 
         // Update taskbar overlay icon if set
         UpdateTaskbarOverlayIcon();
+
+        // Update taskbar progress if set
+        UpdateTaskbarProgress();
     }
 
     /// <summary>
@@ -1823,13 +1828,13 @@ public abstract class VisualForm : Form,
 
             // Get icon handle
             IntPtr hIcon = IntPtr.Zero;
-            if (_taskbarOverlayIcon.Icon != null)
+            if (_taskbar.OverlayIcon.Icon != null)
             {
-                hIcon = _taskbarOverlayIcon.Icon.Handle;
+                hIcon = _taskbar.OverlayIcon.Icon.Handle;
             }
 
             // Set overlay icon (passing null clears it)
-            string description = _taskbarOverlayIcon.Description ?? string.Empty;
+            string description = _taskbar.OverlayIcon.Description ?? string.Empty;
             taskbarList.SetOverlayIcon(Handle, hIcon, description);
         }
         catch (Exception ex)
@@ -1837,6 +1842,200 @@ public abstract class VisualForm : Form,
             // Silently fail if taskbar API is not available
             // This can happen on older Windows versions or if COM registration fails
             KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+        }
+    }
+
+    /// <summary>
+    /// Updates the taskbar progress using the Windows ITaskbarList3 API.
+    /// </summary>
+    private void UpdateTaskbarProgress()
+    {
+        // Only update at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Check if Windows 7+ (ITaskbarList3 requires Windows 7+)
+            if (Environment.OSVersion.Version.Major < 6 ||
+                (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor < 1))
+            {
+                return; // Not supported on Windows Vista or earlier
+            }
+
+            // Create TaskbarList COM object
+            var taskbarList = (PI.ITaskbarList3)new PI.TaskbarList();
+            taskbarList.HrInit();
+
+            // Convert TaskbarProgressState to TBPFLAG
+            PI.TBPFLAG tbpFlag = _taskbar.Progress.State switch
+            {
+                TaskbarProgressState.NoProgress => PI.TBPFLAG.TBPF_NOPROGRESS,
+                TaskbarProgressState.Indeterminate => PI.TBPFLAG.TBPF_INDETERMINATE,
+                TaskbarProgressState.Normal => PI.TBPFLAG.TBPF_NORMAL,
+                TaskbarProgressState.Error => PI.TBPFLAG.TBPF_ERROR,
+                TaskbarProgressState.Paused => PI.TBPFLAG.TBPF_PAUSED,
+                _ => PI.TBPFLAG.TBPF_NOPROGRESS
+            };
+
+            // Set progress state
+            taskbarList.SetProgressState(Handle, tbpFlag);
+
+            // If state is not NoProgress and not Indeterminate, set the progress value
+            if (tbpFlag != PI.TBPFLAG.TBPF_NOPROGRESS && tbpFlag != PI.TBPFLAG.TBPF_INDETERMINATE)
+            {
+                // Ensure maximum is not zero to avoid division by zero
+                ulong maximum = _taskbar.Progress.Maximum > 0 ? _taskbar.Progress.Maximum : 100;
+                taskbarList.SetProgressValue(Handle, _taskbar.Progress.Value, maximum);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Silently fail if taskbar API is not available
+            // This can happen on older Windows versions or if COM registration fails
+            KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+        }
+    }
+
+    /// <summary>
+    /// Updates the jump list using the Windows ICustomDestinationList API.
+    /// </summary>
+    private void UpdateJumpList()
+    {
+        // Only update at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Check if Windows 7+ (ICustomDestinationList requires Windows 7+)
+            if (Environment.OSVersion.Version.Major < 6 ||
+                (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor < 1))
+            {
+                return; // Not supported on Windows Vista or earlier
+            }
+
+            // Check if AppId is set
+            if (string.IsNullOrEmpty(_jumpList.AppId))
+            {
+                return;
+            }
+
+            // Create CustomDestinationList COM object
+            var destinationList = (PI.ICustomDestinationList)new PI.CustomDestinationList();
+            destinationList.SetAppID(_taskbar.JumpList.AppId);
+
+            // Begin jump list creation
+            Guid iidObjectArray = new Guid("92ca9dcd-5622-4bba-a805-5e9f541bd8c9");
+            destinationList.BeginList(out uint maxSlots, ref iidObjectArray, out IntPtr removedItems);
+
+            // Add known categories if requested
+            if (_taskbar.JumpList.ShowFrequentCategory)
+            {
+                destinationList.AppendKnownCategory(PI.KNOWNDESTCATEGORY.KDC_FREQUENT);
+            }
+
+            if (_taskbar.JumpList.ShowRecentCategory)
+            {
+                destinationList.AppendKnownCategory(PI.KNOWNDESTCATEGORY.KDC_RECENT);
+            }
+
+            // Add custom categories
+            foreach (var category in _taskbar.JumpList.Categories)
+            {
+                if (category.Value.Count > 0)
+                {
+                    var categoryItems = CreateObjectArray(category.Value);
+                    if (categoryItems != null)
+                    {
+                        destinationList.AppendCategory(category.Key, categoryItems);
+                    }
+                }
+            }
+
+            // Add user tasks
+            if (_taskbar.JumpList.UserTasks.Count > 0)
+            {
+                var taskItems = CreateObjectArray(_taskbar.JumpList.UserTasks);
+                if (taskItems != null)
+                {
+                    destinationList.AddUserTasks(taskItems);
+                }
+            }
+
+            // Commit the jump list
+            destinationList.CommitList();
+        }
+        catch (Exception ex)
+        {
+            // Silently fail if jump list API is not available
+            // This can happen on older Windows versions or if COM registration fails
+            KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+        }
+    }
+
+    /// <summary>
+    /// Creates an IObjectArray from a list of JumpListItem objects.
+    /// </summary>
+    private PI.IObjectArray? CreateObjectArray(List<JumpListItem> items)
+    {
+        if (items == null || items.Count == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            // Create ObjectCollection
+            var objectCollection = (PI.IObjectCollection)new PI.ObjectCollection();
+
+            // Create shell links for each item
+            foreach (var item in items)
+            {
+                if (string.IsNullOrEmpty(item.Path))
+                {
+                    continue;
+                }
+
+                var shellLink = (PI.IShellLinkW)new PI.ShellLink();
+                shellLink.SetPath(item.Path);
+                
+                if (!string.IsNullOrEmpty(item.Arguments))
+                {
+                    shellLink.SetArguments(item.Arguments);
+                }
+
+                if (!string.IsNullOrEmpty(item.WorkingDirectory))
+                {
+                    shellLink.SetWorkingDirectory(item.WorkingDirectory);
+                }
+
+                if (!string.IsNullOrEmpty(item.Description))
+                {
+                    shellLink.SetDescription(item.Description);
+                }
+
+                if (!string.IsNullOrEmpty(item.IconPath))
+                {
+                    shellLink.SetIconLocation(item.IconPath, item.IconIndex);
+                }
+
+                // Add to collection
+                objectCollection.AddObject(shellLink);
+            }
+
+            // Return as IObjectArray
+            Guid iidObjectArray = new Guid("92ca9dcd-5622-4bba-a805-5e9f541bd8c9");
+            return (PI.IObjectArray)objectCollection;
+        }
+        catch (Exception ex)
+        {
+            KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+            return null;
         }
     }
 }
