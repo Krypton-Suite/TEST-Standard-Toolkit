@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -289,6 +289,7 @@ public class KryptonMonthCalendar : VisualSimpleBase,
         get => base.AutoSizeMode;
         set => base.AutoSizeMode = value;
     }
+
 
     /// <summary>
     /// Gets or sets the Input Method Editor (IME) mode of the control.
@@ -1478,6 +1479,7 @@ public class KryptonMonthCalendar : VisualSimpleBase,
 
         base.OnLostFocus(e);
     }
+
 
     /// <summary>
     /// Raises the Paint event.
