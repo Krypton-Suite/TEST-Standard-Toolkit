@@ -119,20 +119,21 @@ public class ViewDrawMonthDayNames : ViewLeaf,
             ? ClientRectangle.Right - _months.SizeDays.Width
             : ClientLocation.X;
 
-        // Layout the 7 day names (in RTL, reverse the order)
+        // Layout the 7 day names (in RTL, reverse the order to match days)
         var layoutRect = new Rectangle(startX, ClientLocation.Y, _months.SizeDays.Width, _months.SizeDays.Height);
         for (int i = 0; i < 7; i++)
         {
-            // Calculate actual day index based on RTL
-            int actualIndex = isRtl ? (6 - i) : i;
-            int day = ((int)_months.DisplayDayOfWeek + actualIndex) % 7;
+            // In RTL, iterate in reverse order (6, 5, 4, 3, 2, 1, 0) to match days
+            int dayOffset = isRtl ? (6 - i) : i;
+            int day = ((int)_months.DisplayDayOfWeek + dayOffset) % 7;
             
             // Define text to be drawn
             _drawText = _months.DayNames![day];
 
-            _dayMementos[actualIndex]?.Dispose();
+            // Store memento at position index (0-6) for this row
+            _dayMementos[dayOffset]?.Dispose();
 
-            _dayMementos[actualIndex] = context.Renderer.RenderStandardContent.LayoutContent(context, layoutRect, _calendar.StateNormal.DayOfWeek.Content, this, 
+            _dayMementos[dayOffset] = context.Renderer.RenderStandardContent.LayoutContent(context, layoutRect, _calendar.StateNormal.DayOfWeek.Content, this, 
                 VisualOrientation.Top, state);
 
             // Move across to next day (in RTL, move backwards)
@@ -175,19 +176,19 @@ public class ViewDrawMonthDayNames : ViewLeaf,
             ? ClientRectangle.Right - _months.SizeDays.Width
             : ClientLocation.X;
 
-        // Draw the 7 day names (in RTL, reverse the order)
+        // Draw the 7 day names (in RTL, reverse the order to match days)
         var drawRect = new Rectangle(startX, ClientLocation.Y, _months.SizeDays.Width, _months.SizeDays.Height);
         for(int i = 0; i < 7; i++)
         {
-            // Calculate actual day index based on RTL
-            int actualIndex = isRtl ? (6 - i) : i;
-            int day = ((int)_months.DisplayDayOfWeek + actualIndex) % 7;
+            // In RTL, iterate in reverse order (6, 5, 4, 3, 2, 1, 0) to match days
+            int dayOffset = isRtl ? (6 - i) : i;
+            int day = ((int)_months.DisplayDayOfWeek + dayOffset) % 7;
             
-            // Draw using memento cached from the layout call
-            if (_dayMementos[actualIndex] != null)
+            // Draw using memento cached from the layout call (stored at dayOffset index)
+            if (_dayMementos[dayOffset] != null)
             {
                 context?.Renderer.RenderStandardContent.DrawContent(context, drawRect,
-                    _calendar.StateNormal.DayOfWeek.Content, _dayMementos[actualIndex]!,
+                    _calendar.StateNormal.DayOfWeek.Content, _dayMementos[dayOffset]!,
                     VisualOrientation.Top, state, true);
             }
 

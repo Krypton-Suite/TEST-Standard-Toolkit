@@ -290,15 +290,16 @@ public class ViewDrawMonthDays : ViewLeaf,
         DateTime displayDate = _firstDay;
         for (var j = 0; j < WEEKS; j++)
         {
-            // Layout each day as a column (in RTL, reverse the order)
+            // Layout each day as a column (in RTL, iterate in reverse order)
             for (var i = 0; i < WEEKDAYS; i++)
             {
-                // Calculate actual day index based on RTL
-                int actualDayIndex = isRtl ? (WEEKDAYS - 1 - i) : i;
-                DateTime currentDate = _firstDay.AddDays((j * WEEKDAYS) + actualDayIndex);
+                // In RTL, iterate days in reverse order (6, 5, 4, 3, 2, 1, 0) for positioning
+                // but keep dates sequential
+                int dayOffset = isRtl ? (WEEKDAYS - 1 - i) : i;
+                DateTime currentDate = _firstDay.AddDays((j * WEEKDAYS) + dayOffset);
 
-                // Memento index (use original sequential index for memento storage)
-                var index = (j * WEEKDAYS) + actualDayIndex;
+                // Memento index (use sequential index for memento storage to match date)
+                var index = (j * WEEKDAYS) + dayOffset;
 
                 // Define text to be drawn
                 _drawText = currentDate.Day.ToString();
@@ -380,6 +381,7 @@ public class ViewDrawMonthDays : ViewLeaf,
                     }
                 }
 
+                // Store rect at sequential index (for hit testing)
                 _dayRects[index] = layoutRectCell;
 
                 // Move across to next column (in RTL, move backwards)
@@ -446,15 +448,16 @@ public class ViewDrawMonthDays : ViewLeaf,
         DateTime displayDate = _firstDay;
         for (var j = 0; j < WEEKS; j++)
         {
-            // Draw each day as a column (in RTL, reverse the order)
+            // Draw each day as a column (in RTL, iterate in reverse order)
             for (var i = 0; i < WEEKDAYS; i++)
             {
-                // Calculate actual day index based on RTL
-                int actualDayIndex = isRtl ? (WEEKDAYS - 1 - i) : i;
-                DateTime currentDate = _firstDay.AddDays((j * WEEKDAYS) + actualDayIndex);
+                // In RTL, iterate days in reverse order (6, 5, 4, 3, 2, 1, 0) for positioning
+                // but keep dates sequential
+                int dayOffset = isRtl ? (WEEKDAYS - 1 - i) : i;
+                DateTime currentDate = _firstDay.AddDays((j * WEEKDAYS) + dayOffset);
 
-                // Memento index (use original sequential index for memento storage)
-                var index = (j * WEEKDAYS) + actualDayIndex;
+                // Memento index (use sequential index for memento storage to match date)
+                var index = (j * WEEKDAYS) + dayOffset;
 
                 // Draw using memento cached from the layout call
                 if (_dayMementos[index] != null)
