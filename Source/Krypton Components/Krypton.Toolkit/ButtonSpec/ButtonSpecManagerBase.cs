@@ -857,7 +857,7 @@ public abstract class ButtonSpecManagerBase : GlobalId
     {
         var edge = spec.GetEdge(_redirector);
         var isRtl = CommonHelper.IsRightToLeftLayout(Control);
-        
+
         // In RTL mode with RightToLeftLayout enabled, reverse the dock style
         if (isRtl)
         {

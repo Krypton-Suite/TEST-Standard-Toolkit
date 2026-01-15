@@ -2,6 +2,10 @@
 
 =======
 
+## Unreleased
+
+* Implemented global Right-to-Left (RTL) layout support for all `VisualSimpleBase` controls. Added `RightToLeftLayout` property and RTL-aware layout logic to `VisualSimpleBase` base class, enabling consistent RTL support across all inheriting controls (KryptonBreadCrumb, KryptonLabel, KryptonColorButton, KryptonCommandLinkButton, KryptonMonthCalendar, KryptonRadioButton, KryptonCheckBox, KryptonDropButton, KryptonHeader, KryptonTrackBar). Enhanced `KryptonMonthCalendar` with comprehensive RTL support for day names, dates, and navigation. Added RTL helper methods to `CommonHelper` for reusable RTL calculations. Updated `ButtonSpecManagerBase` and `ViewLayoutDocker` to use consistent RTL detection.
+
 ## 2025-11-11 - Build 2511 (V100 RTM) - November 2025
 
 * Resolved [#2593](https://github.com/Krypton-Suite/Standard-Toolkit/issues/2593), Scrolling over `KryptonForm` results in OverflowException in `KryptonSystemMenuListener`

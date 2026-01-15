@@ -290,7 +290,6 @@ public class KryptonMonthCalendar : VisualSimpleBase,
         set => base.AutoSizeMode = value;
     }
 
-
     /// <summary>
     /// Gets or sets the Input Method Editor (IME) mode of the control.
     /// </summary>
@@ -1479,7 +1478,6 @@ public class KryptonMonthCalendar : VisualSimpleBase,
 
         base.OnLostFocus(e);
     }
-
 
     /// <summary>
     /// Raises the Paint event.

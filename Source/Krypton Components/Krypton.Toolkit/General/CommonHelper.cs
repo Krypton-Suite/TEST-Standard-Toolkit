@@ -421,10 +421,10 @@ public static class CommonHelper
     public static void SwapRectangleSizes(ref Rectangle rect) => (rect.Width, rect.Height) = (rect.Height, rect.Width);
 
     /// <summary>
-    /// Gets the right to left layout setting for a control.
+    /// Gets the form level right to left setting.
     /// </summary>
     /// <param name="control">Control for which the setting is needed.</param>
-    /// <returns>RightToLeftLayout setting.</returns>
+    /// <returns>RightToLeft setting.</returns>
     public static bool GetRightToLeftLayout(Control control)
     {
         // First check if the control itself has RightToLeftLayout (e.g., VisualSimpleBase controls)
@@ -444,53 +444,72 @@ public static class CommonHelper
             }
         }
 
+        // Fallback: We need a valid control to find a top level form
+        // Search for a top level form associated with the control
+        Form? topForm = control.FindForm();
+
+        // If can find an owning form
+        if (topForm != null)
+        {
+            // Use the form setting instead
+            return topForm.RightToLeftLayout;
+        }
+
         // Default to left-to-right layout
         return false;
     }
 
     /// <summary>
-    /// Determines if RTL layout should be applied for the given control.
+    /// Checks if a control has Right-to-Left layout enabled.
     /// </summary>
-    /// <param name="control">Control for which RTL is checked.</param>
-    /// <returns>True if RTL layout should be applied; otherwise false.</returns>
+    /// <param name="control">Control to check.</param>
+    /// <returns>True if RTL layout is enabled; otherwise false.</returns>
     public static bool IsRightToLeftLayout(Control control)
     {
-        return GetRightToLeftLayout(control) && (control.RightToLeft == RightToLeft.Yes);
+        if (control == null)
+        {
+            return false;
+        }
+
+        // Check if RightToLeft is Yes and RightToLeftLayout is true
+        return control.RightToLeft == RightToLeft.Yes && GetRightToLeftLayout(control);
     }
 
     /// <summary>
-    /// Calculates the X position from the right edge for RTL-aware positioning.
+    /// Calculates an RTL-aware X position for an item within a container.
     /// </summary>
     /// <param name="containerWidth">Width of the container.</param>
-    /// <param name="itemWidth">Width of the item to position.</param>
-    /// <param name="offset">Offset from the edge.</param>
-    /// <param name="isRtl">True if RTL layout is active.</param>
-    /// <returns>X position for the item.</returns>
+    /// <param name="itemWidth">Width of the item.</param>
+    /// <param name="offset">Offset from the edge (left in LTR, right in RTL).</param>
+    /// <param name="isRtl">Whether RTL layout is enabled.</param>
+    /// <returns>Calculated X position.</returns>
     public static int GetRtlAwareXPosition(int containerWidth, int itemWidth, int offset, bool isRtl)
     {
-        return isRtl 
-            ? containerWidth - itemWidth - offset  // Position from right
-            : offset;                               // Position from left
+        if (isRtl)
+        {
+            return containerWidth - itemWidth - offset;
+        }
+        return offset;
     }
 
     /// <summary>
-    /// Calculates the X position increment for RTL-aware layout (positive or negative step).
+    /// Gets an RTL-aware step value for moving across items.
     /// </summary>
-    /// <param name="step">Step size to increment by.</param>
-    /// <param name="isRtl">True if RTL layout is active.</param>
-    /// <returns>Step value (negative for RTL, positive for LTR).</returns>
+    /// <param name="step">Step size (positive for LTR).</param>
+    /// <param name="isRtl">Whether RTL layout is enabled.</param>
+    /// <returns>Step value (negative in RTL, positive in LTR).</returns>
     public static int GetRtlAwareStep(int step, bool isRtl)
     {
         return isRtl ? -step : step;
     }
 
     /// <summary>
-    /// Gets the reverse index for accessing items in reverse order for RTL.
+    /// Gets an RTL-aware index for iterating through items.
     /// </summary>
-    /// <param name="index">Original index (0-based).</param>
+    /// <param name="index">Current index.</param>
     /// <param name="totalCount">Total number of items.</param>
-    /// <param name="isRtl">True if RTL layout is active.</param>
-    /// <returns>Index to use for accessing the item (reversed if RTL).</returns>
+    /// <param name="isRtl">Whether RTL layout is enabled.</param>
+    /// <returns>RTL-aware index (reversed in RTL mode).</returns>
     public static int GetRtlAwareIndex(int index, int totalCount, bool isRtl)
     {
         return isRtl ? (totalCount - 1 - index) : index;

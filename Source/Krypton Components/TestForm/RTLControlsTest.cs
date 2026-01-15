@@ -10,11 +10,11 @@
 namespace TestForm;
 
 /// <summary>
-/// Comprehensive test form demonstrating Right-to-Left (RTL) support for KryptonMonthCalendar.
+/// Comprehensive test form demonstrating Right-to-Left (RTL) support for all VisualSimpleBase controls.
 /// </summary>
-public partial class MonthCalendarRtlTest : KryptonForm
+public partial class RTLControlsTest : KryptonForm
 {
-    public MonthCalendarRtlTest()
+    public RTLControlsTest()
     {
         InitializeComponent();
         InitializeRtlDemo();
@@ -29,13 +29,13 @@ public partial class MonthCalendarRtlTest : KryptonForm
         SetupRtlToggleExample();
         SetupCalendarExamples();
         SetupFeaturesExample();
-        SetupOtherControlsExample();
+        SetupAllVisualSimpleBaseControls();
 
         // Setup property grid
         propertyGrid.SelectedObject = calendarLtr;
 
         // Update status
-        UpdateStatus("RTL support demo initialized. All VisualSimpleBase controls (KryptonLabel, KryptonCheckBox, KryptonRadioButton, KryptonTrackBar, KryptonHeader, KryptonColorButton, KryptonCommandLinkButton, KryptonDropButton, KryptonBreadCrumb, KryptonMonthCalendar) now inherit RTL support. Use controls below to test RTL layout.");
+        UpdateStatus("RTL support demo initialized. All VisualSimpleBase controls now inherit RTL support. Use controls below to test RTL layout.");
     }
 
     private void SetupRtlToggleExample()
@@ -87,14 +87,82 @@ public partial class MonthCalendarRtlTest : KryptonForm
         calendarFeatures.AddMonthlyBoldedDate(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 15));
     }
 
-    private void SetupOtherControlsExample()
+    private void SetupAllVisualSimpleBaseControls()
     {
-        // Example 5: Show all VisualSimpleBase controls that now have RTL support
-        // (This demonstrates the global nature of the implementation)
-        lblExample5.Values.Text = "All VisualSimpleBase controls now inherit RTL support: " +
-            "KryptonBreadCrumb, KryptonLabel, KryptonColorButton, KryptonCommandLinkButton, " +
-            "KryptonMonthCalendar, KryptonRadioButton, KryptonCheckBox, KryptonDropButton, " +
-            "KryptonHeader, KryptonTrackBar. RTL support is enabled via the RightToLeft and RightToLeftLayout properties inherited from VisualSimpleBase.";
+        // Setup all VisualSimpleBase controls with RTL examples
+        
+        // KryptonLabel
+        lblDemoLabel.Text = "KryptonLabel with RTL support";
+        lblDemoLabelRtl.Text = "KryptonLabel (RTL)";
+        lblDemoLabelRtl.RightToLeft = RightToLeft.Yes;
+        lblDemoLabelRtl.RightToLeftLayout = true;
+
+        // KryptonCheckBox
+        chkDemoCheckBox.Text = "KryptonCheckBox";
+        chkDemoCheckBoxRtl.Text = "KryptonCheckBox (RTL)";
+        chkDemoCheckBoxRtl.RightToLeft = RightToLeft.Yes;
+        chkDemoCheckBoxRtl.RightToLeftLayout = true;
+
+        // KryptonRadioButton
+        radioDemoRadio1.Text = "Option 1";
+        radioDemoRadio1.Checked = true;
+        radioDemoRadio2.Text = "Option 2";
+        radioDemoRadio1Rtl.Text = "Option 1 (RTL)";
+        radioDemoRadio1Rtl.Checked = true;
+        radioDemoRadio1Rtl.RightToLeft = RightToLeft.Yes;
+        radioDemoRadio1Rtl.RightToLeftLayout = true;
+        radioDemoRadio2Rtl.Text = "Option 2 (RTL)";
+        radioDemoRadio2Rtl.RightToLeft = RightToLeft.Yes;
+        radioDemoRadio2Rtl.RightToLeftLayout = true;
+
+        // KryptonTrackBar
+        trackBarDemo.Minimum = 0;
+        trackBarDemo.Maximum = 100;
+        trackBarDemo.Value = 50;
+        trackBarDemoRtl.Minimum = 0;
+        trackBarDemoRtl.Maximum = 100;
+        trackBarDemoRtl.Value = 50;
+        trackBarDemoRtl.RightToLeft = RightToLeft.Yes;
+        trackBarDemoRtl.RightToLeftLayout = true;
+
+        // KryptonHeader
+        headerDemo.Values.Text = "KryptonHeader";
+        headerDemoRtl.Values.Text = "KryptonHeader (RTL)";
+        headerDemoRtl.RightToLeft = RightToLeft.Yes;
+        headerDemoRtl.RightToLeftLayout = true;
+
+        // KryptonColorButton
+        colorButtonDemo.Text = "Color Button";
+        colorButtonDemoRtl.Text = "Color Button (RTL)";
+        colorButtonDemoRtl.RightToLeft = RightToLeft.Yes;
+        colorButtonDemoRtl.RightToLeftLayout = true;
+
+        // KryptonCommandLinkButton
+        cmdLinkDemo.CommandLinkTextValues.Heading = "Command Link";
+        cmdLinkDemo.CommandLinkTextValues.Description = "Description text";
+        cmdLinkDemoRtl.CommandLinkTextValues.Heading = "Command Link (RTL)";
+        cmdLinkDemoRtl.CommandLinkTextValues.Description = "Description text";
+        cmdLinkDemoRtl.RightToLeft = RightToLeft.Yes;
+        cmdLinkDemoRtl.RightToLeftLayout = true;
+
+        // KryptonDropButton
+        dropButtonDemo.Text = "Drop Button";
+        dropButtonDemoRtl.Text = "Drop Button (RTL)";
+        dropButtonDemoRtl.RightToLeft = RightToLeft.Yes;
+        dropButtonDemoRtl.RightToLeftLayout = true;
+
+        // KryptonBreadCrumb
+        breadCrumbDemo.Items.Add(new KryptonBreadCrumbItem("Home"));
+        breadCrumbDemo.Items.Add(new KryptonBreadCrumbItem("Documents"));
+        breadCrumbDemo.Items.Add(new KryptonBreadCrumbItem("Current"));
+        breadCrumbDemoRtl.Items.Add(new KryptonBreadCrumbItem("Home"));
+        breadCrumbDemoRtl.Items.Add(new KryptonBreadCrumbItem("Documents"));
+        breadCrumbDemoRtl.Items.Add(new KryptonBreadCrumbItem("Current"));
+        breadCrumbDemoRtl.RightToLeft = RightToLeft.Yes;
+        breadCrumbDemoRtl.RightToLeftLayout = true;
+
+        // Wire up events
+        btnApplyRtlToAll.Click += BtnApplyRtlToAll_Click;
     }
 
     private void BtnToggleRtl_Click(object? sender, EventArgs e)
@@ -131,7 +199,7 @@ public partial class MonthCalendarRtlTest : KryptonForm
         lblStatus.Refresh();
     }
 
-    private void BtnApplyToAll_Click(object? sender, EventArgs e)
+    private void BtnApplyRtlToAllCalendars_Click(object? sender, EventArgs e)
     {
         bool newRtlValue = calendarLtr.RightToLeft == RightToLeft.Yes && calendarLtr.RightToLeftLayout;
 
@@ -145,6 +213,34 @@ public partial class MonthCalendarRtlTest : KryptonForm
         calendarFeatures.RightToLeftLayout = newRtlValue;
 
         UpdateStatus($"RTL layout applied to all calendars: {newRtlValue}");
+    }
+
+    private void BtnApplyRtlToAll_Click(object? sender, EventArgs e)
+    {
+        bool newRtlValue = !lblDemoLabel.RightToLeftLayout;
+
+        // Apply RTL to all VisualSimpleBase controls
+        ApplyRtlToControl(lblDemoLabelRtl, newRtlValue);
+        ApplyRtlToControl(chkDemoCheckBoxRtl, newRtlValue);
+        ApplyRtlToControl(radioDemoRadio1Rtl, newRtlValue);
+        ApplyRtlToControl(radioDemoRadio2Rtl, newRtlValue);
+        ApplyRtlToControl(trackBarDemoRtl, newRtlValue);
+        ApplyRtlToControl(headerDemoRtl, newRtlValue);
+        ApplyRtlToControl(colorButtonDemoRtl, newRtlValue);
+        ApplyRtlToControl(cmdLinkDemoRtl, newRtlValue);
+        ApplyRtlToControl(dropButtonDemoRtl, newRtlValue);
+        ApplyRtlToControl(breadCrumbDemoRtl, newRtlValue);
+
+        UpdateStatus($"RTL layout applied to all VisualSimpleBase controls: {newRtlValue}");
+    }
+
+    private void ApplyRtlToControl(Control control, bool rtlValue)
+    {
+        if (control is VisualSimpleBase visualSimpleBase)
+        {
+            visualSimpleBase.RightToLeft = rtlValue ? RightToLeft.Yes : RightToLeft.No;
+            visualSimpleBase.RightToLeftLayout = rtlValue;
+        }
     }
 
     private void PropertyGrid_PropertyValueChanged(object s, System.Windows.Forms.PropertyValueChangedEventArgs e)

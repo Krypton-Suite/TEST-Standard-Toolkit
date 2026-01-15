@@ -77,7 +77,7 @@ Created comprehensive demo (`RTLControlsTest`) showcasing:
 - Toggle RTL layout dynamically
 - Multiple calendar configurations (LTR, RTL, multi-month, with features)
 - Property grid integration for testing RTL properties
-- Documentation of all VisualSimpleBase controls that inherit RTL support
+- Visual examples of all VisualSimpleBase controls with RTL support
 
 ## Behavior
 
@@ -163,13 +163,10 @@ When `RightToLeft = Yes` and `RightToLeftLayout = true`:
   - Comprehensive demo showcasing RTL support
   - Multiple calendar examples with RTL toggle
   - Property grid integration
-  - Documentation of all VisualSimpleBase controls with RTL support
+  - Visual examples of all VisualSimpleBase controls with RTL support
 
 - `Source/Krypton Components/TestForm/RTLControlsTest.Designer.cs` (NEW)
   - Designer code for RTL demo form
-
-- `Source/Krypton Components/TestForm/StartScreen.cs`
-  - Added button to launch RTLControlsTest demo
 
 ## Breaking Changes
 

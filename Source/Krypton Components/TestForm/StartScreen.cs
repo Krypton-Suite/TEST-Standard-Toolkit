@@ -93,7 +93,6 @@ public partial class StartScreen : KryptonForm
         CreateButton("EmojiViewer Advanced", "Only hardcore devs can handle this one!", typeof(AdvancedEmojiViewerForm));
         CreateButton("BreadCrumb", "Follow the breadcrumbs and find the treasure...", typeof(BreadCrumbTest));
         CreateButton("Calendar", string.Empty, typeof(CalendarTest));
-        CreateButton("Month Calendar RTL Test", "Comprehensive demonstration of Right-to-Left (RTL) support for KryptonMonthCalendar with toggle examples, multi-month calendars, and feature showcases.", typeof(MonthCalendarRtlTest));
         CreateButton("Controls Test", string.Empty, typeof(ControlsTest));
         CreateButton("KryptonDataGridView Demo", string.Empty, typeof(DataGridViewDemo));
         CreateButton("FadeForm", string.Empty, typeof(FadeFormTest));
