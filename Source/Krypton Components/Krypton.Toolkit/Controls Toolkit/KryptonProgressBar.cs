@@ -1443,13 +1443,16 @@ public class KryptonProgressBar : Control, IContentValues
     {
         var (barPaletteState, barState) = GetBarPaletteState();
 
+        // Cast to PaletteTriple to access Content property
+        PaletteTriple? paletteTriple = barPaletteState as PaletteTriple;
+
         if (!_threshold.UseThresholdColors)
         {
             // Restore original colors when disabled
             _stateBackValue.Color1 = _originalValueColor;
-            if (_originalTextColor != Color.Empty)
+            if (_originalTextColor != Color.Empty && paletteTriple != null)
             {
-                barPaletteState.PaletteContent!.ShortText.Color1 = _originalTextColor;
+                paletteTriple.Content.ShortText.Color1 = _originalTextColor;
             }
             return;
         }
@@ -1473,6 +1476,11 @@ public class KryptonProgressBar : Control, IContentValues
             {
                 _originalTextColor = currentTextColor;
             }
+            else if (paletteTriple != null)
+            {
+                // Try to get from the palette content directly
+                _originalTextColor = paletteTriple.Content.ShortText.Color1;
+            }
         }
 
         // Determine which colors to use based on the current value
@@ -1484,6 +1492,10 @@ public class KryptonProgressBar : Control, IContentValues
             {
                 textColor = _threshold.LowThresholdTextColor;
             }
+            else if (_threshold.UseOppositeTextColors)
+            {
+                textColor = ControlPaint.Light(_threshold.LowThresholdColor);
+            }
         }
         else if (_value >= _threshold.HighThreshold)
         {
@@ -1491,6 +1503,10 @@ public class KryptonProgressBar : Control, IContentValues
             if (_threshold.HighThresholdTextColor != Color.Empty)
             {
                 textColor = _threshold.HighThresholdTextColor;
+            }
+            else if (_threshold.UseOppositeTextColors)
+            {
+                textColor = ControlPaint.Dark(_threshold.HighThresholdColor);
             }
         }
         else
@@ -1500,10 +1516,17 @@ public class KryptonProgressBar : Control, IContentValues
             {
                 textColor = _threshold.MediumThresholdTextColor;
             }
+            else if (_threshold.UseOppositeTextColors)
+            {
+                textColor = ControlPaint.Dark(_threshold.MediumThresholdColor);
+            }
         }
 
         // Update text color (always set it, even if using original, to ensure it's applied)
-        barPaletteState.PaletteContent!.ShortText.Color1 = textColor;
+        if (paletteTriple != null)
+        {
+            paletteTriple.Content.ShortText.Color1 = textColor;
+        }
     }
 
     #endregion
