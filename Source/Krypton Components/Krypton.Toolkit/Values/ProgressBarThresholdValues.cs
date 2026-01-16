@@ -27,6 +27,9 @@ public class ProgressBarThresholdValues : Storage
     private Color _lowThresholdTextColor;
     private Color _mediumThresholdTextColor;
     private Color _highThresholdTextColor;
+    private Color _originalLowThresholdTextColor;
+    private Color _originalMediumThresholdTextColor;
+    private Color _originalHighThresholdTextColor;
 
     #endregion
 
@@ -47,6 +50,9 @@ public class ProgressBarThresholdValues : Storage
         _lowThresholdTextColor = Color.Empty;
         _mediumThresholdTextColor = Color.Empty;
         _highThresholdTextColor = Color.Empty;
+        _originalLowThresholdTextColor = Color.Empty;
+        _originalMediumThresholdTextColor = Color.Empty;
+        _originalHighThresholdTextColor = Color.Empty;
 
         Reset();
     }
@@ -463,8 +469,25 @@ public class ProgressBarThresholdValues : Storage
 
             if (_useOppositeTextColors)
             {
+                // Store original values before calculating opposite colors
+                _originalLowThresholdTextColor = _lowThresholdTextColor;
+                _originalMediumThresholdTextColor = _mediumThresholdTextColor;
+                _originalHighThresholdTextColor = _highThresholdTextColor;
+
                 // Calculate opposite colors when enabled
                 CalculateOppositeTextColors();
+            }
+            else
+            {
+                // Restore original values when disabled
+                _lowThresholdTextColor = _originalLowThresholdTextColor;
+                _mediumThresholdTextColor = _originalMediumThresholdTextColor;
+                _highThresholdTextColor = _originalHighThresholdTextColor;
+
+                // Clear original values
+                _originalLowThresholdTextColor = Color.Empty;
+                _originalMediumThresholdTextColor = Color.Empty;
+                _originalHighThresholdTextColor = Color.Empty;
             }
 
             if (_useThresholdColors)
@@ -521,7 +544,18 @@ public class ProgressBarThresholdValues : Storage
                 return;
             }
 
-            _lowThresholdTextColor = value;
+            // If UseOppositeTextColors is enabled, store the user's value as the original
+            // so it can be restored when UseOppositeTextColors is disabled
+            if (_useOppositeTextColors)
+            {
+                _originalLowThresholdTextColor = value;
+                // If user sets to Empty, use calculated opposite; otherwise respect user's choice
+                _lowThresholdTextColor = value == Color.Empty ? GetOppositeColor(_lowThresholdColor) : value;
+            }
+            else
+            {
+                _lowThresholdTextColor = value;
+            }
 
             if (_useThresholdColors)
             {
@@ -558,7 +592,18 @@ public class ProgressBarThresholdValues : Storage
                 return;
             }
 
-            _mediumThresholdTextColor = value;
+            // If UseOppositeTextColors is enabled, store the user's value as the original
+            // so it can be restored when UseOppositeTextColors is disabled
+            if (_useOppositeTextColors)
+            {
+                _originalMediumThresholdTextColor = value;
+                // If user sets to Empty, use calculated opposite; otherwise respect user's choice
+                _mediumThresholdTextColor = value == Color.Empty ? GetOppositeColor(_mediumThresholdColor) : value;
+            }
+            else
+            {
+                _mediumThresholdTextColor = value;
+            }
 
             if (_useThresholdColors)
             {
@@ -595,7 +640,18 @@ public class ProgressBarThresholdValues : Storage
                 return;
             }
 
-            _highThresholdTextColor = value;
+            // If UseOppositeTextColors is enabled, store the user's value as the original
+            // so it can be restored when UseOppositeTextColors is disabled
+            if (_useOppositeTextColors)
+            {
+                _originalHighThresholdTextColor = value;
+                // If user sets to Empty, use calculated opposite; otherwise respect user's choice
+                _highThresholdTextColor = value == Color.Empty ? GetOppositeColor(_highThresholdColor) : value;
+            }
+            else
+            {
+                _highThresholdTextColor = value;
+            }
 
             if (_useThresholdColors)
             {
@@ -632,6 +688,9 @@ public class ProgressBarThresholdValues : Storage
         ResetLowThresholdTextColor();
         ResetMediumThresholdTextColor();
         ResetHighThresholdTextColor();
+        _originalLowThresholdTextColor = Color.Empty;
+        _originalMediumThresholdTextColor = Color.Empty;
+        _originalHighThresholdTextColor = Color.Empty;
     }
 
     #endregion
