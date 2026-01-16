@@ -1607,6 +1607,22 @@ public class KryptonMonthCalendar : VisualSimpleBase,
     }
 
     /// <summary>
+    /// Raises the RightToLeftLayoutChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnRightToLeftLayoutChanged(EventArgs e)
+    {
+        // Refresh button manager to update button positions for RTL
+        _drawMonths?.ButtonManager.RefreshButtons();
+
+        // Change in RTL layout requires a layout and repaint
+        PerformNeedPaint(true);
+
+        // Let base class fire standard event
+        base.OnRightToLeftLayoutChanged(e);
+    }
+
+    /// <summary>
     /// Raises the Layout event.
     /// </summary>
     /// <param name="levent">A LayoutEventArgs that contains the event data.</param>

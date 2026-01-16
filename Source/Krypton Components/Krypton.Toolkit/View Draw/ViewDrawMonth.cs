@@ -240,6 +240,11 @@ public class ViewDrawMonth : ViewLayoutStack,
 
     #region Public
     /// <summary>
+    /// Gets access to the calendar provider.
+    /// </summary>
+    public IKryptonMonthCalendar Calendar => _calendar;
+
+    /// <summary>
     /// Gets access to the days draw element.
     /// </summary>
     public ViewDrawMonthDays ViewDrawMonthDays { get; }

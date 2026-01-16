@@ -81,6 +81,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("Header Examples", string.Empty, typeof(HeaderExamples));
         CreateButton("Menu/Tool/Status Strips", string.Empty, typeof(MenuToolBarStatusStripTest));
         CreateButton("NotifyIcon", "Comprehensive demonstration of KryptonNotifyIcon with all events, balloon tips, and context menu support.", typeof(NotifyIconTest));
+        CreateButton("Print Preview Dialog", "Comprehensive demonstration of KryptonPrintPreviewDialog with various document types, window states, anti-aliasing options, and integration with KryptonPrintDocument.", typeof(PrintPreviewDialogTest));
         CreateButton("ProgressBar", "Checkout if progress has been made.", typeof(ProgressBarTest));
         CreateButton("Ribbon / Navigator / Workspace", string.Empty, typeof(RibbonNavigatorWorkspaceTest));
         CreateButton("Splash Screen", string.Empty, typeof(SplashScreenExample));
