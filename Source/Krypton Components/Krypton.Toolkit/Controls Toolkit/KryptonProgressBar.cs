@@ -54,6 +54,10 @@ public class KryptonProgressBar : Control, IContentValues
     private bool _syncWithTaskbar;
     private readonly ProgressBarThresholdValues _threshold;
     private Color _originalValueColor;
+    private Color _originalValueColor2;
+    private PaletteColorStyle _originalValueColorStyle;
+    private PaletteRectangleAlign _originalValueColorAlign;
+    private float _originalValueColorAngle;
     private Color _originalTextColor;
     private Color _originalTextColor2;
     private PaletteColorStyle _originalTextColorStyle;
@@ -142,6 +146,10 @@ public class KryptonProgressBar : Control, IContentValues
         _syncWithTaskbar = false;
         // Store the original color from StateCommon (which is set to Green)
         _originalValueColor = StateCommon.Back.Color1;
+        _originalValueColor2 = StateCommon.Back.Color2;
+        _originalValueColorStyle = StateCommon.Back.ColorStyle;
+        _originalValueColorAlign = StateCommon.Back.ColorAlign;
+        _originalValueColorAngle = StateCommon.Back.ColorAngle;
         // Store the original text color (will be set after layout)
         _originalTextColor = Color.Empty;
         _originalTextColor2 = Color.Empty;
@@ -1462,6 +1470,22 @@ public class KryptonProgressBar : Control, IContentValues
         {
             // Restore original colors when disabled
             _stateBackValue.Color1 = _originalValueColor;
+            if (_originalValueColor2 != Color.Empty)
+            {
+                _stateBackValue.Color2 = _originalValueColor2;
+            }
+            if (_originalValueColorStyle != PaletteColorStyle.Inherit)
+            {
+                _stateBackValue.ColorStyle = _originalValueColorStyle;
+            }
+            if (_originalValueColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                _stateBackValue.ColorAlign = _originalValueColorAlign;
+            }
+            if (Math.Abs(_originalValueColorAngle - (-1f)) > 0.001f)
+            {
+                _stateBackValue.ColorAngle = _originalValueColorAngle;
+            }
             if (paletteTriple != null)
             {
                 if (_originalTextColor != Color.Empty)
@@ -1488,14 +1512,17 @@ public class KryptonProgressBar : Control, IContentValues
             return;
         }
 
-        // Store current color as original if we're enabling for the first time
-        // and the current color is different from the default
+        // Store current background color properties as original if we're enabling for the first time
         if (_originalValueColor == Color.Green)
         {
             Color currentColor = _stateBackValue.Color1;
             if (currentColor != Color.Green && currentColor != Color.Empty)
             {
                 _originalValueColor = currentColor;
+                _originalValueColor2 = _stateBackValue.Color2;
+                _originalValueColorStyle = _stateBackValue.ColorStyle;
+                _originalValueColorAlign = _stateBackValue.ColorAlign;
+                _originalValueColorAngle = _stateBackValue.ColorAngle;
             }
         }
 
@@ -1510,6 +1537,11 @@ public class KryptonProgressBar : Control, IContentValues
         }
 
         // Determine which colors and properties to use based on the current value
+        Color backColor = _originalValueColor;
+        Color backColor2 = _originalValueColor2;
+        PaletteColorStyle backColorStyle = _originalValueColorStyle;
+        PaletteRectangleAlign backColorAlign = _originalValueColorAlign;
+        float backColorAngle = _originalValueColorAngle;
         Color textColor = _originalTextColor;
         Color textColor2 = _originalTextColor2;
         PaletteColorStyle textColorStyle = _originalTextColorStyle;
@@ -1518,7 +1550,23 @@ public class KryptonProgressBar : Control, IContentValues
 
         if (_value < _threshold.LowThreshold)
         {
-            _stateBackValue.Color1 = _threshold.LowThresholdColor;
+            backColor = _threshold.LowThresholdColor;
+            if (_threshold.LowThresholdColor2 != Color.Empty)
+            {
+                backColor2 = _threshold.LowThresholdColor2;
+            }
+            if (_threshold.LowThresholdColorStyle != PaletteColorStyle.Inherit)
+            {
+                backColorStyle = _threshold.LowThresholdColorStyle;
+            }
+            if (_threshold.LowThresholdColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                backColorAlign = _threshold.LowThresholdColorAlign;
+            }
+            if (Math.Abs(_threshold.LowThresholdColorAngle - (-1f)) > 0.001f)
+            {
+                backColorAngle = _threshold.LowThresholdColorAngle;
+            }
             if (_threshold.LowThresholdTextColor != Color.Empty)
             {
                 textColor = _threshold.LowThresholdTextColor;
@@ -1546,7 +1594,23 @@ public class KryptonProgressBar : Control, IContentValues
         }
         else if (_value >= _threshold.HighThreshold)
         {
-            _stateBackValue.Color1 = _threshold.HighThresholdColor;
+            backColor = _threshold.HighThresholdColor;
+            if (_threshold.HighThresholdColor2 != Color.Empty)
+            {
+                backColor2 = _threshold.HighThresholdColor2;
+            }
+            if (_threshold.HighThresholdColorStyle != PaletteColorStyle.Inherit)
+            {
+                backColorStyle = _threshold.HighThresholdColorStyle;
+            }
+            if (_threshold.HighThresholdColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                backColorAlign = _threshold.HighThresholdColorAlign;
+            }
+            if (Math.Abs(_threshold.HighThresholdColorAngle - (-1f)) > 0.001f)
+            {
+                backColorAngle = _threshold.HighThresholdColorAngle;
+            }
             if (_threshold.HighThresholdTextColor != Color.Empty)
             {
                 textColor = _threshold.HighThresholdTextColor;
@@ -1574,7 +1638,23 @@ public class KryptonProgressBar : Control, IContentValues
         }
         else
         {
-            _stateBackValue.Color1 = _threshold.MediumThresholdColor;
+            backColor = _threshold.MediumThresholdColor;
+            if (_threshold.MediumThresholdColor2 != Color.Empty)
+            {
+                backColor2 = _threshold.MediumThresholdColor2;
+            }
+            if (_threshold.MediumThresholdColorStyle != PaletteColorStyle.Inherit)
+            {
+                backColorStyle = _threshold.MediumThresholdColorStyle;
+            }
+            if (_threshold.MediumThresholdColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                backColorAlign = _threshold.MediumThresholdColorAlign;
+            }
+            if (Math.Abs(_threshold.MediumThresholdColorAngle - (-1f)) > 0.001f)
+            {
+                backColorAngle = _threshold.MediumThresholdColorAngle;
+            }
             if (_threshold.MediumThresholdTextColor != Color.Empty)
             {
                 textColor = _threshold.MediumThresholdTextColor;
@@ -1599,6 +1679,25 @@ public class KryptonProgressBar : Control, IContentValues
             {
                 textColorAngle = _threshold.MediumThresholdTextColorAngle;
             }
+        }
+
+        // Update background color properties
+        _stateBackValue.Color1 = backColor;
+        if (backColor2 != Color.Empty)
+        {
+            _stateBackValue.Color2 = backColor2;
+        }
+        if (backColorStyle != PaletteColorStyle.Inherit)
+        {
+            _stateBackValue.ColorStyle = backColorStyle;
+        }
+        if (backColorAlign != PaletteRectangleAlign.Inherit)
+        {
+            _stateBackValue.ColorAlign = backColorAlign;
+        }
+        if (Math.Abs(backColorAngle - (-1f)) > 0.001f)
+        {
+            _stateBackValue.ColorAngle = backColorAngle;
         }
 
         // Update text color properties
