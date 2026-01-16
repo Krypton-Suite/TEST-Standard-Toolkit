@@ -575,6 +575,7 @@ public partial class PrintPreviewDialogTest : KryptonForm
             int startY = marginBounds.Top + 50;
             int rowHeight = 30;
             int[] columnWidths = { 150, 100, 100, 100 };
+            int totalWidth = columnWidths[0] + columnWidths[1] + columnWidths[2] + columnWidths[3];
             int x = marginBounds.Left;
 
             // Draw table
@@ -592,7 +593,7 @@ public partial class PrintPreviewDialogTest : KryptonForm
                     using (var brush = new SolidBrush(Color.LightGray))
                     {
                         g.FillRectangle(brush, x, startY + row * rowHeight, 
-                            columnWidths.Sum(), rowHeight);
+                            totalWidth, rowHeight);
                     }
                 }
                 else if (isTotal)
@@ -600,9 +601,8 @@ public partial class PrintPreviewDialogTest : KryptonForm
                     using (var brush = new SolidBrush(Color.LightYellow))
                     {
                         g.FillRectangle(brush, x, startY + row * rowHeight, 
-                            columnWidths.Sum(), rowHeight);
+                            totalWidth, rowHeight);
                     }
-                }
 
                 // Draw cells
                 int cellX = x;

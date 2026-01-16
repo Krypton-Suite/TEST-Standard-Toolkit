@@ -52,6 +52,8 @@ public class KryptonProgressBar : Control, IContentValues
     private bool _showTextBackdrop;
     private Color _textBackdropColor;
     private bool _syncWithTaskbar;
+    private readonly ProgressBarThresholdValues _threshold;
+    private Color _originalValueColor;
 
     #endregion
 
@@ -133,6 +135,10 @@ public class KryptonProgressBar : Control, IContentValues
         _showTextBackdrop = false;
         _textBackdropColor = Color.Empty;
         _syncWithTaskbar = false;
+        // Store the original color from StateCommon (which is set to Green)
+        _originalValueColor = StateCommon.Back.Color1;
+        // Create threshold values storage
+        _threshold = new ProgressBarThresholdValues(this, OnNeedPaintHandler);
 
         OnlayoutInternal();
     }
@@ -464,6 +470,22 @@ public class KryptonProgressBar : Control, IContentValues
             }
 
             _maximum = value;
+            
+            // Validate thresholds against new maximum
+            if (_threshold.LowThreshold > _maximum)
+            {
+                _threshold.LowThreshold = Math.Max(0, _maximum / 3);
+            }
+            if (_threshold.HighThreshold > _maximum)
+            {
+                _threshold.HighThreshold = Math.Max(_threshold.LowThreshold + 1, _maximum * 2 / 3);
+            }
+            
+            if (_threshold.UseThresholdColors)
+            {
+                UpdateThresholdColor();
+            }
+            
             Invalidate();
 
             // Sync with taskbar if enabled
@@ -502,6 +524,12 @@ public class KryptonProgressBar : Control, IContentValues
             }
 
             _minimum = value;
+            
+            if (_threshold.UseThresholdColors)
+            {
+                UpdateThresholdColor();
+            }
+            
             Invalidate();
 
             // Sync with taskbar if enabled
@@ -554,6 +582,11 @@ public class KryptonProgressBar : Control, IContentValues
             if (_useValueAsText)
             {
                 Text = $@"{value}%";
+            }
+
+            if (_threshold.UseThresholdColors)
+            {
+                UpdateThresholdColor();
             }
 
             Invalidate();
@@ -612,6 +645,11 @@ public class KryptonProgressBar : Control, IContentValues
         if (_value > _maximum)
         {
             _value = _maximum;
+        }
+
+        if (_threshold.UseThresholdColors)
+        {
+            UpdateThresholdColor();
         }
 
         Invalidate();
@@ -791,6 +829,16 @@ public class KryptonProgressBar : Control, IContentValues
         }
     }
 
+    /// <summary>
+    /// Gets access to the threshold color values.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Threshold color values for the progress bar.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public ProgressBarThresholdValues Threshold => _threshold;
+
+    private bool ShouldSerializeThreshold() => !Threshold.IsDefault;
+
     #endregion
 
     #region IContentValues
@@ -907,6 +955,12 @@ public class KryptonProgressBar : Control, IContentValues
 
         // Get the renderer associated with this palette
         IRenderer renderer = _palette!.GetRenderer();
+
+        // Update threshold color if enabled (before drawing)
+        if (_threshold.UseThresholdColors)
+        {
+            UpdateThresholdColor();
+        }
 
         // Create the rendering context that is passed into all renderer calls
         using var renderContext = new RenderContext(this, e.Graphics, e.ClipRectangle, renderer);
@@ -1352,6 +1406,44 @@ public class KryptonProgressBar : Control, IContentValues
         Text = value
             ? $@"{Value}%"
             : string.Empty;
+    }
+
+    /// <summary>
+    /// Updates the progress bar color based on the current value and threshold settings.
+    /// </summary>
+    internal void UpdateThresholdColor()
+    {
+        if (!_threshold.UseThresholdColors)
+        {
+            // Restore original color when disabled
+            _stateBackValue.Color1 = _originalValueColor;
+            return;
+        }
+
+        // Store current color as original if we're enabling for the first time
+        // and the current color is different from the default
+        if (_originalValueColor == Color.Green)
+        {
+            Color currentColor = _stateBackValue.Color1;
+            if (currentColor != Color.Green && currentColor != Color.Empty)
+            {
+                _originalValueColor = currentColor;
+            }
+        }
+
+        // Determine which color to use based on the current value
+        if (_value < _threshold.LowThreshold)
+        {
+            _stateBackValue.Color1 = _threshold.LowThresholdColor;
+        }
+        else if (_value >= _threshold.HighThreshold)
+        {
+            _stateBackValue.Color1 = _threshold.HighThresholdColor;
+        }
+        else
+        {
+            _stateBackValue.Color1 = _threshold.MediumThresholdColor;
+        }
     }
 
     #endregion
