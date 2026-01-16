@@ -17,6 +17,7 @@ public class ProgressBarThresholdValues : Storage
 
     private readonly KryptonProgressBar _owner;
     private bool _useThresholdColors;
+    private bool _autoCalculateThresholds;
     private int _lowThreshold;
     private int _highThreshold;
     private Color _lowThresholdColor;
@@ -51,6 +52,7 @@ public class ProgressBarThresholdValues : Storage
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public override bool IsDefault => !_useThresholdColors &&
+                                      !_autoCalculateThresholds &&
                                       _lowThreshold == 33 &&
                                       _highThreshold == 66 &&
                                       _lowThresholdColor == Color.Red &&
@@ -93,19 +95,120 @@ public class ProgressBarThresholdValues : Storage
 
     #endregion
 
+    #region AutoCalculateThresholds
+
+    /// <summary>
+    /// Gets or sets whether to automatically calculate threshold values based on Minimum and Maximum.
+    /// When enabled, thresholds are calculated as: LowThreshold = Minimum + (Maximum - Minimum) / 3,
+    /// HighThreshold = Minimum + (Maximum - Minimum) * 2 / 3.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Whether to automatically calculate threshold values based on Minimum and Maximum.")]
+    [DefaultValue(false)]
+    public bool AutoCalculateThresholds
+    {
+        get => _autoCalculateThresholds;
+        set
+        {
+            if (_autoCalculateThresholds == value)
+            {
+                return;
+            }
+
+            _autoCalculateThresholds = value;
+            
+            if (_autoCalculateThresholds)
+            {
+                // Calculate thresholds when enabled
+                CalculateThresholds();
+            }
+            
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeAutoCalculateThresholds() => AutoCalculateThresholds;
+
+    /// <summary>
+    /// Resets the AutoCalculateThresholds property to its default value.
+    /// </summary>
+    public void ResetAutoCalculateThresholds() => AutoCalculateThresholds = false;
+
+    /// <summary>
+    /// Calculates threshold values based on the owner's Minimum and Maximum.
+    /// </summary>
+    internal void CalculateThresholds()
+    {
+        if (_owner == null)
+        {
+            return;
+        }
+
+        int range = _owner.Maximum - _owner.Minimum;
+        if (range > 0)
+        {
+            // Calculate thresholds: divide range into thirds
+            // LowThreshold = Minimum + 1/3 of range
+            // HighThreshold = Minimum + 2/3 of range
+            _lowThreshold = _owner.Minimum + range / 3;
+            _highThreshold = _owner.Minimum + (range * 2) / 3;
+            
+            // Ensure thresholds are valid and distinct
+            if (_lowThreshold >= _highThreshold)
+            {
+                _lowThreshold = _owner.Minimum + Math.Max(1, range / 3);
+                _highThreshold = Math.Min(_owner.Maximum, _lowThreshold + 1);
+            }
+            
+            // Ensure thresholds don't exceed maximum
+            if (_lowThreshold > _owner.Maximum)
+            {
+                _lowThreshold = _owner.Maximum;
+            }
+            if (_highThreshold > _owner.Maximum)
+            {
+                _highThreshold = _owner.Maximum;
+            }
+            
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+        else
+        {
+            // Range is zero or invalid, set thresholds to minimum
+            _lowThreshold = _owner.Minimum;
+            _highThreshold = _owner.Minimum;
+        }
+    }
+
+    #endregion
+
     #region LowThreshold
 
     /// <summary>
     /// Gets or sets the low threshold value. When the progress value is below this threshold, the low threshold color is used.
+    /// This property is read-only when AutoCalculateThresholds is enabled.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"The low threshold value. Progress below this uses the low threshold color.")]
+    [Description(@"The low threshold value. Progress below this uses the low threshold color. Read-only when AutoCalculateThresholds is enabled.")]
     [DefaultValue(33)]
     public int LowThreshold
     {
         get => _lowThreshold;
         set
         {
+            if (_autoCalculateThresholds)
+            {
+                throw new InvalidOperationException(@"LowThreshold cannot be set when AutoCalculateThresholds is enabled.");
+            }
+
             if (value < 0 || (_owner != null && value > _owner.Maximum))
             {
                 throw new ArgumentOutOfRangeException(nameof(LowThreshold), value, @"LowThreshold must be between 0 and Maximum.");
@@ -145,15 +248,21 @@ public class ProgressBarThresholdValues : Storage
 
     /// <summary>
     /// Gets or sets the high threshold value. When the progress value is above this threshold, the high threshold color is used.
+    /// This property is read-only when AutoCalculateThresholds is enabled.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"The high threshold value. Progress above this uses the high threshold color.")]
+    [Description(@"The high threshold value. Progress above this uses the high threshold color. Read-only when AutoCalculateThresholds is enabled.")]
     [DefaultValue(66)]
     public int HighThreshold
     {
         get => _highThreshold;
         set
         {
+            if (_autoCalculateThresholds)
+            {
+                throw new InvalidOperationException(@"HighThreshold cannot be set when AutoCalculateThresholds is enabled.");
+            }
+
             if (value < 0 || (_owner != null && value > _owner.Maximum))
             {
                 throw new ArgumentOutOfRangeException(nameof(HighThreshold), value, @"HighThreshold must be between 0 and Maximum.");
@@ -308,6 +417,7 @@ public class ProgressBarThresholdValues : Storage
     public void Reset()
     {
         ResetUseThresholdColors();
+        ResetAutoCalculateThresholds();
         ResetLowThreshold();
         ResetHighThreshold();
         ResetLowThresholdColor();

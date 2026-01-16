@@ -471,14 +471,22 @@ public class KryptonProgressBar : Control, IContentValues
 
             _maximum = value;
             
-            // Validate thresholds against new maximum
-            if (_threshold.LowThreshold > _maximum)
+            // Recalculate thresholds if auto-calculation is enabled
+            if (_threshold.AutoCalculateThresholds)
             {
-                _threshold.LowThreshold = Math.Max(0, _maximum / 3);
+                _threshold.CalculateThresholds();
             }
-            if (_threshold.HighThreshold > _maximum)
+            else
             {
-                _threshold.HighThreshold = Math.Max(_threshold.LowThreshold + 1, _maximum * 2 / 3);
+                // Validate thresholds against new maximum
+                if (_threshold.LowThreshold > _maximum)
+                {
+                    _threshold.LowThreshold = Math.Max(0, _maximum / 3);
+                }
+                if (_threshold.HighThreshold > _maximum)
+                {
+                    _threshold.HighThreshold = Math.Max(_threshold.LowThreshold + 1, _maximum * 2 / 3);
+                }
             }
             
             if (_threshold.UseThresholdColors)
@@ -524,6 +532,12 @@ public class KryptonProgressBar : Control, IContentValues
             }
 
             _minimum = value;
+            
+            // Recalculate thresholds if auto-calculation is enabled
+            if (_threshold.AutoCalculateThresholds)
+            {
+                _threshold.CalculateThresholds();
+            }
             
             if (_threshold.UseThresholdColors)
             {
