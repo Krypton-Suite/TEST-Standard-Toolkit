@@ -54,6 +54,7 @@ public class KryptonProgressBar : Control, IContentValues
     private bool _syncWithTaskbar;
     private readonly ProgressBarThresholdValues _threshold;
     private Color _originalValueColor;
+    private Color _originalTextColor;
 
     #endregion
 
@@ -137,6 +138,8 @@ public class KryptonProgressBar : Control, IContentValues
         _syncWithTaskbar = false;
         // Store the original color from StateCommon (which is set to Green)
         _originalValueColor = StateCommon.Back.Color1;
+        // Store the original text color (will be set after layout)
+        _originalTextColor = Color.Empty;
         // Create threshold values storage
         _threshold = new ProgressBarThresholdValues(this, OnNeedPaintHandler);
 
@@ -1328,6 +1331,17 @@ public class KryptonProgressBar : Control, IContentValues
             // We want the inner part of the control to draw like a button.
             var (barPaletteState, barState) = GetBarPaletteState();
 
+            // Store original text color if not already stored
+            if (_originalTextColor == Color.Empty)
+            {
+                _originalTextColor = barPaletteState.PaletteContent!.GetContentShortTextColor1(barState);
+                if (_originalTextColor == Color.Empty)
+                {
+                    // If still empty, try to get from the palette content directly
+                    _originalTextColor = StateNormal.Content.ShortText.Color1;
+                }
+            }
+
             // Get the renderer associated with this palette
             IRenderer renderer = _palette.GetRenderer();
 
@@ -1427,10 +1441,16 @@ public class KryptonProgressBar : Control, IContentValues
     /// </summary>
     internal void UpdateThresholdColor()
     {
+        var (barPaletteState, barState) = GetBarPaletteState();
+
         if (!_threshold.UseThresholdColors)
         {
-            // Restore original color when disabled
+            // Restore original colors when disabled
             _stateBackValue.Color1 = _originalValueColor;
+            if (_originalTextColor != Color.Empty)
+            {
+                barPaletteState.PaletteContent!.ShortText.Color1 = _originalTextColor;
+            }
             return;
         }
 
@@ -1445,19 +1465,45 @@ public class KryptonProgressBar : Control, IContentValues
             }
         }
 
-        // Determine which color to use based on the current value
+        // Store current text color as original if not already stored
+        if (_originalTextColor == Color.Empty)
+        {
+            Color currentTextColor = barPaletteState.PaletteContent!.GetContentShortTextColor1(barState);
+            if (currentTextColor != Color.Empty)
+            {
+                _originalTextColor = currentTextColor;
+            }
+        }
+
+        // Determine which colors to use based on the current value
+        Color textColor = _originalTextColor;
         if (_value < _threshold.LowThreshold)
         {
             _stateBackValue.Color1 = _threshold.LowThresholdColor;
+            if (_threshold.LowThresholdTextColor != Color.Empty)
+            {
+                textColor = _threshold.LowThresholdTextColor;
+            }
         }
         else if (_value >= _threshold.HighThreshold)
         {
             _stateBackValue.Color1 = _threshold.HighThresholdColor;
+            if (_threshold.HighThresholdTextColor != Color.Empty)
+            {
+                textColor = _threshold.HighThresholdTextColor;
+            }
         }
         else
         {
             _stateBackValue.Color1 = _threshold.MediumThresholdColor;
+            if (_threshold.MediumThresholdTextColor != Color.Empty)
+            {
+                textColor = _threshold.MediumThresholdTextColor;
+            }
         }
+
+        // Update text color (always set it, even if using original, to ensure it's applied)
+        barPaletteState.PaletteContent!.ShortText.Color1 = textColor;
     }
 
     #endregion

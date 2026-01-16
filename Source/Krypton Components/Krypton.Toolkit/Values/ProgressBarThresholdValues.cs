@@ -23,6 +23,10 @@ public class ProgressBarThresholdValues : Storage
     private Color _lowThresholdColor;
     private Color _mediumThresholdColor;
     private Color _highThresholdColor;
+    private bool _useOppositeTextColors;
+    private Color _lowThresholdTextColor;
+    private Color _mediumThresholdTextColor;
+    private Color _highThresholdTextColor;
 
     #endregion
 
@@ -39,6 +43,11 @@ public class ProgressBarThresholdValues : Storage
         NeedPaint = needPaint;
         _owner = owner;
 
+        // Initialize text colors to Empty
+        _lowThresholdTextColor = Color.Empty;
+        _mediumThresholdTextColor = Color.Empty;
+        _highThresholdTextColor = Color.Empty;
+
         Reset();
     }
 
@@ -53,11 +62,15 @@ public class ProgressBarThresholdValues : Storage
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public override bool IsDefault => !_useThresholdColors &&
                                       !_autoCalculateThresholds &&
+                                      !_useOppositeTextColors &&
                                       _lowThreshold == 33 &&
                                       _highThreshold == 66 &&
                                       _lowThresholdColor == Color.Red &&
                                       _mediumThresholdColor == Color.Orange &&
-                                      _highThresholdColor == Color.Green;
+                                      _highThresholdColor == Color.Green &&
+                                      _lowThresholdTextColor == Color.Empty &&
+                                      _mediumThresholdTextColor == Color.Empty &&
+                                      _highThresholdTextColor == Color.Empty;
 
     #endregion
 
@@ -318,6 +331,12 @@ public class ProgressBarThresholdValues : Storage
 
             _lowThresholdColor = value;
 
+            // Update opposite text color if enabled
+            if (_useOppositeTextColors)
+            {
+                _lowThresholdTextColor = GetOppositeColor(_lowThresholdColor);
+            }
+
             if (_useThresholdColors)
             {
                 _owner.UpdateThresholdColor();
@@ -354,6 +373,12 @@ public class ProgressBarThresholdValues : Storage
             }
 
             _mediumThresholdColor = value;
+
+            // Update opposite text color if enabled
+            if (_useOppositeTextColors)
+            {
+                _mediumThresholdTextColor = GetOppositeColor(_mediumThresholdColor);
+            }
 
             if (_useThresholdColors)
             {
@@ -392,6 +417,12 @@ public class ProgressBarThresholdValues : Storage
 
             _highThresholdColor = value;
 
+            // Update opposite text color if enabled
+            if (_useOppositeTextColors)
+            {
+                _highThresholdTextColor = GetOppositeColor(_highThresholdColor);
+            }
+
             if (_useThresholdColors)
             {
                 _owner.UpdateThresholdColor();
@@ -409,6 +440,180 @@ public class ProgressBarThresholdValues : Storage
 
     #endregion
 
+    #region UseOppositeTextColors
+
+    /// <summary>
+    /// Gets or sets whether to automatically set text colors to the opposite of threshold colors.
+    /// When enabled, text colors are calculated as the inverse/complement of the threshold colors.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Whether to automatically set text colors to the opposite of threshold colors.")]
+    [DefaultValue(false)]
+    public bool UseOppositeTextColors
+    {
+        get => _useOppositeTextColors;
+        set
+        {
+            if (_useOppositeTextColors == value)
+            {
+                return;
+            }
+
+            _useOppositeTextColors = value;
+
+            if (_useOppositeTextColors)
+            {
+                // Calculate opposite colors when enabled
+                CalculateOppositeTextColors();
+            }
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeUseOppositeTextColors() => UseOppositeTextColors;
+
+    /// <summary>
+    /// Resets the UseOppositeTextColors property to its default value.
+    /// </summary>
+    public void ResetUseOppositeTextColors() => UseOppositeTextColors = false;
+
+    /// <summary>
+    /// Calculates opposite text colors based on threshold colors.
+    /// </summary>
+    private void CalculateOppositeTextColors()
+    {
+        _lowThresholdTextColor = GetOppositeColor(_lowThresholdColor);
+        _mediumThresholdTextColor = GetOppositeColor(_mediumThresholdColor);
+        _highThresholdTextColor = GetOppositeColor(_highThresholdColor);
+    }
+
+    /// <summary>
+    /// Gets the opposite/inverse color of the given color.
+    /// </summary>
+    private static Color GetOppositeColor(Color color)
+    {
+        // Calculate inverse color (255 - each component)
+        return Color.FromArgb(255 - color.R, 255 - color.G, 255 - color.B);
+    }
+
+    #endregion
+
+    #region LowThresholdTextColor
+
+    /// <summary>
+    /// Gets or sets the text color used when the progress value is below the low threshold.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Text color used when progress is below the low threshold. Empty uses default.")]
+    [DefaultValue(typeof(Color), nameof(Color.Empty))]
+    public Color LowThresholdTextColor
+    {
+        get => _lowThresholdTextColor;
+        set
+        {
+            if (_lowThresholdTextColor == value)
+            {
+                return;
+            }
+
+            _lowThresholdTextColor = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeLowThresholdTextColor() => LowThresholdTextColor != Color.Empty;
+
+    /// <summary>
+    /// Resets the LowThresholdTextColor property to its default value.
+    /// </summary>
+    public void ResetLowThresholdTextColor() => LowThresholdTextColor = Color.Empty;
+
+    #endregion
+
+    #region MediumThresholdTextColor
+
+    /// <summary>
+    /// Gets or sets the text color used when the progress value is between the low and high thresholds.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Text color used when progress is between low and high thresholds. Empty uses default.")]
+    [DefaultValue(typeof(Color), nameof(Color.Empty))]
+    public Color MediumThresholdTextColor
+    {
+        get => _mediumThresholdTextColor;
+        set
+        {
+            if (_mediumThresholdTextColor == value)
+            {
+                return;
+            }
+
+            _mediumThresholdTextColor = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeMediumThresholdTextColor() => MediumThresholdTextColor != Color.Empty;
+
+    /// <summary>
+    /// Resets the MediumThresholdTextColor property to its default value.
+    /// </summary>
+    public void ResetMediumThresholdTextColor() => MediumThresholdTextColor = Color.Empty;
+
+    #endregion
+
+    #region HighThresholdTextColor
+
+    /// <summary>
+    /// Gets or sets the text color used when the progress value is above the high threshold.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Text color used when progress is above the high threshold. Empty uses default.")]
+    [DefaultValue(typeof(Color), nameof(Color.Empty))]
+    public Color HighThresholdTextColor
+    {
+        get => _highThresholdTextColor;
+        set
+        {
+            if (_highThresholdTextColor == value)
+            {
+                return;
+            }
+
+            _highThresholdTextColor = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeHighThresholdTextColor() => HighThresholdTextColor != Color.Empty;
+
+    /// <summary>
+    /// Resets the HighThresholdTextColor property to its default value.
+    /// </summary>
+    public void ResetHighThresholdTextColor() => HighThresholdTextColor = Color.Empty;
+
+    #endregion
+
     #region Reset
 
     /// <summary>
@@ -418,11 +623,15 @@ public class ProgressBarThresholdValues : Storage
     {
         ResetUseThresholdColors();
         ResetAutoCalculateThresholds();
+        ResetUseOppositeTextColors();
         ResetLowThreshold();
         ResetHighThreshold();
         ResetLowThresholdColor();
         ResetMediumThresholdColor();
         ResetHighThresholdColor();
+        ResetLowThresholdTextColor();
+        ResetMediumThresholdTextColor();
+        ResetHighThresholdTextColor();
     }
 
     #endregion
