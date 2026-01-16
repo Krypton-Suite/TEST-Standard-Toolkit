@@ -35,6 +35,15 @@ public class ProgressBarThresholdValues : Storage
     private float _lowThresholdColorAngle;
     private float _mediumThresholdColorAngle;
     private float _highThresholdColorAngle;
+    private Image? _lowThresholdImage;
+    private Image? _mediumThresholdImage;
+    private Image? _highThresholdImage;
+    private PaletteImageStyle _lowThresholdImageStyle;
+    private PaletteImageStyle _mediumThresholdImageStyle;
+    private PaletteImageStyle _highThresholdImageStyle;
+    private PaletteRectangleAlign _lowThresholdImageAlign;
+    private PaletteRectangleAlign _mediumThresholdImageAlign;
+    private PaletteRectangleAlign _highThresholdImageAlign;
     private bool _useOppositeTextColors;
     private Color _lowThresholdTextColor;
     private Color _mediumThresholdTextColor;
@@ -101,6 +110,15 @@ public class ProgressBarThresholdValues : Storage
         _lowThresholdColorAngle = -1f;
         _mediumThresholdColorAngle = -1f;
         _highThresholdColorAngle = -1f;
+        _lowThresholdImage = null;
+        _mediumThresholdImage = null;
+        _highThresholdImage = null;
+        _lowThresholdImageStyle = PaletteImageStyle.Inherit;
+        _mediumThresholdImageStyle = PaletteImageStyle.Inherit;
+        _highThresholdImageStyle = PaletteImageStyle.Inherit;
+        _lowThresholdImageAlign = PaletteRectangleAlign.Inherit;
+        _mediumThresholdImageAlign = PaletteRectangleAlign.Inherit;
+        _highThresholdImageAlign = PaletteRectangleAlign.Inherit;
 
         Reset();
     }
@@ -148,7 +166,16 @@ public class ProgressBarThresholdValues : Storage
                                       _highThresholdColorAlign == PaletteRectangleAlign.Inherit &&
                                       Math.Abs(_lowThresholdColorAngle - (-1f)) < 0.001f &&
                                       Math.Abs(_mediumThresholdColorAngle - (-1f)) < 0.001f &&
-                                      Math.Abs(_highThresholdColorAngle - (-1f)) < 0.001f;
+                                      Math.Abs(_highThresholdColorAngle - (-1f)) < 0.001f &&
+                                      _lowThresholdImage == null &&
+                                      _mediumThresholdImage == null &&
+                                      _highThresholdImage == null &&
+                                      _lowThresholdImageStyle == PaletteImageStyle.Inherit &&
+                                      _mediumThresholdImageStyle == PaletteImageStyle.Inherit &&
+                                      _highThresholdImageStyle == PaletteImageStyle.Inherit &&
+                                      _lowThresholdImageAlign == PaletteRectangleAlign.Inherit &&
+                                      _mediumThresholdImageAlign == PaletteRectangleAlign.Inherit &&
+                                      _highThresholdImageAlign == PaletteRectangleAlign.Inherit;
 
     #endregion
 
@@ -965,6 +992,339 @@ public class ProgressBarThresholdValues : Storage
 
     #endregion
 
+    #region LowThresholdImage
+
+    /// <summary>
+    /// Gets or sets the image used when the progress value is below the low threshold.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Image used when progress is below the low threshold. Null uses default.")]
+    [DefaultValue(null)]
+    public Image? LowThresholdImage
+    {
+        get => _lowThresholdImage;
+        set
+        {
+            if (_lowThresholdImage == value)
+            {
+                return;
+            }
+
+            _lowThresholdImage = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeLowThresholdImage() => LowThresholdImage != null;
+
+    /// <summary>
+    /// Resets the LowThresholdImage property to its default value.
+    /// </summary>
+    public void ResetLowThresholdImage() => LowThresholdImage = null;
+
+    #endregion
+
+    #region LowThresholdImageStyle
+
+    /// <summary>
+    /// Gets or sets the image style when the progress value is below the low threshold.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Image style when progress is below the low threshold.")]
+    [DefaultValue(PaletteImageStyle.Inherit)]
+    public PaletteImageStyle LowThresholdImageStyle
+    {
+        get => _lowThresholdImageStyle;
+        set
+        {
+            if (_lowThresholdImageStyle == value)
+            {
+                return;
+            }
+
+            _lowThresholdImageStyle = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeLowThresholdImageStyle() => LowThresholdImageStyle != PaletteImageStyle.Inherit;
+
+    /// <summary>
+    /// Resets the LowThresholdImageStyle property to its default value.
+    /// </summary>
+    public void ResetLowThresholdImageStyle() => LowThresholdImageStyle = PaletteImageStyle.Inherit;
+
+    #endregion
+
+    #region LowThresholdImageAlign
+
+    /// <summary>
+    /// Gets or sets the image alignment when the progress value is below the low threshold.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Image alignment style when progress is below the low threshold.")]
+    [DefaultValue(PaletteRectangleAlign.Inherit)]
+    public PaletteRectangleAlign LowThresholdImageAlign
+    {
+        get => _lowThresholdImageAlign;
+        set
+        {
+            if (_lowThresholdImageAlign == value)
+            {
+                return;
+            }
+
+            _lowThresholdImageAlign = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeLowThresholdImageAlign() => LowThresholdImageAlign != PaletteRectangleAlign.Inherit;
+
+    /// <summary>
+    /// Resets the LowThresholdImageAlign property to its default value.
+    /// </summary>
+    public void ResetLowThresholdImageAlign() => LowThresholdImageAlign = PaletteRectangleAlign.Inherit;
+
+    #endregion
+
+    #region MediumThresholdImage
+
+    /// <summary>
+    /// Gets or sets the image used when the progress value is between the low and high thresholds.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Image used when progress is between low and high thresholds. Null uses default.")]
+    [DefaultValue(null)]
+    public Image? MediumThresholdImage
+    {
+        get => _mediumThresholdImage;
+        set
+        {
+            if (_mediumThresholdImage == value)
+            {
+                return;
+            }
+
+            _mediumThresholdImage = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeMediumThresholdImage() => MediumThresholdImage != null;
+
+    /// <summary>
+    /// Resets the MediumThresholdImage property to its default value.
+    /// </summary>
+    public void ResetMediumThresholdImage() => MediumThresholdImage = null;
+
+    #endregion
+
+    #region MediumThresholdImageStyle
+
+    /// <summary>
+    /// Gets or sets the image style when the progress value is between the low and high thresholds.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Image style when progress is between low and high thresholds.")]
+    [DefaultValue(PaletteImageStyle.Inherit)]
+    public PaletteImageStyle MediumThresholdImageStyle
+    {
+        get => _mediumThresholdImageStyle;
+        set
+        {
+            if (_mediumThresholdImageStyle == value)
+            {
+                return;
+            }
+
+            _mediumThresholdImageStyle = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeMediumThresholdImageStyle() => MediumThresholdImageStyle != PaletteImageStyle.Inherit;
+
+    /// <summary>
+    /// Resets the MediumThresholdImageStyle property to its default value.
+    /// </summary>
+    public void ResetMediumThresholdImageStyle() => MediumThresholdImageStyle = PaletteImageStyle.Inherit;
+
+    #endregion
+
+    #region MediumThresholdImageAlign
+
+    /// <summary>
+    /// Gets or sets the image alignment when the progress value is between the low and high thresholds.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Image alignment style when progress is between low and high thresholds.")]
+    [DefaultValue(PaletteRectangleAlign.Inherit)]
+    public PaletteRectangleAlign MediumThresholdImageAlign
+    {
+        get => _mediumThresholdImageAlign;
+        set
+        {
+            if (_mediumThresholdImageAlign == value)
+            {
+                return;
+            }
+
+            _mediumThresholdImageAlign = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeMediumThresholdImageAlign() => MediumThresholdImageAlign != PaletteRectangleAlign.Inherit;
+
+    /// <summary>
+    /// Resets the MediumThresholdImageAlign property to its default value.
+    /// </summary>
+    public void ResetMediumThresholdImageAlign() => MediumThresholdImageAlign = PaletteRectangleAlign.Inherit;
+
+    #endregion
+
+    #region HighThresholdImage
+
+    /// <summary>
+    /// Gets or sets the image used when the progress value is above the high threshold.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Image used when progress is above the high threshold. Null uses default.")]
+    [DefaultValue(null)]
+    public Image? HighThresholdImage
+    {
+        get => _highThresholdImage;
+        set
+        {
+            if (_highThresholdImage == value)
+            {
+                return;
+            }
+
+            _highThresholdImage = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeHighThresholdImage() => HighThresholdImage != null;
+
+    /// <summary>
+    /// Resets the HighThresholdImage property to its default value.
+    /// </summary>
+    public void ResetHighThresholdImage() => HighThresholdImage = null;
+
+    #endregion
+
+    #region HighThresholdImageStyle
+
+    /// <summary>
+    /// Gets or sets the image style when the progress value is above the high threshold.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Image style when progress is above the high threshold.")]
+    [DefaultValue(PaletteImageStyle.Inherit)]
+    public PaletteImageStyle HighThresholdImageStyle
+    {
+        get => _highThresholdImageStyle;
+        set
+        {
+            if (_highThresholdImageStyle == value)
+            {
+                return;
+            }
+
+            _highThresholdImageStyle = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeHighThresholdImageStyle() => HighThresholdImageStyle != PaletteImageStyle.Inherit;
+
+    /// <summary>
+    /// Resets the HighThresholdImageStyle property to its default value.
+    /// </summary>
+    public void ResetHighThresholdImageStyle() => HighThresholdImageStyle = PaletteImageStyle.Inherit;
+
+    #endregion
+
+    #region HighThresholdImageAlign
+
+    /// <summary>
+    /// Gets or sets the image alignment when the progress value is above the high threshold.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Image alignment style when progress is above the high threshold.")]
+    [DefaultValue(PaletteRectangleAlign.Inherit)]
+    public PaletteRectangleAlign HighThresholdImageAlign
+    {
+        get => _highThresholdImageAlign;
+        set
+        {
+            if (_highThresholdImageAlign == value)
+            {
+                return;
+            }
+
+            _highThresholdImageAlign = value;
+
+            if (_useThresholdColors)
+            {
+                _owner.UpdateThresholdColor();
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeHighThresholdImageAlign() => HighThresholdImageAlign != PaletteRectangleAlign.Inherit;
+
+    /// <summary>
+    /// Resets the HighThresholdImageAlign property to its default value.
+    /// </summary>
+    public void ResetHighThresholdImageAlign() => HighThresholdImageAlign = PaletteRectangleAlign.Inherit;
+
+    #endregion
+
     #region UseOppositeTextColors
 
     /// <summary>
@@ -1663,6 +2023,15 @@ public class ProgressBarThresholdValues : Storage
         ResetLowThresholdColorAngle();
         ResetMediumThresholdColorAngle();
         ResetHighThresholdColorAngle();
+        ResetLowThresholdImage();
+        ResetMediumThresholdImage();
+        ResetHighThresholdImage();
+        ResetLowThresholdImageStyle();
+        ResetMediumThresholdImageStyle();
+        ResetHighThresholdImageStyle();
+        ResetLowThresholdImageAlign();
+        ResetMediumThresholdImageAlign();
+        ResetHighThresholdImageAlign();
         ResetLowThresholdTextColor();
         ResetMediumThresholdTextColor();
         ResetHighThresholdTextColor();

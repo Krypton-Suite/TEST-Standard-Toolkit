@@ -58,6 +58,9 @@ public class KryptonProgressBar : Control, IContentValues
     private PaletteColorStyle _originalValueColorStyle;
     private PaletteRectangleAlign _originalValueColorAlign;
     private float _originalValueColorAngle;
+    private Image? _originalValueImage;
+    private PaletteImageStyle _originalValueImageStyle;
+    private PaletteRectangleAlign _originalValueImageAlign;
     private Color _originalTextColor;
     private Color _originalTextColor2;
     private PaletteColorStyle _originalTextColorStyle;
@@ -150,6 +153,9 @@ public class KryptonProgressBar : Control, IContentValues
         _originalValueColorStyle = StateCommon.Back.ColorStyle;
         _originalValueColorAlign = StateCommon.Back.ColorAlign;
         _originalValueColorAngle = StateCommon.Back.ColorAngle;
+        _originalValueImage = StateCommon.Back.Image;
+        _originalValueImageStyle = StateCommon.Back.ImageStyle;
+        _originalValueImageAlign = StateCommon.Back.ImageAlign;
         // Store the original text color (will be set after layout)
         _originalTextColor = Color.Empty;
         _originalTextColor2 = Color.Empty;
@@ -1486,6 +1492,18 @@ public class KryptonProgressBar : Control, IContentValues
             {
                 _stateBackValue.ColorAngle = _originalValueColorAngle;
             }
+            if (_originalValueImage != null)
+            {
+                _stateBackValue.Image = _originalValueImage;
+            }
+            if (_originalValueImageStyle != PaletteImageStyle.Inherit)
+            {
+                _stateBackValue.ImageStyle = _originalValueImageStyle;
+            }
+            if (_originalValueImageAlign != PaletteRectangleAlign.Inherit)
+            {
+                _stateBackValue.ImageAlign = _originalValueImageAlign;
+            }
             if (paletteTriple != null)
             {
                 if (_originalTextColor != Color.Empty)
@@ -1523,6 +1541,9 @@ public class KryptonProgressBar : Control, IContentValues
                 _originalValueColorStyle = _stateBackValue.ColorStyle;
                 _originalValueColorAlign = _stateBackValue.ColorAlign;
                 _originalValueColorAngle = _stateBackValue.ColorAngle;
+                _originalValueImage = _stateBackValue.Image;
+                _originalValueImageStyle = _stateBackValue.ImageStyle;
+                _originalValueImageAlign = _stateBackValue.ImageAlign;
             }
         }
 
@@ -1542,6 +1563,9 @@ public class KryptonProgressBar : Control, IContentValues
         PaletteColorStyle backColorStyle = _originalValueColorStyle;
         PaletteRectangleAlign backColorAlign = _originalValueColorAlign;
         float backColorAngle = _originalValueColorAngle;
+        Image? backImage = _originalValueImage;
+        PaletteImageStyle backImageStyle = _originalValueImageStyle;
+        PaletteRectangleAlign backImageAlign = _originalValueImageAlign;
         Color textColor = _originalTextColor;
         Color textColor2 = _originalTextColor2;
         PaletteColorStyle textColorStyle = _originalTextColorStyle;
@@ -1566,6 +1590,18 @@ public class KryptonProgressBar : Control, IContentValues
             if (Math.Abs(_threshold.LowThresholdColorAngle - (-1f)) > 0.001f)
             {
                 backColorAngle = _threshold.LowThresholdColorAngle;
+            }
+            if (_threshold.LowThresholdImage != null)
+            {
+                backImage = _threshold.LowThresholdImage;
+            }
+            if (_threshold.LowThresholdImageStyle != PaletteImageStyle.Inherit)
+            {
+                backImageStyle = _threshold.LowThresholdImageStyle;
+            }
+            if (_threshold.LowThresholdImageAlign != PaletteRectangleAlign.Inherit)
+            {
+                backImageAlign = _threshold.LowThresholdImageAlign;
             }
             if (_threshold.LowThresholdTextColor != Color.Empty)
             {
@@ -1611,6 +1647,18 @@ public class KryptonProgressBar : Control, IContentValues
             {
                 backColorAngle = _threshold.HighThresholdColorAngle;
             }
+            if (_threshold.HighThresholdImage != null)
+            {
+                backImage = _threshold.HighThresholdImage;
+            }
+            if (_threshold.HighThresholdImageStyle != PaletteImageStyle.Inherit)
+            {
+                backImageStyle = _threshold.HighThresholdImageStyle;
+            }
+            if (_threshold.HighThresholdImageAlign != PaletteRectangleAlign.Inherit)
+            {
+                backImageAlign = _threshold.HighThresholdImageAlign;
+            }
             if (_threshold.HighThresholdTextColor != Color.Empty)
             {
                 textColor = _threshold.HighThresholdTextColor;
@@ -1655,6 +1703,18 @@ public class KryptonProgressBar : Control, IContentValues
             {
                 backColorAngle = _threshold.MediumThresholdColorAngle;
             }
+            if (_threshold.MediumThresholdImage != null)
+            {
+                backImage = _threshold.MediumThresholdImage;
+            }
+            if (_threshold.MediumThresholdImageStyle != PaletteImageStyle.Inherit)
+            {
+                backImageStyle = _threshold.MediumThresholdImageStyle;
+            }
+            if (_threshold.MediumThresholdImageAlign != PaletteRectangleAlign.Inherit)
+            {
+                backImageAlign = _threshold.MediumThresholdImageAlign;
+            }
             if (_threshold.MediumThresholdTextColor != Color.Empty)
             {
                 textColor = _threshold.MediumThresholdTextColor;
@@ -1698,6 +1758,18 @@ public class KryptonProgressBar : Control, IContentValues
         if (Math.Abs(backColorAngle - (-1f)) > 0.001f)
         {
             _stateBackValue.ColorAngle = backColorAngle;
+        }
+        if (backImage != null)
+        {
+            _stateBackValue.Image = backImage;
+        }
+        if (backImageStyle != PaletteImageStyle.Inherit)
+        {
+            _stateBackValue.ImageStyle = backImageStyle;
+        }
+        if (backImageAlign != PaletteRectangleAlign.Inherit)
+        {
+            _stateBackValue.ImageAlign = backImageAlign;
         }
 
         // Update text color properties
