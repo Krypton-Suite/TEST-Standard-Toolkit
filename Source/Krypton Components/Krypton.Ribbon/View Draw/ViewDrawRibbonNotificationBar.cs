@@ -652,6 +652,18 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 		}
 
 		public string GetLongText() => GetShortText();
+
+		public Image? GetOverlayImage(PaletteState state) => null;
+
+		public Color GetOverlayImageTransparentColor(PaletteState state) => Color.Empty;
+
+		public OverlayImagePosition GetOverlayImagePosition(PaletteState state) => OverlayImagePosition.TopRight;
+
+		public OverlayImageScaleMode GetOverlayImageScaleMode(PaletteState state) => OverlayImageScaleMode.None;
+
+		public float GetOverlayImageScaleFactor(PaletteState state) => 0.5f;
+
+		public Size GetOverlayImageFixedSize(PaletteState state) => new Size(16, 16);
 	}
 	#endregion
 }
@@ -659,7 +671,7 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 /// <summary>
 /// Controller for handling mouse interactions with the notification bar.
 /// </summary>
-internal class NotificationBarController : MouseController
+internal class NotificationBarController : ButtonController
 {
 	private readonly ViewDrawRibbonNotificationBar _notificationBar;
 
@@ -669,15 +681,15 @@ internal class NotificationBarController : MouseController
 		_notificationBar = notificationBar;
 	}
 
-	public override void MouseMove(Point pt)
+	public override void MouseMove(Control c, Point pt)
 	{
-		base.MouseMove(pt);
+		base.MouseMove(c, pt);
 		_notificationBar.UpdateHoverState(pt);
 	}
 
-	public override void MouseLeave(Point pt)
+	public override void MouseLeave(Control c, ViewBase? next)
 	{
-		base.MouseLeave(pt);
+		base.MouseLeave(c, next);
 		_notificationBar.ClearHoverState();
 	}
 }
