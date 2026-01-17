@@ -114,6 +114,36 @@ public class KryptonForm : VisualForm,
 
             return base.GetContentLongTextH(style, state);
         }
+
+        public override int GetMetricInt(KryptonForm? owningForm, PaletteState state, PaletteMetricInt metric)
+        {
+            // Scale control box button edge inset when touchscreen support is enabled
+            if (metric == PaletteMetricInt.HeaderButtonEdgeInsetForm && KryptonManager.UseTouchscreenSupport)
+            {
+                int baseValue = base.GetMetricInt(owningForm, state, metric);
+                float scaleFactor = KryptonManager.TouchscreenScaleFactor;
+                return (int)Math.Round(baseValue * scaleFactor);
+            }
+
+            return base.GetMetricInt(owningForm, state, metric);
+        }
+
+        public override Padding GetMetricPadding(KryptonForm? owningForm, PaletteState state, PaletteMetricPadding metric)
+        {
+            // Scale control box button padding when touchscreen support is enabled
+            if (metric == PaletteMetricPadding.HeaderButtonPaddingForm && KryptonManager.UseTouchscreenSupport)
+            {
+                Padding basePadding = base.GetMetricPadding(owningForm, state, metric);
+                float scaleFactor = KryptonManager.TouchscreenScaleFactor;
+                return new Padding(
+                    (int)Math.Round(basePadding.Left * scaleFactor),
+                    (int)Math.Round(basePadding.Top * scaleFactor),
+                    (int)Math.Round(basePadding.Right * scaleFactor),
+                    (int)Math.Round(basePadding.Bottom * scaleFactor));
+            }
+
+            return base.GetMetricPadding(owningForm, state, metric);
+        }
     }
 
     /// <summary>
@@ -313,6 +343,7 @@ public class KryptonForm : VisualForm,
         // Hook into global static events
         KryptonManager.GlobalUseThemeFormChromeBorderWidthChanged += OnGlobalUseThemeFormChromeBorderWidthChanged;
         KryptonManager.GlobalPaletteChanged += OnGlobalPaletteChanged;
+        KryptonManager.GlobalTouchscreenSupportChanged += OnGlobalTouchscreenSupportChanged;
 
         // Create the view manager instance
         ViewManager = new ViewManager(this, _drawDocker);
@@ -560,6 +591,7 @@ public class KryptonForm : VisualForm,
             // Unhook from the global static events
             KryptonManager.GlobalPaletteChanged -= OnGlobalPaletteChanged;
             KryptonManager.GlobalUseThemeFormChromeBorderWidthChanged -= OnGlobalUseThemeFormChromeBorderWidthChanged;
+            KryptonManager.GlobalTouchscreenSupportChanged -= OnGlobalTouchscreenSupportChanged;
 
             // #1979 Temporary fix
             base.PaletteChanged -= (s, e) => _internalKryptonPanel.PaletteMode = PaletteMode;
@@ -2815,6 +2847,17 @@ public class KryptonForm : VisualForm,
             {
                 BeginInvoke(new System.Windows.Forms.MethodInvoker(RecalcNonClient));
             }
+        }
+    }
+
+    private void OnGlobalTouchscreenSupportChanged(object? sender, EventArgs e)
+    {
+        // Refresh buttons to apply new touchscreen scaling
+        _buttonManager?.RecreateButtons();
+        RecalcNonClient();
+        if (IsHandleCreated)
+        {
+            BeginInvoke(new System.Windows.Forms.MethodInvoker(RecalcNonClient));
         }
     }
 
