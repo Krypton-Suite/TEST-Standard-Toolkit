@@ -7,6 +7,9 @@
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Mail;
 
@@ -36,9 +39,11 @@ public class BugReportEmailService
     /// <param name="config">The email configuration.</param>
     /// <param name="subject">The email subject.</param>
     /// <param name="body">The email body.</param>
+    /// <param name="attachmentPaths"></param>
     /// <param name="attachments">Optional list of file paths to attach.</param>
     /// <returns>True if the email was sent successfully; otherwise, false.</returns>
-    public bool SendBugReport(BugReportEmailConfig config, string subject, string body, List<string>? attachments = null)
+    public bool SendBugReport(BugReportEmailConfig config, string subject, string body, List<string> attachmentPaths,
+        List<string>? attachments = null)
     {
         if (config == null)
         {

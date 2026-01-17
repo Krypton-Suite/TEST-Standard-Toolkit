@@ -7,6 +7,9 @@
  */
 #endregion
 
+using System;
+using System.Drawing;
+
 namespace Krypton.Utilities;
 
 /// <summary>

@@ -7,6 +7,14 @@
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Windows.Forms;
+
+using Krypton.Toolkit;
+
 namespace Krypton.Utilities;
 
 /// <summary>
@@ -81,7 +89,7 @@ public class KryptonAutoTextSuggestProvider : Component
         {
             Detach();
             _showTimer.Dispose();
-            _popup?.Dispose();
+            //_popup?.Dispose();
         }
 
         base.Dispose(disposing);

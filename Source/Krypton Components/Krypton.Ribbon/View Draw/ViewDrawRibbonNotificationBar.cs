@@ -45,6 +45,7 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 	private ViewDrawContent? _iconContent;
 	private ViewDrawContent? _textContent;
 	private ViewLayoutStack? _buttonStack;
+	private readonly RibbonToContent _paletteContent;
 	#endregion
 
 	#region Events
@@ -75,6 +76,9 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 		_buttonAreas = new List<ButtonArea>();
 		_hoveredButtonIndex = -1;
 		_closeButtonHovered = false;
+
+		// Create palette content provider for notification bar
+		_paletteContent = new RibbonToContent(_ribbon.StateCommon.RibbonGeneral);
 
 		// Create layout structure
 		_layoutDocker = new ViewLayoutDocker();
@@ -273,7 +277,7 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 			if (_iconContent == null)
 			{
 				var iconProvider = new NotificationIconContent(_notificationData);
-				_iconContent = new ViewDrawContent(iconProvider, this, VisualOrientation.Top);
+				_iconContent = new ViewDrawContent(_paletteContent, iconProvider, VisualOrientation.Top);
 			}
 			_layoutDocker.Add(_iconContent, ViewDockStyle.Left);
 		}
@@ -286,7 +290,7 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 		if (_textContent == null)
 		{
 			var textProvider = new NotificationTextContent(_notificationData);
-			_textContent = new ViewDrawContent(textProvider, this, VisualOrientation.Top);
+			_textContent = new ViewDrawContent(_paletteContent, textProvider, VisualOrientation.Top);
 		}
 		_layoutDocker.Add(_textContent, ViewDockStyle.Fill);
 
