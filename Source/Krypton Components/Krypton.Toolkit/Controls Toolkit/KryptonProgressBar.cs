@@ -51,6 +51,21 @@ public class KryptonProgressBar : Control, IContentValues
     private Color _textShadowColor;
     private bool _showTextBackdrop;
     private Color _textBackdropColor;
+    private bool _syncWithTaskbar;
+    private readonly ProgressBarThresholdValues _threshold;
+    private Color _originalValueColor;
+    private Color _originalValueColor2;
+    private PaletteColorStyle _originalValueColorStyle;
+    private PaletteRectangleAlign _originalValueColorAlign;
+    private float _originalValueColorAngle;
+    private Image? _originalValueImage;
+    private PaletteImageStyle _originalValueImageStyle;
+    private PaletteRectangleAlign _originalValueImageAlign;
+    private Color _originalTextColor;
+    private Color _originalTextColor2;
+    private PaletteColorStyle _originalTextColorStyle;
+    private PaletteRectangleAlign _originalTextColorAlign;
+    private float _originalTextColorAngle;
 
     #endregion
 
@@ -131,6 +146,24 @@ public class KryptonProgressBar : Control, IContentValues
         _textShadowColor = Color.Empty;
         _showTextBackdrop = false;
         _textBackdropColor = Color.Empty;
+        _syncWithTaskbar = false;
+        // Store the original color from StateCommon (which is set to Green)
+        _originalValueColor = StateCommon.Back.Color1;
+        _originalValueColor2 = StateCommon.Back.Color2;
+        _originalValueColorStyle = StateCommon.Back.ColorStyle;
+        _originalValueColorAlign = StateCommon.Back.ColorAlign;
+        _originalValueColorAngle = StateCommon.Back.ColorAngle;
+        _originalValueImage = StateCommon.Back.Image;
+        _originalValueImageStyle = StateCommon.Back.ImageStyle;
+        _originalValueImageAlign = StateCommon.Back.ImageAlign;
+        // Store the original text color (will be set after layout)
+        _originalTextColor = Color.Empty;
+        _originalTextColor2 = Color.Empty;
+        _originalTextColorStyle = PaletteColorStyle.Inherit;
+        _originalTextColorAlign = PaletteRectangleAlign.Inherit;
+        _originalTextColorAngle = -1f;
+        // Create threshold values storage
+        _threshold = new ProgressBarThresholdValues(this, OnNeedPaintHandler);
 
         OnlayoutInternal();
     }
@@ -140,6 +173,12 @@ public class KryptonProgressBar : Control, IContentValues
     {
         if (disposing)
         {
+            // Clear taskbar progress if sync is enabled
+            if (_syncWithTaskbar)
+            {
+                ClearTaskbarProgress();
+            }
+
             if (_mementoContent != null)
             {
                 _mementoContent.Dispose();
@@ -176,6 +215,21 @@ public class KryptonProgressBar : Control, IContentValues
         }
 
         base.Dispose(disposing);
+    }
+
+    /// <summary>
+    /// Raises the ParentChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnParentChanged(EventArgs e)
+    {
+        base.OnParentChanged(e);
+
+        // If sync is enabled, update taskbar progress when parent changes
+        if (_syncWithTaskbar)
+        {
+            SyncTaskbarProgress();
+        }
     }
 
     #endregion
@@ -255,6 +309,12 @@ public class KryptonProgressBar : Control, IContentValues
             {
                 Invalidate();
                 _marqueeTimer.Stop();
+            }
+
+            // Sync with taskbar if enabled
+            if (_syncWithTaskbar)
+            {
+                SyncTaskbarProgress();
             }
         }
     }
@@ -435,7 +495,37 @@ public class KryptonProgressBar : Control, IContentValues
             }
 
             _maximum = value;
+            
+            // Recalculate thresholds if auto-calculation is enabled
+            if (_threshold.AutoCalculateThresholds)
+            {
+                _threshold.CalculateThresholds();
+            }
+            else
+            {
+                // Validate thresholds against new maximum
+                if (_threshold.LowThreshold > _maximum)
+                {
+                    _threshold.LowThreshold = Math.Max(0, _maximum / 3);
+                }
+                if (_threshold.HighThreshold > _maximum)
+                {
+                    _threshold.HighThreshold = Math.Max(_threshold.LowThreshold + 1, _maximum * 2 / 3);
+                }
+            }
+            
+            if (_threshold.UseThresholdColors)
+            {
+                UpdateThresholdColor();
+            }
+            
             Invalidate();
+
+            // Sync with taskbar if enabled
+            if (_syncWithTaskbar)
+            {
+                SyncTaskbarProgress();
+            }
         }
     }
 
@@ -467,7 +557,25 @@ public class KryptonProgressBar : Control, IContentValues
             }
 
             _minimum = value;
+            
+            // Recalculate thresholds if auto-calculation is enabled
+            if (_threshold.AutoCalculateThresholds)
+            {
+                _threshold.CalculateThresholds();
+            }
+            
+            if (_threshold.UseThresholdColors)
+            {
+                UpdateThresholdColor();
+            }
+            
             Invalidate();
+
+            // Sync with taskbar if enabled
+            if (_syncWithTaskbar)
+            {
+                SyncTaskbarProgress();
+            }
         }
     }
 
@@ -515,7 +623,18 @@ public class KryptonProgressBar : Control, IContentValues
                 Text = $@"{value}%";
             }
 
+            if (_threshold.UseThresholdColors)
+            {
+                UpdateThresholdColor();
+            }
+
             Invalidate();
+
+            // Sync with taskbar if enabled
+            if (_syncWithTaskbar)
+            {
+                SyncTaskbarProgress();
+            }
         }
     }
 
@@ -567,7 +686,18 @@ public class KryptonProgressBar : Control, IContentValues
             _value = _maximum;
         }
 
+        if (_threshold.UseThresholdColors)
+        {
+            UpdateThresholdColor();
+        }
+
         Invalidate();
+
+        // Sync with taskbar if enabled
+        if (_syncWithTaskbar)
+        {
+            SyncTaskbarProgress();
+        }
     }
 
     /// <summary>Advances the current position of the progress bar by the amount of the <see cref="P:System.Windows.Forms.ProgressBar.Step" /> property.</summary>
@@ -582,6 +712,120 @@ public class KryptonProgressBar : Control, IContentValues
     /// <returns>A string that represents the current <see cref="T:System.Windows.Forms.ProgressBar" />.</returns>
     public override string ToString() =>
         $"{base.ToString()}, Minimum: {Minimum.ToString(CultureInfo.CurrentCulture)}, Maximum: {Maximum.ToString(CultureInfo.CurrentCulture)}, Value: {Value.ToString(CultureInfo.CurrentCulture)}";
+
+    /// <summary>
+    /// Gets or sets whether the progress bar should automatically sync with the parent form's taskbar progress indicator.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Whether to automatically sync progress bar value with the parent form's taskbar progress indicator.")]
+    [DefaultValue(false)]
+    public bool SyncWithTaskbar
+    {
+        get => _syncWithTaskbar;
+        set
+        {
+            if (_syncWithTaskbar != value)
+            {
+                _syncWithTaskbar = value;
+                if (_syncWithTaskbar)
+                {
+                    SyncTaskbarProgress();
+                }
+                else
+                {
+                    // Clear taskbar progress when sync is disabled
+                    ClearTaskbarProgress();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Syncs the progress bar state with the parent form's taskbar progress indicator.
+    /// </summary>
+    private void SyncTaskbarProgress()
+    {
+        // Only sync at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Find parent form
+            var parentForm = FindForm();
+            if (parentForm is not VisualForm visualForm)
+            {
+                return;
+            }
+
+            // Map ProgressBarStyle to TaskbarProgressState
+            TaskbarProgressState state = _style switch
+            {
+                ProgressBarStyle.Marquee => TaskbarProgressState.Indeterminate,
+                ProgressBarStyle.Continuous => TaskbarProgressState.Normal,
+                ProgressBarStyle.Blocks => TaskbarProgressState.Normal,
+                _ => TaskbarProgressState.Normal
+            };
+
+            // Set taskbar progress state
+            visualForm.Taskbar.Progress.State = state;
+
+            // For non-indeterminate styles, set the progress value
+            if (state != TaskbarProgressState.Indeterminate)
+            {
+                // Calculate effective range (accounting for minimum)
+                int effectiveRange = _maximum - _minimum;
+                if (effectiveRange > 0)
+                {
+                    // Calculate progress value relative to minimum
+                    int effectiveValue = _value - _minimum;
+                    visualForm.Taskbar.Progress.Maximum = (ulong)effectiveRange;
+                    visualForm.Taskbar.Progress.Value = (ulong)effectiveValue;
+                }
+                else
+                {
+                    // Range is zero or invalid, set to no progress
+                    visualForm.Taskbar.Progress.State = TaskbarProgressState.NoProgress;
+                }
+            }
+        }
+        catch
+        {
+            // Silently fail if parent form doesn't support taskbar progress
+            // or if there's any other error
+        }
+    }
+
+    /// <summary>
+    /// Clears the taskbar progress indicator.
+    /// </summary>
+    private void ClearTaskbarProgress()
+    {
+        // Only clear at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Find parent form
+            var parentForm = FindForm();
+            if (parentForm is not VisualForm visualForm)
+            {
+                return;
+            }
+
+            // Clear taskbar progress
+            visualForm.Taskbar.Progress.State = TaskbarProgressState.NoProgress;
+        }
+        catch
+        {
+            // Silently fail if parent form doesn't support taskbar progress
+        }
+    }
 
     /// <summary>
     /// Gets and sets the visual orientation of the control.
@@ -623,6 +867,16 @@ public class KryptonProgressBar : Control, IContentValues
             UpdateTextWithValue(value);
         }
     }
+
+    /// <summary>
+    /// Gets access to the threshold color values.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Threshold color values for the progress bar.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public ProgressBarThresholdValues Threshold => _threshold;
+
+    private bool ShouldSerializeThreshold() => !Threshold.IsDefault;
 
     #endregion
 
@@ -740,6 +994,12 @@ public class KryptonProgressBar : Control, IContentValues
 
         // Get the renderer associated with this palette
         IRenderer renderer = _palette!.GetRenderer();
+
+        // Update threshold color if enabled (before drawing)
+        if (_threshold.UseThresholdColors)
+        {
+            UpdateThresholdColor();
+        }
 
         // Create the rendering context that is passed into all renderer calls
         using var renderContext = new RenderContext(this, e.Graphics, e.ClipRectangle, renderer);
@@ -1093,6 +1353,21 @@ public class KryptonProgressBar : Control, IContentValues
             // We want the inner part of the control to draw like a button.
             var (barPaletteState, barState) = GetBarPaletteState();
 
+            // Store original text color properties if not already stored
+            if (_originalTextColor == Color.Empty)
+            {
+                _originalTextColor = barPaletteState.PaletteContent!.GetContentShortTextColor1(barState);
+                if (_originalTextColor == Color.Empty)
+                {
+                    // If still empty, try to get from the palette content directly
+                    _originalTextColor = StateNormal.Content.ShortText.Color1;
+                }
+                _originalTextColor2 = StateNormal.Content.ShortText.Color2;
+                _originalTextColorStyle = StateNormal.Content.ShortText.ColorStyle;
+                _originalTextColorAlign = StateNormal.Content.ShortText.ColorAlign;
+                _originalTextColorAngle = StateNormal.Content.ShortText.ColorAngle;
+            }
+
             // Get the renderer associated with this palette
             IRenderer renderer = _palette.GetRenderer();
 
@@ -1185,6 +1460,339 @@ public class KryptonProgressBar : Control, IContentValues
         Text = value
             ? $@"{Value}%"
             : string.Empty;
+    }
+
+    /// <summary>
+    /// Updates the progress bar color based on the current value and threshold settings.
+    /// </summary>
+    internal void UpdateThresholdColor()
+    {
+        var (barPaletteState, barState) = GetBarPaletteState();
+
+        // Cast to PaletteTriple to access Content property
+        PaletteTriple? paletteTriple = barPaletteState as PaletteTriple;
+
+        if (!_threshold.UseThresholdColors)
+        {
+            // Restore original colors when disabled
+            _stateBackValue.Color1 = _originalValueColor;
+            if (_originalValueColor2 != Color.Empty)
+            {
+                _stateBackValue.Color2 = _originalValueColor2;
+            }
+            if (_originalValueColorStyle != PaletteColorStyle.Inherit)
+            {
+                _stateBackValue.ColorStyle = _originalValueColorStyle;
+            }
+            if (_originalValueColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                _stateBackValue.ColorAlign = _originalValueColorAlign;
+            }
+            if (Math.Abs(_originalValueColorAngle - (-1f)) > 0.001f)
+            {
+                _stateBackValue.ColorAngle = _originalValueColorAngle;
+            }
+            if (_originalValueImage != null)
+            {
+                _stateBackValue.Image = _originalValueImage;
+            }
+            if (_originalValueImageStyle != PaletteImageStyle.Inherit)
+            {
+                _stateBackValue.ImageStyle = _originalValueImageStyle;
+            }
+            if (_originalValueImageAlign != PaletteRectangleAlign.Inherit)
+            {
+                _stateBackValue.ImageAlign = _originalValueImageAlign;
+            }
+            if (paletteTriple != null)
+            {
+                if (_originalTextColor != Color.Empty)
+                {
+                    paletteTriple.Content.ShortText.Color1 = _originalTextColor;
+                }
+                if (_originalTextColor2 != Color.Empty)
+                {
+                    paletteTriple.Content.ShortText.Color2 = _originalTextColor2;
+                }
+                if (_originalTextColorStyle != PaletteColorStyle.Inherit)
+                {
+                    paletteTriple.Content.ShortText.ColorStyle = _originalTextColorStyle;
+                }
+                if (_originalTextColorAlign != PaletteRectangleAlign.Inherit)
+                {
+                    paletteTriple.Content.ShortText.ColorAlign = _originalTextColorAlign;
+                }
+                if (Math.Abs(_originalTextColorAngle - (-1f)) > 0.001f)
+                {
+                    paletteTriple.Content.ShortText.ColorAngle = _originalTextColorAngle;
+                }
+            }
+            return;
+        }
+
+        // Store current background color properties as original if we're enabling for the first time
+        if (_originalValueColor == Color.Green)
+        {
+            Color currentColor = _stateBackValue.Color1;
+            if (currentColor != Color.Green && currentColor != Color.Empty)
+            {
+                _originalValueColor = currentColor;
+                _originalValueColor2 = _stateBackValue.Color2;
+                _originalValueColorStyle = _stateBackValue.ColorStyle;
+                _originalValueColorAlign = _stateBackValue.ColorAlign;
+                _originalValueColorAngle = _stateBackValue.ColorAngle;
+                _originalValueImage = _stateBackValue.Image;
+                _originalValueImageStyle = _stateBackValue.ImageStyle;
+                _originalValueImageAlign = _stateBackValue.ImageAlign;
+            }
+        }
+
+        // Store current text color properties as original if not already stored
+        if (_originalTextColor == Color.Empty && paletteTriple != null)
+        {
+            _originalTextColor = paletteTriple.Content.ShortText.Color1;
+            _originalTextColor2 = paletteTriple.Content.ShortText.Color2;
+            _originalTextColorStyle = paletteTriple.Content.ShortText.ColorStyle;
+            _originalTextColorAlign = paletteTriple.Content.ShortText.ColorAlign;
+            _originalTextColorAngle = paletteTriple.Content.ShortText.ColorAngle;
+        }
+
+        // Determine which colors and properties to use based on the current value
+        Color backColor = _originalValueColor;
+        Color backColor2 = _originalValueColor2;
+        PaletteColorStyle backColorStyle = _originalValueColorStyle;
+        PaletteRectangleAlign backColorAlign = _originalValueColorAlign;
+        float backColorAngle = _originalValueColorAngle;
+        Image? backImage = _originalValueImage;
+        PaletteImageStyle backImageStyle = _originalValueImageStyle;
+        PaletteRectangleAlign backImageAlign = _originalValueImageAlign;
+        Color textColor = _originalTextColor;
+        Color textColor2 = _originalTextColor2;
+        PaletteColorStyle textColorStyle = _originalTextColorStyle;
+        PaletteRectangleAlign textColorAlign = _originalTextColorAlign;
+        float textColorAngle = _originalTextColorAngle;
+
+        if (_value < _threshold.LowThreshold)
+        {
+            backColor = _threshold.LowThresholdColor;
+            if (_threshold.LowThresholdColor2 != Color.Empty)
+            {
+                backColor2 = _threshold.LowThresholdColor2;
+            }
+            if (_threshold.LowThresholdColorStyle != PaletteColorStyle.Inherit)
+            {
+                backColorStyle = _threshold.LowThresholdColorStyle;
+            }
+            if (_threshold.LowThresholdColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                backColorAlign = _threshold.LowThresholdColorAlign;
+            }
+            if (Math.Abs(_threshold.LowThresholdColorAngle - (-1f)) > 0.001f)
+            {
+                backColorAngle = _threshold.LowThresholdColorAngle;
+            }
+            if (_threshold.LowThresholdImage != null)
+            {
+                backImage = _threshold.LowThresholdImage;
+            }
+            if (_threshold.LowThresholdImageStyle != PaletteImageStyle.Inherit)
+            {
+                backImageStyle = _threshold.LowThresholdImageStyle;
+            }
+            if (_threshold.LowThresholdImageAlign != PaletteRectangleAlign.Inherit)
+            {
+                backImageAlign = _threshold.LowThresholdImageAlign;
+            }
+            if (_threshold.LowThresholdTextColor != Color.Empty)
+            {
+                textColor = _threshold.LowThresholdTextColor;
+            }
+            else if (_threshold.UseOppositeTextColors)
+            {
+                textColor = ControlPaint.Light(_threshold.LowThresholdColor);
+            }
+            if (_threshold.LowThresholdTextColor2 != Color.Empty)
+            {
+                textColor2 = _threshold.LowThresholdTextColor2;
+            }
+            if (_threshold.LowThresholdTextColorStyle != PaletteColorStyle.Inherit)
+            {
+                textColorStyle = _threshold.LowThresholdTextColorStyle;
+            }
+            if (_threshold.LowThresholdTextColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                textColorAlign = _threshold.LowThresholdTextColorAlign;
+            }
+            if (Math.Abs(_threshold.LowThresholdTextColorAngle - (-1f)) > 0.001f)
+            {
+                textColorAngle = _threshold.LowThresholdTextColorAngle;
+            }
+        }
+        else if (_value >= _threshold.HighThreshold)
+        {
+            backColor = _threshold.HighThresholdColor;
+            if (_threshold.HighThresholdColor2 != Color.Empty)
+            {
+                backColor2 = _threshold.HighThresholdColor2;
+            }
+            if (_threshold.HighThresholdColorStyle != PaletteColorStyle.Inherit)
+            {
+                backColorStyle = _threshold.HighThresholdColorStyle;
+            }
+            if (_threshold.HighThresholdColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                backColorAlign = _threshold.HighThresholdColorAlign;
+            }
+            if (Math.Abs(_threshold.HighThresholdColorAngle - (-1f)) > 0.001f)
+            {
+                backColorAngle = _threshold.HighThresholdColorAngle;
+            }
+            if (_threshold.HighThresholdImage != null)
+            {
+                backImage = _threshold.HighThresholdImage;
+            }
+            if (_threshold.HighThresholdImageStyle != PaletteImageStyle.Inherit)
+            {
+                backImageStyle = _threshold.HighThresholdImageStyle;
+            }
+            if (_threshold.HighThresholdImageAlign != PaletteRectangleAlign.Inherit)
+            {
+                backImageAlign = _threshold.HighThresholdImageAlign;
+            }
+            if (_threshold.HighThresholdTextColor != Color.Empty)
+            {
+                textColor = _threshold.HighThresholdTextColor;
+            }
+            else if (_threshold.UseOppositeTextColors)
+            {
+                textColor = ControlPaint.Dark(_threshold.HighThresholdColor);
+            }
+            if (_threshold.HighThresholdTextColor2 != Color.Empty)
+            {
+                textColor2 = _threshold.HighThresholdTextColor2;
+            }
+            if (_threshold.HighThresholdTextColorStyle != PaletteColorStyle.Inherit)
+            {
+                textColorStyle = _threshold.HighThresholdTextColorStyle;
+            }
+            if (_threshold.HighThresholdTextColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                textColorAlign = _threshold.HighThresholdTextColorAlign;
+            }
+            if (Math.Abs(_threshold.HighThresholdTextColorAngle - (-1f)) > 0.001f)
+            {
+                textColorAngle = _threshold.HighThresholdTextColorAngle;
+            }
+        }
+        else
+        {
+            backColor = _threshold.MediumThresholdColor;
+            if (_threshold.MediumThresholdColor2 != Color.Empty)
+            {
+                backColor2 = _threshold.MediumThresholdColor2;
+            }
+            if (_threshold.MediumThresholdColorStyle != PaletteColorStyle.Inherit)
+            {
+                backColorStyle = _threshold.MediumThresholdColorStyle;
+            }
+            if (_threshold.MediumThresholdColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                backColorAlign = _threshold.MediumThresholdColorAlign;
+            }
+            if (Math.Abs(_threshold.MediumThresholdColorAngle - (-1f)) > 0.001f)
+            {
+                backColorAngle = _threshold.MediumThresholdColorAngle;
+            }
+            if (_threshold.MediumThresholdImage != null)
+            {
+                backImage = _threshold.MediumThresholdImage;
+            }
+            if (_threshold.MediumThresholdImageStyle != PaletteImageStyle.Inherit)
+            {
+                backImageStyle = _threshold.MediumThresholdImageStyle;
+            }
+            if (_threshold.MediumThresholdImageAlign != PaletteRectangleAlign.Inherit)
+            {
+                backImageAlign = _threshold.MediumThresholdImageAlign;
+            }
+            if (_threshold.MediumThresholdTextColor != Color.Empty)
+            {
+                textColor = _threshold.MediumThresholdTextColor;
+            }
+            else if (_threshold.UseOppositeTextColors)
+            {
+                textColor = ControlPaint.Dark(_threshold.MediumThresholdColor);
+            }
+            if (_threshold.MediumThresholdTextColor2 != Color.Empty)
+            {
+                textColor2 = _threshold.MediumThresholdTextColor2;
+            }
+            if (_threshold.MediumThresholdTextColorStyle != PaletteColorStyle.Inherit)
+            {
+                textColorStyle = _threshold.MediumThresholdTextColorStyle;
+            }
+            if (_threshold.MediumThresholdTextColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                textColorAlign = _threshold.MediumThresholdTextColorAlign;
+            }
+            if (Math.Abs(_threshold.MediumThresholdTextColorAngle - (-1f)) > 0.001f)
+            {
+                textColorAngle = _threshold.MediumThresholdTextColorAngle;
+            }
+        }
+
+        // Update background color properties
+        _stateBackValue.Color1 = backColor;
+        if (backColor2 != Color.Empty)
+        {
+            _stateBackValue.Color2 = backColor2;
+        }
+        if (backColorStyle != PaletteColorStyle.Inherit)
+        {
+            _stateBackValue.ColorStyle = backColorStyle;
+        }
+        if (backColorAlign != PaletteRectangleAlign.Inherit)
+        {
+            _stateBackValue.ColorAlign = backColorAlign;
+        }
+        if (Math.Abs(backColorAngle - (-1f)) > 0.001f)
+        {
+            _stateBackValue.ColorAngle = backColorAngle;
+        }
+        if (backImage != null)
+        {
+            _stateBackValue.Image = backImage;
+        }
+        if (backImageStyle != PaletteImageStyle.Inherit)
+        {
+            _stateBackValue.ImageStyle = backImageStyle;
+        }
+        if (backImageAlign != PaletteRectangleAlign.Inherit)
+        {
+            _stateBackValue.ImageAlign = backImageAlign;
+        }
+
+        // Update text color properties
+        if (paletteTriple != null)
+        {
+            paletteTriple.Content.ShortText.Color1 = textColor;
+            if (textColor2 != Color.Empty)
+            {
+                paletteTriple.Content.ShortText.Color2 = textColor2;
+            }
+            if (textColorStyle != PaletteColorStyle.Inherit)
+            {
+                paletteTriple.Content.ShortText.ColorStyle = textColorStyle;
+            }
+            if (textColorAlign != PaletteRectangleAlign.Inherit)
+            {
+                paletteTriple.Content.ShortText.ColorAlign = textColorAlign;
+            }
+            if (Math.Abs(textColorAngle - (-1f)) > 0.001f)
+            {
+                paletteTriple.Content.ShortText.ColorAngle = textColorAngle;
+            }
+        }
     }
 
     #endregion

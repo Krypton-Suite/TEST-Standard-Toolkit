@@ -856,8 +856,8 @@ public abstract class ButtonSpecManagerBase : GlobalId
     private ViewDockStyle GetDockStyle(ButtonSpec spec)
     {
         var edge = spec.GetEdge(_redirector);
-        var isRtl = Control is Form form && form.RightToLeft == RightToLeft.Yes && form.RightToLeftLayout;
-        
+        var isRtl = CommonHelper.IsRightToLeftLayout(Control);
+
         // In RTL mode with RightToLeftLayout enabled, reverse the dock style
         if (isRtl)
         {

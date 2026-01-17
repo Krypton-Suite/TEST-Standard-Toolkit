@@ -107,4 +107,40 @@
 		<DefineConstants>$(DefineConstants);LTS</DefineConstants>
 	</PropertyGroup>
 
+	<!-- Authenticode Signing Configuration -->
+	<!--
+		Authenticode signing can be enabled by setting EnableAuthenticodeSigning=true
+		and providing the signing certificate information.
+		
+		To enable signing, set these MSBuild properties:
+		- EnableAuthenticodeSigning=true
+		- AuthenticodeCertificatePath=path\to\certificate.pfx (or certificate in certificate store)
+		- AuthenticodeCertificatePassword=password (if using .pfx file, leave empty for certificate store)
+		- AuthenticodeCertificateThumbprint=thumbprint (if using certificate store instead of .pfx)
+		- AuthenticodeTimestampServer=http://timestamp.digicert.com (optional but recommended)
+		
+		Example:
+		msbuild MyProject.csproj /p:EnableAuthenticodeSigning=true /p:AuthenticodeCertificatePath="cert.pfx" /p:AuthenticodeCertificatePassword="pwd"
+	-->
+	<PropertyGroup>
+		<!-- Enable Authenticode signing by default only for Release and Installer configurations -->
+		<EnableAuthenticodeSigning Condition="'$(EnableAuthenticodeSigning)' == '' And ('$(Configuration)' == 'Release' Or '$(Configuration)' == 'Installer')">false</EnableAuthenticodeSigning>
+		<EnableAuthenticodeSigning Condition="'$(EnableAuthenticodeSigning)' == ''">false</EnableAuthenticodeSigning>
+		
+		<!-- Path to the code signing certificate (.pfx file) or leave empty to use certificate store -->
+		<AuthenticodeCertificatePath Condition="'$(AuthenticodeCertificatePath)' == ''"></AuthenticodeCertificatePath>
+		
+		<!-- Password for .pfx certificate file, or empty if using certificate store -->
+		<AuthenticodeCertificatePassword Condition="'$(AuthenticodeCertificatePassword)' == ''"></AuthenticodeCertificatePassword>
+		
+		<!-- Certificate thumbprint when using certificate store (requires AuthenticodeCertificatePath to be empty) -->
+		<AuthenticodeCertificateThumbprint Condition="'$(AuthenticodeCertificateThumbprint)' == ''"></AuthenticodeCertificateThumbprint>
+		
+		<!-- Timestamp server URL (optional but recommended to ensure signature remains valid after certificate expiration) -->
+		<AuthenticodeTimestampServer Condition="'$(AuthenticodeTimestampServer)' == ''">http://timestamp.digicert.com</AuthenticodeTimestampServer>
+		
+		<!-- Additional SignTool arguments -->
+		<AuthenticodeSignToolAdditionalArgs Condition="'$(AuthenticodeSignToolAdditionalArgs)' == ''"></AuthenticodeSignToolAdditionalArgs>
+	</PropertyGroup>
+
 </Project>

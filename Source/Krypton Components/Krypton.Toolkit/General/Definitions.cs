@@ -4678,6 +4678,25 @@ public enum FileSystemRootMode
 
 #endregion
 
+#region Enum TaskbarProgressState
+/// <summary>
+/// Taskbar progress state enumeration.
+/// </summary>
+public enum TaskbarProgressState
+{
+    /// <summary>No progress indicator is displayed.</summary>
+    NoProgress = 0,
+    /// <summary>An indeterminate progress indicator is displayed.</summary>
+    Indeterminate = 1,
+    /// <summary>A normal progress indicator is displayed.</summary>
+    Normal = 2,
+    /// <summary>An error progress indicator is displayed.</summary>
+    Error = 4,
+    /// <summary>A paused progress indicator is displayed.</summary>
+    Paused = 8
+}
+#endregion
+
 #region IFocusLostMenuItem
 /// <summary>
 /// This interface can be implemented by any (derived) control or component that needs focus handling via the FocusLostMenuHelper.

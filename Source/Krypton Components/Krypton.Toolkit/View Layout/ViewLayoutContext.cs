@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -104,6 +104,32 @@ public class ViewLayoutContext : ViewContext
     public Rectangle DisplayRectangle { get; set; }
 
     public RectangleF DisplayRectangleF { get; set; }
+
+    /// <summary>
+    /// Gets whether Right-to-Left layout is enabled for the control.
+    /// </summary>
+    public bool IsRightToLeftLayout
+    {
+        get
+        {
+            if (Control != null)
+            {
+                return CommonHelper.IsRightToLeftLayout(Control);
+            }
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the RightToLeft setting of the control.
+    /// </summary>
+    public RightToLeft RightToLeft
+    {
+        get
+        {
+            return Control?.RightToLeft ?? RightToLeft.No;
+        }
+    }
 
     #endregion
 }
