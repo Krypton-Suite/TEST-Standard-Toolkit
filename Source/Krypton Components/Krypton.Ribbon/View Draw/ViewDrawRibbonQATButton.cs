@@ -301,5 +301,26 @@ internal class ViewDrawRibbonQATButton : ViewComposite,
     /// <returns>Overlay image position.</returns>
     public OverlayImagePosition GetOverlayImagePosition(PaletteState state) => OverlayImagePosition.TopRight;
 
+    /// <summary>
+    /// Gets the scaling mode for the overlay image.
+    /// </summary>
+    /// <param name="state">The state for which the overlay scale mode is needed.</param>
+    /// <returns>Overlay image scale mode.</returns>
+    public OverlayImageScaleMode GetOverlayImageScaleMode(PaletteState state) => OverlayImageScaleMode.None;
+
+    /// <summary>
+    /// Gets the scale factor for the overlay image (used when scale mode is Percentage or ProportionalToMain).
+    /// </summary>
+    /// <param name="state">The state for which the overlay scale factor is needed.</param>
+    /// <returns>Scale factor (0.0 to 2.0).</returns>
+    public float GetOverlayImageScaleFactor(PaletteState state) => 0.5f;
+
+    /// <summary>
+    /// Gets the fixed size for the overlay image (used when scale mode is FixedSize).
+    /// </summary>
+    /// <param name="state">The state for which the overlay fixed size is needed.</param>
+    /// <returns>Fixed size.</returns>
+    public Size GetOverlayImageFixedSize(PaletteState state) => new Size(16, 16);
+
     #endregion
 }
