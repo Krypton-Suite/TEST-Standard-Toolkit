@@ -41,7 +41,7 @@ public class InternalKryptonFileSystemTreeView : KryptonFileSystemTreeView
     /// </summary>
     [Category(@"Behavior")]
     [Description(@"Occurs when a directory is being expanded.")]
-    public event EventHandler<DirectoryExpandingEventArgs>? DirectoryExpanding;
+    public new event EventHandler<DirectoryExpandingEventArgs>? DirectoryExpanding;
 
     /// <summary>
     /// Occurs when a directory has been expanded.

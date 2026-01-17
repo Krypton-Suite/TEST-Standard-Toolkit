@@ -35,6 +35,78 @@ public class ViewDrawMonth : ViewLayoutStack,
         }
         #endregion
     }
+
+    /// <summary>
+    /// Palette content wrapper that handles RTL text alignment for the month calendar header.
+    /// </summary>
+    private class MonthHeaderPaletteContent : PaletteContentInherit
+    {
+        private readonly IPaletteContent _inherit;
+        private readonly Control _control;
+
+        public MonthHeaderPaletteContent(IPaletteContent inherit, Control control)
+        {
+            _inherit = inherit;
+            _control = control;
+        }
+
+        public override PaletteRelativeAlign GetContentShortTextH(PaletteState state)
+        {
+            // In RTL mode, align header text to the right (Far)
+            if (CommonHelper.IsRightToLeftLayout(_control))
+            {
+                return PaletteRelativeAlign.Far;
+            }
+
+            // Use the inherited alignment (typically Center for calendar headers)
+            return _inherit.GetContentShortTextH(state);
+        }
+
+        // Delegate all other methods to the inherited palette
+        public override InheritBool GetContentDraw(PaletteState state) => _inherit.GetContentDraw(state);
+        public override InheritBool GetContentDrawFocus(PaletteState state) => _inherit.GetContentDrawFocus(state);
+        public override PaletteRelativeAlign GetContentImageH(PaletteState state) => _inherit.GetContentImageH(state);
+        public override PaletteRelativeAlign GetContentImageV(PaletteState state) => _inherit.GetContentImageV(state);
+        public override PaletteImageEffect GetContentImageEffect(PaletteState state) => _inherit.GetContentImageEffect(state);
+        public override Color GetContentImageColorMap(PaletteState state) => _inherit.GetContentImageColorMap(state);
+        public override Color GetContentImageColorTo(PaletteState state) => _inherit.GetContentImageColorTo(state);
+        public override Font? GetContentShortTextFont(PaletteState state) => _inherit.GetContentShortTextFont(state);
+        public override Font? GetContentShortTextNewFont(PaletteState state) => _inherit.GetContentShortTextNewFont(state);
+        public override PaletteTextHint GetContentShortTextHint(PaletteState state) => _inherit.GetContentShortTextHint(state);
+        public override PaletteTextHotkeyPrefix GetContentShortTextPrefix(PaletteState state) => _inherit.GetContentShortTextPrefix(state);
+        public override InheritBool GetContentShortTextMultiLine(PaletteState state) => _inherit.GetContentShortTextMultiLine(state);
+        public override PaletteTextTrim GetContentShortTextTrim(PaletteState state) => _inherit.GetContentShortTextTrim(state);
+        public override PaletteRelativeAlign GetContentShortTextV(PaletteState state) => _inherit.GetContentShortTextV(state);
+        public override PaletteRelativeAlign GetContentShortTextMultiLineH(PaletteState state) => _inherit.GetContentShortTextMultiLineH(state);
+        public override Color GetContentShortTextColor1(PaletteState state) => _inherit.GetContentShortTextColor1(state);
+        public override Color GetContentShortTextColor2(PaletteState state) => _inherit.GetContentShortTextColor2(state);
+        public override PaletteColorStyle GetContentShortTextColorStyle(PaletteState state) => _inherit.GetContentShortTextColorStyle(state);
+        public override PaletteRectangleAlign GetContentShortTextColorAlign(PaletteState state) => _inherit.GetContentShortTextColorAlign(state);
+        public override float GetContentShortTextColorAngle(PaletteState state) => _inherit.GetContentShortTextColorAngle(state);
+        public override Image? GetContentShortTextImage(PaletteState state) => _inherit.GetContentShortTextImage(state);
+        public override PaletteImageStyle GetContentShortTextImageStyle(PaletteState state) => _inherit.GetContentShortTextImageStyle(state);
+        public override PaletteRectangleAlign GetContentShortTextImageAlign(PaletteState state) => _inherit.GetContentShortTextImageAlign(state);
+        public override Font? GetContentLongTextFont(PaletteState state) => _inherit.GetContentLongTextFont(state);
+        public override Font? GetContentLongTextNewFont(PaletteState state) => _inherit.GetContentLongTextNewFont(state);
+        public override PaletteTextHint GetContentLongTextHint(PaletteState state) => _inherit.GetContentLongTextHint(state);
+        public override PaletteTextHotkeyPrefix GetContentLongTextPrefix(PaletteState state) => _inherit.GetContentLongTextPrefix(state);
+        public override InheritBool GetContentLongTextMultiLine(PaletteState state) => _inherit.GetContentLongTextMultiLine(state);
+        public override PaletteTextTrim GetContentLongTextTrim(PaletteState state) => _inherit.GetContentLongTextTrim(state);
+        public override PaletteRelativeAlign GetContentLongTextH(PaletteState state) => _inherit.GetContentLongTextH(state);
+        public override PaletteRelativeAlign GetContentLongTextV(PaletteState state) => _inherit.GetContentLongTextV(state);
+        public override PaletteRelativeAlign GetContentLongTextMultiLineH(PaletteState state) => _inherit.GetContentLongTextMultiLineH(state);
+        public override Color GetContentLongTextColor1(PaletteState state) => _inherit.GetContentLongTextColor1(state);
+        public override Color GetContentLongTextColor2(PaletteState state) => _inherit.GetContentLongTextColor2(state);
+        public override PaletteColorStyle GetContentLongTextColorStyle(PaletteState state) => _inherit.GetContentLongTextColorStyle(state);
+        public override PaletteRectangleAlign GetContentLongTextColorAlign(PaletteState state) => _inherit.GetContentLongTextColorAlign(state);
+        public override float GetContentLongTextColorAngle(PaletteState state) => _inherit.GetContentLongTextColorAngle(state);
+        public override Image? GetContentLongTextImage(PaletteState state) => _inherit.GetContentLongTextImage(state);
+        public override PaletteImageStyle GetContentLongTextImageStyle(PaletteState state) => _inherit.GetContentLongTextImageStyle(state);
+        public override PaletteRectangleAlign GetContentLongTextImageAlign(PaletteState state) => _inherit.GetContentLongTextImageAlign(state);
+        public override Padding GetBorderContentPadding(KryptonForm? owningForm, PaletteState state) => _inherit.GetBorderContentPadding(owningForm, state);
+        public override int GetContentAdjacentGap(PaletteState state) => _inherit.GetContentAdjacentGap(state);
+        public override PaletteContentStyle GetContentStyle() => _inherit.GetContentStyle();
+    }
     #endregion
 
     #region Instance Fields
@@ -75,7 +147,9 @@ public class ViewDrawMonth : ViewLayoutStack,
         _months = months;
 
         // Add a header for showing the month/year value
-        _drawContent = new ViewDrawContent(_calendar.StateNormal.Header.Content, this, VisualOrientation.Top);
+        // Wrap the header content palette to handle RTL text alignment
+        var headerContentPalette = new MonthHeaderPaletteContent(_calendar.StateNormal.Header.Content, _calendar.CalendarControl);
+        _drawContent = new ViewDrawContent(headerContentPalette, this, VisualOrientation.Top);
         _borderForced = new PaletteBorderInheritForced(_calendar.StateNormal.Header.Border);
         _borderForced.ForceBorderEdges(PaletteDrawBorders.None);
         _drawHeader = new ViewDrawDocker(_calendar.StateNormal.Header.Back, _borderForced, null!)
@@ -165,6 +239,11 @@ public class ViewDrawMonth : ViewLayoutStack,
     #endregion
 
     #region Public
+    /// <summary>
+    /// Gets access to the calendar provider.
+    /// </summary>
+    public IKryptonMonthCalendar Calendar => _calendar;
+
     /// <summary>
     /// Gets access to the days draw element.
     /// </summary>

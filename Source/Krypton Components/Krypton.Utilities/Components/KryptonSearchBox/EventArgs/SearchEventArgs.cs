@@ -7,6 +7,8 @@
  */
 #endregion
 
+using System;
+
 namespace Krypton.Utilities;
 
 /// <summary>

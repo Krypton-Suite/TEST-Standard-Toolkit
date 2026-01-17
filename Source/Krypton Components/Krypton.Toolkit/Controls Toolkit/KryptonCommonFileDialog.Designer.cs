@@ -7,6 +7,8 @@
  */
 #endregion
 
+#nullable enable
+
 namespace Krypton.Toolkit;
 
 partial class KryptonCommonFileDialog

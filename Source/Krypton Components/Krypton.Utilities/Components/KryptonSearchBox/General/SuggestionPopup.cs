@@ -7,7 +7,13 @@
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
+using System.Windows.Forms;
+
+using Krypton.Toolkit;
 
 namespace Krypton.Utilities;
 
@@ -279,7 +285,7 @@ internal class SuggestionPopup : KryptonForm
         }
 
         // Show the form without activating it (doesn't steal focus)
-        PI.ShowWindow(Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
+        PI.ShowWindow((IntPtr)Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
     }
 
     private void OnSuggestionListBoxMouseDown(object? sender, MouseEventArgs e)
@@ -381,7 +387,7 @@ internal class SuggestionPopup : KryptonForm
             // Prevent the form from activating when it becomes visible
             if (IsHandleCreated && Handle != IntPtr.Zero)
             {
-                PI.ShowWindow(Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
+                PI.ShowWindow((IntPtr)Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
             }
             return;
         }

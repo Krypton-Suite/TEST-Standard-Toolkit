@@ -196,7 +196,8 @@ public partial class BugReportingDialogTest : KryptonForm
                 "Test Email - Bug Reporting Configuration",
                 $"This is a test email sent at {DateTime.Now:yyyy-MM-dd HH:mm:ss}\n\n" +
                 "If you receive this email, your SMTP configuration is working correctly.",
-                null
+                new List<string>(),
+                attachments: null
             );
 
             if (success)

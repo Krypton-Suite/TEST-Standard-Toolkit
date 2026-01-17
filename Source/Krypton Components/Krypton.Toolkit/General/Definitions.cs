@@ -1224,8 +1224,13 @@ public enum BadgeShape
 
     /// <summary>
     /// Specifies a rounded rectangle badge.
+    /// </summary> 
+    RoundedRectangle,
+
+    /// <summary>
+    /// Specifies a capsule (pill-shaped) badge with fully rounded ends.
     /// </summary>
-    RoundedRectangle
+    Capsule
 }
 #endregion
 
@@ -4671,6 +4676,25 @@ public enum FileSystemRootMode
     CustomPath
 }*/
 
+#endregion
+
+#region Enum TaskbarProgressState
+/// <summary>
+/// Taskbar progress state enumeration.
+/// </summary>
+public enum TaskbarProgressState
+{
+    /// <summary>No progress indicator is displayed.</summary>
+    NoProgress = 0,
+    /// <summary>An indeterminate progress indicator is displayed.</summary>
+    Indeterminate = 1,
+    /// <summary>A normal progress indicator is displayed.</summary>
+    Normal = 2,
+    /// <summary>An error progress indicator is displayed.</summary>
+    Error = 4,
+    /// <summary>A paused progress indicator is displayed.</summary>
+    Paused = 8
+}
 #endregion
 
 #region IFocusLostMenuItem

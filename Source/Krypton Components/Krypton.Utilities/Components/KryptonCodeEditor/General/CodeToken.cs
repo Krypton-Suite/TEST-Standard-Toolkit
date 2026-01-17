@@ -7,6 +7,8 @@
  */
 #endregion
 
+using System;
+
 using static Krypton.Utilities.KryptonCodeEditor;
 
 namespace Krypton.Utilities;

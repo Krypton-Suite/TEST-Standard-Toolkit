@@ -336,3 +336,4 @@ Source/Krypton Components/Krypton.Ribbon/Temp.txt
 .vscode/
 Terminal.Gui/
 Scripts/ModernBuild/*.txt
+/Artefacts

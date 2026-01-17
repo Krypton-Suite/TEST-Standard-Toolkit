@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -1604,6 +1604,22 @@ public class KryptonMonthCalendar : VisualSimpleBase,
 
         // Let base class fire standard event
         base.OnEnabledChanged(e);
+    }
+
+    /// <summary>
+    /// Raises the RightToLeftLayoutChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnRightToLeftLayoutChanged(EventArgs e)
+    {
+        // Refresh button manager to update button positions for RTL
+        _drawMonths?.ButtonManager.RefreshButtons();
+
+        // Change in RTL layout requires a layout and repaint
+        PerformNeedPaint(true);
+
+        // Let base class fire standard event
+        base.OnRightToLeftLayoutChanged(e);
     }
 
     /// <summary>

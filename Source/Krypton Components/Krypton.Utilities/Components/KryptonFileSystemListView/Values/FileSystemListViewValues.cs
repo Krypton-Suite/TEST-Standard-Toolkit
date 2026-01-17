@@ -1,4 +1,10 @@
-﻿namespace Krypton.Utilities
+﻿using System;
+using System.ComponentModel;
+using System.Drawing;
+
+using Krypton.Toolkit;
+
+namespace Krypton.Utilities
 {
     /// <summary>
     /// Groups file system list view specific properties for display in the PropertyGrid.

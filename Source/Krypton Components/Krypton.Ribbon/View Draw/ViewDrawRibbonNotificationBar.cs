@@ -45,6 +45,7 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 	private ViewDrawContent? _iconContent;
 	private ViewDrawContent? _textContent;
 	private ViewLayoutStack? _buttonStack;
+	private readonly RibbonToContent _paletteContent;
 	#endregion
 
 	#region Events
@@ -75,6 +76,9 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 		_buttonAreas = new List<ButtonArea>();
 		_hoveredButtonIndex = -1;
 		_closeButtonHovered = false;
+
+		// Create palette content provider for notification bar
+		_paletteContent = new RibbonToContent(_ribbon.StateCommon.RibbonGeneral);
 
 		// Create layout structure
 		_layoutDocker = new ViewLayoutDocker();
@@ -273,7 +277,7 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 			if (_iconContent == null)
 			{
 				var iconProvider = new NotificationIconContent(_notificationData);
-				_iconContent = new ViewDrawContent(iconProvider, this, VisualOrientation.Top);
+				_iconContent = new ViewDrawContent(_paletteContent, iconProvider, VisualOrientation.Top);
 			}
 			_layoutDocker.Add(_iconContent, ViewDockStyle.Left);
 		}
@@ -286,7 +290,7 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 		if (_textContent == null)
 		{
 			var textProvider = new NotificationTextContent(_notificationData);
-			_textContent = new ViewDrawContent(textProvider, this, VisualOrientation.Top);
+			_textContent = new ViewDrawContent(_paletteContent, textProvider, VisualOrientation.Top);
 		}
 		_layoutDocker.Add(_textContent, ViewDockStyle.Fill);
 
@@ -610,6 +614,18 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 		public string GetShortText() => string.Empty;
 
 		public string GetLongText() => string.Empty;
+
+		public Image? GetOverlayImage(PaletteState state) => null;
+
+		public Color GetOverlayImageTransparentColor(PaletteState state) => Color.Empty;
+
+		public OverlayImagePosition GetOverlayImagePosition(PaletteState state) => OverlayImagePosition.TopRight;
+
+		public OverlayImageScaleMode GetOverlayImageScaleMode(PaletteState state) => OverlayImageScaleMode.None;
+
+		public float GetOverlayImageScaleFactor(PaletteState state) => 0.5f;
+
+		public Size GetOverlayImageFixedSize(PaletteState state) => new Size(16, 16);
 	}
 
 	/// <summary>
@@ -640,6 +656,18 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 		}
 
 		public string GetLongText() => GetShortText();
+
+		public Image? GetOverlayImage(PaletteState state) => null;
+
+		public Color GetOverlayImageTransparentColor(PaletteState state) => Color.Empty;
+
+		public OverlayImagePosition GetOverlayImagePosition(PaletteState state) => OverlayImagePosition.TopRight;
+
+		public OverlayImageScaleMode GetOverlayImageScaleMode(PaletteState state) => OverlayImageScaleMode.None;
+
+		public float GetOverlayImageScaleFactor(PaletteState state) => 0.5f;
+
+		public Size GetOverlayImageFixedSize(PaletteState state) => new Size(16, 16);
 	}
 	#endregion
 }
@@ -647,7 +675,7 @@ internal class ViewDrawRibbonNotificationBar : ViewComposite
 /// <summary>
 /// Controller for handling mouse interactions with the notification bar.
 /// </summary>
-internal class NotificationBarController : MouseController
+internal class NotificationBarController : ButtonController
 {
 	private readonly ViewDrawRibbonNotificationBar _notificationBar;
 
@@ -657,15 +685,15 @@ internal class NotificationBarController : MouseController
 		_notificationBar = notificationBar;
 	}
 
-	public override void MouseMove(Point pt)
+	public override void MouseMove(Control c, Point pt)
 	{
-		base.MouseMove(pt);
+		base.MouseMove(c, pt);
 		_notificationBar.UpdateHoverState(pt);
 	}
 
-	public override void MouseLeave(Point pt)
+	public override void MouseLeave(Control c, ViewBase? next)
 	{
-		base.MouseLeave(pt);
+		base.MouseLeave(c, next);
 		_notificationBar.ClearHoverState();
 	}
 }

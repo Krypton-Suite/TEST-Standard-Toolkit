@@ -978,12 +978,15 @@ public sealed class KryptonManager : Component
     {
         if (IsTouchscreenAvailable())
         {
-            TouchscreenSettings.Enabled = true;
-            TouchscreenSettings.ControlScaleFactor = scaleFactor;
-            TouchscreenSettings.FontScalingEnabled = enableFontScaling;
+            UseTouchscreenSupport = true;
+
+            TouchscreenScaleFactorValue = scaleFactor;
+
+            UseTouchscreenFontScaling = enableFontScaling;
+
             if (enableFontScaling)
             {
-                TouchscreenSettings.FontScaleFactor = scaleFactor;
+                TouchscreenFontScaleFactorValue = scaleFactor;
             }
             return true;
         }
