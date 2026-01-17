@@ -8,6 +8,8 @@
  */
 #endregion
 
+using ContentAlignment = System.Drawing.ContentAlignment;
+
 namespace Krypton.Ribbon;
 
 /// <summary>

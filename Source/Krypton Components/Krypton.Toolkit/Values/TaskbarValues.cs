@@ -102,7 +102,7 @@ public class TaskbarValues : Storage
     /// <summary>
     /// Resets all taskbar values to their defaults.
     /// </summary>
-    public override void Reset()
+    public void Reset()
     {
         OverlayIcon.Reset();
         Progress.Reset();

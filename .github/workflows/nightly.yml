@@ -201,11 +201,50 @@ jobs:
 
       - name: Restore
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+
+      - name: Prepare Code Signing Certificate (Optional)
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
+        id: prepare_cert_nightly
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          if ($env:AUTHENTICODE_CERT_BASE64) {
+            Write-Host "Preparing Authenticode signing certificate..."
+            $certBytes = [Convert]::FromBase64String($env:AUTHENTICODE_CERT_BASE64)
+            $certPath = "$env:RUNNER_TEMP\codesign.pfx"
+            [System.IO.File]::WriteAllBytes($certPath, $certBytes)
+            Write-Host "Certificate saved to: $certPath"
+            echo "cert_path=$certPath" >> $env:GITHUB_OUTPUT
+            echo "cert_available=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "Authenticode certificate not provided - signing will be skipped"
+            echo "cert_available=false" >> $env:GITHUB_OUTPUT
+          }
+        env:
+          AUTHENTICODE_CERT_BASE64: ${{ secrets.AUTHENTICODE_CERT_BASE64 }}
 
       - name: Build Nightly
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
-        run: msbuild "Scripts/Build/nightly.proj" /t:Build /p:Configuration=Nightly /p:Platform="Any CPU"
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildArgs = 'Scripts/Build/nightly.proj /t:Build /p:Configuration=Nightly /p:Platform="Any CPU"'
+          
+          if (${{ steps.prepare_cert_nightly.outputs.cert_available }} -eq 'true') {
+            $buildArgs += ' /p:EnableAuthenticodeSigning=true'
+            $buildArgs += " /p:AuthenticodeCertificatePath=`"${{ steps.prepare_cert_nightly.outputs.cert_path }}`""
+            if ($env:AUTHENTICODE_CERT_PASSWORD) {
+              $buildArgs += " /p:AuthenticodeCertificatePassword=`"$env:AUTHENTICODE_CERT_PASSWORD`""
+            }
+            Write-Host "Building with Authenticode signing enabled"
+          } else {
+            Write-Host "Building without Authenticode signing"
+          }
+          
+          msbuild $buildArgs
+        env:
+          AUTHENTICODE_CERT_PASSWORD: ${{ secrets.AUTHENTICODE_CERT_PASSWORD }}
 
       - name: Pack Nightly
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'

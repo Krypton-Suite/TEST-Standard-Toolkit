@@ -66,7 +66,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
 
       - name: Build
         run: msbuild "Scripts/Build/nightly.proj" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU"
@@ -156,7 +156,7 @@ jobs:
           dotnet remove "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
 
       - name: Build Release
         run: msbuild "Scripts/Build/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"

@@ -1919,11 +1919,11 @@ public abstract class VisualForm : Form,
                 return; // Not supported on Windows Vista or earlier
             }
 
-            // Check if AppId is set
+            /*// Check if AppId is set
             if (string.IsNullOrEmpty(_jumpList.AppId))
             {
                 return;
-            }
+            }*/
 
             // Create CustomDestinationList COM object
             var destinationList = (PI.ICustomDestinationList)new PI.CustomDestinationList();
