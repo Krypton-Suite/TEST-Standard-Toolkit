@@ -12533,7 +12533,7 @@ public class RenderStandard : RenderBase
         /// <summary>
         /// Calculate the overlay image position and size based on the main image rectangle, overlay position, and scale mode.
         /// </summary>
-        private void CalculateOverlayImagePosition()
+        public void CalculateOverlayImagePosition()
         {
             if (OverlayImage == null || !DrawImage)
             {

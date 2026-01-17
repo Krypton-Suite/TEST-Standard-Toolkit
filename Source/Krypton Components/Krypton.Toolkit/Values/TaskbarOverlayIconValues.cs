@@ -31,9 +31,7 @@ public class TaskbarOverlayIconValues : Storage
         // Store the provided paint notification delegate
         NeedPaint = needPaint;
 
-        // Set initial values
-        _icon = null;
-        _description = string.Empty;
+        Reset();
     }
     #endregion
 
@@ -123,5 +121,16 @@ public class TaskbarOverlayIconValues : Storage
         Icon = source.Icon;
         Description = source.Description;
     }
+    #endregion
+
+    #region Reset
+
+    public void Reset()
+    {
+        // Set initial values
+        _icon = null;
+        _description = string.Empty;
+    }
+
     #endregion
 }

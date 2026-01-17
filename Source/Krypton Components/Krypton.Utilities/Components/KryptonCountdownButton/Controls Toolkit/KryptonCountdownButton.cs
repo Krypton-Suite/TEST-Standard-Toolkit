@@ -7,6 +7,13 @@
  */
 #endregion
 
+using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Threading;
+
+using Krypton.Toolkit;
+
 using Timer = System.Windows.Forms.Timer;
 
 namespace Krypton.Utilities;

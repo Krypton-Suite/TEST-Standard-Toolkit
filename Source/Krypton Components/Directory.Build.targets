@@ -169,4 +169,79 @@
 			</PropertyGroup>
 		</Otherwise>
 	</Choose>
+
+	<!-- Authenticode Signing Target -->
+	<!--
+		This target signs DLL and EXE files with Authenticode after they are built.
+		It only runs if EnableAuthenticodeSigning is true and a certificate is configured.
+	-->
+	<Target Name="AuthenticodeSign" AfterTargets="Build" 
+	        Condition="'$(EnableAuthenticodeSigning)' == 'true' And ('$(AuthenticodeCertificatePath)' != '' Or '$(AuthenticodeCertificateThumbprint)' != '')">
+		<PropertyGroup>
+			<!-- Determine the output file path -->
+			<_OutputFile>$(TargetPath)</_OutputFile>
+			<_OutputFile Condition="'$(_OutputFile)' == '' And '$(OutputPath)' != '' And '$(TargetFileName)' != ''">$(OutputPath)$(TargetFileName)</_OutputFile>
+			<_OutputFile Condition="'$(_OutputFile)' == ''">$(OutputPath)$(AssemblyName).dll</_OutputFile>
+			<_OutputFile Condition="'$(_OutputFile)' == ''">$(OutputPath)$(AssemblyName).exe</_OutputFile>
+		</PropertyGroup>
+		
+		<!-- Check if file exists and is a DLL or EXE -->
+		<ItemGroup>
+			<_AllOutputFiles Include="$(_OutputFile)" Condition="Exists('$(_OutputFile)')" />
+			<_FilesToSign Include="@(_AllOutputFiles)" Condition="'%(Extension)' == '.dll' Or '%(Extension)' == '.exe'" />
+		</ItemGroup>
+		
+		<!-- Find SignTool.exe -->
+		<PropertyGroup>
+			<_SignToolPath Condition="Exists('$(WindowsSdkBinPath)\x64\signtool.exe')">$(WindowsSdkBinPath)\x64\signtool.exe</_SignToolPath>
+			<_SignToolPath Condition="'$(_SignToolPath)' == '' And Exists('$(WindowsSdkBinPath)\x86\signtool.exe')">$(WindowsSdkBinPath)\x86\signtool.exe</_SignToolPath>
+			<_SignToolPath Condition="'$(_SignToolPath)' == '' And Exists('C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe')">C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe</_SignToolPath>
+			<_SignToolPath Condition="'$(_SignToolPath)' == '' And Exists('C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe')">C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe</_SignToolPath>
+			<_SignToolPath Condition="'$(_SignToolPath)' == ''">signtool.exe</_SignToolPath>
+		</PropertyGroup>
+		
+		<!-- Build SignTool command arguments -->
+		<PropertyGroup>
+			<_SignToolArgs>sign</_SignToolArgs>
+			
+			<!-- Add certificate specification -->
+			<_SignToolArgs Condition="'$(AuthenticodeCertificatePath)' != ''">$(_SignToolArgs) /f "$(AuthenticodeCertificatePath)"</_SignToolArgs>
+			<_SignToolArgs Condition="'$(AuthenticodeCertificatePath)' != '' And '$(AuthenticodeCertificatePassword)' != ''">$(_SignToolArgs) /p "$(AuthenticodeCertificatePassword)"</_SignToolArgs>
+			<_SignToolArgs Condition="'$(AuthenticodeCertificateThumbprint)' != '' And '$(AuthenticodeCertificatePath)' == ''">$(_SignToolArgs) /sha1 "$(AuthenticodeCertificateThumbprint)"</_SignToolArgs>
+			
+			<!-- Add timestamp server (use /tr for RFC 3161 timestamp which is recommended) -->
+			<_SignToolArgs Condition="'$(AuthenticodeTimestampServer)' != ''">$(_SignToolArgs) /tr "$(AuthenticodeTimestampServer)" /td sha256</_SignToolArgs>
+			
+			<!-- Add /fd for file digest algorithm -->
+			<_SignToolArgs>$(_SignToolArgs) /fd sha256</_SignToolArgs>
+			
+			<!-- Add /v for verbose output -->
+			<_SignToolArgs>$(_SignToolArgs) /v</_SignToolArgs>
+			
+			<!-- Add additional arguments if specified -->
+			<_SignToolArgs Condition="'$(AuthenticodeSignToolAdditionalArgs)' != ''">$(_SignToolArgs) $(AuthenticodeSignToolAdditionalArgs)</_SignToolArgs>
+			
+			<!-- Add file to sign at the end -->
+			<_SignToolArgs>$(_SignToolArgs) /q</_SignToolArgs>
+		</PropertyGroup>
+		
+		<!-- Sign each file -->
+		<Exec Command="&quot;$(_SignToolPath)&quot; $(_SignToolArgs) &quot;%( _FilesToSign.Identity)&quot;"
+		      Condition="@(_FilesToSign->Count()) > 0"
+		      ContinueOnError="true"
+		      IgnoreExitCode="false">
+			<Output TaskParameter="ExitCode" PropertyName="_SignToolExitCode" />
+		</Exec>
+		
+		<!-- Verify signing was successful -->
+		<Message Text="Authenticode signing completed for: %(_FilesToSign.Identity)" 
+		         Condition="@(_FilesToSign->Count()) > 0 And '$(_SignToolExitCode)' == '0'" 
+		         Importance="normal" />
+		<Warning Text="Authenticode signing failed or skipped for: %(_FilesToSign.Identity). Exit code: $(_SignToolExitCode). Ensure SignTool.exe is available and certificate is configured correctly." 
+		         Condition="@(_FilesToSign->Count()) > 0 And '$(_SignToolExitCode)' != '0' And '$(_SignToolExitCode)' != ''" 
+		         Importance="normal" />
+		<Message Text="No files to sign for Authenticode. Output file: $(_OutputFile)" 
+		         Condition="@(_FilesToSign->Count()) == 0"
+		         Importance="low" />
+	</Target>
 </Project>

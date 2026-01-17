@@ -7,6 +7,18 @@
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Windows.Forms;
+
+using Krypton.Toolkit;
+
 using Timer = System.Windows.Forms.Timer;
 
 namespace Krypton.Utilities;
@@ -242,7 +254,7 @@ public class KryptonCodeEditor : VisualPanel,
             if (_language != value)
             {
                 _language = value;
-                UpdateAutoCompleteKeywords();
+                //UpdateAutoCompleteKeywords();
                 
                 // Update AutoTextSuggestProvider suggestions if enabled
                 if (_autoTextSuggestProvider != null && _autoTextSuggestProvider.Enabled)
@@ -1659,16 +1671,15 @@ public class KryptonCodeEditor : VisualPanel,
         UpdateAutoCompleteKeywords();
     }
     
-    private void UpdateAutoTextSuggestProviderKeywords()
+    private void UpdateAutoCompleteKeywords()
     {
-        if (_autoTextSuggestProvider == null)
-        {
-            return;
-        }
-        
-        _autoTextSuggestProvider.Suggestions.Clear();
-        
-        var keywords = _language switch
+        _autoCompleteKeywords.Clear();
+        _autoCompleteKeywords.AddRange(GetKeywordsForLanguage(_language));
+    }
+    
+    private static string[] GetKeywordsForLanguage(Language language)
+    {
+        return language switch
         {
             Language.CSharp => new[] { "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "else", "enum", "event", "explicit", "extern", "false", "finally", "fixed", "float", "for", "foreach", "goto", "if", "implicit", "in", "int", "interface", "internal", "is", "lock", "long", "namespace", "new", "null", "object", "operator", "out", "override", "params", "private", "protected", "public", "readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string", "struct", "switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void", "volatile", "while", "async", "await", "Console", "WriteLine", "ReadLine", "Math", "String", "Int32", "Double", "Boolean" },
             Language.Cpp => new[] { "auto", "bool", "break", "case", "catch", "char", "class", "const", "continue", "default", "delete", "do", "double", "else", "enum", "extern", "float", "for", "goto", "if", "int", "long", "namespace", "new", "operator", "private", "protected", "public", "return", "short", "signed", "sizeof", "static", "struct", "switch", "template", "this", "throw", "try", "typedef", "union", "unsigned", "using", "virtual", "void", "volatile", "while", "cout", "cin", "endl", "string", "vector", "map", "set" },
@@ -1683,10 +1694,22 @@ public class KryptonCodeEditor : VisualPanel,
             Language.Ruby => new[] { "alias", "and", "begin", "break", "case", "class", "def", "defined?", "do", "else", "elsif", "end", "ensure", "false", "for", "if", "in", "module", "next", "nil", "not", "or", "redo", "rescue", "retry", "return", "self", "super", "then", "true", "undef", "unless", "until", "when", "while", "yield" },
             Language.Swift => new[] { "associatedtype", "break", "case", "catch", "class", "continue", "default", "defer", "deinit", "do", "else", "enum", "extension", "fallthrough", "fileprivate", "for", "func", "guard", "if", "import", "in", "init", "inout", "internal", "is", "let", "lazy", "mutating", "nil", "nonmutating", "open", "operator", "private", "protocol", "public", "repeat", "rethrows", "return", "self", "Self", "static", "struct", "subscript", "super", "switch", "throw", "throws", "try", "typealias", "var", "where", "while", "Bool", "Int", "Int8", "Int16", "Int32", "Int64", "UInt", "UInt8", "UInt16", "UInt32", "UInt64", "Float", "Double", "String", "Character", "Array", "Dictionary", "Set", "Optional", "Any", "AnyObject" },
             Language.Kotlin => new[] { "abstract", "actual", "annotation", "as", "break", "by", "catch", "class", "companion", "const", "constructor", "continue", "crossinline", "data", "do", "dynamic", "else", "enum", "expect", "external", "final", "finally", "for", "fun", "get", "if", "import", "in", "infix", "init", "inline", "inner", "interface", "internal", "is", "lateinit", "noinline", "null", "object", "open", "operator", "out", "override", "package", "private", "protected", "public", "reified", "return", "sealed", "set", "super", "suspend", "tailrec", "this", "throw", "try", "typealias", "typeof", "val", "var", "vararg", "when", "where", "while", "Any", "Boolean", "Byte", "Char", "Double", "Float", "Int", "Long", "Short", "String", "Unit", "Nothing", "Number", "Comparable" },
-            Language.Sql => new[] { "SELECT", "FROM", "WHERE", "INSERT", "UPDATE", "DELETE", "CREATE", "ALTER", "DROP", "TABLE", "INDEX", "VIEW", "PROCEDURE", "FUNCTION", "TRIGGER", "DATABASE", "SCHEMA", "GRANT", "REVOKE", "COMMIT", "ROLLBACK", "BEGIN", "END", "IF", "ELSE", "WHILE", "FOR", "LOOP", "CASE", "WHEN", "THEN", "ELSE", "END", "DECLARE", "SET", "EXEC", "EXECUTE", "UNION", "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "OUTER", "ON", "GROUP", "BY", "ORDER", "HAVING", "DISTINCT", "TOP", "LIMIT", "OFFSET", "AS", "AND", "OR", "NOT", "IN", "EXISTS", "LIKE", "BETWEEN", "IS", "NULL", "TRUE", "FALSE", "COUNT", "SUM", "AVG", "MAX", "MIN", "CAST", "CONVERT", "GETDATE", "GETUTCDATE", "YEAR", "MONTH", "DAY", "DATEPART", "DATEADD", "DATEDIFF" },
+            Language.Sql => new[] { "SELECT", "FROM", "WHERE", "INSERT", "UPDATE", "DELETE", "CREATE", "ALTER", "DROP", "TABLE", "INDEX", "VIEW", "PROCEDURE", "FUNCTION", "TRIGGER", "DATABASE", "SCHEMA", "GRANT", "REVOKE", "COMMIT", "ROLLBACK", "BEGIN", "END", "IF", "ELSE", "WHILE", "FOR", "LOOP", "CASE", "WHEN", "THEN", "DECLARE", "SET", "EXEC", "EXECUTE", "UNION", "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "OUTER", "ON", "GROUP", "BY", "ORDER", "HAVING", "DISTINCT", "TOP", "LIMIT", "OFFSET", "AS", "AND", "OR", "NOT", "IN", "EXISTS", "LIKE", "BETWEEN", "IS", "NULL", "TRUE", "FALSE", "COUNT", "SUM", "AVG", "MAX", "MIN", "CAST", "CONVERT", "GETDATE", "GETUTCDATE", "YEAR", "MONTH", "DAY", "DATEPART", "DATEADD", "DATEDIFF" },
             Language.PowerShell => new[] { "if", "else", "elseif", "switch", "for", "foreach", "while", "do", "until", "break", "continue", "return", "function", "filter", "workflow", "class", "enum", "namespace", "using", "module", "param", "begin", "process", "end", "try", "catch", "finally", "throw", "trap", "Get-", "Set-", "New-", "Remove-", "Add-", "Clear-", "Copy-", "Export-", "Import-", "Move-", "Out-", "Pop-", "Push-", "Rename-", "Resolve-", "Search-", "Select-", "Send-", "Sort-", "Split-", "Start-", "Stop-", "Suspend-", "Test-", "Trace-", "Update-", "Wait-", "Write-" },
             _ => Array.Empty<string>()
         };
+    }
+    
+    private void UpdateAutoTextSuggestProviderKeywords()
+    {
+        if (_autoTextSuggestProvider == null)
+        {
+            return;
+        }
+        
+        _autoTextSuggestProvider.Suggestions.Clear();
+        
+        var keywords = GetKeywordsForLanguage(_language);
         
         // Convert keywords to KryptonAutoTextSuggestItem objects
         foreach (var keyword in keywords)

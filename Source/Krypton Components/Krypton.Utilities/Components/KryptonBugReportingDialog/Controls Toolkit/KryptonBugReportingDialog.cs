@@ -7,6 +7,10 @@
  */
 #endregion
 
+using System;
+using System.ComponentModel;
+using System.Windows.Forms;
+
 namespace Krypton.Utilities;
 
 /// <summary>The public interface to the <see cref="VisualBugReportingDialogForm"/> class.</summary>

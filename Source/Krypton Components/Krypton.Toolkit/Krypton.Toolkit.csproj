@@ -77,6 +77,9 @@
 	<Compile Update="ButtonSpec\ButtonSpecFormWindowMax.cs">
 	  <SubType>Component</SubType>
 	</Compile>
+	<Compile Update="ButtonSpec\ButtonSpecFormWindowHelp.cs">
+	  <SubType>Component</SubType>
+	</Compile>
 	<Compile Update="ButtonSpec\ButtonSpecCalendar.cs">
 	  <SubType>Component</SubType>
 	</Compile>

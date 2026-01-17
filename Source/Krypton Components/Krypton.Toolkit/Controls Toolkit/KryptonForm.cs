@@ -39,20 +39,111 @@ public class KryptonForm : VisualForm,
             _kryptonForm = kryptonForm;
         }
 
-        public override PaletteRelativeAlign GetContentShortTextH(PaletteContentStyle style, PaletteState state) => style switch
+        public override PaletteRelativeAlign GetContentShortTextH(PaletteContentStyle style, PaletteState state)
         {
-            PaletteContentStyle.HeaderForm
+            // Handle header styles
+            if (style is PaletteContentStyle.HeaderForm
                 or PaletteContentStyle.HeaderPrimary
                 or PaletteContentStyle.HeaderDockInactive
                 or PaletteContentStyle.HeaderDockActive
                 or PaletteContentStyle.HeaderSecondary
                 or PaletteContentStyle.HeaderCustom1
                 or PaletteContentStyle.HeaderCustom2
-                or PaletteContentStyle.HeaderCustom3 => _kryptonForm._formTitleAlign != PaletteRelativeAlign.Inherit
+                or PaletteContentStyle.HeaderCustom3)
+            {
+                // In RTL mode with RightToLeftLayout enabled, position title on the right (Far)
+                // The content layout system will position text before image when both are Far,
+                // so the order is: [Buttons] [Title] [Icon]
+                if (_kryptonForm.RightToLeft == RightToLeft.Yes && _kryptonForm.RightToLeftLayout)
+                {
+                    // Title should be Far (right side) so it appears on the right before the icon
+                    return PaletteRelativeAlign.Far;
+                }
+
+                // Use custom title align if set, otherwise use base
+                return _kryptonForm._formTitleAlign != PaletteRelativeAlign.Inherit
                     ? _kryptonForm._formTitleAlign
-                    : base.GetContentShortTextH(style, state),
-            _ => base.GetContentShortTextH(style, state)
-        };
+                    : base.GetContentShortTextH(style, state);
+            }
+
+            return base.GetContentShortTextH(style, state);
+        }
+
+        public override PaletteRelativeAlign GetContentImageH(PaletteContentStyle style, PaletteState state)
+        {
+            // In RTL mode with RightToLeftLayout enabled, position icon on the right (Far)
+            if (_kryptonForm.RightToLeft == RightToLeft.Yes && _kryptonForm.RightToLeftLayout)
+            {
+                return style switch
+                {
+                    PaletteContentStyle.HeaderForm
+                        or PaletteContentStyle.HeaderPrimary
+                        or PaletteContentStyle.HeaderDockInactive
+                        or PaletteContentStyle.HeaderDockActive
+                        or PaletteContentStyle.HeaderSecondary
+                        or PaletteContentStyle.HeaderCustom1
+                        or PaletteContentStyle.HeaderCustom2
+                        or PaletteContentStyle.HeaderCustom3 => PaletteRelativeAlign.Far,
+                    _ => base.GetContentImageH(style, state)
+                };
+            }
+
+            return base.GetContentImageH(style, state);
+        }
+
+        public override PaletteRelativeAlign GetContentLongTextH(PaletteContentStyle style, PaletteState state)
+        {
+            // Handle header styles
+            if (style is PaletteContentStyle.HeaderForm
+                or PaletteContentStyle.HeaderPrimary
+                or PaletteContentStyle.HeaderDockInactive
+                or PaletteContentStyle.HeaderDockActive
+                or PaletteContentStyle.HeaderSecondary
+                or PaletteContentStyle.HeaderCustom1
+                or PaletteContentStyle.HeaderCustom2
+                or PaletteContentStyle.HeaderCustom3)
+            {
+                // In RTL mode with RightToLeftLayout enabled, position TextExtra on the left (Near)
+                // so it appears after the control box buttons: [Buttons] [TextExtra] [Title] [Icon]
+                if (_kryptonForm.RightToLeft == RightToLeft.Yes && _kryptonForm.RightToLeftLayout)
+                {
+                    // TextExtra should be Near (left side) so it appears after the buttons
+                    return PaletteRelativeAlign.Near;
+                }
+            }
+
+            return base.GetContentLongTextH(style, state);
+        }
+
+        public override int GetMetricInt(KryptonForm? owningForm, PaletteState state, PaletteMetricInt metric)
+        {
+            // Scale control box button edge inset when touchscreen support is enabled
+            if (metric == PaletteMetricInt.HeaderButtonEdgeInsetForm && KryptonManager.UseTouchscreenSupport)
+            {
+                int baseValue = base.GetMetricInt(owningForm, state, metric);
+                float scaleFactor = KryptonManager.TouchscreenScaleFactor;
+                return (int)Math.Round(baseValue * scaleFactor);
+            }
+
+            return base.GetMetricInt(owningForm, state, metric);
+        }
+
+        public override Padding GetMetricPadding(KryptonForm? owningForm, PaletteState state, PaletteMetricPadding metric)
+        {
+            // Scale control box button padding when touchscreen support is enabled
+            if (metric == PaletteMetricPadding.HeaderButtonPaddingForm && KryptonManager.UseTouchscreenSupport)
+            {
+                Padding basePadding = base.GetMetricPadding(owningForm, state, metric);
+                float scaleFactor = KryptonManager.TouchscreenScaleFactor;
+                return new Padding(
+                    (int)Math.Round(basePadding.Left * scaleFactor),
+                    (int)Math.Round(basePadding.Top * scaleFactor),
+                    (int)Math.Round(basePadding.Right * scaleFactor),
+                    (int)Math.Round(basePadding.Bottom * scaleFactor));
+            }
+
+            return base.GetMetricPadding(owningForm, state, metric);
+        }
     }
 
     /// <summary>
@@ -164,6 +255,13 @@ public class KryptonForm : VisualForm,
         // Yes, we want to be drawn double buffered by default
         base.DoubleBuffered = true;
 
+#if NET10_0_OR_GREATER
+        // Fix for issue #2862: .NET 10 introduced FormCornerPreference which causes flicker
+        // during resize when using custom chrome. Set to DoNotRound since KryptonForm
+        // handles its own border rendering with custom chrome.
+        FormCornerPreference = FormCornerPreference.DoNotRound;
+#endif
+
         // Create storage objects
         ButtonSpecs = new FormButtonSpecCollection(this);
         var buttonSpecsFixed = new FormFixedButtonSpecCollection(this);
@@ -172,7 +270,8 @@ public class KryptonForm : VisualForm,
         ButtonSpecMin = new ButtonSpecFormWindowMin(this);
         ButtonSpecMax = new ButtonSpecFormWindowMax(this);
         ButtonSpecClose = new ButtonSpecFormWindowClose(this);
-        buttonSpecsFixed.AddRange([ButtonSpecMin, ButtonSpecMax, ButtonSpecClose]);
+        ButtonSpecHelp = new ButtonSpecFormWindowHelp(this);
+        buttonSpecsFixed.AddRange([ButtonSpecMin, ButtonSpecMax, ButtonSpecClose, ButtonSpecHelp]);
 
         // Create the palette storage
         StateCommon = new PaletteFormRedirect(Redirector, NeedPaintDelegate, this);
@@ -244,6 +343,7 @@ public class KryptonForm : VisualForm,
         // Hook into global static events
         KryptonManager.GlobalUseThemeFormChromeBorderWidthChanged += OnGlobalUseThemeFormChromeBorderWidthChanged;
         KryptonManager.GlobalPaletteChanged += OnGlobalPaletteChanged;
+        KryptonManager.GlobalTouchscreenSupportChanged += OnGlobalTouchscreenSupportChanged;
 
         // Create the view manager instance
         ViewManager = new ViewManager(this, _drawDocker);
@@ -491,6 +591,7 @@ public class KryptonForm : VisualForm,
             // Unhook from the global static events
             KryptonManager.GlobalPaletteChanged -= OnGlobalPaletteChanged;
             KryptonManager.GlobalUseThemeFormChromeBorderWidthChanged -= OnGlobalUseThemeFormChromeBorderWidthChanged;
+            KryptonManager.GlobalTouchscreenSupportChanged -= OnGlobalTouchscreenSupportChanged;
 
             // #1979 Temporary fix
             base.PaletteChanged -= (s, e) => _internalKryptonPanel.PaletteMode = PaletteMode;
@@ -509,6 +610,7 @@ public class KryptonForm : VisualForm,
             ButtonSpecMin.Dispose();
             ButtonSpecMax.Dispose();
             ButtonSpecClose.Dispose();
+            ButtonSpecHelp.Dispose();
 
             // Dispose the click timer
             _clickTimer?.Dispose();
@@ -773,12 +875,36 @@ public class KryptonForm : VisualForm,
     public new bool CloseBox 
     {
         get => base.CloseBox;
-
+ 
         set
         { 
             if (base.CloseBox != value)
             {
                 base.CloseBox = value;
+                _buttonManager.PerformNeedPaint(true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Toggles display of the Help button.
+    /// </summary>
+    /// <remarks>
+    /// The Help button only appears when both MinimizeBox and MaximizeBox are false.
+    /// </remarks>
+    [DefaultValue(false)]
+    [Category("Window Style")]
+    [Description("Toggles display of the help button. Only shows when MinimizeBox and MaximizeBox are false.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public new bool HelpButton
+    {
+        get => base.HelpButton;
+
+        set
+        {
+            if (base.HelpButton != value)
+            {
+                base.HelpButton = value;
                 _buttonManager.PerformNeedPaint(true);
             }
         }
@@ -1059,12 +1185,20 @@ public class KryptonForm : VisualForm,
     public ButtonSpecFormWindowMax ButtonSpecMax { get; }
 
     /// <summary>
-    /// Gets access to the minimize button spec.
+    /// Gets access to the close button spec.
     /// </summary>
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ButtonSpecFormWindowClose ButtonSpecClose { get; }
+
+    /// <summary>
+    /// Gets access to the help button spec.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public ButtonSpecFormWindowHelp ButtonSpecHelp { get; }
 
     /// <summary>
     /// Gets and sets a value indicating if the border should be inert to changes.
@@ -1229,6 +1363,26 @@ public class KryptonForm : VisualForm,
             if (base.ControlBox != value)
             {
                 base.ControlBox = value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets and sets the RightToLeft property.
+    /// </summary>
+    [Browsable(true)]
+    [DefaultValue(RightToLeft.No)]
+    [EditorBrowsable(EditorBrowsableState.Always)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public override RightToLeft RightToLeft
+    {
+        get => base.RightToLeft;
+        set
+        {
+            if (base.RightToLeft != value)
+            {
+                base.RightToLeft = value;
+                OnRightToLeftChanged(EventArgs.Empty);
             }
         }
     }
@@ -1587,6 +1741,30 @@ public class KryptonForm : VisualForm,
     /// <summary>
     /// When border style changes via property, force non-client repaint so grippie updates immediately.
     /// </summary>
+    /// <summary>
+    /// Raises the RightToLeftChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnRightToLeftChanged(EventArgs e)
+    {
+        base.OnRightToLeftChanged(e);
+        
+        // Recreate buttons when RTL changes to update their positions
+        _buttonManager?.RecreateButtons();
+    }
+
+    /// <summary>
+    /// Raises the RightToLeftLayoutChanged event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnRightToLeftLayoutChanged(EventArgs e)
+    {
+        base.OnRightToLeftLayoutChanged(e);
+        
+        // Recreate buttons when RTL layout changes to update their positions
+        _buttonManager?.RecreateButtons();
+    }
+
     protected override void OnStyleChanged(EventArgs e)
     {
         base.OnStyleChanged(e);
@@ -1660,6 +1838,18 @@ public class KryptonForm : VisualForm,
             {
                 Help.ShowHelp(targetControl, provider.HelpNamespace, provider.GetHelpNavigator(targetControl),
                     provider.GetHelpKeyword(targetControl));
+            }
+
+            // Also trigger HelpRequested event for standard Windows Forms behavior
+            // This allows applications to handle help without using HelpProvider
+            var helpEventArgs = new HelpEventArgs(screenPos);
+            OnHelpRequested(helpEventArgs);
+
+            // If the event was handled, mark the message as processed
+            if (helpEventArgs.Handled)
+            {
+                m.Result = IntPtr.Zero;
+                return;
             }
 
             m.Result = IntPtr.Zero;
@@ -2416,13 +2606,34 @@ public class KryptonForm : VisualForm,
     {
         if (MdiParent == null)
         {
+            // Fix for #2457, please do not remove!!!
+            // For RTL layout mode, disable region clipping to prevent border issues
+            if (RightToLeftLayout)
+            {
+                SuspendPaint();
+                _regionWindowState = FormWindowState.Maximized;
+                UpdateBorderRegion(null); // No region clipping in RTL mode
+                ResumePaint();
+                return;
+            }
+
             // Get the size of each window border
             var xBorder = PI.GetSystemMetrics(PI.SM_.CXSIZEFRAME) * 2;
             var yBorder = PI.GetSystemMetrics(PI.SM_.CYSIZEFRAME) * 2;
 
-            // Reduce the Bounds by the padding on all but the top
-            var maximizedRect = new Rectangle(xBorder, yBorder, Width - (xBorder * 2),
-                Height - (yBorder * 2));
+            // Fix for #2457, please do not remove!!!
+            // Get the actual border widths from the form's border palette
+            var formBorder = StateCommon?.Border as PaletteFormBorder;
+            var (leftBorder, topBorder) = formBorder?.BorderWidths(FormBorderStyle) ?? (xBorder / 2, yBorder / 2);
+            var rightBorder = leftBorder; // Use same width for right border
+            var bottomBorder = topBorder; // Use same width for bottom border
+
+            // Calculate the maximized region with proper border handling
+            var maximizedRect = new Rectangle(
+                leftBorder,
+                topBorder,
+                Width - (leftBorder + rightBorder),
+                Height - (topBorder + bottomBorder));
 
             // Use this as the new region
             SuspendPaint();
@@ -2636,6 +2847,17 @@ public class KryptonForm : VisualForm,
             {
                 BeginInvoke(new System.Windows.Forms.MethodInvoker(RecalcNonClient));
             }
+        }
+    }
+
+    private void OnGlobalTouchscreenSupportChanged(object? sender, EventArgs e)
+    {
+        // Refresh buttons to apply new touchscreen scaling
+        _buttonManager?.RecreateButtons();
+        RecalcNonClient();
+        if (IsHandleCreated)
+        {
+            BeginInvoke(new System.Windows.Forms.MethodInvoker(RecalcNonClient));
         }
     }
 

@@ -42,8 +42,8 @@ public partial class TaskbarOverlayIconTest : KryptonForm
         btnExample1.Text = "Set Red Badge";
         btnExample1.Click += (s, e) =>
         {
-            TaskbarOverlayIcon.Icon = CreateOverlayIcon(Color.Red, "!");
-            TaskbarOverlayIcon.Description = "Red notification badge";
+            Taskbar.OverlayIcon.Icon = CreateOverlayIcon(Color.Red, "!");
+            Taskbar.OverlayIcon.Description = "Red notification badge";
         };
 
         // Example 2: Different colors
@@ -236,23 +236,23 @@ public partial class TaskbarOverlayIconTest : KryptonForm
 
     private void BtnToggleOverlay_Click(object? sender, EventArgs e)
     {
-        bool isVisible = TaskbarOverlayIcon.Icon != null;
+        bool isVisible = Taskbar.OverlayIcon.Icon != null;
         if (isVisible)
         {
-            TaskbarOverlayIcon.Icon = null;
-            TaskbarOverlayIcon.Description = string.Empty;
+            Taskbar.OverlayIcon.Icon = null;
+            Taskbar.OverlayIcon.Description = string.Empty;
         }
         else
         {
-            TaskbarOverlayIcon.Icon = CreateOverlayIcon(Color.Red, "!");
-            TaskbarOverlayIcon.Description = "Overlay visible";
+            Taskbar.OverlayIcon.Icon = CreateOverlayIcon(Color.Red, "!");
+            Taskbar.OverlayIcon.Description = "Overlay visible";
         }
         UpdateToggleStatus();
     }
 
     private void UpdateToggleStatus()
     {
-        lblToggleStatus.Text = $"Overlay: {(TaskbarOverlayIcon.Icon != null ? "Visible" : "Hidden")}";
+        lblToggleStatus.Text = $"Overlay: {(Taskbar.OverlayIcon.Icon != null ? "Visible" : "Hidden")}";
     }
 
     protected override void Dispose(bool disposing)
@@ -260,7 +260,7 @@ public partial class TaskbarOverlayIconTest : KryptonForm
         if (disposing)
         {
             // Dispose overlay icon if set
-            TaskbarOverlayIcon.Icon?.Dispose();
+            Taskbar.OverlayIcon.Icon?.Dispose();
             components?.Dispose();
         }
         base.Dispose(disposing);

@@ -8,6 +8,8 @@
  */
 #endregion
 
+using ContentAlignment = System.Drawing.ContentAlignment;
+
 namespace Krypton.Ribbon;
 
 /// <summary>
@@ -140,7 +142,7 @@ internal class ViewDrawRibbonNotificationBanner : ViewDrawPanel
         // Calculate heading height
         if (!string.IsNullOrEmpty(_bannerData.HeadingText))
         {
-            using var g = context.Renderer?.RenderStandardContent?.Graphics ?? CreateGraphics();
+            using var g = CreateGraphics();
             SizeF headingSize = g.MeasureString(_bannerData.HeadingText, headingFont, textAreaWidth);
             height += (int)Math.Ceiling(headingSize.Height);
             if (!string.IsNullOrEmpty(_bannerData.MessageText))
@@ -152,7 +154,7 @@ internal class ViewDrawRibbonNotificationBanner : ViewDrawPanel
         // Calculate message height
         if (!string.IsNullOrEmpty(_bannerData.MessageText))
         {
-            using var g = context.Renderer?.RenderStandardContent?.Graphics ?? CreateGraphics();
+            using var g = CreateGraphics();
             SizeF messageSize = g.MeasureString(_bannerData.MessageText, messageFont, textAreaWidth);
             height += (int)Math.Ceiling(messageSize.Height);
         }
