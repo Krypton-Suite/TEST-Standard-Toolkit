@@ -7,6 +7,10 @@
  */
 #endregion
 
+using System.ComponentModel;
+
+using Krypton.Toolkit;
+
 namespace Krypton.Utilities;
 
 /// <summary>Exposes a general set of strings that are used within the Krypton bug reporting dialog, and are localisable.</summary>

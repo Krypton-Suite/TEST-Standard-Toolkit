@@ -7,6 +7,14 @@
  */
 #endregion
 
+using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Printing;
+using System.Windows.Forms;
+
+using Krypton.Toolkit;
+
 namespace Krypton.Utilities;
 
 /// <summary>
@@ -44,7 +52,6 @@ public class KryptonPrintPreviewControl : VisualPanel
     private PaletteDoubleRedirect? _pageStateCommon;
     private PaletteDouble? _pageStateNormal;
     private PaletteDouble? _pageStateDisabled;
-    private PaletteBackStyle _pageBackStyle = PaletteBackStyle.PanelAlternate;
 
     #endregion
 

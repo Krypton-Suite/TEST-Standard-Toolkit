@@ -1,3 +1,7 @@
+using System.Windows.Forms;
+
+using Krypton.Toolkit;
+
 namespace Krypton.Utilities
 {
     partial class VisualBugReportingDialogForm

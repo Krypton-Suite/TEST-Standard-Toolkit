@@ -100,13 +100,18 @@ public class KryptonRibbon : VisualSimple,
 	private KryptonRibbonTab? _selectedTab;
 	private BackstageOverlayForm? _backstageOverlay;
 	private KryptonRibbonTab? _backstageRestoreTab;
-	#endregion
 
-	#region Events
-	/// <summary>
-	/// Occurs when the selected tab changes.
-	/// </summary>
-	[Category(@"Ribbon")]
+    private Timer? _autoDismissTimer;
+	private KryptonRibbonNotificationBarData? _notificationBarData;
+	private ViewDrawRibbonNotificationBar? _notificationBar;
+
+    #endregion
+
+    #region Events
+    /// <summary>
+    /// Occurs when the selected tab changes.
+    /// </summary>
+    [Category(@"Ribbon")]
 	[Description(@"Occurs when the selected tab changes.")]
 	public event EventHandler? SelectedTabChanged;
 
@@ -274,10 +279,19 @@ public class KryptonRibbon : VisualSimple,
 				_autoDismissTimer = null;
 			}
 
+			// Unhook from notification bar
+			if (_notificationBar != null)
+			{
+				_notificationBar.ButtonClick -= OnNotificationBarButtonClick;
+				_notificationBar.Dispose();
+				_notificationBar = null;
+			}
+
 			// Unhook from notification bar data
 			if (_notificationBarData != null)
 			{
 				_notificationBarData.PropertyChanged -= OnNotificationBarDataPropertyChanged;
+				_notificationBarData = null;
 			}
 
 			// Prevent the removing of child controls from causing a 
@@ -2954,12 +2968,21 @@ public class KryptonRibbon : VisualSimple,
 			Visible = false
 		};
 
+		// Create notification bar (initially hidden)
+		_notificationBar = new ViewDrawRibbonNotificationBar(this, NeedPaintDelegate)
+		{
+			Visible = false,
+			NotificationData = _notificationBarData
+		};
+		_notificationBar.ButtonClick += OnNotificationBarButtonClick;
+
 		// Connect up the various view elements
 		MainPanel.Add(_ribbonDocker);
 		_ribbonDocker.Add(GroupsArea, ViewDockStyle.Fill);
 		_ribbonDocker.Add(_minimizeBar, ViewDockStyle.Bottom);
 		_ribbonDocker.Add(_qatBelowRibbon, ViewDockStyle.Bottom);
 		_ribbonDocker.Add(_notificationBanner, ViewDockStyle.Top);
+		_ribbonDocker.Add(_notificationBar, ViewDockStyle.Top);
 		_ribbonDocker.Add(TabsArea, ViewDockStyle.Top);
 		_ribbonDocker.Add(CaptionArea, ViewDockStyle.Top);
 
