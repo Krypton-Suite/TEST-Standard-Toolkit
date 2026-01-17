@@ -559,11 +559,11 @@ public partial class PrintPreviewDialogTest : KryptonForm
             var marginBounds = args.MarginBounds;
 
             var titleFont = new Font("Arial", 16, FontStyle.Bold);
-            g.DrawString("Sample Data Table", titleFont, Brushes.Black, 
+            g.DrawString("Sample Data Table", titleFont, Brushes.Black,
                 marginBounds.Left, marginBounds.Top);
 
             // Table data
-            string[][] tableData = 
+            string[][] tableData =
             {
                 new[] { "Product", "Quantity", "Price", "Total" },
                 new[] { "Widget A", "10", "$5.00", "$50.00" },
@@ -583,8 +583,8 @@ public partial class PrintPreviewDialogTest : KryptonForm
             {
                 bool isHeader = row == 0;
                 bool isTotal = row == tableData.Length - 1;
-                var font = isHeader || isTotal 
-                    ? new Font("Arial", 11, FontStyle.Bold) 
+                var font = isHeader || isTotal
+                    ? new Font("Arial", 11, FontStyle.Bold)
                     : new Font("Arial", 10);
 
                 // Draw row background
@@ -592,7 +592,7 @@ public partial class PrintPreviewDialogTest : KryptonForm
                 {
                     using (var brush = new SolidBrush(Color.LightGray))
                     {
-                        g.FillRectangle(brush, x, startY + row * rowHeight, 
+                        g.FillRectangle(brush, x, startY + row * rowHeight,
                             totalWidth, rowHeight);
                     }
                 }
@@ -600,41 +600,45 @@ public partial class PrintPreviewDialogTest : KryptonForm
                 {
                     using (var brush = new SolidBrush(Color.LightYellow))
                     {
-                        g.FillRectangle(brush, x, startY + row * rowHeight, 
+                        g.FillRectangle(brush, x, startY + row * rowHeight,
                             totalWidth, rowHeight);
                     }
 
-                // Draw cells
-                int cellX = x;
-                for (int col = 0; col < tableData[row].Length; col++)
-                {
-                    var cellRect = new Rectangle(cellX, startY + row * rowHeight, 
-                        columnWidths[col], rowHeight);
-                    g.DrawRectangle(Pens.Black, cellRect);
-                    
-                    var format = new StringFormat
+                    // Draw cells
+                    int cellX = x;
+                    for (int col = 0; col < tableData[row].Length; col++)
                     {
-                        Alignment = col == 0 ? StringAlignment.Near : StringAlignment.Far,
-                        LineAlignment = StringAlignment.Center
-                    };
+                        var cellRect = new Rectangle(cellX, startY + row * rowHeight,
+                            columnWidths[col], rowHeight);
+                        g.DrawRectangle(Pens.Black, cellRect);
 
-                    g.DrawString(tableData[row][col], font, Brushes.Black, 
-                        cellRect, format);
-                    cellX += columnWidths[col];
+                        var format = new StringFormat
+                        {
+                            Alignment = col == 0 ? StringAlignment.Near : StringAlignment.Far,
+                            LineAlignment = StringAlignment.Center
+                        };
+
+                        g.DrawString(tableData[row][col], font, Brushes.Black,
+                            cellRect, format);
+                        cellX += columnWidths[col];
+                    }
                 }
+
+                args.HasMorePages = false;
             }
 
-            args.HasMorePages = false;
-        };
+            ;
 
-        var preview = new KryptonPrintPreviewDialog
-        {
-            Document = printDoc,
-            Text = "Table Document Preview"
-        };
+            var preview = new KryptonPrintPreviewDialog
+            {
+                Document = printDoc,
+                Text = "Table Document Preview"
+            };
 
-        preview.ShowDialog(this);
+            preview.ShowDialog(this);
+        };
     }
+
 
     #endregion
 }
