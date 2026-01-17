@@ -8,7 +8,17 @@
 #endregion
 
 // Used only in Visual Bug Reporting Dialog
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Net.Mail;
+using System.Text;
+using System.Windows.Forms;
+
+using Krypton.Toolkit;
 
 namespace Krypton.Utilities;
 
@@ -516,7 +526,7 @@ public partial class VisualBugReportingDialogForm : KryptonForm
             var subject = $"Bug Report - {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
             var body = BuildEmailBody();
 
-            var success = _emailService.SendBugReport(_emailConfig!, subject, body, _attachmentPaths);
+            var success = _emailService.SendBugReport(_emailConfig!, subject, body, _attachmentPaths, _attachmentPaths);
 
             if (success)
             {

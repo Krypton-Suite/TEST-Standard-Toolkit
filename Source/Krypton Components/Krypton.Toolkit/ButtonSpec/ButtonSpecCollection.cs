@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -159,9 +159,18 @@ public class ButtonSpecCollection<T> : ButtonSpecCollectionBase,
     /// <param name="array">Array of instances.</param>
     public void AddRange(IEnumerable<T> array)
     {
+        if (array == null)
+        {
+            throw new ArgumentNullException(nameof(array));
+        }
+
         foreach (T item in array)
         {
-            Add(item);
+            // Skip null items to prevent ArgumentNullException
+            if (item != null)
+            {
+                Add(item);
+            }
         }
     }
 

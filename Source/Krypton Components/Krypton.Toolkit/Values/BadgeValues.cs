@@ -22,6 +22,7 @@ public class BadgeValues : Storage
     private static readonly Font? _defaultFont = null; // null means use default font
     private const int DEFAULT_BADGE_DIAMETER = 0; // 0 means auto-size
     private const bool DEFAULT_AUTO_SHOW_HIDE_BADGE = false;
+    private const int DEFAULT_MARGIN = 3; // Default margin/offset from button edge
     #endregion
 
     #region Instance Fields
@@ -36,6 +37,7 @@ public class BadgeValues : Storage
     private bool _visible;
     private int _badgeDiameter;
     private bool _autoShowHideBadge;
+    private int _margin;
     private readonly BadgeBorderValues _border;
     private readonly BadgeOverflowValues _overflow;
     #endregion
@@ -62,6 +64,7 @@ public class BadgeValues : Storage
         _visible = false;
         _badgeDiameter = DEFAULT_BADGE_DIAMETER;
         _autoShowHideBadge = DEFAULT_AUTO_SHOW_HIDE_BADGE;
+        _margin = DEFAULT_MARGIN;
         
         // Initialize nested expandable objects
         _border = new BadgeBorderValues(needPaint);
@@ -86,6 +89,7 @@ public class BadgeValues : Storage
                                       (Visible == false) &&
                                       (BadgeDiameter == DEFAULT_BADGE_DIAMETER) &&
                                       (AutoShowHideBadge == DEFAULT_AUTO_SHOW_HIDE_BADGE) &&
+                                      (Margin == DEFAULT_MARGIN) &&
                                       Border.IsDefault &&
                                       Overflow.IsDefault;
 
@@ -492,5 +496,39 @@ public class BadgeValues : Storage
             // Don't call PerformNeedPaint here to avoid recursion - it will be called by the property setter that triggered this update
         }
     }
+    #endregion
+
+    #region Margin
+    /// <summary>
+    /// Gets and sets the margin (offset) from the button edge for badge positioning.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"The margin (offset in pixels) from the button edge for badge positioning.")]
+    [RefreshProperties(RefreshProperties.All)]
+    [DefaultValue(3)]
+    public int Margin
+    {
+        get => _margin;
+        set
+        {
+            if (value < 0)
+            {
+                value = 0;
+            }
+
+            if (_margin != value)
+            {
+                _margin = value;
+                PerformNeedPaint(true);
+            }
+        }
+    }
+
+    private bool ShouldSerializeMargin() => Margin != DEFAULT_MARGIN;
+
+    /// <summary>
+    /// Resets the Margin property to its default value.
+    /// </summary>
+    public void ResetMargin() => Margin = DEFAULT_MARGIN;
     #endregion
 }

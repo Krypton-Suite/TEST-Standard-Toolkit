@@ -7,6 +7,12 @@
  */
 #endregion
 
+using System.ComponentModel.Design;
+using System.Drawing;
+using System.Windows.Forms;
+
+using Krypton.Toolkit;
+
 namespace Krypton.Utilities;
 
 internal class KryptonCodeEditorActionList : DesignerActionList

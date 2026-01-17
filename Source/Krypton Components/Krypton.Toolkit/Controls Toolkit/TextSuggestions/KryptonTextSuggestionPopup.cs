@@ -178,7 +178,7 @@ internal class KryptonTextSuggestionPopup : VisualPopup
     /// <summary>
     /// Closes the popup.
     /// </summary>
-    public new void Close()
+    public void Close()
     {
         if (IsHandleCreated && !IsDisposed)
         {

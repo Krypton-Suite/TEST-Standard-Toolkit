@@ -77,9 +77,11 @@ public partial class StartScreen : KryptonForm
         CreateButton("Markdown Editor/Viewer", "Full-featured markdown editor with custom Krypton rendering and HTML preview.", typeof(MarkdownEditorViewer));
         CreateButton("Code Editor", "Native code editor with syntax highlighting, line numbering, code folding, and auto-completion.", typeof(CodeEditorTest));
         CreateButton("FormBorder Test", string.Empty, typeof(FormBorderTest));
+        CreateButton("Help Button Test", "Comprehensive demonstration of KryptonForm Help button functionality. Tests Help button visibility, HelpRequested event, and HelpProvider integration.", typeof(HelpButtonTest));
         CreateButton("Header Examples", string.Empty, typeof(HeaderExamples));
         CreateButton("Menu/Tool/Status Strips", string.Empty, typeof(MenuToolBarStatusStripTest));
         CreateButton("NotifyIcon", "Comprehensive demonstration of KryptonNotifyIcon with all events, balloon tips, and context menu support.", typeof(NotifyIconTest));
+        CreateButton("Print Preview Dialog", "Comprehensive demonstration of KryptonPrintPreviewDialog with various document types, window states, anti-aliasing options, and integration with KryptonPrintDocument.", typeof(PrintPreviewDialogTest));
         CreateButton("ProgressBar", "Checkout if progress has been made.", typeof(ProgressBarTest));
         CreateButton("Ribbon / Navigator / Workspace", string.Empty, typeof(RibbonNavigatorWorkspaceTest));
         CreateButton("Splash Screen", string.Empty, typeof(SplashScreenExample));
@@ -114,6 +116,8 @@ public partial class StartScreen : KryptonForm
         CreateButton("Krypton MDI Window", "KryptonForm MDI Container with both KForm and WForm children", typeof(MdiWindow));
         CreateButton("Overlay Image Test", "Comprehensive demonstration of overlay images on KryptonButton and KryptonLabel with configurable positions and scaling modes.", typeof(OverlayImageTest));
         CreateButton("Taskbar Overlay Icon Test", "Comprehensive demonstration of taskbar overlay icons on KryptonForm with configurable icons, descriptions, and interactive examples.", typeof(TaskbarOverlayIconTest));
+        CreateButton("Taskbar Progress Test", "Comprehensive demonstration of taskbar progress indicators on KryptonForm with different states, animated progress, and interactive examples.", typeof(TaskbarProgressTest));
+        CreateButton("Jump List Test", "Comprehensive demonstration of jump lists on KryptonForm with user tasks, custom categories, known categories, and interactive examples.", typeof(JumpListTest));
     }
 
     private void OnFormClosing(object? sender, FormClosingEventArgs e)

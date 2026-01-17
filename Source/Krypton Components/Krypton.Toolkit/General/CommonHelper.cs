@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -427,10 +427,24 @@ public static class CommonHelper
     /// <returns>RightToLeft setting.</returns>
     public static bool GetRightToLeftLayout(Control control)
     {
-        // Default to left-to-right layout
-        var rtl = false;
+        // First check if the control itself has RightToLeftLayout (e.g., VisualSimpleBase controls)
+        if (control is VisualSimpleBase visualSimpleBase)
+        {
+            return visualSimpleBase.RightToLeftLayout;
+        }
 
-        // We need a valid control to find a top level form
+        // For other controls that might have RightToLeftLayout (like Form, ListView, etc.)
+        // Use reflection to check if the property exists and get its value
+        var property = control.GetType().GetProperty("RightToLeftLayout");
+        if (property != null && property.PropertyType == typeof(bool))
+        {
+            if (property.GetValue(control) is bool value)
+            {
+                return value;
+            }
+        }
+
+        // Fallback: We need a valid control to find a top level form
         // Search for a top level form associated with the control
         Form? topForm = control.FindForm();
 
@@ -438,10 +452,67 @@ public static class CommonHelper
         if (topForm != null)
         {
             // Use the form setting instead
-            rtl = topForm.RightToLeftLayout;
+            return topForm.RightToLeftLayout;
         }
 
-        return rtl;
+        // Default to left-to-right layout
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a control has Right-to-Left layout enabled.
+    /// </summary>
+    /// <param name="control">Control to check.</param>
+    /// <returns>True if RTL layout is enabled; otherwise false.</returns>
+    public static bool IsRightToLeftLayout(Control control)
+    {
+        if (control == null)
+        {
+            return false;
+        }
+
+        // Check if RightToLeft is Yes and RightToLeftLayout is true
+        return control.RightToLeft == RightToLeft.Yes && GetRightToLeftLayout(control);
+    }
+
+    /// <summary>
+    /// Calculates an RTL-aware X position for an item within a container.
+    /// </summary>
+    /// <param name="containerWidth">Width of the container.</param>
+    /// <param name="itemWidth">Width of the item.</param>
+    /// <param name="offset">Offset from the edge (left in LTR, right in RTL).</param>
+    /// <param name="isRtl">Whether RTL layout is enabled.</param>
+    /// <returns>Calculated X position.</returns>
+    public static int GetRtlAwareXPosition(int containerWidth, int itemWidth, int offset, bool isRtl)
+    {
+        if (isRtl)
+        {
+            return containerWidth - itemWidth - offset;
+        }
+        return offset;
+    }
+
+    /// <summary>
+    /// Gets an RTL-aware step value for moving across items.
+    /// </summary>
+    /// <param name="step">Step size (positive for LTR).</param>
+    /// <param name="isRtl">Whether RTL layout is enabled.</param>
+    /// <returns>Step value (negative in RTL, positive in LTR).</returns>
+    public static int GetRtlAwareStep(int step, bool isRtl)
+    {
+        return isRtl ? -step : step;
+    }
+
+    /// <summary>
+    /// Gets an RTL-aware index for iterating through items.
+    /// </summary>
+    /// <param name="index">Current index.</param>
+    /// <param name="totalCount">Total number of items.</param>
+    /// <param name="isRtl">Whether RTL layout is enabled.</param>
+    /// <returns>RTL-aware index (reversed in RTL mode).</returns>
+    public static int GetRtlAwareIndex(int index, int totalCount, bool isRtl)
+    {
+        return isRtl ? (totalCount - 1 - index) : index;
     }
 
     /// <summary>

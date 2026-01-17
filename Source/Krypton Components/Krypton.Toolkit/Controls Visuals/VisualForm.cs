@@ -40,15 +40,15 @@ public abstract class VisualForm : Form,
     private bool _captured;
     private bool _disposing;
     private int _ignoreCount;
+    private bool _resizing;
     private KryptonCustomPaletteBase? _localCustomPalette;
     private PaletteBase _palette;
     private PaletteMode _paletteMode;
-    private readonly IntPtr _screenDC;
     private ShadowValues _shadowValues;
     private ShadowManager _shadowManager;
     private BlurValues _blurValues;
     private BlurManager _blurManager;
-    private readonly TaskbarOverlayIconValues _taskbarOverlayIcon;
+    private readonly TaskbarValues _taskbar;
     private readonly object lockObject = new();
     #endregion
 
@@ -106,9 +106,6 @@ public abstract class VisualForm : Form,
         // Automatically redraw whenever the size of the window changes
         SetStyle(ControlStyles.ResizeRedraw, true);
 
-        // We need to create and cache a device context compatible with the display
-        _screenDC = PI.CreateCompatibleDC(IntPtr.Zero);
-
         // Setup the need paint delegate
         NeedPaintDelegate = OnNeedPaint;
 
@@ -130,9 +127,11 @@ public abstract class VisualForm : Form,
         ShadowValues = new ShadowValues();
         BlurValues = new BlurValues();
 
-        // Taskbar overlay icon
-        _taskbarOverlayIcon = new TaskbarOverlayIconValues(NeedPaintDelegate);
-        _taskbarOverlayIcon.OnTaskbarOverlayChanged += UpdateTaskbarOverlayIcon;
+        // Taskbar (overlay icon, progress, jump list)
+        _taskbar = new TaskbarValues(NeedPaintDelegate);
+        _taskbar.OverlayIcon.OnTaskbarOverlayChanged += UpdateTaskbarOverlayIcon;
+        _taskbar.Progress.OnTaskbarProgressChanged += UpdateTaskbarProgress;
+        _taskbar.JumpList.OnJumpListChanged += UpdateJumpList;
 
 #if !NET462
         DpiChanged += OnDpiChanged;
@@ -170,11 +169,6 @@ public abstract class VisualForm : Form,
         base.Dispose(disposing);
 
         ViewManager?.Dispose();
-
-        if (_screenDC != IntPtr.Zero)
-        {
-            PI.DeleteDC(_screenDC);
-        }
     }
     #endregion
 
@@ -403,23 +397,23 @@ public abstract class VisualForm : Form,
     public void ResetBlurValues() => _blurValues.Reset();
 
     /// <summary>
-    /// Gets access to the taskbar overlay icon values.
+    /// Gets access to the taskbar values (overlay icon, progress, and jump list).
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Taskbar overlay icon to display on the taskbar button.")]
+    [Description(@"Taskbar-related settings including overlay icon, progress indicator, and jump list.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public TaskbarOverlayIconValues TaskbarOverlayIcon => _taskbarOverlayIcon;
+    public TaskbarValues Taskbar => _taskbar;
 
     /// <summary>
-    /// Resets the TaskbarOverlayIcon property to its default value.
+    /// Resets the Taskbar property to its default value.
     /// </summary>
-    public void ResetTaskbarOverlayIcon() => TaskbarOverlayIcon.Reset();
+    public void ResetTaskbar() => Taskbar.Reset();
 
     /// <summary>
-    /// Indicates whether the TaskbarOverlayIcon property should be serialized.
+    /// Indicates whether the Taskbar property should be serialized.
     /// </summary>
-    /// <returns>true if the TaskbarOverlayIcon property should be serialized; otherwise, false.</returns>
-    public bool ShouldSerializeTaskbarOverlayIcon() => !TaskbarOverlayIcon.IsDefault;
+    /// <returns>true if the Taskbar property should be serialized; otherwise, false.</returns>
+    public bool ShouldSerializeTaskbar() => !Taskbar.IsDefault;
 
     /// <summary>
     /// Gets and sets the custom palette implementation.
@@ -813,6 +807,9 @@ public abstract class VisualForm : Form,
 
         // Update taskbar overlay icon if set
         UpdateTaskbarOverlayIcon();
+
+        // Update taskbar progress if set
+        UpdateTaskbarProgress();
     }
 
     /// <summary>
@@ -827,6 +824,16 @@ public abstract class VisualForm : Form,
     }
 
     /// <summary>
+    /// Raises the ResizeBegin event.
+    /// </summary>
+    /// <param name="e">An EventArgs containing the event data.</param>
+    protected override void OnResizeBegin(EventArgs e)
+    {
+        _resizing = true;
+        base.OnResizeBegin(e);
+    }
+
+    /// <summary>
     /// Raises the Resize event.
     /// </summary>
     /// <param name="e">An EventArgs containing the event data.</param>
@@ -837,15 +844,43 @@ public abstract class VisualForm : Form,
 
         base.OnResize(e);
 
+        // During resize, only mark layout as needed but don't trigger immediate paint
+        // to prevent flicker. Paint will be performed at resize end.
+        if (!_resizing)
+        {
+            if (!((MdiParent != null)
+                  && CommonHelper.IsFormMaximized(this))
+               )
+            {
+                PerformNeedPaint(true);
+            }
+        }
+        else
+        {
+            // Just mark that layout is needed, but don't invalidate during resize
+            NeedLayout = true;
+        }
+
+        // Reverse the resume from earlier
+        SuspendPaint();
+    }
+
+    /// <summary>
+    /// Raises the ResizeEnd event.
+    /// </summary>
+    /// <param name="e">An EventArgs containing the event data.</param>
+    protected override void OnResizeEnd(EventArgs e)
+    {
+        _resizing = false;
+        base.OnResizeEnd(e);
+
+        // Now perform the deferred paint that was skipped during resize
         if (!((MdiParent != null)
               && CommonHelper.IsFormMaximized(this))
            )
         {
             PerformNeedPaint(true);
         }
-
-        // Reverse the resume from earlier
-        SuspendPaint();
     }
 
     /// <summary>
@@ -1111,6 +1146,21 @@ public abstract class VisualForm : Form,
                     processed = OnWM_NCLBUTTONDBLCLK(ref m);
                     break;
 
+                case PI.WM_.ENTERSIZEMOVE:
+                    // User has started resizing or moving the window
+                    _resizing = true;
+                    break;
+                case PI.WM_.EXITSIZEMOVE:
+                    // User has finished resizing or moving the window
+                    _resizing = false;
+                    // Perform deferred paint that was skipped during resize
+                    if (!((MdiParent != null)
+                          && CommonHelper.IsFormMaximized(this))
+                       )
+                    {
+                        PerformNeedPaint(true);
+                    }
+                    break;
                 case PI.WM_.SYSCOMMAND:
                 {
                     var sc = (PI.SC_)m.WParam.ToInt64();
@@ -1514,86 +1564,49 @@ public abstract class VisualForm : Form,
     /// <param name="hWnd">Window handle of window being painted.</param>
     protected virtual void OnNonClientPaint(IntPtr hWnd)
     {
-        // Create rectangle that encloses the entire window
+        // Get the real window bounds
         Rectangle windowBounds = RealWindowRectangle;
-        // We can only draw a window that has some size
-        if (windowBounds is { Width: > 0, Height: > 0 })
+        if (windowBounds.Width <= 0 || windowBounds.Height <= 0)
+            return;
+
+        IntPtr hDC = PI.GetWindowDC(Handle);
+        if (hDC == IntPtr.Zero)
+            return;
+
+        try
         {
-            // Get the device context for this window
-            IntPtr hDC = PI.GetWindowDC(Handle);
+            // Clip out the client area so we only paint the non-client region
+            Padding borders = RealWindowBorders;
+            Rectangle clipClientRect = new(
+                borders.Left,
+                borders.Top,
+                windowBounds.Width - borders.Horizontal,
+                windowBounds.Height - borders.Vertical);
 
-            // If we managed to get a device context
-            if (hDC != IntPtr.Zero)
+            bool minimized = CommonHelper.IsFormMinimized(this);
+            if (!minimized)
             {
-                try
-                {
-                    // Find the rectangle that covers the client area of the form
-                    Padding borders = RealWindowBorders;
-
-                    var clipClientRect = new Rectangle(borders.Left, borders.Top,
-                        windowBounds.Width - borders.Horizontal, windowBounds.Height - borders.Vertical);
-
-                    var minimized = CommonHelper.IsFormMinimized(this);
-
-                    // After excluding the client area, is there anything left to draw?
-                    if (minimized || clipClientRect is { Width: > 0, Height: > 0 })
-                    {
-                        // If not minimized we need to clip the client area
-                        if (!minimized)
-                        {
-                            // Exclude client area from being drawn into and bit blitted
-                            PI.ExcludeClipRect(hDC, clipClientRect.Left, clipClientRect.Top,
-                                clipClientRect.Right, clipClientRect.Bottom);
-                        }
-
-                        // Create one the correct size and cache for future drawing
-                        IntPtr hBitmap = PI.CreateCompatibleBitmap(hDC, windowBounds.Width, windowBounds.Height);
-
-                        // If we managed to get a compatible bitmap
-                        if (hBitmap != IntPtr.Zero)
-                        {
-                            // Must use the screen device context for the bitmap when drawing into the
-                            // bitmap otherwise the Opacity and RightToLeftLayout will not work correctly.
-                            // Select the new bitmap into the screen DC
-                            IntPtr oldBitmap = PI.SelectObject(_screenDC, hBitmap);
-
-                            try
-                            {
-                                // Drawing is easier when using a Graphics instance
-                                using (Graphics g = Graphics.FromHdc(_screenDC))
-                                {
-                                    WindowChromePaint(g, windowBounds);
-                                }
-
-                                // Now blit from the bitmap to the screen
-                                PI.BitBlt(hDC, 0, 0, windowBounds.Width, windowBounds.Height, _screenDC, 0, 0, PI.SRCCOPY);
-                            }
-                            finally
-                            {
-                                // Restore the original bitmap
-                                PI.SelectObject(_screenDC, oldBitmap);
-
-                                // Delete the temporary bitmap
-                                PI.DeleteObject(hBitmap);
-                            }
-                        }
-                        else
-                        {
-                            // Drawing is easier when using a Graphics instance
-                            using Graphics g = Graphics.FromHdc(hDC);
-                            WindowChromePaint(g, windowBounds);
-                        }
-                    }
-                }
-                finally
-                {
-                    // Must always release the device context
-                    PI.ReleaseDC(Handle, hDC);
-                }
+                PI.ExcludeClipRect(
+                    hDC,
+                    clipClientRect.Left,
+                    clipClientRect.Top,
+                    clipClientRect.Right,
+                    clipClientRect.Bottom);
             }
+
+            // Use our buffered‐paint helper instead of raw DIB/DC
+            RenderBufferedPaintHelper.PaintBuffered(hDC, windowBounds, g =>
+            {
+                var localBounds = new Rectangle(Point.Empty, windowBounds.Size);
+                WindowChromePaint(g, localBounds);
+            });
+        }
+        finally
+        {
+            PI.ReleaseDC(Handle, hDC);
         }
 
-        // Bump the number of paints that have occurred
+        // Count this paint cycle
         PaintCount++;
     }
 
@@ -1815,13 +1828,13 @@ public abstract class VisualForm : Form,
 
             // Get icon handle
             IntPtr hIcon = IntPtr.Zero;
-            if (_taskbarOverlayIcon.Icon != null)
+            if (_taskbar.OverlayIcon.Icon != null)
             {
-                hIcon = _taskbarOverlayIcon.Icon.Handle;
+                hIcon = _taskbar.OverlayIcon.Icon.Handle;
             }
 
             // Set overlay icon (passing null clears it)
-            string description = _taskbarOverlayIcon.Description ?? string.Empty;
+            string description = _taskbar.OverlayIcon.Description ?? string.Empty;
             taskbarList.SetOverlayIcon(Handle, hIcon, description);
         }
         catch (Exception ex)
@@ -1829,6 +1842,200 @@ public abstract class VisualForm : Form,
             // Silently fail if taskbar API is not available
             // This can happen on older Windows versions or if COM registration fails
             KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+        }
+    }
+
+    /// <summary>
+    /// Updates the taskbar progress using the Windows ITaskbarList3 API.
+    /// </summary>
+    private void UpdateTaskbarProgress()
+    {
+        // Only update at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Check if Windows 7+ (ITaskbarList3 requires Windows 7+)
+            if (Environment.OSVersion.Version.Major < 6 ||
+                (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor < 1))
+            {
+                return; // Not supported on Windows Vista or earlier
+            }
+
+            // Create TaskbarList COM object
+            var taskbarList = (PI.ITaskbarList3)new PI.TaskbarList();
+            taskbarList.HrInit();
+
+            // Convert TaskbarProgressState to TBPFLAG
+            PI.TBPFLAG tbpFlag = _taskbar.Progress.State switch
+            {
+                TaskbarProgressState.NoProgress => PI.TBPFLAG.TBPF_NOPROGRESS,
+                TaskbarProgressState.Indeterminate => PI.TBPFLAG.TBPF_INDETERMINATE,
+                TaskbarProgressState.Normal => PI.TBPFLAG.TBPF_NORMAL,
+                TaskbarProgressState.Error => PI.TBPFLAG.TBPF_ERROR,
+                TaskbarProgressState.Paused => PI.TBPFLAG.TBPF_PAUSED,
+                _ => PI.TBPFLAG.TBPF_NOPROGRESS
+            };
+
+            // Set progress state
+            taskbarList.SetProgressState(Handle, tbpFlag);
+
+            // If state is not NoProgress and not Indeterminate, set the progress value
+            if (tbpFlag != PI.TBPFLAG.TBPF_NOPROGRESS && tbpFlag != PI.TBPFLAG.TBPF_INDETERMINATE)
+            {
+                // Ensure maximum is not zero to avoid division by zero
+                ulong maximum = _taskbar.Progress.Maximum > 0 ? _taskbar.Progress.Maximum : 100;
+                taskbarList.SetProgressValue(Handle, _taskbar.Progress.Value, maximum);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Silently fail if taskbar API is not available
+            // This can happen on older Windows versions or if COM registration fails
+            KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+        }
+    }
+
+    /// <summary>
+    /// Updates the jump list using the Windows ICustomDestinationList API.
+    /// </summary>
+    private void UpdateJumpList()
+    {
+        // Only update at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Check if Windows 7+ (ICustomDestinationList requires Windows 7+)
+            if (Environment.OSVersion.Version.Major < 6 ||
+                (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor < 1))
+            {
+                return; // Not supported on Windows Vista or earlier
+            }
+
+            /*// Check if AppId is set
+            if (string.IsNullOrEmpty(_jumpList.AppId))
+            {
+                return;
+            }*/
+
+            // Create CustomDestinationList COM object
+            var destinationList = (PI.ICustomDestinationList)new PI.CustomDestinationList();
+            destinationList.SetAppID(_taskbar.JumpList.AppId);
+
+            // Begin jump list creation
+            Guid iidObjectArray = new Guid("92ca9dcd-5622-4bba-a805-5e9f541bd8c9");
+            destinationList.BeginList(out uint maxSlots, ref iidObjectArray, out IntPtr removedItems);
+
+            // Add known categories if requested
+            if (_taskbar.JumpList.ShowFrequentCategory)
+            {
+                destinationList.AppendKnownCategory(PI.KNOWNDESTCATEGORY.KDC_FREQUENT);
+            }
+
+            if (_taskbar.JumpList.ShowRecentCategory)
+            {
+                destinationList.AppendKnownCategory(PI.KNOWNDESTCATEGORY.KDC_RECENT);
+            }
+
+            // Add custom categories
+            foreach (var category in _taskbar.JumpList.Categories)
+            {
+                if (category.Value.Count > 0)
+                {
+                    var categoryItems = CreateObjectArray(category.Value);
+                    if (categoryItems != null)
+                    {
+                        destinationList.AppendCategory(category.Key, categoryItems);
+                    }
+                }
+            }
+
+            // Add user tasks
+            if (_taskbar.JumpList.UserTasks.Count > 0)
+            {
+                var taskItems = CreateObjectArray(_taskbar.JumpList.UserTasks);
+                if (taskItems != null)
+                {
+                    destinationList.AddUserTasks(taskItems);
+                }
+            }
+
+            // Commit the jump list
+            destinationList.CommitList();
+        }
+        catch (Exception ex)
+        {
+            // Silently fail if jump list API is not available
+            // This can happen on older Windows versions or if COM registration fails
+            KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+        }
+    }
+
+    /// <summary>
+    /// Creates an IObjectArray from a list of JumpListItem objects.
+    /// </summary>
+    private PI.IObjectArray? CreateObjectArray(List<JumpListItem> items)
+    {
+        if (items == null || items.Count == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            // Create ObjectCollection
+            var objectCollection = (PI.IObjectCollection)new PI.ObjectCollection();
+
+            // Create shell links for each item
+            foreach (var item in items)
+            {
+                if (string.IsNullOrEmpty(item.Path))
+                {
+                    continue;
+                }
+
+                var shellLink = (PI.IShellLinkW)new PI.ShellLink();
+                shellLink.SetPath(item.Path);
+                
+                if (!string.IsNullOrEmpty(item.Arguments))
+                {
+                    shellLink.SetArguments(item.Arguments);
+                }
+
+                if (!string.IsNullOrEmpty(item.WorkingDirectory))
+                {
+                    shellLink.SetWorkingDirectory(item.WorkingDirectory);
+                }
+
+                if (!string.IsNullOrEmpty(item.Description))
+                {
+                    shellLink.SetDescription(item.Description);
+                }
+
+                if (!string.IsNullOrEmpty(item.IconPath))
+                {
+                    shellLink.SetIconLocation(item.IconPath, item.IconIndex);
+                }
+
+                // Add to collection
+                objectCollection.AddObject(shellLink);
+            }
+
+            // Return as IObjectArray
+            Guid iidObjectArray = new Guid("92ca9dcd-5622-4bba-a805-5e9f541bd8c9");
+            return (PI.IObjectArray)objectCollection;
+        }
+        catch (Exception ex)
+        {
+            KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+            return null;
         }
     }
 }

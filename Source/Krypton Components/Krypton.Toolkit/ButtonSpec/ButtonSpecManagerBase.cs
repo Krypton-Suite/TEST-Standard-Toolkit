@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -853,7 +853,19 @@ public abstract class ButtonSpecManagerBase : GlobalId
         return -1;
     }
 
-    private ViewDockStyle GetDockStyle(ButtonSpec spec) => spec.GetEdge(_redirector) == RelativeEdgeAlign.Near ? ViewDockStyle.Left : ViewDockStyle.Right;
+    private ViewDockStyle GetDockStyle(ButtonSpec spec)
+    {
+        var edge = spec.GetEdge(_redirector);
+        var isRtl = CommonHelper.IsRightToLeftLayout(Control);
+
+        // In RTL mode with RightToLeftLayout enabled, reverse the dock style
+        if (isRtl)
+        {
+            return edge == RelativeEdgeAlign.Near ? ViewDockStyle.Right : ViewDockStyle.Left;
+        }
+        
+        return edge == RelativeEdgeAlign.Near ? ViewDockStyle.Left : ViewDockStyle.Right;
+    }
 
     private VisualOrientation CalculateOrientation(VisualOrientation viewOrientation,
         ButtonOrientation buttonOrientation) => buttonOrientation switch

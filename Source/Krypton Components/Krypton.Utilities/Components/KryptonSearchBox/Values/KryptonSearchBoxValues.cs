@@ -7,6 +7,13 @@
  */
 #endregion
 
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+
+using Krypton.Toolkit;
+
 namespace Krypton.Utilities;
 
 /// <summary>
