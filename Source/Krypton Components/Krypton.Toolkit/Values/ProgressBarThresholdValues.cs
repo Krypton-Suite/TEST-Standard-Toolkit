@@ -18,8 +18,7 @@ public class ProgressBarThresholdValues : Storage
     private readonly KryptonProgressBar _owner;
     private bool _useThresholdColors;
     private bool _autoCalculateThresholds;
-    private int _lowThreshold;
-    private int _highThreshold;
+    private int _thresholdValue;
     private bool _useOppositeTextColors;
     private readonly ProgressBarThresholdCommonBase _commonBase;
     private readonly ProgressBarThresholdRegionAppearance _low;
@@ -70,8 +69,7 @@ public class ProgressBarThresholdValues : Storage
     public override bool IsDefault => !_useThresholdColors &&
                                       !_autoCalculateThresholds &&
                                       !_useOppositeTextColors &&
-                                      _lowThreshold == 33 &&
-                                      _highThreshold == 66 &&
+                                      _thresholdValue == 50 &&
                                       _low.IsDefault &&
                                       _medium.IsDefault &&
                                       _high.IsDefault &&
@@ -83,7 +81,7 @@ public class ProgressBarThresholdValues : Storage
 
     /// <summary>
     /// Gets or sets whether to use threshold-based colors for the progress bar.
-    /// When enabled, the color changes based on LowThreshold and HighThreshold values.
+    /// When enabled, the color changes based on ThresholdValue (Low color below threshold, High color at or above threshold).
     /// </summary>
     [Category(@"Visuals")]
     [Description(@"Whether to use threshold-based colors for the progress bar.")]
@@ -116,9 +114,8 @@ public class ProgressBarThresholdValues : Storage
     #region AutoCalculateThresholds
 
     /// <summary>
-    /// Gets or sets whether to automatically calculate threshold values based on Minimum and Maximum.
-    /// When enabled, thresholds are calculated as: LowThreshold = Minimum + (Maximum - Minimum) / 3,
-    /// HighThreshold = Minimum + (Maximum - Minimum) * 2 / 3.
+    /// Gets or sets whether to automatically calculate threshold value based on Minimum and Maximum.
+    /// When enabled, threshold is calculated as: ThresholdValue = Minimum + (Maximum - Minimum) / 2 (midpoint).
     /// </summary>
     [Category(@"Visuals")]
     [Description(@"Whether to automatically calculate threshold values based on Minimum and Maximum.")]
@@ -157,7 +154,7 @@ public class ProgressBarThresholdValues : Storage
     public void ResetAutoCalculateThresholds() => AutoCalculateThresholds = false;
 
     /// <summary>
-    /// Calculates threshold values based on the owner's Minimum and Maximum.
+    /// Calculates threshold value based on the owner's Minimum and Maximum.
     /// </summary>
     internal void CalculateThresholds()
     {
@@ -169,27 +166,17 @@ public class ProgressBarThresholdValues : Storage
         int range = _owner.Maximum - _owner.Minimum;
         if (range > 0)
         {
-            // Calculate thresholds: divide range into thirds
-            // LowThreshold = Minimum + 1/3 of range
-            // HighThreshold = Minimum + 2/3 of range
-            _lowThreshold = _owner.Minimum + range / 3;
-            _highThreshold = _owner.Minimum + (range * 2) / 3;
+            // Calculate threshold as midpoint: Minimum + (Maximum - Minimum) / 2
+            _thresholdValue = _owner.Minimum + range / 2;
             
-            // Ensure thresholds are valid and distinct
-            if (_lowThreshold >= _highThreshold)
+            // Ensure threshold is within valid range
+            if (_thresholdValue < _owner.Minimum)
             {
-                _lowThreshold = _owner.Minimum + Math.Max(1, range / 3);
-                _highThreshold = Math.Min(_owner.Maximum, _lowThreshold + 1);
+                _thresholdValue = _owner.Minimum;
             }
-            
-            // Ensure thresholds don't exceed maximum
-            if (_lowThreshold > _owner.Maximum)
+            if (_thresholdValue > _owner.Maximum)
             {
-                _lowThreshold = _owner.Maximum;
-            }
-            if (_highThreshold > _owner.Maximum)
-            {
-                _highThreshold = _owner.Maximum;
+                _thresholdValue = _owner.Maximum;
             }
             
             if (_useThresholdColors)
@@ -200,50 +187,44 @@ public class ProgressBarThresholdValues : Storage
         }
         else
         {
-            // Range is zero or invalid, set thresholds to minimum
-            _lowThreshold = _owner.Minimum;
-            _highThreshold = _owner.Minimum;
+            // Range is zero or invalid, set threshold to minimum
+            _thresholdValue = _owner.Minimum;
         }
     }
 
     #endregion
 
-    #region LowThreshold
+    #region ThresholdValue
 
     /// <summary>
-    /// Gets or sets the low threshold value. When the progress value is below this threshold, the low threshold color is used.
+    /// Gets or sets the threshold value. When the progress value is below this threshold, the low threshold color is used.
+    /// When the progress value is at or above this threshold, the high threshold color is used.
     /// This property is read-only when AutoCalculateThresholds is enabled.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"The low threshold value. Progress below this uses the low threshold color. Read-only when AutoCalculateThresholds is enabled.")]
-    [DefaultValue(33)]
-    public int LowThreshold
+    [Description(@"The threshold value. Progress below this uses the low threshold color; at or above uses the high threshold color. Read-only when AutoCalculateThresholds is enabled.")]
+    [DefaultValue(50)]
+    public int ThresholdValue
     {
-        get => _lowThreshold;
+        get => _thresholdValue;
         set
         {
             if (_autoCalculateThresholds)
             {
-                throw new InvalidOperationException(@"LowThreshold cannot be set when AutoCalculateThresholds is enabled.");
+                throw new InvalidOperationException(@"ThresholdValue cannot be set when AutoCalculateThresholds is enabled.");
             }
 
             if (value < 0 || (_owner != null && value > _owner.Maximum))
             {
-                throw new ArgumentOutOfRangeException(nameof(LowThreshold), value, @"LowThreshold must be between 0 and Maximum.");
+                throw new ArgumentOutOfRangeException(nameof(ThresholdValue), value, @"ThresholdValue must be between 0 and Maximum.");
             }
 
-            if (_lowThreshold == value)
+            if (_thresholdValue == value)
             {
                 return;
             }
 
-            _lowThreshold = value;
-
-            // Ensure low threshold is less than high threshold
-            if (_lowThreshold >= _highThreshold && _owner != null)
-            {
-                _highThreshold = Math.Min(_owner.Maximum, _lowThreshold + 1);
-            }
+            _thresholdValue = value;
 
             if (_useThresholdColors)
             {
@@ -253,66 +234,12 @@ public class ProgressBarThresholdValues : Storage
         }
     }
 
-    private bool ShouldSerializeLowThreshold() => LowThreshold != 33;
+    private bool ShouldSerializeThresholdValue() => ThresholdValue != 50;
 
     /// <summary>
-    /// Resets the LowThreshold property to its default value.
+    /// Resets the ThresholdValue property to its default value.
     /// </summary>
-    public void ResetLowThreshold() => LowThreshold = 33;
-
-    #endregion
-
-    #region HighThreshold
-
-    /// <summary>
-    /// Gets or sets the high threshold value. When the progress value is above this threshold, the high threshold color is used.
-    /// This property is read-only when AutoCalculateThresholds is enabled.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"The high threshold value. Progress above this uses the high threshold color. Read-only when AutoCalculateThresholds is enabled.")]
-    [DefaultValue(66)]
-    public int HighThreshold
-    {
-        get => _highThreshold;
-        set
-        {
-            if (_autoCalculateThresholds)
-            {
-                throw new InvalidOperationException(@"HighThreshold cannot be set when AutoCalculateThresholds is enabled.");
-            }
-
-            if (value < 0 || (_owner != null && value > _owner.Maximum))
-            {
-                throw new ArgumentOutOfRangeException(nameof(HighThreshold), value, @"HighThreshold must be between 0 and Maximum.");
-            }
-
-            if (_highThreshold == value)
-            {
-                return;
-            }
-
-            _highThreshold = value;
-
-            // Ensure high threshold is greater than low threshold
-            if (_highThreshold <= _lowThreshold)
-            {
-                _lowThreshold = Math.Max(0, _highThreshold - 1);
-            }
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThreshold() => HighThreshold != 66;
-
-    /// <summary>
-    /// Resets the HighThreshold property to its default value.
-    /// </summary>
-    public void ResetHighThreshold() => HighThreshold = 66;
+    public void ResetThresholdValue() => ThresholdValue = 50;
 
     #endregion
 
@@ -338,10 +265,10 @@ public class ProgressBarThresholdValues : Storage
     #region Low
 
     /// <summary>
-    /// Gets the colours and images used when progress is below the low threshold.
+    /// Gets the colours and images used when progress is below the threshold value.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Colours and images when progress is below the low threshold.")]
+    [Description(@"Colours and images when progress is below the threshold value.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public ProgressBarThresholdRegionAppearance Low => _low;
 
@@ -357,10 +284,10 @@ public class ProgressBarThresholdValues : Storage
     #region Medium
 
     /// <summary>
-    /// Gets the colours and images used when progress is between low and high thresholds.
+    /// Gets the colours and images used when progress is between low and high thresholds. (Note: Medium region is not currently used with single ThresholdValue.)
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Colours and images when progress is between low and high thresholds.")]
+    [Description(@"Colours and images when progress is between low and high thresholds. (Note: Medium region is not currently used with single ThresholdValue.)")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public ProgressBarThresholdRegionAppearance Medium => _medium;
 
@@ -376,10 +303,10 @@ public class ProgressBarThresholdValues : Storage
     #region High
 
     /// <summary>
-    /// Gets the colours and images used when progress is above the high threshold.
+    /// Gets the colours and images used when progress is at or above the threshold value.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Colours and images when progress is above the high threshold.")]
+    [Description(@"Colours and images when progress is at or above the threshold value.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public ProgressBarThresholdRegionAppearance High => _high;
 
@@ -490,8 +417,7 @@ public class ProgressBarThresholdValues : Storage
         ResetUseThresholdColors();
         ResetAutoCalculateThresholds();
         ResetUseOppositeTextColors();
-        ResetLowThreshold();
-        ResetHighThreshold();
+        ResetThresholdValue();
         ResetCommonBase();
         ResetLow();
         ResetMedium();

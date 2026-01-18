@@ -503,14 +503,10 @@ public class KryptonProgressBar : Control, IContentValues
             }
             else
             {
-                // Validate thresholds against new maximum
-                if (_threshold.LowThreshold > _maximum)
+                // Validate threshold against new maximum
+                if (_threshold.ThresholdValue > _maximum)
                 {
-                    _threshold.LowThreshold = Math.Max(0, _maximum / 3);
-                }
-                if (_threshold.HighThreshold > _maximum)
-                {
-                    _threshold.HighThreshold = Math.Max(_threshold.LowThreshold + 1, _maximum * 2 / 3);
+                    _threshold.ThresholdValue = Math.Max(0, _maximum / 2);
                 }
             }
             
@@ -1559,17 +1555,13 @@ public class KryptonProgressBar : Control, IContentValues
 
         // Determine which state to use (Normal or Disabled) based on control's Enabled state
         ProgressBarThresholdRegionAppearance region;
-        if (_value < _threshold.LowThreshold)
+        if (_value < _threshold.ThresholdValue)
         {
             region = _threshold.Low;
         }
-        else if (_value >= _threshold.HighThreshold)
-        {
-            region = _threshold.High;
-        }
         else
         {
-            region = _threshold.Medium;
+            region = _threshold.High;
         }
 
         // Get the active state (Normal or Disabled)
