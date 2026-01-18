@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
  *  Modifications by Peter Wagner(aka Wagnerp) & Simon Coghlan(aka Smurf-IV), tobitege et al. 2022 - 2026. All rights reserved.
@@ -20,49 +20,11 @@ public class ProgressBarThresholdValues : Storage
     private bool _autoCalculateThresholds;
     private int _lowThreshold;
     private int _highThreshold;
-    private Color _lowThresholdColor;
-    private Color _mediumThresholdColor;
-    private Color _highThresholdColor;
-    private Color _lowThresholdColor2;
-    private Color _mediumThresholdColor2;
-    private Color _highThresholdColor2;
-    private PaletteColorStyle _lowThresholdColorStyle;
-    private PaletteColorStyle _mediumThresholdColorStyle;
-    private PaletteColorStyle _highThresholdColorStyle;
-    private PaletteRectangleAlign _lowThresholdColorAlign;
-    private PaletteRectangleAlign _mediumThresholdColorAlign;
-    private PaletteRectangleAlign _highThresholdColorAlign;
-    private float _lowThresholdColorAngle;
-    private float _mediumThresholdColorAngle;
-    private float _highThresholdColorAngle;
-    private Image? _lowThresholdImage;
-    private Image? _mediumThresholdImage;
-    private Image? _highThresholdImage;
-    private PaletteImageStyle _lowThresholdImageStyle;
-    private PaletteImageStyle _mediumThresholdImageStyle;
-    private PaletteImageStyle _highThresholdImageStyle;
-    private PaletteRectangleAlign _lowThresholdImageAlign;
-    private PaletteRectangleAlign _mediumThresholdImageAlign;
-    private PaletteRectangleAlign _highThresholdImageAlign;
     private bool _useOppositeTextColors;
-    private Color _lowThresholdTextColor;
-    private Color _mediumThresholdTextColor;
-    private Color _highThresholdTextColor;
-    private Color _originalLowThresholdTextColor;
-    private Color _originalMediumThresholdTextColor;
-    private Color _originalHighThresholdTextColor;
-    private Color _lowThresholdTextColor2;
-    private Color _mediumThresholdTextColor2;
-    private Color _highThresholdTextColor2;
-    private PaletteColorStyle _lowThresholdTextColorStyle;
-    private PaletteColorStyle _mediumThresholdTextColorStyle;
-    private PaletteColorStyle _highThresholdTextColorStyle;
-    private PaletteRectangleAlign _lowThresholdTextColorAlign;
-    private PaletteRectangleAlign _mediumThresholdTextColorAlign;
-    private PaletteRectangleAlign _highThresholdTextColorAlign;
-    private float _lowThresholdTextColorAngle;
-    private float _mediumThresholdTextColorAngle;
-    private float _highThresholdTextColorAngle;
+    private readonly ProgressBarThresholdCommonBase _commonBase;
+    private readonly ProgressBarThresholdRegionAppearance _low;
+    private readonly ProgressBarThresholdRegionAppearance _medium;
+    private readonly ProgressBarThresholdRegionAppearance _high;
 
     #endregion
 
@@ -79,48 +41,21 @@ public class ProgressBarThresholdValues : Storage
         NeedPaint = needPaint;
         _owner = owner;
 
-        // Initialize text colors to Empty
-        _lowThresholdTextColor = Color.Empty;
-        _mediumThresholdTextColor = Color.Empty;
-        _highThresholdTextColor = Color.Empty;
-        _originalLowThresholdTextColor = Color.Empty;
-        _originalMediumThresholdTextColor = Color.Empty;
-        _originalHighThresholdTextColor = Color.Empty;
-        _lowThresholdTextColor2 = Color.Empty;
-        _mediumThresholdTextColor2 = Color.Empty;
-        _highThresholdTextColor2 = Color.Empty;
-        _lowThresholdTextColorStyle = PaletteColorStyle.Inherit;
-        _mediumThresholdTextColorStyle = PaletteColorStyle.Inherit;
-        _highThresholdTextColorStyle = PaletteColorStyle.Inherit;
-        _lowThresholdTextColorAlign = PaletteRectangleAlign.Inherit;
-        _mediumThresholdTextColorAlign = PaletteRectangleAlign.Inherit;
-        _highThresholdTextColorAlign = PaletteRectangleAlign.Inherit;
-        _lowThresholdTextColorAngle = -1f;
-        _mediumThresholdTextColorAngle = -1f;
-        _highThresholdTextColorAngle = -1f;
-        _lowThresholdColor2 = Color.Empty;
-        _mediumThresholdColor2 = Color.Empty;
-        _highThresholdColor2 = Color.Empty;
-        _lowThresholdColorStyle = PaletteColorStyle.Inherit;
-        _mediumThresholdColorStyle = PaletteColorStyle.Inherit;
-        _highThresholdColorStyle = PaletteColorStyle.Inherit;
-        _lowThresholdColorAlign = PaletteRectangleAlign.Inherit;
-        _mediumThresholdColorAlign = PaletteRectangleAlign.Inherit;
-        _highThresholdColorAlign = PaletteRectangleAlign.Inherit;
-        _lowThresholdColorAngle = -1f;
-        _mediumThresholdColorAngle = -1f;
-        _highThresholdColorAngle = -1f;
-        _lowThresholdImage = null;
-        _mediumThresholdImage = null;
-        _highThresholdImage = null;
-        _lowThresholdImageStyle = PaletteImageStyle.Inherit;
-        _mediumThresholdImageStyle = PaletteImageStyle.Inherit;
-        _highThresholdImageStyle = PaletteImageStyle.Inherit;
-        _lowThresholdImageAlign = PaletteRectangleAlign.Inherit;
-        _mediumThresholdImageAlign = PaletteRectangleAlign.Inherit;
-        _highThresholdImageAlign = PaletteRectangleAlign.Inherit;
+        _commonBase = new ProgressBarThresholdCommonBase();
+        _low = new ProgressBarThresholdRegionAppearance(this, Color.Red);
+        _medium = new ProgressBarThresholdRegionAppearance(this, Color.Orange);
+        _high = new ProgressBarThresholdRegionAppearance(this, Color.Green);
 
         Reset();
+    }
+
+    /// <summary>
+    /// Notifies the owner that a region's colours or images changed. Called by ProgressBarThresholdRegionAppearance.
+    /// </summary>
+    internal void NotifyRegionChanged(ProgressBarThresholdRegionAppearance? region)
+    {
+        _owner.UpdateThresholdColor();
+        PerformNeedPaint(true);
     }
 
     #endregion
@@ -137,45 +72,10 @@ public class ProgressBarThresholdValues : Storage
                                       !_useOppositeTextColors &&
                                       _lowThreshold == 33 &&
                                       _highThreshold == 66 &&
-                                      _lowThresholdColor == Color.Red &&
-                                      _mediumThresholdColor == Color.Orange &&
-                                      _highThresholdColor == Color.Green &&
-                                      _lowThresholdTextColor == Color.Empty &&
-                                      _mediumThresholdTextColor == Color.Empty &&
-                                      _highThresholdTextColor == Color.Empty &&
-                                      _lowThresholdTextColor2 == Color.Empty &&
-                                      _mediumThresholdTextColor2 == Color.Empty &&
-                                      _highThresholdTextColor2 == Color.Empty &&
-                                      _lowThresholdTextColorStyle == PaletteColorStyle.Inherit &&
-                                      _mediumThresholdTextColorStyle == PaletteColorStyle.Inherit &&
-                                      _highThresholdTextColorStyle == PaletteColorStyle.Inherit &&
-                                      _lowThresholdTextColorAlign == PaletteRectangleAlign.Inherit &&
-                                      _mediumThresholdTextColorAlign == PaletteRectangleAlign.Inherit &&
-                                      _highThresholdTextColorAlign == PaletteRectangleAlign.Inherit &&
-                                      Math.Abs(_lowThresholdTextColorAngle - (-1f)) < 0.001f &&
-                                      Math.Abs(_mediumThresholdTextColorAngle - (-1f)) < 0.001f &&
-                                      Math.Abs(_highThresholdTextColorAngle - (-1f)) < 0.001f &&
-                                      _lowThresholdColor2 == Color.Empty &&
-                                      _mediumThresholdColor2 == Color.Empty &&
-                                      _highThresholdColor2 == Color.Empty &&
-                                      _lowThresholdColorStyle == PaletteColorStyle.Inherit &&
-                                      _mediumThresholdColorStyle == PaletteColorStyle.Inherit &&
-                                      _highThresholdColorStyle == PaletteColorStyle.Inherit &&
-                                      _lowThresholdColorAlign == PaletteRectangleAlign.Inherit &&
-                                      _mediumThresholdColorAlign == PaletteRectangleAlign.Inherit &&
-                                      _highThresholdColorAlign == PaletteRectangleAlign.Inherit &&
-                                      Math.Abs(_lowThresholdColorAngle - (-1f)) < 0.001f &&
-                                      Math.Abs(_mediumThresholdColorAngle - (-1f)) < 0.001f &&
-                                      Math.Abs(_highThresholdColorAngle - (-1f)) < 0.001f &&
-                                      _lowThresholdImage == null &&
-                                      _mediumThresholdImage == null &&
-                                      _highThresholdImage == null &&
-                                      _lowThresholdImageStyle == PaletteImageStyle.Inherit &&
-                                      _mediumThresholdImageStyle == PaletteImageStyle.Inherit &&
-                                      _highThresholdImageStyle == PaletteImageStyle.Inherit &&
-                                      _lowThresholdImageAlign == PaletteRectangleAlign.Inherit &&
-                                      _mediumThresholdImageAlign == PaletteRectangleAlign.Inherit &&
-                                      _highThresholdImageAlign == PaletteRectangleAlign.Inherit;
+                                      _low.IsDefault &&
+                                      _medium.IsDefault &&
+                                      _high.IsDefault &&
+                                      _commonBase.IsDefault;
 
     #endregion
 
@@ -416,912 +316,116 @@ public class ProgressBarThresholdValues : Storage
 
     #endregion
 
-    #region LowThresholdColor
+    #region CommonBase
 
     /// <summary>
-    /// Gets or sets the color used when the progress value is below the low threshold.
+    /// Gets the common base template for colours and images. Set values here, then call AssignFromCommonBaseToLow/Medium/High/All to copy to regions.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Color used when progress is below the low threshold.")]
-    [DefaultValue(typeof(Color), nameof(Color.Red))]
-    public Color LowThresholdColor
-    {
-        get => _lowThresholdColor;
-        set
-        {
-            if (_lowThresholdColor == value)
-            {
-                return;
-            }
+    [Description(@"Common base template. Set colours and images here, then assign to Low, Medium, or High via AssignFromCommonBaseToLow/Medium/High/All.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public ProgressBarThresholdCommonBase CommonBase => _commonBase;
 
-            _lowThresholdColor = value;
-
-            // Update opposite text color if enabled
-            if (_useOppositeTextColors)
-            {
-                _lowThresholdTextColor = GetOppositeColor(_lowThresholdColor);
-            }
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdColor() => LowThresholdColor != Color.Red;
+    private bool ShouldSerializeCommonBase() => !_commonBase.IsDefault;
 
     /// <summary>
-    /// Resets the LowThresholdColor property to its default value.
+    /// Resets the CommonBase to its default value.
     /// </summary>
-    public void ResetLowThresholdColor() => LowThresholdColor = Color.Red;
+    public void ResetCommonBase() => _commonBase.Reset();
 
     #endregion
 
-    #region MediumThresholdColor
+    #region Low
 
     /// <summary>
-    /// Gets or sets the color used when the progress value is between the low and high thresholds.
+    /// Gets the colours and images used when progress is below the low threshold.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Color used when progress is between low and high thresholds.")]
-    [DefaultValue(typeof(Color), nameof(Color.Orange))]
-    public Color MediumThresholdColor
-    {
-        get => _mediumThresholdColor;
-        set
-        {
-            if (_mediumThresholdColor == value)
-            {
-                return;
-            }
+    [Description(@"Colours and images when progress is below the low threshold.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public ProgressBarThresholdRegionAppearance Low => _low;
 
-            _mediumThresholdColor = value;
-
-            // Update opposite text color if enabled
-            if (_useOppositeTextColors)
-            {
-                _mediumThresholdTextColor = GetOppositeColor(_mediumThresholdColor);
-            }
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdColor() => MediumThresholdColor != Color.Orange;
+    private bool ShouldSerializeLow() => !_low.IsDefault;
 
     /// <summary>
-    /// Resets the MediumThresholdColor property to its default value.
+    /// Resets the Low region to its default value.
     /// </summary>
-    public void ResetMediumThresholdColor() => MediumThresholdColor = Color.Orange;
+    public void ResetLow() => _low.Reset();
 
     #endregion
 
-    #region HighThresholdColor
+    #region Medium
 
     /// <summary>
-    /// Gets or sets the color used when the progress value is above the high threshold.
+    /// Gets the colours and images used when progress is between low and high thresholds.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Color used when progress is above the high threshold.")]
-    [DefaultValue(typeof(Color), nameof(Color.Green))]
-    public Color HighThresholdColor
-    {
-        get => _highThresholdColor;
-        set
-        {
-            if (_highThresholdColor == value)
-            {
-                return;
-            }
+    [Description(@"Colours and images when progress is between low and high thresholds.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public ProgressBarThresholdRegionAppearance Medium => _medium;
 
-            _highThresholdColor = value;
-
-            // Update opposite text color if enabled
-            if (_useOppositeTextColors)
-            {
-                _highThresholdTextColor = GetOppositeColor(_highThresholdColor);
-            }
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdColor() => HighThresholdColor != Color.Green;
+    private bool ShouldSerializeMedium() => !_medium.IsDefault;
 
     /// <summary>
-    /// Resets the HighThresholdColor property to its default value.
+    /// Resets the Medium region to its default value.
     /// </summary>
-    public void ResetHighThresholdColor() => HighThresholdColor = Color.Green;
+    public void ResetMedium() => _medium.Reset();
 
     #endregion
 
-    #region LowThresholdColor2
+    #region High
 
     /// <summary>
-    /// Gets or sets the second color used when the progress value is below the low threshold.
+    /// Gets the colours and images used when progress is above the high threshold.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Second color used when progress is below the low threshold. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
-    [KryptonDefaultColor]
-    public Color LowThresholdColor2
-    {
-        get => _lowThresholdColor2;
-        set
-        {
-            if (_lowThresholdColor2 == value)
-            {
-                return;
-            }
+    [Description(@"Colours and images when progress is above the high threshold.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public ProgressBarThresholdRegionAppearance High => _high;
 
-            _lowThresholdColor2 = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdColor2() => LowThresholdColor2 != Color.Empty;
+    private bool ShouldSerializeHigh() => !_high.IsDefault;
 
     /// <summary>
-    /// Resets the LowThresholdColor2 property to its default value.
+    /// Resets the High region to its default value.
     /// </summary>
-    public void ResetLowThresholdColor2() => LowThresholdColor2 = Color.Empty;
+    public void ResetHigh() => _high.Reset();
 
     #endregion
 
-    #region LowThresholdColorStyle
+    #region AssignFromCommonBase
 
     /// <summary>
-    /// Gets or sets the color drawing style when the progress value is below the low threshold.
+    /// Copies CommonBase colours and images to the Low region.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Color drawing style when progress is below the low threshold.")]
-    [DefaultValue(PaletteColorStyle.Inherit)]
-    public PaletteColorStyle LowThresholdColorStyle
-    {
-        get => _lowThresholdColorStyle;
-        set
-        {
-            if (_lowThresholdColorStyle == value)
-            {
-                return;
-            }
-
-            _lowThresholdColorStyle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdColorStyle() => LowThresholdColorStyle != PaletteColorStyle.Inherit;
+    [Description(@"Copies the common base colours and images to the Low threshold region.")]
+    public void AssignFromCommonBaseToLow() => _low.AssignFrom(_commonBase);
 
     /// <summary>
-    /// Resets the LowThresholdColorStyle property to its default value.
-    /// </summary>
-    public void ResetLowThresholdColorStyle() => LowThresholdColorStyle = PaletteColorStyle.Inherit;
-
-    #endregion
-
-    #region LowThresholdColorAlign
-
-    /// <summary>
-    /// Gets or sets the color alignment when the progress value is below the low threshold.
+    /// Copies CommonBase colours and images to the Medium region.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Color alignment style when progress is below the low threshold.")]
-    [DefaultValue(PaletteRectangleAlign.Inherit)]
-    public PaletteRectangleAlign LowThresholdColorAlign
-    {
-        get => _lowThresholdColorAlign;
-        set
-        {
-            if (_lowThresholdColorAlign == value)
-            {
-                return;
-            }
-
-            _lowThresholdColorAlign = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdColorAlign() => LowThresholdColorAlign != PaletteRectangleAlign.Inherit;
+    [Description(@"Copies the common base colours and images to the Medium threshold region.")]
+    public void AssignFromCommonBaseToMedium() => _medium.AssignFrom(_commonBase);
 
     /// <summary>
-    /// Resets the LowThresholdColorAlign property to its default value.
-    /// </summary>
-    public void ResetLowThresholdColorAlign() => LowThresholdColorAlign = PaletteRectangleAlign.Inherit;
-
-    #endregion
-
-    #region LowThresholdColorAngle
-
-    /// <summary>
-    /// Gets or sets the color angle when the progress value is below the low threshold.
+    /// Copies CommonBase colours and images to the High region.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Color angle when progress is below the low threshold.")]
-    [DefaultValue(-1f)]
-    public float LowThresholdColorAngle
-    {
-        get => _lowThresholdColorAngle;
-        set
-        {
-            if (Math.Abs(_lowThresholdColorAngle - value) < 0.001f)
-            {
-                return;
-            }
-
-            _lowThresholdColorAngle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdColorAngle() => Math.Abs(LowThresholdColorAngle - (-1f)) > 0.001f;
+    [Description(@"Copies the common base colours and images to the High threshold region.")]
+    public void AssignFromCommonBaseToHigh() => _high.AssignFrom(_commonBase);
 
     /// <summary>
-    /// Resets the LowThresholdColorAngle property to its default value.
-    /// </summary>
-    public void ResetLowThresholdColorAngle() => LowThresholdColorAngle = -1f;
-
-    #endregion
-
-    #region MediumThresholdColor2
-
-    /// <summary>
-    /// Gets or sets the second color used when the progress value is between the low and high thresholds.
+    /// Copies CommonBase colours and images to all three regions (Low, Medium, High).
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Second color used when progress is between low and high thresholds. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
-    [KryptonDefaultColor]
-    public Color MediumThresholdColor2
+    [Description(@"Copies the common base colours and images to all threshold regions.")]
+    public void AssignFromCommonBaseToAll()
     {
-        get => _mediumThresholdColor2;
-        set
-        {
-            if (_mediumThresholdColor2 == value)
-            {
-                return;
-            }
-
-            _mediumThresholdColor2 = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
+        _low.AssignFrom(_commonBase);
+        _medium.AssignFrom(_commonBase);
+        _high.AssignFrom(_commonBase);
     }
-
-    private bool ShouldSerializeMediumThresholdColor2() => MediumThresholdColor2 != Color.Empty;
-
-    /// <summary>
-    /// Resets the MediumThresholdColor2 property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdColor2() => MediumThresholdColor2 = Color.Empty;
-
-    #endregion
-
-    #region MediumThresholdColorStyle
-
-    /// <summary>
-    /// Gets or sets the color drawing style when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color drawing style when progress is between low and high thresholds.")]
-    [DefaultValue(PaletteColorStyle.Inherit)]
-    public PaletteColorStyle MediumThresholdColorStyle
-    {
-        get => _mediumThresholdColorStyle;
-        set
-        {
-            if (_mediumThresholdColorStyle == value)
-            {
-                return;
-            }
-
-            _mediumThresholdColorStyle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdColorStyle() => MediumThresholdColorStyle != PaletteColorStyle.Inherit;
-
-    /// <summary>
-    /// Resets the MediumThresholdColorStyle property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdColorStyle() => MediumThresholdColorStyle = PaletteColorStyle.Inherit;
-
-    #endregion
-
-    #region MediumThresholdColorAlign
-
-    /// <summary>
-    /// Gets or sets the color alignment when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color alignment style when progress is between low and high thresholds.")]
-    [DefaultValue(PaletteRectangleAlign.Inherit)]
-    public PaletteRectangleAlign MediumThresholdColorAlign
-    {
-        get => _mediumThresholdColorAlign;
-        set
-        {
-            if (_mediumThresholdColorAlign == value)
-            {
-                return;
-            }
-
-            _mediumThresholdColorAlign = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdColorAlign() => MediumThresholdColorAlign != PaletteRectangleAlign.Inherit;
-
-    /// <summary>
-    /// Resets the MediumThresholdColorAlign property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdColorAlign() => MediumThresholdColorAlign = PaletteRectangleAlign.Inherit;
-
-    #endregion
-
-    #region MediumThresholdColorAngle
-
-    /// <summary>
-    /// Gets or sets the color angle when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color angle when progress is between low and high thresholds.")]
-    [DefaultValue(-1f)]
-    public float MediumThresholdColorAngle
-    {
-        get => _mediumThresholdColorAngle;
-        set
-        {
-            if (Math.Abs(_mediumThresholdColorAngle - value) < 0.001f)
-            {
-                return;
-            }
-
-            _mediumThresholdColorAngle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdColorAngle() => Math.Abs(MediumThresholdColorAngle - (-1f)) > 0.001f;
-
-    /// <summary>
-    /// Resets the MediumThresholdColorAngle property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdColorAngle() => MediumThresholdColorAngle = -1f;
-
-    #endregion
-
-    #region HighThresholdColor2
-
-    /// <summary>
-    /// Gets or sets the second color used when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Second color used when progress is above the high threshold. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
-    [KryptonDefaultColor]
-    public Color HighThresholdColor2
-    {
-        get => _highThresholdColor2;
-        set
-        {
-            if (_highThresholdColor2 == value)
-            {
-                return;
-            }
-
-            _highThresholdColor2 = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdColor2() => HighThresholdColor2 != Color.Empty;
-
-    /// <summary>
-    /// Resets the HighThresholdColor2 property to its default value.
-    /// </summary>
-    public void ResetHighThresholdColor2() => HighThresholdColor2 = Color.Empty;
-
-    #endregion
-
-    #region HighThresholdColorStyle
-
-    /// <summary>
-    /// Gets or sets the color drawing style when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color drawing style when progress is above the high threshold.")]
-    [DefaultValue(PaletteColorStyle.Inherit)]
-    public PaletteColorStyle HighThresholdColorStyle
-    {
-        get => _highThresholdColorStyle;
-        set
-        {
-            if (_highThresholdColorStyle == value)
-            {
-                return;
-            }
-
-            _highThresholdColorStyle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdColorStyle() => HighThresholdColorStyle != PaletteColorStyle.Inherit;
-
-    /// <summary>
-    /// Resets the HighThresholdColorStyle property to its default value.
-    /// </summary>
-    public void ResetHighThresholdColorStyle() => HighThresholdColorStyle = PaletteColorStyle.Inherit;
-
-    #endregion
-
-    #region HighThresholdColorAlign
-
-    /// <summary>
-    /// Gets or sets the color alignment when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color alignment style when progress is above the high threshold.")]
-    [DefaultValue(PaletteRectangleAlign.Inherit)]
-    public PaletteRectangleAlign HighThresholdColorAlign
-    {
-        get => _highThresholdColorAlign;
-        set
-        {
-            if (_highThresholdColorAlign == value)
-            {
-                return;
-            }
-
-            _highThresholdColorAlign = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdColorAlign() => HighThresholdColorAlign != PaletteRectangleAlign.Inherit;
-
-    /// <summary>
-    /// Resets the HighThresholdColorAlign property to its default value.
-    /// </summary>
-    public void ResetHighThresholdColorAlign() => HighThresholdColorAlign = PaletteRectangleAlign.Inherit;
-
-    #endregion
-
-    #region HighThresholdColorAngle
-
-    /// <summary>
-    /// Gets or sets the color angle when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color angle when progress is above the high threshold.")]
-    [DefaultValue(-1f)]
-    public float HighThresholdColorAngle
-    {
-        get => _highThresholdColorAngle;
-        set
-        {
-            if (Math.Abs(_highThresholdColorAngle - value) < 0.001f)
-            {
-                return;
-            }
-
-            _highThresholdColorAngle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdColorAngle() => Math.Abs(HighThresholdColorAngle - (-1f)) > 0.001f;
-
-    /// <summary>
-    /// Resets the HighThresholdColorAngle property to its default value.
-    /// </summary>
-    public void ResetHighThresholdColorAngle() => HighThresholdColorAngle = -1f;
-
-    #endregion
-
-    #region LowThresholdImage
-
-    /// <summary>
-    /// Gets or sets the image used when the progress value is below the low threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Image used when progress is below the low threshold. Null uses default.")]
-    [DefaultValue(null)]
-    public Image? LowThresholdImage
-    {
-        get => _lowThresholdImage;
-        set
-        {
-            if (_lowThresholdImage == value)
-            {
-                return;
-            }
-
-            _lowThresholdImage = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdImage() => LowThresholdImage != null;
-
-    /// <summary>
-    /// Resets the LowThresholdImage property to its default value.
-    /// </summary>
-    public void ResetLowThresholdImage() => LowThresholdImage = null;
-
-    #endregion
-
-    #region LowThresholdImageStyle
-
-    /// <summary>
-    /// Gets or sets the image style when the progress value is below the low threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Image style when progress is below the low threshold.")]
-    [DefaultValue(PaletteImageStyle.Inherit)]
-    public PaletteImageStyle LowThresholdImageStyle
-    {
-        get => _lowThresholdImageStyle;
-        set
-        {
-            if (_lowThresholdImageStyle == value)
-            {
-                return;
-            }
-
-            _lowThresholdImageStyle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdImageStyle() => LowThresholdImageStyle != PaletteImageStyle.Inherit;
-
-    /// <summary>
-    /// Resets the LowThresholdImageStyle property to its default value.
-    /// </summary>
-    public void ResetLowThresholdImageStyle() => LowThresholdImageStyle = PaletteImageStyle.Inherit;
-
-    #endregion
-
-    #region LowThresholdImageAlign
-
-    /// <summary>
-    /// Gets or sets the image alignment when the progress value is below the low threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Image alignment style when progress is below the low threshold.")]
-    [DefaultValue(PaletteRectangleAlign.Inherit)]
-    public PaletteRectangleAlign LowThresholdImageAlign
-    {
-        get => _lowThresholdImageAlign;
-        set
-        {
-            if (_lowThresholdImageAlign == value)
-            {
-                return;
-            }
-
-            _lowThresholdImageAlign = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdImageAlign() => LowThresholdImageAlign != PaletteRectangleAlign.Inherit;
-
-    /// <summary>
-    /// Resets the LowThresholdImageAlign property to its default value.
-    /// </summary>
-    public void ResetLowThresholdImageAlign() => LowThresholdImageAlign = PaletteRectangleAlign.Inherit;
-
-    #endregion
-
-    #region MediumThresholdImage
-
-    /// <summary>
-    /// Gets or sets the image used when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Image used when progress is between low and high thresholds. Null uses default.")]
-    [DefaultValue(null)]
-    public Image? MediumThresholdImage
-    {
-        get => _mediumThresholdImage;
-        set
-        {
-            if (_mediumThresholdImage == value)
-            {
-                return;
-            }
-
-            _mediumThresholdImage = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdImage() => MediumThresholdImage != null;
-
-    /// <summary>
-    /// Resets the MediumThresholdImage property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdImage() => MediumThresholdImage = null;
-
-    #endregion
-
-    #region MediumThresholdImageStyle
-
-    /// <summary>
-    /// Gets or sets the image style when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Image style when progress is between low and high thresholds.")]
-    [DefaultValue(PaletteImageStyle.Inherit)]
-    public PaletteImageStyle MediumThresholdImageStyle
-    {
-        get => _mediumThresholdImageStyle;
-        set
-        {
-            if (_mediumThresholdImageStyle == value)
-            {
-                return;
-            }
-
-            _mediumThresholdImageStyle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdImageStyle() => MediumThresholdImageStyle != PaletteImageStyle.Inherit;
-
-    /// <summary>
-    /// Resets the MediumThresholdImageStyle property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdImageStyle() => MediumThresholdImageStyle = PaletteImageStyle.Inherit;
-
-    #endregion
-
-    #region MediumThresholdImageAlign
-
-    /// <summary>
-    /// Gets or sets the image alignment when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Image alignment style when progress is between low and high thresholds.")]
-    [DefaultValue(PaletteRectangleAlign.Inherit)]
-    public PaletteRectangleAlign MediumThresholdImageAlign
-    {
-        get => _mediumThresholdImageAlign;
-        set
-        {
-            if (_mediumThresholdImageAlign == value)
-            {
-                return;
-            }
-
-            _mediumThresholdImageAlign = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdImageAlign() => MediumThresholdImageAlign != PaletteRectangleAlign.Inherit;
-
-    /// <summary>
-    /// Resets the MediumThresholdImageAlign property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdImageAlign() => MediumThresholdImageAlign = PaletteRectangleAlign.Inherit;
-
-    #endregion
-
-    #region HighThresholdImage
-
-    /// <summary>
-    /// Gets or sets the image used when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Image used when progress is above the high threshold. Null uses default.")]
-    [DefaultValue(null)]
-    public Image? HighThresholdImage
-    {
-        get => _highThresholdImage;
-        set
-        {
-            if (_highThresholdImage == value)
-            {
-                return;
-            }
-
-            _highThresholdImage = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdImage() => HighThresholdImage != null;
-
-    /// <summary>
-    /// Resets the HighThresholdImage property to its default value.
-    /// </summary>
-    public void ResetHighThresholdImage() => HighThresholdImage = null;
-
-    #endregion
-
-    #region HighThresholdImageStyle
-
-    /// <summary>
-    /// Gets or sets the image style when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Image style when progress is above the high threshold.")]
-    [DefaultValue(PaletteImageStyle.Inherit)]
-    public PaletteImageStyle HighThresholdImageStyle
-    {
-        get => _highThresholdImageStyle;
-        set
-        {
-            if (_highThresholdImageStyle == value)
-            {
-                return;
-            }
-
-            _highThresholdImageStyle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdImageStyle() => HighThresholdImageStyle != PaletteImageStyle.Inherit;
-
-    /// <summary>
-    /// Resets the HighThresholdImageStyle property to its default value.
-    /// </summary>
-    public void ResetHighThresholdImageStyle() => HighThresholdImageStyle = PaletteImageStyle.Inherit;
-
-    #endregion
-
-    #region HighThresholdImageAlign
-
-    /// <summary>
-    /// Gets or sets the image alignment when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Image alignment style when progress is above the high threshold.")]
-    [DefaultValue(PaletteRectangleAlign.Inherit)]
-    public PaletteRectangleAlign HighThresholdImageAlign
-    {
-        get => _highThresholdImageAlign;
-        set
-        {
-            if (_highThresholdImageAlign == value)
-            {
-                return;
-            }
-
-            _highThresholdImageAlign = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdImageAlign() => HighThresholdImageAlign != PaletteRectangleAlign.Inherit;
-
-    /// <summary>
-    /// Resets the HighThresholdImageAlign property to its default value.
-    /// </summary>
-    public void ResetHighThresholdImageAlign() => HighThresholdImageAlign = PaletteRectangleAlign.Inherit;
 
     #endregion
 
@@ -1348,25 +452,15 @@ public class ProgressBarThresholdValues : Storage
 
             if (_useOppositeTextColors)
             {
-                // Store original values before calculating opposite colors
-                _originalLowThresholdTextColor = _lowThresholdTextColor;
-                _originalMediumThresholdTextColor = _mediumThresholdTextColor;
-                _originalHighThresholdTextColor = _highThresholdTextColor;
-
-                // Calculate opposite colors when enabled
-                CalculateOppositeTextColors();
+                _low.EnableOppositeTextColors();
+                _medium.EnableOppositeTextColors();
+                _high.EnableOppositeTextColors();
             }
             else
             {
-                // Restore original values when disabled
-                _lowThresholdTextColor = _originalLowThresholdTextColor;
-                _mediumThresholdTextColor = _originalMediumThresholdTextColor;
-                _highThresholdTextColor = _originalHighThresholdTextColor;
-
-                // Clear original values
-                _originalLowThresholdTextColor = Color.Empty;
-                _originalMediumThresholdTextColor = Color.Empty;
-                _originalHighThresholdTextColor = Color.Empty;
+                _low.RestoreOriginalTextColor();
+                _medium.RestoreOriginalTextColor();
+                _high.RestoreOriginalTextColor();
             }
 
             if (_useThresholdColors)
@@ -1384,616 +478,6 @@ public class ProgressBarThresholdValues : Storage
     /// </summary>
     public void ResetUseOppositeTextColors() => UseOppositeTextColors = false;
 
-    /// <summary>
-    /// Calculates opposite text colors based on threshold colors.
-    /// </summary>
-    private void CalculateOppositeTextColors()
-    {
-        _lowThresholdTextColor = GetOppositeColor(_lowThresholdColor);
-        _mediumThresholdTextColor = GetOppositeColor(_mediumThresholdColor);
-        _highThresholdTextColor = GetOppositeColor(_highThresholdColor);
-    }
-
-    /// <summary>
-    /// Gets the opposite/inverse color of the given color.
-    /// </summary>
-    private static Color GetOppositeColor(Color color)
-    {
-        // Calculate inverse color (255 - each component)
-        return Color.FromArgb(255 - color.R, 255 - color.G, 255 - color.B);
-    }
-
-    #endregion
-
-    #region LowThresholdTextColor
-
-    /// <summary>
-    /// Gets or sets the text color used when the progress value is below the low threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Text color used when progress is below the low threshold. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
-    public Color LowThresholdTextColor
-    {
-        get => _lowThresholdTextColor;
-        set
-        {
-            if (_lowThresholdTextColor == value)
-            {
-                return;
-            }
-
-            // If UseOppositeTextColors is enabled, store the user's value as the original
-            // so it can be restored when UseOppositeTextColors is disabled
-            if (_useOppositeTextColors)
-            {
-                _originalLowThresholdTextColor = value;
-                // If user sets to Empty, use calculated opposite; otherwise respect user's choice
-                _lowThresholdTextColor = value == Color.Empty ? GetOppositeColor(_lowThresholdColor) : value;
-            }
-            else
-            {
-                _lowThresholdTextColor = value;
-            }
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdTextColor() => LowThresholdTextColor != Color.Empty;
-
-    /// <summary>
-    /// Resets the LowThresholdTextColor property to its default value.
-    /// </summary>
-    public void ResetLowThresholdTextColor() => LowThresholdTextColor = Color.Empty;
-
-    #endregion
-
-    #region MediumThresholdTextColor
-
-    /// <summary>
-    /// Gets or sets the text color used when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Text color used when progress is between low and high thresholds. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
-    public Color MediumThresholdTextColor
-    {
-        get => _mediumThresholdTextColor;
-        set
-        {
-            if (_mediumThresholdTextColor == value)
-            {
-                return;
-            }
-
-            // If UseOppositeTextColors is enabled, store the user's value as the original
-            // so it can be restored when UseOppositeTextColors is disabled
-            if (_useOppositeTextColors)
-            {
-                _originalMediumThresholdTextColor = value;
-                // If user sets to Empty, use calculated opposite; otherwise respect user's choice
-                _mediumThresholdTextColor = value == Color.Empty ? GetOppositeColor(_mediumThresholdColor) : value;
-            }
-            else
-            {
-                _mediumThresholdTextColor = value;
-            }
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdTextColor() => MediumThresholdTextColor != Color.Empty;
-
-    /// <summary>
-    /// Resets the MediumThresholdTextColor property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdTextColor() => MediumThresholdTextColor = Color.Empty;
-
-    #endregion
-
-    #region HighThresholdTextColor
-
-    /// <summary>
-    /// Gets or sets the text color used when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Text color used when progress is above the high threshold. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
-    public Color HighThresholdTextColor
-    {
-        get => _highThresholdTextColor;
-        set
-        {
-            if (_highThresholdTextColor == value)
-            {
-                return;
-            }
-
-            // If UseOppositeTextColors is enabled, store the user's value as the original
-            // so it can be restored when UseOppositeTextColors is disabled
-            if (_useOppositeTextColors)
-            {
-                _originalHighThresholdTextColor = value;
-                // If user sets to Empty, use calculated opposite; otherwise respect user's choice
-                _highThresholdTextColor = value == Color.Empty ? GetOppositeColor(_highThresholdColor) : value;
-            }
-            else
-            {
-                _highThresholdTextColor = value;
-            }
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdTextColor() => HighThresholdTextColor != Color.Empty;
-
-    /// <summary>
-    /// Resets the HighThresholdTextColor property to its default value.
-    /// </summary>
-    public void ResetHighThresholdTextColor() => HighThresholdTextColor = Color.Empty;
-
-    #endregion
-
-    #region LowThresholdTextColor2
-
-    /// <summary>
-    /// Gets or sets the second text color used when the progress value is below the low threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Second text color used when progress is below the low threshold. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
-    [KryptonDefaultColor]
-    public Color LowThresholdTextColor2
-    {
-        get => _lowThresholdTextColor2;
-        set
-        {
-            if (_lowThresholdTextColor2 == value)
-            {
-                return;
-            }
-
-            _lowThresholdTextColor2 = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdTextColor2() => LowThresholdTextColor2 != Color.Empty;
-
-    /// <summary>
-    /// Resets the LowThresholdTextColor2 property to its default value.
-    /// </summary>
-    public void ResetLowThresholdTextColor2() => LowThresholdTextColor2 = Color.Empty;
-
-    #endregion
-
-    #region LowThresholdTextColorStyle
-
-    /// <summary>
-    /// Gets or sets the color drawing style for the text when the progress value is below the low threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color drawing style for the text when progress is below the low threshold.")]
-    [DefaultValue(PaletteColorStyle.Inherit)]
-    public PaletteColorStyle LowThresholdTextColorStyle
-    {
-        get => _lowThresholdTextColorStyle;
-        set
-        {
-            if (_lowThresholdTextColorStyle == value)
-            {
-                return;
-            }
-
-            _lowThresholdTextColorStyle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdTextColorStyle() => LowThresholdTextColorStyle != PaletteColorStyle.Inherit;
-
-    /// <summary>
-    /// Resets the LowThresholdTextColorStyle property to its default value.
-    /// </summary>
-    public void ResetLowThresholdTextColorStyle() => LowThresholdTextColorStyle = PaletteColorStyle.Inherit;
-
-    #endregion
-
-    #region LowThresholdTextColorAlign
-
-    /// <summary>
-    /// Gets or sets the color alignment for the text when the progress value is below the low threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color alignment style for the text when progress is below the low threshold.")]
-    [DefaultValue(PaletteRectangleAlign.Inherit)]
-    public PaletteRectangleAlign LowThresholdTextColorAlign
-    {
-        get => _lowThresholdTextColorAlign;
-        set
-        {
-            if (_lowThresholdTextColorAlign == value)
-            {
-                return;
-            }
-
-            _lowThresholdTextColorAlign = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdTextColorAlign() => LowThresholdTextColorAlign != PaletteRectangleAlign.Inherit;
-
-    /// <summary>
-    /// Resets the LowThresholdTextColorAlign property to its default value.
-    /// </summary>
-    public void ResetLowThresholdTextColorAlign() => LowThresholdTextColorAlign = PaletteRectangleAlign.Inherit;
-
-    #endregion
-
-    #region LowThresholdTextColorAngle
-
-    /// <summary>
-    /// Gets or sets the color angle for the text when the progress value is below the low threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color angle for the text when progress is below the low threshold.")]
-    [DefaultValue(-1f)]
-    public float LowThresholdTextColorAngle
-    {
-        get => _lowThresholdTextColorAngle;
-        set
-        {
-            if (Math.Abs(_lowThresholdTextColorAngle - value) < 0.001f)
-            {
-                return;
-            }
-
-            _lowThresholdTextColorAngle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeLowThresholdTextColorAngle() => Math.Abs(LowThresholdTextColorAngle - (-1f)) > 0.001f;
-
-    /// <summary>
-    /// Resets the LowThresholdTextColorAngle property to its default value.
-    /// </summary>
-    public void ResetLowThresholdTextColorAngle() => LowThresholdTextColorAngle = -1f;
-
-    #endregion
-
-    #region MediumThresholdTextColor2
-
-    /// <summary>
-    /// Gets or sets the second text color used when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Second text color used when progress is between low and high thresholds. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
-    [KryptonDefaultColor]
-    public Color MediumThresholdTextColor2
-    {
-        get => _mediumThresholdTextColor2;
-        set
-        {
-            if (_mediumThresholdTextColor2 == value)
-            {
-                return;
-            }
-
-            _mediumThresholdTextColor2 = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdTextColor2() => MediumThresholdTextColor2 != Color.Empty;
-
-    /// <summary>
-    /// Resets the MediumThresholdTextColor2 property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdTextColor2() => MediumThresholdTextColor2 = Color.Empty;
-
-    #endregion
-
-    #region MediumThresholdTextColorStyle
-
-    /// <summary>
-    /// Gets or sets the color drawing style for the text when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color drawing style for the text when progress is between low and high thresholds.")]
-    [DefaultValue(PaletteColorStyle.Inherit)]
-    public PaletteColorStyle MediumThresholdTextColorStyle
-    {
-        get => _mediumThresholdTextColorStyle;
-        set
-        {
-            if (_mediumThresholdTextColorStyle == value)
-            {
-                return;
-            }
-
-            _mediumThresholdTextColorStyle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdTextColorStyle() => MediumThresholdTextColorStyle != PaletteColorStyle.Inherit;
-
-    /// <summary>
-    /// Resets the MediumThresholdTextColorStyle property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdTextColorStyle() => MediumThresholdTextColorStyle = PaletteColorStyle.Inherit;
-
-    #endregion
-
-    #region MediumThresholdTextColorAlign
-
-    /// <summary>
-    /// Gets or sets the color alignment for the text when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color alignment style for the text when progress is between low and high thresholds.")]
-    [DefaultValue(PaletteRectangleAlign.Inherit)]
-    public PaletteRectangleAlign MediumThresholdTextColorAlign
-    {
-        get => _mediumThresholdTextColorAlign;
-        set
-        {
-            if (_mediumThresholdTextColorAlign == value)
-            {
-                return;
-            }
-
-            _mediumThresholdTextColorAlign = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdTextColorAlign() => MediumThresholdTextColorAlign != PaletteRectangleAlign.Inherit;
-
-    /// <summary>
-    /// Resets the MediumThresholdTextColorAlign property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdTextColorAlign() => MediumThresholdTextColorAlign = PaletteRectangleAlign.Inherit;
-
-    #endregion
-
-    #region MediumThresholdTextColorAngle
-
-    /// <summary>
-    /// Gets or sets the color angle for the text when the progress value is between the low and high thresholds.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color angle for the text when progress is between low and high thresholds.")]
-    [DefaultValue(-1f)]
-    public float MediumThresholdTextColorAngle
-    {
-        get => _mediumThresholdTextColorAngle;
-        set
-        {
-            if (Math.Abs(_mediumThresholdTextColorAngle - value) < 0.001f)
-            {
-                return;
-            }
-
-            _mediumThresholdTextColorAngle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeMediumThresholdTextColorAngle() => Math.Abs(MediumThresholdTextColorAngle - (-1f)) > 0.001f;
-
-    /// <summary>
-    /// Resets the MediumThresholdTextColorAngle property to its default value.
-    /// </summary>
-    public void ResetMediumThresholdTextColorAngle() => MediumThresholdTextColorAngle = -1f;
-
-    #endregion
-
-    #region HighThresholdTextColor2
-
-    /// <summary>
-    /// Gets or sets the second text color used when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Second text color used when progress is above the high threshold. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
-    [KryptonDefaultColor]
-    public Color HighThresholdTextColor2
-    {
-        get => _highThresholdTextColor2;
-        set
-        {
-            if (_highThresholdTextColor2 == value)
-            {
-                return;
-            }
-
-            _highThresholdTextColor2 = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdTextColor2() => HighThresholdTextColor2 != Color.Empty;
-
-    /// <summary>
-    /// Resets the HighThresholdTextColor2 property to its default value.
-    /// </summary>
-    public void ResetHighThresholdTextColor2() => HighThresholdTextColor2 = Color.Empty;
-
-    #endregion
-
-    #region HighThresholdTextColorStyle
-
-    /// <summary>
-    /// Gets or sets the color drawing style for the text when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color drawing style for the text when progress is above the high threshold.")]
-    [DefaultValue(PaletteColorStyle.Inherit)]
-    public PaletteColorStyle HighThresholdTextColorStyle
-    {
-        get => _highThresholdTextColorStyle;
-        set
-        {
-            if (_highThresholdTextColorStyle == value)
-            {
-                return;
-            }
-
-            _highThresholdTextColorStyle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdTextColorStyle() => HighThresholdTextColorStyle != PaletteColorStyle.Inherit;
-
-    /// <summary>
-    /// Resets the HighThresholdTextColorStyle property to its default value.
-    /// </summary>
-    public void ResetHighThresholdTextColorStyle() => HighThresholdTextColorStyle = PaletteColorStyle.Inherit;
-
-    #endregion
-
-    #region HighThresholdTextColorAlign
-
-    /// <summary>
-    /// Gets or sets the color alignment for the text when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color alignment style for the text when progress is above the high threshold.")]
-    [DefaultValue(PaletteRectangleAlign.Inherit)]
-    public PaletteRectangleAlign HighThresholdTextColorAlign
-    {
-        get => _highThresholdTextColorAlign;
-        set
-        {
-            if (_highThresholdTextColorAlign == value)
-            {
-                return;
-            }
-
-            _highThresholdTextColorAlign = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdTextColorAlign() => HighThresholdTextColorAlign != PaletteRectangleAlign.Inherit;
-
-    /// <summary>
-    /// Resets the HighThresholdTextColorAlign property to its default value.
-    /// </summary>
-    public void ResetHighThresholdTextColorAlign() => HighThresholdTextColorAlign = PaletteRectangleAlign.Inherit;
-
-    #endregion
-
-    #region HighThresholdTextColorAngle
-
-    /// <summary>
-    /// Gets or sets the color angle for the text when the progress value is above the high threshold.
-    /// </summary>
-    [Category(@"Visuals")]
-    [Description(@"Color angle for the text when progress is above the high threshold.")]
-    [DefaultValue(-1f)]
-    public float HighThresholdTextColorAngle
-    {
-        get => _highThresholdTextColorAngle;
-        set
-        {
-            if (Math.Abs(_highThresholdTextColorAngle - value) < 0.001f)
-            {
-                return;
-            }
-
-            _highThresholdTextColorAngle = value;
-
-            if (_useThresholdColors)
-            {
-                _owner.UpdateThresholdColor();
-                PerformNeedPaint(true);
-            }
-        }
-    }
-
-    private bool ShouldSerializeHighThresholdTextColorAngle() => Math.Abs(HighThresholdTextColorAngle - (-1f)) > 0.001f;
-
-    /// <summary>
-    /// Resets the HighThresholdTextColorAngle property to its default value.
-    /// </summary>
-    public void ResetHighThresholdTextColorAngle() => HighThresholdTextColorAngle = -1f;
-
     #endregion
 
     #region Reset
@@ -2008,48 +492,10 @@ public class ProgressBarThresholdValues : Storage
         ResetUseOppositeTextColors();
         ResetLowThreshold();
         ResetHighThreshold();
-        ResetLowThresholdColor();
-        ResetMediumThresholdColor();
-        ResetHighThresholdColor();
-        ResetLowThresholdColor2();
-        ResetMediumThresholdColor2();
-        ResetHighThresholdColor2();
-        ResetLowThresholdColorStyle();
-        ResetMediumThresholdColorStyle();
-        ResetHighThresholdColorStyle();
-        ResetLowThresholdColorAlign();
-        ResetMediumThresholdColorAlign();
-        ResetHighThresholdColorAlign();
-        ResetLowThresholdColorAngle();
-        ResetMediumThresholdColorAngle();
-        ResetHighThresholdColorAngle();
-        ResetLowThresholdImage();
-        ResetMediumThresholdImage();
-        ResetHighThresholdImage();
-        ResetLowThresholdImageStyle();
-        ResetMediumThresholdImageStyle();
-        ResetHighThresholdImageStyle();
-        ResetLowThresholdImageAlign();
-        ResetMediumThresholdImageAlign();
-        ResetHighThresholdImageAlign();
-        ResetLowThresholdTextColor();
-        ResetMediumThresholdTextColor();
-        ResetHighThresholdTextColor();
-        ResetLowThresholdTextColor2();
-        ResetMediumThresholdTextColor2();
-        ResetHighThresholdTextColor2();
-        ResetLowThresholdTextColorStyle();
-        ResetMediumThresholdTextColorStyle();
-        ResetHighThresholdTextColorStyle();
-        ResetLowThresholdTextColorAlign();
-        ResetMediumThresholdTextColorAlign();
-        ResetHighThresholdTextColorAlign();
-        ResetLowThresholdTextColorAngle();
-        ResetMediumThresholdTextColorAngle();
-        ResetHighThresholdTextColorAngle();
-        _originalLowThresholdTextColor = Color.Empty;
-        _originalMediumThresholdTextColor = Color.Empty;
-        _originalHighThresholdTextColor = Color.Empty;
+        ResetCommonBase();
+        ResetLow();
+        ResetMedium();
+        ResetHigh();
     }
 
     #endregion

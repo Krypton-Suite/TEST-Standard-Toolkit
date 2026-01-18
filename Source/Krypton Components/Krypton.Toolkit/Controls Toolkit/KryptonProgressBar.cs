@@ -1557,188 +1557,45 @@ public class KryptonProgressBar : Control, IContentValues
             _originalTextColorAngle = paletteTriple.Content.ShortText.ColorAngle;
         }
 
-        // Determine which colors and properties to use based on the current value
-        Color backColor = _originalValueColor;
-        Color backColor2 = _originalValueColor2;
-        PaletteColorStyle backColorStyle = _originalValueColorStyle;
-        PaletteRectangleAlign backColorAlign = _originalValueColorAlign;
-        float backColorAngle = _originalValueColorAngle;
-        Image? backImage = _originalValueImage;
-        PaletteImageStyle backImageStyle = _originalValueImageStyle;
-        PaletteRectangleAlign backImageAlign = _originalValueImageAlign;
-        Color textColor = _originalTextColor;
-        Color textColor2 = _originalTextColor2;
-        PaletteColorStyle textColorStyle = _originalTextColorStyle;
-        PaletteRectangleAlign textColorAlign = _originalTextColorAlign;
-        float textColorAngle = _originalTextColorAngle;
-
+        // Determine which state to use (Normal or Disabled) based on control's Enabled state
+        ProgressBarThresholdRegionAppearance region;
         if (_value < _threshold.LowThreshold)
         {
-            backColor = _threshold.LowThresholdColor;
-            if (_threshold.LowThresholdColor2 != Color.Empty)
-            {
-                backColor2 = _threshold.LowThresholdColor2;
-            }
-            if (_threshold.LowThresholdColorStyle != PaletteColorStyle.Inherit)
-            {
-                backColorStyle = _threshold.LowThresholdColorStyle;
-            }
-            if (_threshold.LowThresholdColorAlign != PaletteRectangleAlign.Inherit)
-            {
-                backColorAlign = _threshold.LowThresholdColorAlign;
-            }
-            if (Math.Abs(_threshold.LowThresholdColorAngle - (-1f)) > 0.001f)
-            {
-                backColorAngle = _threshold.LowThresholdColorAngle;
-            }
-            if (_threshold.LowThresholdImage != null)
-            {
-                backImage = _threshold.LowThresholdImage;
-            }
-            if (_threshold.LowThresholdImageStyle != PaletteImageStyle.Inherit)
-            {
-                backImageStyle = _threshold.LowThresholdImageStyle;
-            }
-            if (_threshold.LowThresholdImageAlign != PaletteRectangleAlign.Inherit)
-            {
-                backImageAlign = _threshold.LowThresholdImageAlign;
-            }
-            if (_threshold.LowThresholdTextColor != Color.Empty)
-            {
-                textColor = _threshold.LowThresholdTextColor;
-            }
-            else if (_threshold.UseOppositeTextColors)
-            {
-                textColor = ControlPaint.Light(_threshold.LowThresholdColor);
-            }
-            if (_threshold.LowThresholdTextColor2 != Color.Empty)
-            {
-                textColor2 = _threshold.LowThresholdTextColor2;
-            }
-            if (_threshold.LowThresholdTextColorStyle != PaletteColorStyle.Inherit)
-            {
-                textColorStyle = _threshold.LowThresholdTextColorStyle;
-            }
-            if (_threshold.LowThresholdTextColorAlign != PaletteRectangleAlign.Inherit)
-            {
-                textColorAlign = _threshold.LowThresholdTextColorAlign;
-            }
-            if (Math.Abs(_threshold.LowThresholdTextColorAngle - (-1f)) > 0.001f)
-            {
-                textColorAngle = _threshold.LowThresholdTextColorAngle;
-            }
+            region = _threshold.Low;
         }
         else if (_value >= _threshold.HighThreshold)
         {
-            backColor = _threshold.HighThresholdColor;
-            if (_threshold.HighThresholdColor2 != Color.Empty)
-            {
-                backColor2 = _threshold.HighThresholdColor2;
-            }
-            if (_threshold.HighThresholdColorStyle != PaletteColorStyle.Inherit)
-            {
-                backColorStyle = _threshold.HighThresholdColorStyle;
-            }
-            if (_threshold.HighThresholdColorAlign != PaletteRectangleAlign.Inherit)
-            {
-                backColorAlign = _threshold.HighThresholdColorAlign;
-            }
-            if (Math.Abs(_threshold.HighThresholdColorAngle - (-1f)) > 0.001f)
-            {
-                backColorAngle = _threshold.HighThresholdColorAngle;
-            }
-            if (_threshold.HighThresholdImage != null)
-            {
-                backImage = _threshold.HighThresholdImage;
-            }
-            if (_threshold.HighThresholdImageStyle != PaletteImageStyle.Inherit)
-            {
-                backImageStyle = _threshold.HighThresholdImageStyle;
-            }
-            if (_threshold.HighThresholdImageAlign != PaletteRectangleAlign.Inherit)
-            {
-                backImageAlign = _threshold.HighThresholdImageAlign;
-            }
-            if (_threshold.HighThresholdTextColor != Color.Empty)
-            {
-                textColor = _threshold.HighThresholdTextColor;
-            }
-            else if (_threshold.UseOppositeTextColors)
-            {
-                textColor = ControlPaint.Dark(_threshold.HighThresholdColor);
-            }
-            if (_threshold.HighThresholdTextColor2 != Color.Empty)
-            {
-                textColor2 = _threshold.HighThresholdTextColor2;
-            }
-            if (_threshold.HighThresholdTextColorStyle != PaletteColorStyle.Inherit)
-            {
-                textColorStyle = _threshold.HighThresholdTextColorStyle;
-            }
-            if (_threshold.HighThresholdTextColorAlign != PaletteRectangleAlign.Inherit)
-            {
-                textColorAlign = _threshold.HighThresholdTextColorAlign;
-            }
-            if (Math.Abs(_threshold.HighThresholdTextColorAngle - (-1f)) > 0.001f)
-            {
-                textColorAngle = _threshold.HighThresholdTextColorAngle;
-            }
+            region = _threshold.High;
         }
         else
         {
-            backColor = _threshold.MediumThresholdColor;
-            if (_threshold.MediumThresholdColor2 != Color.Empty)
-            {
-                backColor2 = _threshold.MediumThresholdColor2;
-            }
-            if (_threshold.MediumThresholdColorStyle != PaletteColorStyle.Inherit)
-            {
-                backColorStyle = _threshold.MediumThresholdColorStyle;
-            }
-            if (_threshold.MediumThresholdColorAlign != PaletteRectangleAlign.Inherit)
-            {
-                backColorAlign = _threshold.MediumThresholdColorAlign;
-            }
-            if (Math.Abs(_threshold.MediumThresholdColorAngle - (-1f)) > 0.001f)
-            {
-                backColorAngle = _threshold.MediumThresholdColorAngle;
-            }
-            if (_threshold.MediumThresholdImage != null)
-            {
-                backImage = _threshold.MediumThresholdImage;
-            }
-            if (_threshold.MediumThresholdImageStyle != PaletteImageStyle.Inherit)
-            {
-                backImageStyle = _threshold.MediumThresholdImageStyle;
-            }
-            if (_threshold.MediumThresholdImageAlign != PaletteRectangleAlign.Inherit)
-            {
-                backImageAlign = _threshold.MediumThresholdImageAlign;
-            }
-            if (_threshold.MediumThresholdTextColor != Color.Empty)
-            {
-                textColor = _threshold.MediumThresholdTextColor;
-            }
-            else if (_threshold.UseOppositeTextColors)
-            {
-                textColor = ControlPaint.Dark(_threshold.MediumThresholdColor);
-            }
-            if (_threshold.MediumThresholdTextColor2 != Color.Empty)
-            {
-                textColor2 = _threshold.MediumThresholdTextColor2;
-            }
-            if (_threshold.MediumThresholdTextColorStyle != PaletteColorStyle.Inherit)
-            {
-                textColorStyle = _threshold.MediumThresholdTextColorStyle;
-            }
-            if (_threshold.MediumThresholdTextColorAlign != PaletteRectangleAlign.Inherit)
-            {
-                textColorAlign = _threshold.MediumThresholdTextColorAlign;
-            }
-            if (Math.Abs(_threshold.MediumThresholdTextColorAngle - (-1f)) > 0.001f)
-            {
-                textColorAngle = _threshold.MediumThresholdTextColorAngle;
-            }
+            region = _threshold.Medium;
+        }
+
+        // Get the active state (Normal or Disabled)
+        ProgressBarThresholdRegionState activeState = Enabled ? region.StateNormal : region.StateDisabled;
+        ProgressBarThresholdRegionState commonState = region.StateCommon;
+
+        // Get effective values - use active state if set, otherwise fall back to common state, then original
+        Color backColor = activeState.Back.Color1 != Color.Empty ? activeState.Back.Color1 : 
+                         (commonState.Back.Color1 != Color.Empty ? commonState.Back.Color1 : _originalValueColor);
+        Color backColor2 = activeState.Back.Color2 != Color.Empty ? activeState.Back.Color2 : commonState.Back.Color2;
+        PaletteColorStyle backColorStyle = activeState.Back.ColorStyle != PaletteColorStyle.Inherit ? activeState.Back.ColorStyle : commonState.Back.ColorStyle;
+        PaletteRectangleAlign backColorAlign = activeState.Back.ColorAlign != PaletteRectangleAlign.Inherit ? activeState.Back.ColorAlign : commonState.Back.ColorAlign;
+        float backColorAngle = Math.Abs(activeState.Back.ColorAngle - (-1f)) > 0.001f ? activeState.Back.ColorAngle : commonState.Back.ColorAngle;
+        Image? backImage = activeState.Back.Image ?? commonState.Back.Image;
+        PaletteImageStyle backImageStyle = activeState.Back.ImageStyle != PaletteImageStyle.Inherit ? activeState.Back.ImageStyle : commonState.Back.ImageStyle;
+        PaletteRectangleAlign backImageAlign = activeState.Back.ImageAlign != PaletteRectangleAlign.Inherit ? activeState.Back.ImageAlign : commonState.Back.ImageAlign;
+        Color textColor = activeState.Content.Color1 != Color.Empty ? activeState.Content.Color1 : commonState.Content.Color1;
+        Color textColor2 = activeState.Content.Color2 != Color.Empty ? activeState.Content.Color2 : commonState.Content.Color2;
+        PaletteColorStyle textColorStyle = activeState.Content.ColorStyle != PaletteColorStyle.Inherit ? activeState.Content.ColorStyle : commonState.Content.ColorStyle;
+        PaletteRectangleAlign textColorAlign = activeState.Content.ColorAlign != PaletteRectangleAlign.Inherit ? activeState.Content.ColorAlign : commonState.Content.ColorAlign;
+        float textColorAngle = Math.Abs(activeState.Content.ColorAngle - (-1f)) > 0.001f ? activeState.Content.ColorAngle : commonState.Content.ColorAngle;
+
+        // Handle UseOppositeTextColors - if textColor is Empty and UseOppositeTextColors is enabled, calculate opposite
+        if (textColor == Color.Empty && _threshold.UseOppositeTextColors && backColor != Color.Empty)
+        {
+            textColor = ControlPaint.Light(backColor);
         }
 
         // Update background color properties
