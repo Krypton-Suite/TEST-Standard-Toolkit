@@ -502,11 +502,15 @@ public class KryptonHScrollBar : Control
         // save client rectangle
         Rectangle rect = ClientRectangle;
 
+        // Get DPI scaling factor
+        float dpiFactor = GetDpiFactor();
+        int borderOffset = (int)Math.Round(1 * dpiFactor);
+
         // adjust the rectangle for horizontal scrollbar
-        rect.X += _arrowWidth + 1;
-        rect.Y++;
-        rect.Width -= (_arrowWidth * 2) + 2;
-        rect.Height -= 2;
+        rect.X += _arrowWidth + borderOffset;
+        rect.Y += borderOffset;
+        rect.Width -= (_arrowWidth * 2) + (borderOffset * 2);
+        rect.Height -= borderOffset * 2;
 
         KryptonScrollBarRenderer.InitColors();
 
@@ -568,9 +572,10 @@ public class KryptonHScrollBar : Control
         }
         else if (_rightBarClicked)
         {
-            _clickedBarRectangle.X = _thumbRectangle.Right + 1;
+            int borderOffset = (int)Math.Round(1 * GetDpiFactor());
+            _clickedBarRectangle.X = _thumbRectangle.Right + borderOffset;
             _clickedBarRectangle.Width =
-                _thumbRightLimitRight - _clickedBarRectangle.X + 1;
+                _thumbRightLimitRight - _clickedBarRectangle.X + borderOffset;
 
             KryptonScrollBarRenderer.DrawTrack(
                 e.Graphics,
@@ -849,7 +854,7 @@ public class KryptonHScrollBar : Control
     protected override bool ProcessDialogKey(Keys keyData)
     {
         // key handling is here - keys recognized by the control
-        // Left&Right, PageUp, PageDown, Home, End
+        // Left&Right, PageUp, PageDown, Home, End, Ctrl+Home, Ctrl+End
         if (keyData == Keys.Left)
         {
             Value -= _smallChange;
@@ -884,10 +889,12 @@ public class KryptonHScrollBar : Control
                 return true;
             }
             case Keys.Home:
+            case Keys.Control | Keys.Home:
                 Value = _minimum;
 
                 return true;
             case Keys.End:
+            case Keys.Control | Keys.End:
                 Value = _maximum;
 
                 return true;
@@ -925,6 +932,29 @@ public class KryptonHScrollBar : Control
     #region Misc Methods
 
     /// <summary>
+    /// Gets the DPI scaling factor for the control.
+    /// </summary>
+    /// <returns>The DPI scaling factor (DeviceDpi / 96). Returns 1.0 if DPI cannot be determined.</returns>
+    private float GetDpiFactor()
+    {
+        if (IsHandleCreated && DeviceDpi > 0)
+        {
+            return DeviceDpi / 96F;
+        }
+
+        // Fallback: use Graphics DPI if handle not created yet
+        try
+        {
+            using Graphics g = CreateGraphics();
+            return g.DpiX / 96F;
+        }
+        catch
+        {
+            return 1.0F;
+        }
+    }
+
+    /// <summary>
     /// Sets up the scrollbar.
     /// </summary>
     private void SetUpScrollBar()
@@ -935,36 +965,43 @@ public class KryptonHScrollBar : Control
             return;
         }
 
+        // Get DPI scaling factor
+        float dpiFactor = GetDpiFactor();
+
         // set up the width's, height's and rectangles for horizontal scrollbar
-        _arrowHeight = 15;
-        _arrowWidth = 17;
-        _thumbHeight = 15;
+        // Scale dimensions based on DPI
+        _arrowHeight = (int)Math.Round(15 * dpiFactor);
+        _arrowWidth = (int)Math.Round(17 * dpiFactor);
+        _thumbHeight = (int)Math.Round(15 * dpiFactor);
         _thumbWidth = GetThumbSize();
 
+        int borderOffset = (int)Math.Round(1 * dpiFactor);
+        int verticalOffset = (int)Math.Round(2 * dpiFactor);
+
         _clickedBarRectangle = ClientRectangle;
-        _clickedBarRectangle.Inflate(-1, -1);
+        _clickedBarRectangle.Inflate(-borderOffset, -borderOffset);
         _clickedBarRectangle.X += _arrowWidth;
         _clickedBarRectangle.Width -= _arrowWidth * 2;
 
         _channelRectangle = _clickedBarRectangle;
 
         _thumbRectangle = new Rectangle(
-            ClientRectangle.X + _arrowWidth + 1,
-            ClientRectangle.Y + 2,
+            ClientRectangle.X + _arrowWidth + borderOffset,
+            ClientRectangle.Y + verticalOffset,
             _thumbWidth,
-            _thumbHeight - 1
+            _thumbHeight - borderOffset
         );
 
         _leftArrowRectangle = new Rectangle(
-            ClientRectangle.X + 1,
-            ClientRectangle.Y + 2,
+            ClientRectangle.X + borderOffset,
+            ClientRectangle.Y + verticalOffset,
             _arrowWidth,
             _arrowHeight
         );
 
         _rightArrowRectangle = new Rectangle(
-            ClientRectangle.Right - _arrowWidth - 1,
-            ClientRectangle.Y + 2,
+            ClientRectangle.Right - _arrowWidth - borderOffset,
+            ClientRectangle.Y + verticalOffset,
             _arrowWidth,
             _arrowHeight
         );
@@ -974,14 +1011,14 @@ public class KryptonHScrollBar : Control
 
         // Set the right limit of the thumb's right border.
         _thumbRightLimitRight =
-            ClientRectangle.Right - _arrowWidth - 2;
+            ClientRectangle.Right - _arrowWidth - verticalOffset;
 
         // Set the right limit of the thumb's left border.
         _thumbRightLimitLeft =
             _thumbRightLimitRight - _thumbRectangle.Width;
 
         // Set the left limit of the thumb's left border.
-        _thumbLeftLimit = ClientRectangle.X + _arrowWidth + 1;
+        _thumbLeftLimit = ClientRectangle.X + _arrowWidth + borderOffset;
 
         ChangeThumbPosition(GetThumbPosition());
 

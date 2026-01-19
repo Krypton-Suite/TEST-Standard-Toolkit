@@ -105,6 +105,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("PropertyGridTest", string.Empty, typeof(PropertyGridTest));
         CreateButton("Ribbon", string.Empty, typeof(RibbonTest));
         CreateButton("Ribbon Notification Bar", "Comprehensive demonstration of the Krypton Ribbon Notification Bar feature with all customization options.", typeof(RibbonNotificationBarDemo));
+        CreateButton("Detachable Ribbons", "Demonstrates ribbons hosted on UserControls (Issue #595). Enables plugin architectures where ribbons can be hosted on UserControls that get loaded by plugins.", typeof(DetachableRibbonTest));
         CreateButton("TextBox", string.Empty, typeof(TextBoxEventTest));
         CreateButton("TextBox Validating Test", "Tests fix for Validating event duplication bug #2801", typeof(KryptonTextBoxValidatingTest));
         CreateButton("RichTextBox Formatting Test", "Tests fix for RichTextBox formatting preservation when palette changes (Issue #2832)", typeof(RichTextBoxFormattingTest));
