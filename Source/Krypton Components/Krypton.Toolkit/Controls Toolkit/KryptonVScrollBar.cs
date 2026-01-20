@@ -572,7 +572,6 @@ public class KryptonVScrollBar : Control
         }
         else if (_bottomBarClicked)
         {
-            int borderOffset = (int)Math.Round(1 * GetDpiFactor());
             _clickedBarRectangle.Y = _thumbRectangle.Bottom + borderOffset;
             _clickedBarRectangle.Height =
                 _thumbBottomLimitBottom - _clickedBarRectangle.Y + borderOffset;
