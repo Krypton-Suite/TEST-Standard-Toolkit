@@ -873,18 +873,17 @@ public class KryptonHeaderGroup : VisualControlContainment
     /// <param name="e">An EventArgs containing the event data.</param>
     protected override void OnHandleCreated(EventArgs e)
     {
-        base.OnHandleCreated(e);
-        if (_useKryptonScrollbars)
-        {
-            UpdateScrollbarManager();
-        }
-    }
-    {
         // Let base class do standard stuff
         base.OnHandleCreated(e);
 
         // We need a layout to occur before any painting
         InvokeLayout();
+
+        // Initialize scrollbar manager if enabled
+        if (_useKryptonScrollbars)
+        {
+            UpdateScrollbarManager();
+        }
     }
 
     /// <summary>
