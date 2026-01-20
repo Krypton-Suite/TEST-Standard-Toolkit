@@ -393,13 +393,6 @@ public class KryptonGroup : VisualControlContainment
         }
         base.Dispose(disposing);
     }
-    {
-        // Let base class do standard stuff
-        base.OnHandleCreated(e);
-
-        // We need a layout to occur before any painting
-        InvokeLayout();
-    }
 
     /// <summary>
     /// Raises the Initialized event.

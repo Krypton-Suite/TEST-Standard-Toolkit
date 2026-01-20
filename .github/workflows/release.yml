@@ -161,20 +161,20 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $buildArgs = 'Scripts/Build/build.proj /t:Build /p:Configuration=Release /p:Platform="Any CPU"'
+          $projectPath = "Scripts/Build/build.proj"
           
           if (${{ steps.prepare_cert.outputs.cert_available }} -eq 'true') {
-            $buildArgs += ' /p:EnableAuthenticodeSigning=true'
-            $buildArgs += " /p:AuthenticodeCertificatePath=`"${{ steps.prepare_cert.outputs.cert_path }}`""
-            if ($env:AUTHENTICODE_CERT_PASSWORD) {
-              $buildArgs += " /p:AuthenticodeCertificatePassword=`"$env:AUTHENTICODE_CERT_PASSWORD`""
-            }
             Write-Host "Building with Authenticode signing enabled"
+            $certPath = "${{ steps.prepare_cert.outputs.cert_path }}"
+            if ($env:AUTHENTICODE_CERT_PASSWORD) {
+              & msbuild $projectPath /t:Build /p:Configuration=Release /p:Platform="Any CPU" /p:EnableAuthenticodeSigning=true /p:AuthenticodeCertificatePath="$certPath" /p:AuthenticodeCertificatePassword="$env:AUTHENTICODE_CERT_PASSWORD"
+            } else {
+              & msbuild $projectPath /t:Build /p:Configuration=Release /p:Platform="Any CPU" /p:EnableAuthenticodeSigning=true /p:AuthenticodeCertificatePath="$certPath"
+            }
           } else {
             Write-Host "Building without Authenticode signing"
+            & msbuild $projectPath /t:Build /p:Configuration=Release /p:Platform="Any CPU"
           }
-          
-          msbuild $buildArgs
         env:
           AUTHENTICODE_CERT_PASSWORD: ${{ secrets.AUTHENTICODE_CERT_PASSWORD }}
 
@@ -426,20 +426,20 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $buildArgs = 'Scripts/Build/build.proj /t:Build /p:Configuration=Release /p:Platform="Any CPU"'
+          $projectPath = "Scripts/Build/build.proj"
           
           if (${{ steps.prepare_cert.outputs.cert_available }} -eq 'true') {
-            $buildArgs += ' /p:EnableAuthenticodeSigning=true'
-            $buildArgs += " /p:AuthenticodeCertificatePath=`"${{ steps.prepare_cert.outputs.cert_path }}`""
-            if ($env:AUTHENTICODE_CERT_PASSWORD) {
-              $buildArgs += " /p:AuthenticodeCertificatePassword=`"$env:AUTHENTICODE_CERT_PASSWORD`""
-            }
             Write-Host "Building with Authenticode signing enabled"
+            $certPath = "${{ steps.prepare_cert.outputs.cert_path }}"
+            if ($env:AUTHENTICODE_CERT_PASSWORD) {
+              & msbuild $projectPath /t:Build /p:Configuration=Release /p:Platform="Any CPU" /p:EnableAuthenticodeSigning=true /p:AuthenticodeCertificatePath="$certPath" /p:AuthenticodeCertificatePassword="$env:AUTHENTICODE_CERT_PASSWORD"
+            } else {
+              & msbuild $projectPath /t:Build /p:Configuration=Release /p:Platform="Any CPU" /p:EnableAuthenticodeSigning=true /p:AuthenticodeCertificatePath="$certPath"
+            }
           } else {
             Write-Host "Building without Authenticode signing"
+            & msbuild $projectPath /t:Build /p:Configuration=Release /p:Platform="Any CPU"
           }
-          
-          msbuild $buildArgs
         env:
           AUTHENTICODE_CERT_PASSWORD: ${{ secrets.AUTHENTICODE_CERT_PASSWORD }}
 
