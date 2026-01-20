@@ -83,6 +83,8 @@ public partial class StartScreen : KryptonForm
         CreateButton("NotifyIcon", "Comprehensive demonstration of KryptonNotifyIcon with all events, balloon tips, and context menu support.", typeof(NotifyIconTest));
         CreateButton("Print Preview Dialog", "Comprehensive demonstration of KryptonPrintPreviewDialog with various document types, window states, anti-aliasing options, and integration with KryptonPrintDocument.", typeof(PrintPreviewDialogTest));
         CreateButton("ProgressBar", "Checkout if progress has been made.", typeof(ProgressBarTest));
+        CreateButton("ScrollBar", "Comprehensive demonstration of KryptonHScrollBar and KryptonVScrollBar controls with basic usage, scrolling content, synchronization, theming, programmatic control, and event logging.", typeof(ScrollBarTest));
+        CreateButton("Scrollbar Manager", "Comprehensive demonstration of KryptonScrollbarManager with container mode, native wrapper mode, dynamic content, and integration examples.", typeof(ScrollbarManagerTest));
         CreateButton("Ribbon / Navigator / Workspace", string.Empty, typeof(RibbonNavigatorWorkspaceTest));
         CreateButton("Splash Screen", string.Empty, typeof(SplashScreenExample));
         CreateButton("Theme Controls", string.Empty, typeof(ThemeControlExamples));
@@ -104,6 +106,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("PropertyGridTest", string.Empty, typeof(PropertyGridTest));
         CreateButton("Ribbon", string.Empty, typeof(RibbonTest));
         CreateButton("Ribbon Notification Bar", "Comprehensive demonstration of the Krypton Ribbon Notification Bar feature with all customization options.", typeof(RibbonNotificationBarDemo));
+        CreateButton("Detachable Ribbons", "Demonstrates ribbons hosted on UserControls (Issue #595). Enables plugin architectures where ribbons can be hosted on UserControls that get loaded by plugins.", typeof(DetachableRibbonTest));
         CreateButton("TextBox", string.Empty, typeof(TextBoxEventTest));
         CreateButton("TextBox Validating Test", "Tests fix for Validating event duplication bug #2801", typeof(KryptonTextBoxValidatingTest));
         CreateButton("RichTextBox Formatting Test", "Tests fix for RichTextBox formatting preservation when palette changes (Issue #2832)", typeof(RichTextBoxFormattingTest));

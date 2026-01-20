@@ -427,6 +427,8 @@ public class KryptonListBox : VisualControlBase,
     private bool _trackingMouseEnter;
     // Captures the scroll position before a click/selection change
     private int _preClickTopIndex;
+    private KryptonScrollbarManager? _scrollbarManager;
+    private bool _useKryptonScrollbars;
     #endregion
 
     #region Events
@@ -679,6 +681,11 @@ public class KryptonListBox : VisualControlBase,
     /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
     protected override void Dispose(bool disposing)
     {
+        if (disposing)
+        {
+            _scrollbarManager?.Dispose();
+            _scrollbarManager = null;
+        }
         base.Dispose(disposing);
         if (_screenDC != IntPtr.Zero)
         {
@@ -703,6 +710,36 @@ public class KryptonListBox : VisualControlBase,
     [EditorBrowsable(EditorBrowsableState.Always)]
     [Browsable(false)]
     public Control ContainedControl => ListBox;
+
+    /// <summary>
+    /// Gets or sets whether to use Krypton-themed scrollbars instead of native scrollbars.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Gets or sets whether to use Krypton-themed scrollbars instead of native scrollbars.")]
+    [DefaultValue(false)]
+    public bool UseKryptonScrollbars
+    {
+        get => _useKryptonScrollbars;
+        set
+        {
+            if (_useKryptonScrollbars != value)
+            {
+                _useKryptonScrollbars = value;
+                UpdateScrollbarManager();
+            }
+        }
+    }
+
+    private bool ShouldSerializeUseKryptonScrollbars() => UseKryptonScrollbars;
+
+    private void ResetUseKryptonScrollbars() => UseKryptonScrollbars = false;
+
+    /// <summary>
+    /// Gets access to the scrollbar manager when UseKryptonScrollbars is enabled.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public KryptonScrollbarManager? ScrollbarManager => _scrollbarManager;
 
     /// <summary>
     /// Gets or sets the text for the control.
@@ -1527,6 +1564,12 @@ public class KryptonListBox : VisualControlBase,
 
         // We need a layout to occur before any painting
         InvokeLayout();
+
+        // Initialize scrollbar manager if enabled
+        if (_useKryptonScrollbars)
+        {
+            UpdateScrollbarManager();
+        }
     }
 
     /// <summary>
@@ -1599,6 +1642,29 @@ public class KryptonListBox : VisualControlBase,
     #endregion
 
     #region Implementation
+
+    private void UpdateScrollbarManager()
+    {
+        if (_useKryptonScrollbars)
+        {
+            if (_scrollbarManager == null)
+            {
+                _scrollbarManager = new KryptonScrollbarManager(_listBox, ScrollbarManagerMode.NativeWrapper)
+                {
+                    Enabled = true
+                };
+            }
+        }
+        else
+        {
+            if (_scrollbarManager != null)
+            {
+                _scrollbarManager.Dispose();
+                _scrollbarManager = null;
+            }
+        }
+    }
+
     private void UpdateStateAndPalettes()
     {
         if (!IsDisposed)
