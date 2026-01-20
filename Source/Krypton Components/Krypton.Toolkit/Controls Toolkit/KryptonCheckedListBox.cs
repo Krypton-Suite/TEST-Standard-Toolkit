@@ -2239,16 +2239,6 @@ public class KryptonCheckedListBox : VisualControlBase,
             UpdateScrollbarManager();
         }
     }
-    {
-        // Let base class do standard stuff
-        base.OnHandleCreated(e);
-
-        // Force the font to be set into the text box child control
-        PerformNeedPaint(false);
-
-        // We need a layout to occur before any painting
-        InvokeLayout();
-    }
 
     /// <summary>
     /// Processes a notification from palette storage of a paint and optional layout required.
