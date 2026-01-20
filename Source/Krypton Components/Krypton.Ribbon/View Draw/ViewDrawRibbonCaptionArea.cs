@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -480,7 +480,8 @@ internal class ViewDrawRibbonCaptionArea : ViewDrawDocker
         if (_ribbon is { IsDisposed: false, Disposing: false })
         {
             // Find the new owning level form we are hosted inside
-            var ownerForm = _ribbon.Parent as Form;
+            // Use FindForm() to support ribbons hosted on UserControls (detachable ribbons)
+            var ownerForm = _ribbon.FindForm();
 
             // Should always be inside a form, but you never know!
             // We only care if the owner form is a KryptonForm instance
@@ -505,7 +506,12 @@ internal class ViewDrawRibbonCaptionArea : ViewDrawDocker
         if (_kryptonForm != null)
         {
             // Ribbon must be placed at the top left of the forms client area
-            if (_ribbon.Location == Point.Empty)
+            // Calculate the ribbon's position relative to the form's client area
+            // This supports ribbons hosted on UserControls (detachable ribbons)
+            Point ribbonLocationInForm = _ribbon.PointToScreen(Point.Empty);
+            Point formClientLocation = _kryptonForm.PointToClient(ribbonLocationInForm);
+
+            if (formClientLocation == Point.Empty)
             {
                 // Find the height of the top caption area for the form
                 var height = _kryptonForm.RealWindowBorders.Top;

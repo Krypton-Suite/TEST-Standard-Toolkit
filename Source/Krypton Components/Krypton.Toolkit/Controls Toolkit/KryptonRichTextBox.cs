@@ -298,6 +298,8 @@ public class KryptonRichTextBox : VisualControlBase,
     private bool _trackingMouseEnter;
     private bool _firstPaint;
     private string? _originalRtf; // Store original RTF to restore when switching away from dark mode black themes
+    private KryptonScrollbarManager? _scrollbarManager;
+    private bool _useKryptonScrollbars;
     #endregion
 
     #region Events
@@ -513,6 +515,9 @@ public class KryptonRichTextBox : VisualControlBase,
         {
             // Remove any showing tooltip
             OnCancelToolTip(this, EventArgs.Empty);
+
+            _scrollbarManager?.Dispose();
+            _scrollbarManager = null;
         }
 
         base.Dispose(disposing);
@@ -563,6 +568,36 @@ public class KryptonRichTextBox : VisualControlBase,
     [EditorBrowsable(EditorBrowsableState.Always)]
     [Browsable(false)]
     public Control ContainedControl => RichTextBox;
+
+    /// <summary>
+    /// Gets or sets whether to use Krypton-themed scrollbars instead of native scrollbars.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Gets or sets whether to use Krypton-themed scrollbars instead of native scrollbars.")]
+    [DefaultValue(false)]
+    public bool UseKryptonScrollbars
+    {
+        get => _useKryptonScrollbars;
+        set
+        {
+            if (_useKryptonScrollbars != value)
+            {
+                _useKryptonScrollbars = value;
+                UpdateScrollbarManager();
+            }
+        }
+    }
+
+    private bool ShouldSerializeUseKryptonScrollbars() => UseKryptonScrollbars;
+
+    private void ResetUseKryptonScrollbars() => UseKryptonScrollbars = false;
+
+    /// <summary>
+    /// Gets access to the scrollbar manager when UseKryptonScrollbars is enabled.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public KryptonScrollbarManager? ScrollbarManager => _scrollbarManager;
 
     /// <summary>
     /// Gets a value indicating whether the control has input focus.
@@ -1799,6 +1834,12 @@ public class KryptonRichTextBox : VisualControlBase,
 
         // We need a layout to occur before any painting
         InvokeLayout();
+
+        // Initialize scrollbar manager if enabled
+        if (_useKryptonScrollbars)
+        {
+            UpdateScrollbarManager();
+        }
     }
 
     /// <summary>
@@ -2232,6 +2273,28 @@ public class KryptonRichTextBox : VisualControlBase,
     #endregion
 
     #region Implementation
+
+    private void UpdateScrollbarManager()
+    {
+        if (_useKryptonScrollbars)
+        {
+            if (_scrollbarManager == null)
+            {
+                _scrollbarManager = new KryptonScrollbarManager(_richTextBox, ScrollbarManagerMode.NativeWrapper)
+                {
+                    Enabled = true
+                };
+            }
+        }
+        else
+        {
+            if (_scrollbarManager != null)
+            {
+                _scrollbarManager.Dispose();
+                _scrollbarManager = null;
+            }
+        }
+    }
 
     private void UpdateStateAndPalettes()
     {
