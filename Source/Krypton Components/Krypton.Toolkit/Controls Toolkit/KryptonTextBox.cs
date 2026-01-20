@@ -332,6 +332,8 @@ public class KryptonTextBox : VisualControlBase,
     private bool _showEllipsisButton;
     //private bool _isInAlphaNumericMode;
     private readonly ButtonSpecAny _editorButton;
+    private KryptonScrollbarManager? _scrollbarManager;
+    private bool _useKryptonScrollbars;
     #endregion
 
     #region Events
@@ -551,6 +553,9 @@ public class KryptonTextBox : VisualControlBase,
 
             // Remember to pull down the manager instance
             _buttonManager?.Destruct();
+
+            _scrollbarManager?.Dispose();
+            _scrollbarManager = null;
         }
 
         base.Dispose(disposing);
@@ -595,6 +600,36 @@ public class KryptonTextBox : VisualControlBase,
     [EditorBrowsable(EditorBrowsableState.Never)]
     [Browsable(false)]
     public bool InRibbonDesignMode { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to use Krypton-themed scrollbars instead of native scrollbars.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Gets or sets whether to use Krypton-themed scrollbars instead of native scrollbars.")]
+    [DefaultValue(false)]
+    public bool UseKryptonScrollbars
+    {
+        get => _useKryptonScrollbars;
+        set
+        {
+            if (_useKryptonScrollbars != value)
+            {
+                _useKryptonScrollbars = value;
+                UpdateScrollbarManager();
+            }
+        }
+    }
+
+    private bool ShouldSerializeUseKryptonScrollbars() => UseKryptonScrollbars;
+
+    private void ResetUseKryptonScrollbars() => UseKryptonScrollbars = false;
+
+    /// <summary>
+    /// Gets access to the scrollbar manager when UseKryptonScrollbars is enabled.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public KryptonScrollbarManager? ScrollbarManager => _scrollbarManager;
 
     /// <summary>
     /// Gets and sets if the control uses the multiline string editor widget.
@@ -1507,6 +1542,47 @@ public class KryptonTextBox : VisualControlBase,
     /// </summary>
     /// <param name="e">An EventArgs containing the event data.</param>
     protected override void OnHandleCreated(EventArgs e)
+    {
+        // Let base class do standard stuff
+        base.OnHandleCreated(e);
+
+        // Force the font to be set into the text box child control
+        PerformNeedPaint(false);
+
+        // We need a layout to occur before any painting
+        InvokeLayout();
+
+        // We need to recalculate the correct height
+        AdjustHeight(true);
+
+        // Initialize scrollbar manager if enabled
+        if (_useKryptonScrollbars)
+        {
+            UpdateScrollbarManager();
+        }
+    }
+
+    private void UpdateScrollbarManager()
+    {
+        if (_useKryptonScrollbars)
+        {
+            if (_scrollbarManager == null)
+            {
+                _scrollbarManager = new KryptonScrollbarManager(_textBox, ScrollbarManagerMode.NativeWrapper)
+                {
+                    Enabled = true
+                };
+            }
+        }
+        else
+        {
+            if (_scrollbarManager != null)
+            {
+                _scrollbarManager.Dispose();
+                _scrollbarManager = null;
+            }
+        }
+    }
     {
         // Let base class do standard stuff
         base.OnHandleCreated(e);

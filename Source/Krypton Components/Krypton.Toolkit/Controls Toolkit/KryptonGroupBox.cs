@@ -38,6 +38,8 @@ public class KryptonGroupBox : VisualControlContainment
     private bool _captionVisible;
     private readonly bool _ignoreLayout;
     private bool _layingOut;
+    private KryptonScrollbarManager? _scrollbarManager;
+    private bool _useKryptonScrollbars;
     #endregion
 
     #region Identity
@@ -128,6 +130,9 @@ public class KryptonGroupBox : VisualControlContainment
                     // Ignored
                 }
             }
+
+            _scrollbarManager?.Dispose();
+            _scrollbarManager = null;
         }
 
         base.Dispose(disposing);
@@ -237,6 +242,36 @@ public class KryptonGroupBox : VisualControlContainment
     [Description(@"The internal panel that contains group content.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public KryptonGroupBoxPanel Panel { get; }
+
+    /// <summary>
+    /// Gets or sets whether to use Krypton-themed scrollbars instead of native scrollbars.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"Gets or sets whether to use Krypton-themed scrollbars instead of native scrollbars.")]
+    [DefaultValue(false)]
+    public bool UseKryptonScrollbars
+    {
+        get => _useKryptonScrollbars;
+        set
+        {
+            if (_useKryptonScrollbars != value)
+            {
+                _useKryptonScrollbars = value;
+                UpdateScrollbarManager();
+            }
+        }
+    }
+
+    private bool ShouldSerializeUseKryptonScrollbars() => UseKryptonScrollbars;
+
+    private void ResetUseKryptonScrollbars() => UseKryptonScrollbars = false;
+
+    /// <summary>
+    /// Gets access to the scrollbar manager when UseKryptonScrollbars is enabled.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public KryptonScrollbarManager? ScrollbarManager => _scrollbarManager;
 
     /// <summary>
     /// Gets and the sets the percentage of overlap for the caption and group area.
@@ -781,6 +816,28 @@ public class KryptonGroupBox : VisualControlContainment
     private void OnRemoveObscurer(object? sender, EventArgs e) => _obscurer?.Uncover();
 
     private void OnValuesTextChanged(object? sender, EventArgs e) => OnTextChanged(EventArgs.Empty);
+
+    private void UpdateScrollbarManager()
+    {
+        if (_useKryptonScrollbars)
+        {
+            if (_scrollbarManager == null)
+            {
+                _scrollbarManager = new KryptonScrollbarManager(Panel, ScrollbarManagerMode.Container)
+                {
+                    Enabled = true
+                };
+            }
+        }
+        else
+        {
+            if (_scrollbarManager != null)
+            {
+                _scrollbarManager.Dispose();
+                _scrollbarManager = null;
+            }
+        }
+    }
 
     private void OnGroupPanelPaint(object sender, NeedLayoutEventArgs e)
     {
