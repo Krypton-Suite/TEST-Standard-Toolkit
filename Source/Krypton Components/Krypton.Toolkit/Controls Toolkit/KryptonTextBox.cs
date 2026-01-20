@@ -1583,19 +1583,6 @@ public class KryptonTextBox : VisualControlBase,
             }
         }
     }
-    {
-        // Let base class do standard stuff
-        base.OnHandleCreated(e);
-
-        // Force the font to be set into the text box child control
-        PerformNeedPaint(false);
-
-        // We need a layout to occur before any painting
-        InvokeLayout();
-
-        // We need to recalculate the correct height
-        AdjustHeight(true);
-    }
 
     /// <summary>
     /// Raises the EnabledChanged event.
