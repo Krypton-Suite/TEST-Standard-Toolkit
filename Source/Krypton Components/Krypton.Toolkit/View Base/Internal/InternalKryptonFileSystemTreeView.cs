@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -48,14 +48,14 @@ public class InternalKryptonFileSystemTreeView : KryptonFileSystemTreeView
     /// </summary>
     [Category(@"Behavior")]
     [Description(@"Occurs when a directory has been expanded.")]
-    public event EventHandler<DirectoryExpandedEventArgs>? DirectoryExpanded;
+    public new event EventHandler<DirectoryExpandedEventArgs>? DirectoryExpanded;
 
     /// <summary>
     /// Occurs when an error occurs while loading the file system.
     /// </summary>
     [Category(@"Behavior")]
     [Description(@"Occurs when an error occurs while loading the file system.")]
-    public event EventHandler<FileSystemErrorEventArgs>? FileSystemError;
+    public new event EventHandler<FileSystemErrorEventArgs>? FileSystemError;
 
     #endregion
 
@@ -97,7 +97,7 @@ public class InternalKryptonFileSystemTreeView : KryptonFileSystemTreeView
     /// <value>
     /// The file system TreeView values.
     /// </value>
-    public FileSystemTreeViewValues FileSystemTreeViewValues => _fileSystemValues;
+    public new FileSystemTreeViewValues FileSystemTreeViewValues => _fileSystemValues;
 
     /// <summary>
     /// Gets or sets the root mode for the tree view.

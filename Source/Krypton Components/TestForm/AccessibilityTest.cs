@@ -636,7 +636,7 @@ public partial class AccessibilityTest : KryptonForm
         results.AppendLine();
         results.AppendLine("6. Verify across all target frameworks:");
         results.AppendLine("   - net472, net48, net481 (Legacy)");
-        results.AppendLine("   - net8.0-windows, net9.0-windows, net10.0-windows (Modern)");
+        results.AppendLine("   - net8.0-windows, net9.0-windows (Modern)");
 
         _txtResults.Text = results.ToString();
         _txtResults.SelectionStart = 0;

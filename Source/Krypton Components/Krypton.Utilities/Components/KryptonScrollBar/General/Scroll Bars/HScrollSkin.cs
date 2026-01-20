@@ -10,6 +10,8 @@
  */
 #endregion
 
+using System.ComponentModel;
+using System.Windows.Forms;
 using Krypton.Toolkit;
 
 namespace Krypton.Utilities;
