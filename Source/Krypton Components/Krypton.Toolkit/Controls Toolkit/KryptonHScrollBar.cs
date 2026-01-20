@@ -572,7 +572,6 @@ public class KryptonHScrollBar : Control
         }
         else if (_rightBarClicked)
         {
-            int borderOffset = (int)Math.Round(1 * GetDpiFactor());
             _clickedBarRectangle.X = _thumbRectangle.Right + borderOffset;
             _clickedBarRectangle.Width =
                 _thumbRightLimitRight - _clickedBarRectangle.X + borderOffset;

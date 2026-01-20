@@ -612,14 +612,14 @@ public class KryptonScrollbarManager : IDisposable
         try
         {
             // Get current window style
-            long style = PI.GetWindowLong(_targetControl.Handle, PI.GWL_.STYLE);
+            uint style = PI.GetWindowLong(_targetControl.Handle, PI.GWL_.STYLE);
 
             // Remove scrollbar styles
-            style &= ~(long)PI.WS_.HSCROLL;
-            style &= ~(long)PI.WS_.VSCROLL;
+            style &= ~(uint)PI.WS_.HSCROLL;
+            style &= ~(uint)PI.WS_.VSCROLL;
 
             // Set new style
-            PI.SetWindowLong(_targetControl.Handle, PI.GWL_.STYLE, (IntPtr)style);
+            PI.SetWindowLong(_targetControl.Handle, PI.GWL_.STYLE, style);
 
             // Force redraw
             _targetControl.Invalidate();
