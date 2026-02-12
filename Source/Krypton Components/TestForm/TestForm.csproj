@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Krypton.Docking\Krypton.Docking.csproj" />
     <ProjectReference Include="..\Krypton.Navigator\Krypton.Navigator.csproj" />
+    <ProjectReference Include="..\Krypton.Navigator.Utilities\Krypton.Navigator.Utilities.csproj" />
     <ProjectReference Include="..\Krypton.Ribbon\Krypton.Ribbon.csproj" />
     <ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit.csproj" />
     <ProjectReference Include="..\Krypton.Utilities\Krypton.Utilities.csproj" />

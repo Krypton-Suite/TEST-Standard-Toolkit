@@ -216,6 +216,7 @@ public class KryptonForm : VisualForm,
     private bool _firstCheckView;
     private bool _lastNotNormal;
     private bool _useDropShadow;
+    private bool _enableMica;
     private StatusStrip? _statusStrip;
     private bool _mdiTransferred;
     private Bitmap? _cacheBitmap;
@@ -1116,6 +1117,39 @@ public class KryptonForm : VisualForm,
     }
 
     /// <summary>
+    /// Gets or sets whether the Windows 11 Mica backdrop material is applied to the form.
+    /// Only has effect on Windows 11 (build 22000+). When using the Windows 11 Mica palette,
+    /// this is set to true automatically.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Use the Windows 11 Mica backdrop material on the form. Only applies on Windows 11.")]
+    [DefaultValue(false)]
+    public bool EnableMica
+    {
+        get => _enableMica;
+        set
+        {
+            if (_enableMica == value)
+            {
+                return;
+            }
+
+            _enableMica = value;
+            if (IsHandleCreated && !DesignMode)
+            {
+                if (_enableMica)
+                {
+                    WindowUtilities.EnableMica(this);
+                }
+                else
+                {
+                    WindowUtilities.DisableMica(this);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets or sets a value indicating whether this instance is in administrator mode.
     /// </summary>
     /// <value>
@@ -2007,6 +2041,12 @@ public class KryptonForm : VisualForm,
 
         // Ensure Material defaults are applied as early as possible for new forms
         ApplyMaterialFormChromeDefaultsIfNeeded();
+
+        // Apply Windows 11 Mica backdrop when enabled
+        if (_enableMica && !DesignMode)
+        {
+            WindowUtilities.EnableMica(this);
+        }
     }
 
     #endregion
@@ -2273,6 +2313,43 @@ public class KryptonForm : VisualForm,
         return ret;
     }
 
+    /// <summary>
+    /// Process the WM_NCCALCSIZE message when overriding window chrome.
+    /// Adjusts the top border to 0 when the caption should be hidden.
+    /// </summary>
+    /// <param name="m">A Windows-based message.</param>
+    /// <returns>True if the message was processed; otherwise false.</returns>
+    protected override bool OnWM_NCCALCSIZE(ref Message m)
+    {
+        // Does the LParam contain a RECT or an NCCALCSIZE_PARAMS
+        if (m.WParam != IntPtr.Zero)
+        {
+            // Get the border sizing needed around the client area
+            Padding borders = RealWindowBorders;
+
+            // If caption should be hidden, set top border to 0 to prevent white band
+            if (ShouldHideCaption())
+            {
+                borders = new Padding(borders.Left, 0, borders.Right, borders.Bottom);
+            }
+
+            // Extract the Win32 NCCALCSIZE_PARAMS structure from LPARAM
+            PI.NCCALCSIZE_PARAMS calcsize = (PI.NCCALCSIZE_PARAMS)m.GetLParam(typeof(PI.NCCALCSIZE_PARAMS))!;
+
+            // Reduce provided RECT by the borders
+            calcsize.rectProposed.left += borders.Left;
+            calcsize.rectProposed.top += borders.Top;
+            calcsize.rectProposed.right -= borders.Right;
+            calcsize.rectProposed.bottom -= borders.Bottom;
+
+            // Put back the modified structure
+            Marshal.StructureToPtr(calcsize, m.LParam, false);
+        }
+
+        // Message processed, do not pass onto base class for processing
+        return true;
+    }
+
     protected override void OnMove(EventArgs e)
     {
         base.OnMove(e);
@@ -2338,6 +2415,30 @@ public class KryptonForm : VisualForm,
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Determines if the caption area should be hidden (no text, no icon, no control box, no visible buttons).
+    /// </summary>
+    /// <returns>True if caption should be hidden; otherwise false.</returns>
+    private bool ShouldHideCaption()
+    {
+        // Check if there are any visible buttons
+        bool hasVisibleButtons = false;
+        foreach (ButtonSpecView bsv in _buttonManager.ButtonSpecViews)
+        {
+            if (bsv.ViewCenter.Visible && bsv.ViewButton.Enabled)
+            {
+                hasVisibleButtons = true;
+                break;
+            }
+        }
+        
+        // Hide caption if no control box, no text, no icon, and no visible buttons
+        return !ControlBox 
+            && string.IsNullOrEmpty(GetShortText()) 
+            && GetDefinedIcon() == null
+            && !hasVisibleButtons;
     }
 
     /// <summary>
@@ -2452,15 +2553,29 @@ public class KryptonForm : VisualForm,
                 }
 
                 // Update the heading to enforce a fixed Material-like caption height when Material renderer is active
-                if (Renderer is RenderMaterial)
+                bool shouldHideCaption = ShouldHideCaption();
+                
+                if (shouldHideCaption)
                 {
-                    const int materialCaptionHeight = 44; // px
-                    _headingFixedSize.FixedSize = new Size(materialCaptionHeight, materialCaptionHeight);
+                    // Hide the caption area when there's nothing to display
+                    _headingFixedSize.FixedSize = Size.Empty;
+                    _headingFixedSize.Visible = false;
                 }
                 else
                 {
-                    Padding windowBorders = RealWindowBorders;
-                    _headingFixedSize.FixedSize = new Size(windowBorders.Top, windowBorders.Top);
+                    // Ensure the heading is visible
+                    _headingFixedSize.Visible = true;
+                    
+                    if (Renderer is RenderMaterial)
+                    {
+                        const int materialCaptionHeight = 44; // px
+                        _headingFixedSize.FixedSize = new Size(materialCaptionHeight, materialCaptionHeight);
+                    }
+                    else
+                    {
+                        Padding windowBorders = RealWindowBorders;
+                        _headingFixedSize.FixedSize = new Size(windowBorders.Top, windowBorders.Top);
+                    }
                 }
 
                 // A change in window state since last time requires a layout
@@ -2810,6 +2925,15 @@ public class KryptonForm : VisualForm,
 
             // Hide the form icon by default for a cleaner Material header (user can still re-enable later)
             AllowIconDisplay = false;
+        }
+        else if (Renderer is RenderWindows11Mica)
+        {
+            // Enable the real Windows 11 Mica backdrop when using the Mica palette
+            _enableMica = true;
+            if (IsHandleCreated && !DesignMode)
+            {
+                WindowUtilities.EnableMica(this);
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -187,7 +187,7 @@ internal class KryptonToastNotificationController
         return result;
     }
 
-    private static DateTime CreateDateTimeToastWithProgressBarNotification(KryptonUserInputToastNotificationData data) => data.UseRtlReading ? VisualToastNotificationDateTimeUserInputWithProgressBarRtlAwareForm.ShowNotification(data) : VisualToastNotificationDateTimeUserInputWithProgressBarForm.ShowNotification(data);
+    private static DateTime CreateDateTimeToastWithProgressBarNotification(KryptonUserInputToastNotificationData data) => data.UseRtlReading ? ToastDateTimeProgressBarRtlForm.ShowNotification(data) : VisualToastNotificationDateTimeUserInputWithProgressBarForm.ShowNotification(data);
 
     private static decimal ReturnDecimalInputWithProgressBar(KryptonUserInputToastNotificationData data)
     {
@@ -196,7 +196,7 @@ internal class KryptonToastNotificationController
         return result;
     }
 
-    private static decimal CreateDecimalToastWithProgressBarNotification(KryptonUserInputToastNotificationData data) => data.UseRtlReading ? VisualToastNotificationNUDUserInputWithProgressBarRtlAwareForm.ShowToastNotification(data) : VisualToastNotificationNUDUserInputWithProgressBarForm.ShowToastNotification(data);
+    private static decimal CreateDecimalToastWithProgressBarNotification(KryptonUserInputToastNotificationData data) => data.UseRtlReading ? ToastNUDProgressBarRtlForm.ShowToastNotification(data) : VisualToastNotificationNUDUserInputWithProgressBarForm.ShowToastNotification(data);
 
     private static string ReturnStringInputWithProgressBar(KryptonUserInputToastNotificationData data)
     {
@@ -212,13 +212,13 @@ internal class KryptonToastNotificationController
             switch (data.NotificationInputAreaType)
             {
                 case KryptonToastNotificationInputAreaType.ComboBox:
-                    return VisualToastNotificationComboBoxUserInputWithProgressBarRtlAwareForm.ShowNotification(data);
+                    return ToastComboBoxProgressBarRtlForm.ShowNotification(data);
                 case KryptonToastNotificationInputAreaType.DomainUpDown:
-                    return VisualToastNotificationDomainUpDownInputWithProgressBarRtlAwareForm.ShowNotification(data);
+                    return ToastDomainUpDownProgressBarRtlForm.ShowNotification(data);
                 case KryptonToastNotificationInputAreaType.MaskedTextBox:
-                    return VisualToastNotificationMaskedTextBoxInputWithProgressBarRtlAwareForm.ShowNotification(data);
+                    return ToastMaskedTextBoxProgressBarRtlForm.ShowNotification(data);
                 case KryptonToastNotificationInputAreaType.TextBox:
-                    return VisualToastNotificationTextBoxUserInputWithProgressBarRtlAwareForm.ShowNotification(data);
+                    return ToastTextBoxProgressBarRtlForm.ShowNotification(data);
             }
         }
         else

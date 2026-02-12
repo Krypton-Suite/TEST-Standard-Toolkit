@@ -117,9 +117,11 @@ public partial class StartScreen : KryptonForm
         CreateButton("Powered By Button", string.Empty, typeof(PoweredByButtonExample));
         CreateButton("Krypton Task Dialog Demo", string.Empty, typeof(KryptonTaskDialogDemoForm));
         CreateButton("Krypton MDI Window", "KryptonForm MDI Container with both KForm and WForm children", typeof(MdiWindow));
+        CreateButton("Krypton Navigator Tabbed Editor", "Comprehensive demo of KryptonNavigatorTabbedEditor: KryptonNavigator with a KryptonRichTextBox on each tab. Tab management, editor operations, text operations, and Navigator mode switching.", typeof(KryptonNavigatorTabbedEditorDemo));
         CreateButton("Overlay Image Test", "Comprehensive demonstration of overlay images on KryptonButton and KryptonLabel with configurable positions and scaling modes.", typeof(OverlayImageTest));
         CreateButton("Taskbar Overlay Icon Test", "Comprehensive demonstration of taskbar overlay icons on KryptonForm with configurable icons, descriptions, and interactive examples.", typeof(TaskbarOverlayIconTest));
         CreateButton("Taskbar Progress Test", "Comprehensive demonstration of taskbar progress indicators on KryptonForm with different states, animated progress, and interactive examples.", typeof(TaskbarProgressTest));
+        CreateButton("Taskbar Thumbnail Buttons Test", "Comprehensive demonstration of taskbar thumbnail buttons on KryptonForm (media-style Play, Pause, Stop, etc.) with click handling and state examples.", typeof(TaskbarThumbnailButtonsTest));
         CreateButton("Jump List Test", "Comprehensive demonstration of jump lists on KryptonForm with user tasks, custom categories, known categories, and interactive examples.", typeof(JumpListTest));
     }
 

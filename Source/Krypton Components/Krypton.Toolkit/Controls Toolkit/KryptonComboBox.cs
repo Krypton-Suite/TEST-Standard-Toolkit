@@ -1496,9 +1496,61 @@ public class KryptonComboBox : VisualControlBase,
     [AllowNull]
     public override Font Font
     {
-        get => base.Font;
+        get => GetStateCommonFont() ?? base.Font;
 
-        set => base.Font = value!;
+        set
+        {
+            // Always set base.Font to ensure consistency
+            base.Font = value!;
+            // Also try to set StateCommon font, but don't fail if it's not available
+            SetStateCommonFont(value);
+        }
+    }
+
+    /// <summary>
+    /// Gets the font from StateCommon.ComboBox.Content.Font safely, handling design mode serialization issues.
+    /// </summary>
+    /// <returns>The font from StateCommon, or null if not available or during problematic design time access.</returns>
+    protected virtual Font? GetStateCommonFont()
+    {
+        try
+        {
+            // Use null-conditional operators to safely access nested properties
+            // This prevents issues during design time serialization when StateCommon might not be fully initialized
+            return StateCommon?.ComboBox?.Content?.Font;
+        }
+        catch
+        {
+            // If StateCommon is not fully initialized or there's a serialization issue,
+            // return null to fall back to base.Font
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Sets the font to StateCommon.ComboBox.Content.Font safely, handling design mode serialization issues.
+    /// </summary>
+    /// <param name="value">The font value to set.</param>
+    /// <returns>True if the font was set to StateCommon, false to fall back to base.Font.</returns>
+    protected virtual bool SetStateCommonFont(Font? value)
+    {
+        try
+        {
+            // Use null-conditional operators to safely access nested properties
+            // This prevents issues during design time serialization when StateCommon might not be fully initialized
+            if (StateCommon?.ComboBox?.Content != null)
+            {
+                StateCommon.ComboBox.Content.Font = value;
+                return true;
+            }
+        }
+        catch
+        {
+            // If StateCommon is not fully initialized or there's a serialization issue,
+            // return false to fall back to base.Font
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -2959,25 +3011,27 @@ public class KryptonComboBox : VisualControlBase,
                 // Set the correct text rendering hint for the text drawing. We only draw if the edit text is enabled so we
                 // just always grab the normal state value. Without this line the wrong hint can occur because it inherits
                 // it from the device context. Resulting in blurred text.
-                e.Graphics.TextRenderingHint = CommonHelper.PaletteTextHintToRenderingHint(StateNormal.Item.PaletteContent!.GetContentShortTextHint(PaletteState.Normal));
-
-                TextFormatFlags flags = TextFormatFlags.TextBoxControl | TextFormatFlags.NoPadding;
-
-                // Use the correct prefix setting
-                flags |= TextFormatFlags.NoPrefix;
-
-                // Do we need to switch drawing direction?
-                if (RightToLeft == RightToLeft.Yes)
+                // Use GraphicsTextHint to properly save/restore TextRenderingHint to prevent affecting other controls
+                using (new GraphicsTextHint(e.Graphics, CommonHelper.PaletteTextHintToRenderingHint(StateNormal.Item.PaletteContent!.GetContentShortTextHint(PaletteState.Normal))))
                 {
-                    flags |= TextFormatFlags.Right;
-                }
+                    TextFormatFlags flags = TextFormatFlags.TextBoxControl | TextFormatFlags.NoPadding;
 
-                // Draw text using font defined by the control
-                TextRenderer.DrawText(e.Graphics,
-                    _comboBox.Text, _comboBox.Font,
-                    drawBounds,
-                    textColor, backColor,
-                    flags);
+                    // Use the correct prefix setting
+                    flags |= TextFormatFlags.NoPrefix;
+
+                    // Do we need to switch drawing direction?
+                    if (RightToLeft == RightToLeft.Yes)
+                    {
+                        flags |= TextFormatFlags.Right;
+                    }
+
+                    // Draw text using font defined by the control
+                    TextRenderer.DrawText(e.Graphics,
+                        _comboBox.Text, _comboBox.Font,
+                        drawBounds,
+                        textColor, backColor,
+                        flags);
+                }
             }
         }
         else

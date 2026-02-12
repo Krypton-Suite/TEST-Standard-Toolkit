@@ -19,6 +19,7 @@ public class TaskbarValues : Storage
     private readonly TaskbarOverlayIconValues _overlayIcon;
     private readonly TaskbarProgressValues _progress;
     private readonly JumpListValues _jumpList;
+    private readonly TaskbarThumbnailButtonValues _thumbnailButtons;
     #endregion
 
     #region Identity
@@ -35,6 +36,7 @@ public class TaskbarValues : Storage
         _overlayIcon = new TaskbarOverlayIconValues(needPaint);
         _progress = new TaskbarProgressValues(needPaint);
         _jumpList = new JumpListValues(needPaint);
+        _thumbnailButtons = new TaskbarThumbnailButtonValues(needPaint);
     }
     #endregion
 
@@ -44,7 +46,7 @@ public class TaskbarValues : Storage
     /// </summary>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public override bool IsDefault => OverlayIcon.IsDefault && Progress.IsDefault && JumpList.IsDefault;
+    public override bool IsDefault => OverlayIcon.IsDefault && Progress.IsDefault && JumpList.IsDefault && ThumbnailButtons.IsDefault;
     #endregion
 
     #region OverlayIcon
@@ -98,6 +100,23 @@ public class TaskbarValues : Storage
     public void ResetJumpList() => JumpList.Reset();
     #endregion
 
+    #region ThumbnailButtons
+    /// <summary>
+    /// Gets access to the taskbar thumbnail button values.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Taskbar thumbnail buttons to display in the thumbnail preview.")]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public TaskbarThumbnailButtonValues ThumbnailButtons => _thumbnailButtons;
+
+    private bool ShouldSerializeThumbnailButtons() => !ThumbnailButtons.IsDefault;
+
+    /// <summary>
+    /// Resets the ThumbnailButtons property to its default value.
+    /// </summary>
+    public void ResetThumbnailButtons() => ThumbnailButtons.Reset();
+    #endregion
+
     #region Implementation
     /// <summary>
     /// Resets all taskbar values to their defaults.
@@ -107,6 +126,7 @@ public class TaskbarValues : Storage
         OverlayIcon.Reset();
         Progress.Reset();
         JumpList.Reset();
+        ThumbnailButtons.Reset();
     }
 
     /// <summary>
@@ -118,6 +138,7 @@ public class TaskbarValues : Storage
         OverlayIcon.CopyFrom(source.OverlayIcon);
         Progress.CopyFrom(source.Progress);
         JumpList.CopyFrom(source.JumpList);
+        ThumbnailButtons.CopyFrom(source.ThumbnailButtons);
     }
     #endregion
 }

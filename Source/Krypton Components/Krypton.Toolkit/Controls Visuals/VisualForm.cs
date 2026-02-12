@@ -50,6 +50,7 @@ public abstract class VisualForm : Form,
     private BlurManager _blurManager;
     private readonly TaskbarValues _taskbar;
     private readonly object lockObject = new();
+    private bool _thumbnailButtonsAdded;
     #endregion
 
     #region Events
@@ -80,6 +81,13 @@ public abstract class VisualForm : Form,
     [Category(@"Property Changed")]
     [Description(@"Occurs when the value of the GlobalPalette property is changed.")]
     public event EventHandler? GlobalPaletteChanged;
+
+    /// <summary>
+    /// Occurs when a thumbnail button is clicked.
+    /// </summary>
+    [Category(@"Action")]
+    [Description(@"Occurs when a thumbnail button in the taskbar preview is clicked.")]
+    public event EventHandler<TaskbarThumbnailButtonClickEventArgs>? TaskbarThumbnailButtonClick;
     #endregion
 
     #region Identity
@@ -127,11 +135,12 @@ public abstract class VisualForm : Form,
         ShadowValues = new ShadowValues();
         BlurValues = new BlurValues();
 
-        // Taskbar (overlay icon, progress, jump list)
+        // Taskbar (overlay icon, progress, jump list, thumbnail buttons)
         _taskbar = new TaskbarValues(NeedPaintDelegate);
         _taskbar.OverlayIcon.OnTaskbarOverlayChanged += UpdateTaskbarOverlayIcon;
         _taskbar.Progress.OnTaskbarProgressChanged += UpdateTaskbarProgress;
         _taskbar.JumpList.OnJumpListChanged += UpdateJumpList;
+        _taskbar.ThumbnailButtons.OnTaskbarThumbnailButtonsChanged += UpdateTaskbarThumbnailButtons;
 
 #if !NET462
         DpiChanged += OnDpiChanged;
@@ -810,6 +819,21 @@ public abstract class VisualForm : Form,
 
         // Update taskbar progress if set
         UpdateTaskbarProgress();
+
+        // Update taskbar thumbnail buttons if set
+        UpdateTaskbarThumbnailButtons();
+    }
+
+    /// <summary>
+    /// Raises the HandleDestroyed event.
+    /// </summary>
+    /// <param name="e">An EventArgs containing the event data.</param>
+    protected override void OnHandleDestroyed(EventArgs e)
+    {
+        // Reset thumbnail buttons flag when handle is destroyed
+        _thumbnailButtonsAdded = false;
+        
+        base.OnHandleDestroyed(e);
     }
 
     /// <summary>
@@ -1199,6 +1223,18 @@ public abstract class VisualForm : Form,
                     // and paint of the non-client area to get it shown.
                     PerformNeedPaint(true);
                     break;
+                case PI.WM_.COMMAND:
+                    // Handle thumbnail button clicks
+                    uint hiWord = (uint)((int)m.WParam >> 16) & 0xFFFF;
+                    uint loWord = (uint)(int)m.WParam & 0xFFFF;
+                    
+                    if (hiWord == PI.THBN_CLICKED)
+                    {
+                        OnTaskbarThumbnailButtonClick(new TaskbarThumbnailButtonClickEventArgs(loWord));
+                        m.Result = IntPtr.Zero;
+                        processed = true;
+                    }
+                    break;
             }
         }
 
@@ -1569,6 +1605,12 @@ public abstract class VisualForm : Form,
         if (windowBounds.Width <= 0 || windowBounds.Height <= 0)
             return;
 
+        // Fix for #2935: Maximized MDI child form border is drawn on the wrong monitor (primary)
+        // when the form is on a secondary monitor. Skip custom border painting for maximized MDI
+        // children to avoid GDI+ coordinate issues on multi-monitor setups.
+        if (MdiParent != null && CommonHelper.IsFormMaximized(this))
+            return;
+
         IntPtr hDC = PI.GetWindowDC(Handle);
         if (hDC == IntPtr.Zero)
             return;
@@ -1900,6 +1942,111 @@ public abstract class VisualForm : Form,
     }
 
     /// <summary>
+    /// Updates the taskbar thumbnail buttons using the Windows ITaskbarList3 API.
+    /// </summary>
+    private void UpdateTaskbarThumbnailButtons()
+    {
+        // Only update at runtime, not in designer
+        if (CommonHelper.DesignMode() || !IsHandleCreated)
+        {
+            return;
+        }
+
+        try
+        {
+            // Check if Windows 7+ (ITaskbarList3 requires Windows 7+)
+            if (Environment.OSVersion.Version.Major < 6 ||
+                (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor < 1))
+            {
+                return; // Not supported on Windows Vista or earlier
+            }
+
+            // Validate ImageList is set
+            if (_taskbar.ThumbnailButtons.ImageList == null)
+            {
+                return;
+            }
+
+            // Validate buttons exist
+            if (_taskbar.ThumbnailButtons.Buttons.Count == 0)
+            {
+                return;
+            }
+
+            // Create TaskbarList COM object
+            var taskbarList = (PI.ITaskbarList3)new PI.TaskbarList();
+            taskbarList.HrInit();
+
+            // Set image list (must be done before adding buttons)
+            taskbarList.ThumbBarSetImageList(Handle, _taskbar.ThumbnailButtons.ImageList.Handle);
+
+            // Marshal buttons to THUMBBUTTON structures
+            var thumbButtons = new PI.THUMBBUTTON[_taskbar.ThumbnailButtons.Buttons.Count];
+            var buttonPtrs = new IntPtr[_taskbar.ThumbnailButtons.Buttons.Count];
+
+            for (int i = 0; i < _taskbar.ThumbnailButtons.Buttons.Count; i++)
+            {
+                var button = _taskbar.ThumbnailButtons.Buttons[i];
+                
+                thumbButtons[i] = new PI.THUMBBUTTON
+                {
+                    dwMask = PI.ThumbnailButtonMask.Bitmap | PI.ThumbnailButtonMask.Tooltip | PI.ThumbnailButtonMask.Flags,
+                    iId = button.Id,
+                    iBitmap = (uint)button.ImageIndex,
+                    hIcon = IntPtr.Zero,
+                    pszTip = button.Tooltip ?? string.Empty,
+                    dwFlags = button.Flags
+                };
+
+                // Allocate memory for the structure
+                buttonPtrs[i] = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PI.THUMBBUTTON)));
+                Marshal.StructureToPtr(thumbButtons[i], buttonPtrs[i], false);
+            }
+
+            try
+            {
+                if (!_thumbnailButtonsAdded)
+                {
+                    // First time - add buttons
+                    taskbarList.ThumbBarAddButtons(Handle, (uint)_taskbar.ThumbnailButtons.Buttons.Count, buttonPtrs);
+                    _thumbnailButtonsAdded = true;
+                }
+                else
+                {
+                    // Buttons already added - update them
+                    taskbarList.ThumbBarUpdateButtons(Handle, (uint)_taskbar.ThumbnailButtons.Buttons.Count, buttonPtrs);
+                }
+            }
+            catch
+            {
+                // Silently fail - buttons may have been added already or API call failed
+                // Try to mark as added if update would work
+                if (!_thumbnailButtonsAdded)
+                {
+                    _thumbnailButtonsAdded = true;
+                }
+            }
+            finally
+            {
+                // Free allocated memory
+                foreach (var ptr in buttonPtrs)
+                {
+                    if (ptr != IntPtr.Zero)
+                    {
+                        Marshal.FreeHGlobal(ptr);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Silently fail if taskbar API is not available
+            // This can happen on older Windows versions or if COM registration fails
+            KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
+        }
+    }
+
+    /// <summary>
     /// Updates the jump list using the Windows ICustomDestinationList API.
     /// </summary>
     private void UpdateJumpList()
@@ -1976,6 +2123,15 @@ public abstract class VisualForm : Form,
             // This can happen on older Windows versions or if COM registration fails
             KryptonExceptionHandler.CaptureException(ex, showStackTrace: GlobalStaticValues.DEFAULT_USE_STACK_TRACE);
         }
+    }
+
+    /// <summary>
+    /// Raises the TaskbarThumbnailButtonClick event.
+    /// </summary>
+    /// <param name="e">Event arguments.</param>
+    protected virtual void OnTaskbarThumbnailButtonClick(TaskbarThumbnailButtonClickEventArgs e)
+    {
+        TaskbarThumbnailButtonClick?.Invoke(this, e);
     }
 
     /// <summary>
