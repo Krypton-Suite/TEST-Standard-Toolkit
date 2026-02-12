@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -597,9 +597,11 @@ public class KryptonWrapLabel : Label
         }
 
         ForeColor = textColor;
-        e.Graphics.TextRenderingHint = CommonHelper.PaletteTextHintToRenderingHint(hint);
-
-        base.OnPaint(e);
+        // Use GraphicsTextHint to properly save/restore TextRenderingHint to prevent affecting other controls
+        using (new GraphicsTextHint(e.Graphics, CommonHelper.PaletteTextHintToRenderingHint(hint)))
+        {
+            base.OnPaint(e);
+        }
     }
 
     /// <summary>

@@ -4039,7 +4039,24 @@ No 	                    No 	                    Show text only
             PlaceHolder1,
             PlaceHolder2,
             PlaceHolder3,
-            AccentPolicy = 19
+            AccentPolicy = 19,
+            // Windows 11 (22H2+) system backdrop
+            SystemBackdropType = 38
+        }
+
+        /// <summary>System backdrop type for Windows 11 Mica/Acrylic (used with DWMWINDOWATTRIBUTE.SystemBackdropType).</summary>
+        public enum DWM_SYSTEMBACKDROP_TYPE : int
+        {
+            /// <summary>DWM chooses backdrop (typically behind title bar only).</summary>
+            Auto = 0,
+            /// <summary>No system backdrop.</summary>
+            None = 1,
+            /// <summary>Mica material for long-lived windows (Windows 11).</summary>
+            MainWindow = 2,
+            /// <summary>Desktop Acrylic for transient windows.</summary>
+            TransientWindow = 3,
+            /// <summary>Mica Alt for tabbed windows.</summary>
+            TabbedWindow = 4
         }
 
         public enum DWMNCRENDERINGPOLICY : uint
@@ -5195,6 +5212,38 @@ No 	                    No 	                    Show text only
     internal class TaskbarList
     {
     }
+
+    /// <summary>
+    /// Thumbnail button mask flags.
+    /// </summary>
+    [Flags]
+    internal enum ThumbnailButtonMask
+    {
+        Bitmap = 0x00000001,
+        Icon = 0x00000002,
+        Tooltip = 0x00000004,
+        Flags = 0x00000008
+    }
+
+    /// <summary>
+    /// Thumbnail button structure for Windows API.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct THUMBBUTTON
+    {
+        public ThumbnailButtonMask dwMask;
+        public uint iId;
+        public uint iBitmap;
+        public IntPtr hIcon;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        public string pszTip;
+        public ThumbnailButtonFlags dwFlags;
+    }
+
+    /// <summary>
+    /// Thumbnail button notification constant.
+    /// </summary>
+    internal const int THBN_CLICKED = 0x1800;
 
     #endregion
 

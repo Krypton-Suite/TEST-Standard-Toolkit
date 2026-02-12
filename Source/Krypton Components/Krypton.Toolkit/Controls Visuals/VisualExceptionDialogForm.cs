@@ -23,13 +23,17 @@ public partial class VisualExceptionDialogForm : KryptonForm
 
     private readonly Action<Exception>? _bugReportCallback;
 
+    private readonly SecureString? _githubSecretKey;
+
+    private readonly string? _githubConfigPath;
+
     private List<KryptonTreeNode> _originalNodes = new List<KryptonTreeNode>();
 
     #endregion
 
     #region Identity
 
-    public VisualExceptionDialogForm(bool? showCopyButton, bool? showSearchBox, Color? highlightColor, Exception exception, Action<Exception>? bugReportCallback = null)
+    public VisualExceptionDialogForm(bool? showCopyButton, bool? showSearchBox, Color? highlightColor, Exception exception, Action<Exception>? bugReportCallback = null, SecureString? githubSecretKey = null, string? githubConfigPath = null)
     {
         InitializeComponent();
 
@@ -44,6 +48,10 @@ public partial class VisualExceptionDialogForm : KryptonForm
         _exception = exception;
 
         _bugReportCallback = bugReportCallback;
+
+        _githubSecretKey = githubSecretKey is { Length: > 0 } ? githubSecretKey : null;
+
+        _githubConfigPath = githubConfigPath;
 
         // Set highlight color
         isbSearchArea.HighlightColor = (Color)_highlightColor;
@@ -65,10 +73,11 @@ public partial class VisualExceptionDialogForm : KryptonForm
         kbtnCopy.Visible = _showCopyButton ?? true;
         isbSearchArea.ShowSearchFeatures = _showSearchBox ?? true;
 
-        if (_bugReportCallback != null && _exception != null)
+        var showReportBug = (_bugReportCallback != null || _githubSecretKey != null) && _exception != null;
+        if (showReportBug)
         {
             kbtnReportBug.Visible = true;
-            kbtnReportBug.Text = "Report Bug";
+            kbtnReportBug.Text = KryptonManager.Strings.ExceptionDialogStrings.ReportBug;
             kbtnReportBug.Click += KbtnReportBug_Click;
         }
         else
@@ -129,19 +138,51 @@ public partial class VisualExceptionDialogForm : KryptonForm
 
     private void KbtnReportBug_Click(object? sender, EventArgs e)
     {
-        if (_exception != null && _bugReportCallback != null)
+        if (_exception == null)
+        {
+            return;
+        }
+
+        if (_githubSecretKey != null)
+        {
+            var additionalInfo = FormatExceptionForGitHub(_exception);
+            Krypton.Toolkit.KryptonGitHubIssueReportDialog.Show(this, _githubSecretKey, _githubConfigPath, additionalInfo);
+        }
+        else if (_bugReportCallback != null)
         {
             _bugReportCallback(_exception);
         }
+    }
+
+    private static string FormatExceptionForGitHub(Exception exception)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("**Exception from KryptonExceptionDialog**");
+        sb.AppendLine();
+        sb.AppendLine($"**Type:** {exception.GetType().FullName}");
+        sb.AppendLine($"**Message:** {exception.Message}");
+        sb.AppendLine();
+        sb.AppendLine("**Stack Trace:**");
+        sb.AppendLine("```");
+        sb.AppendLine(exception.StackTrace ?? "(none)");
+        sb.AppendLine("```");
+        if (exception.InnerException != null)
+        {
+            sb.AppendLine();
+            sb.AppendLine("**Inner Exception:**");
+            sb.AppendLine($"Type: {exception.InnerException.GetType().FullName}");
+            sb.AppendLine($"Message: {exception.InnerException.Message}");
+        }
+        return sb.ToString();
     }
 
     #endregion
 
     #region Show
 
-    internal static void Show(Exception exception, Color? highlightColor, bool? showCopyButton, bool? showSearchBox, Action<Exception>? bugReportCallback = null)
+    internal static void Show(Exception exception, Color? highlightColor, bool? showCopyButton, bool? showSearchBox, Action<Exception>? bugReportCallback = null, SecureString? githubSecretKey = null, string? githubConfigPath = null)
     {
-        using var ved = new VisualExceptionDialogForm(showCopyButton, showSearchBox, highlightColor, exception, bugReportCallback);
+        using var ved = new VisualExceptionDialogForm(showCopyButton, showSearchBox, highlightColor, exception, bugReportCallback, githubSecretKey, githubConfigPath);
 
         ved.ShowDialog();
     }

@@ -301,59 +301,59 @@ public class KryptonTabControl : TabControl
     [Category(@"Visuals")]
     [Description(@"Overrides for defining common tab appearance that other states can override.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteBack TabStateCommon => _tabStateCommon?.Back ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
+    public PaletteTripleRedirect TabStateCommon => _tabStateCommon ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
 
-    private bool ShouldSerializeTabStateCommon() => _tabStateCommon != null && !_tabStateCommon.Back.IsDefault;
+    private bool ShouldSerializeTabStateCommon() => _tabStateCommon != null && !_tabStateCommon.IsDefault;
 
     /// <summary>
-    /// Gets access to the disabled tab appearance.
+    /// Gets access to the disabled tab appearance entries.
     /// </summary>
     [Category(@"Visuals")]
     [Description(@"Overrides for defining disabled tab appearance.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteBack TabStateDisabled => _tabStateDisabled?.Back ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
+    public PaletteTriple TabStateDisabled => _tabStateDisabled ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
 
-    private bool ShouldSerializeTabStateDisabled() => _tabStateDisabled != null && !_tabStateDisabled.Back.IsDefault;
+    private bool ShouldSerializeTabStateDisabled() => _tabStateDisabled != null && !_tabStateDisabled.IsDefault;
 
     /// <summary>
-    /// Gets access to the normal tab appearance.
+    /// Gets access to the normal tab appearance entries.
     /// </summary>
     [Category(@"Visuals")]
     [Description(@"Overrides for defining normal tab appearance.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteBack TabStateNormal => _tabStateNormal?.Back ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
+    public PaletteTriple TabStateNormal => _tabStateNormal ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
 
-    private bool ShouldSerializeTabStateNormal() => _tabStateNormal != null && !_tabStateNormal.Back.IsDefault;
+    private bool ShouldSerializeTabStateNormal() => _tabStateNormal != null && !_tabStateNormal.IsDefault;
 
     /// <summary>
-    /// Gets access to the tracking tab appearance.
+    /// Gets access to the hot tracking tab appearance entries.
     /// </summary>
     [Category(@"Visuals")]
-    [Description(@"Overrides for defining tracking tab appearance.")]
+    [Description(@"Overrides for defining hot tracking tab appearance.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteBack TabStateTracking => _tabStateTracking?.Back ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
+    public PaletteTriple TabStateTracking => _tabStateTracking ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
 
-    private bool ShouldSerializeTabStateTracking() => _tabStateTracking != null && !_tabStateTracking.Back.IsDefault;
+    private bool ShouldSerializeTabStateTracking() => _tabStateTracking != null && !_tabStateTracking.IsDefault;
 
     /// <summary>
-    /// Gets access to the pressed tab appearance.
+    /// Gets access to the pressed tab appearance entries.
     /// </summary>
     [Category(@"Visuals")]
     [Description(@"Overrides for defining pressed tab appearance.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteBack TabStatePressed => _tabStatePressed?.Back ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
+    public PaletteTriple TabStatePressed => _tabStatePressed ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
 
-    private bool ShouldSerializeTabStatePressed() => _tabStatePressed != null && !_tabStatePressed.Back.IsDefault;
+    private bool ShouldSerializeTabStatePressed() => _tabStatePressed != null && !_tabStatePressed.IsDefault;
 
     /// <summary>
-    /// Gets access to the selected tab appearance.
+    /// Gets access to the selected tab appearance entries.
     /// </summary>
     [Category(@"Visuals")]
     [Description(@"Overrides for defining selected tab appearance.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteBack TabStateSelected => _tabStateSelected?.Back ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
+    public PaletteTriple TabStateSelected => _tabStateSelected ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
 
-    private bool ShouldSerializeTabStateSelected() => _tabStateSelected != null && !_tabStateSelected.Back.IsDefault;
+    private bool ShouldSerializeTabStateSelected() => _tabStateSelected != null && !_tabStateSelected.IsDefault;
 
     /// <summary>
     /// Gets access to the common tab control appearance that other states can override.
@@ -361,29 +361,29 @@ public class KryptonTabControl : TabControl
     [Category(@"Visuals")]
     [Description(@"Overrides for defining common tab control appearance that other states can override.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteBack StateCommon => _stateCommon?.Back ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
+    public PaletteDoubleRedirect StateCommon => _stateCommon ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
 
-    private bool ShouldSerializeStateCommon() => _stateCommon != null && !_stateCommon.Back.IsDefault;
+    private bool ShouldSerializeStateCommon() => _stateCommon != null && !_stateCommon.IsDefault;
 
     /// <summary>
-    /// Gets access to the disabled tab control appearance.
+    /// Gets access to the disabled tab control appearance entries.
     /// </summary>
     [Category(@"Visuals")]
     [Description(@"Overrides for defining disabled tab control appearance.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteBack StateDisabled => _stateDisabled?.Back ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
+    public PaletteDouble StateDisabled => _stateDisabled ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
 
-    private bool ShouldSerializeStateDisabled() => _stateDisabled != null && !_stateDisabled.Back.IsDefault;
+    private bool ShouldSerializeStateDisabled() => _stateDisabled != null && !_stateDisabled.IsDefault;
 
     /// <summary>
-    /// Gets access to the normal tab control appearance.
+    /// Gets access to the normal tab control appearance entries.
     /// </summary>
     [Category(@"Visuals")]
     [Description(@"Overrides for defining normal tab control appearance.")]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public PaletteBack StateNormal => _stateNormal?.Back ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
+    public PaletteDouble StateNormal => _stateNormal ?? throw new ObjectDisposedException(nameof(KryptonTabControl));
 
-    private bool ShouldSerializeStateNormal() => _stateNormal != null && !_stateNormal.Back.IsDefault;
+    private bool ShouldSerializeStateNormal() => _stateNormal != null && !_stateNormal.IsDefault;
 
     /// <summary>
     /// Fix the control to a particular palette state.
@@ -468,17 +468,54 @@ public class KryptonTabControl : TabControl
     /// <param name="e">A PaintEventArgs that contains the event data.</param>
     protected override void OnPaintBackground(PaintEventArgs e)
     {
-        // Paint parent background for transparency
-        if (Parent != null)
+        // Use Krypton renderer to paint the background with themed colors
+        if (_renderer != null && _stateCommon != null)
         {
-            using var brush = new SolidBrush(Parent.BackColor);
-            e.Graphics.FillRectangle(brush, e.ClipRectangle);
+            // Determine the appropriate palette state
+            var paletteState = Enabled ? PaletteState.Normal : PaletteState.Disabled;
+            var paletteBack = Enabled ? _stateNormal?.Back : _stateDisabled?.Back;
+
+            if (paletteBack != null && paletteBack.GetBackDraw(paletteState) == InheritBool.True)
+            {
+                // Create render context
+                var context = new RenderContext(this, e.Graphics, e.ClipRectangle, _renderer);
+
+                // Create a rectangle path for the background
+                using var path = new GraphicsPath();
+                path.AddRectangle(e.ClipRectangle);
+
+                // Draw the background using the renderer
+                using var memento = _renderer.RenderStandardBack.DrawBack(context, e.ClipRectangle, path, paletteBack, VisualOrientation.Top, paletteState, null);
+            }
+            else
+            {
+                // Fallback: paint parent background for transparency
+                if (Parent != null)
+                {
+                    using var brush = new SolidBrush(Parent.BackColor);
+                    e.Graphics.FillRectangle(brush, e.ClipRectangle);
+                }
+                else
+                {
+                    // Use system color as last resort
+                    using var brush = new SolidBrush(SystemColors.Control);
+                    e.Graphics.FillRectangle(brush, e.ClipRectangle);
+                }
+            }
         }
         else
         {
-            // Use system color as fallback
-            using var brush = new SolidBrush(SystemColors.Control);
-            e.Graphics.FillRectangle(brush, e.ClipRectangle);
+            // No renderer available, use default behavior
+            if (Parent != null)
+            {
+                using var brush = new SolidBrush(Parent.BackColor);
+                e.Graphics.FillRectangle(brush, e.ClipRectangle);
+            }
+            else
+            {
+                using var brush = new SolidBrush(SystemColors.Control);
+                e.Graphics.FillRectangle(brush, e.ClipRectangle);
+            }
         }
     }
 
@@ -531,8 +568,6 @@ public class KryptonTabControl : TabControl
     {
         var currentPalette = _palette ?? KryptonManager.CurrentGlobalPalette;
         _renderer = currentPalette?.GetRenderer();
-
-        //Backcolor = Color.Transparent;
     }
 
     private PaletteBackStyle GetTabBackStyle()
@@ -1037,4 +1072,3 @@ public class TabButtonSpecClickEventArgs : EventArgs
     /// </summary>
     public ButtonSpecAny ButtonSpec { get; }
 }
-

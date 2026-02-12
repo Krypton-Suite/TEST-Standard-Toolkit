@@ -4697,6 +4697,28 @@ public enum TaskbarProgressState
 }
 #endregion
 
+#region Enum ThumbnailButtonFlags
+/// <summary>
+/// Thumbnail button flags enumeration.
+/// </summary>
+[Flags]
+public enum ThumbnailButtonFlags
+{
+    /// <summary>Button is enabled and can be clicked.</summary>
+    Enabled = 0x00000000,
+    /// <summary>Button is disabled and appears grayed out.</summary>
+    Disabled = 0x00000001,
+    /// <summary>Dismiss thumbnail on click.</summary>
+    DismissOnClick = 0x00000002,
+    /// <summary>Button has no background border.</summary>
+    NoBackground = 0x00000004,
+    /// <summary>Button is hidden and not displayed.</summary>
+    Hidden = 0x00000008,
+    /// <summary>Button is non-interactive.</summary>
+    NonInteractive = 0x00000010
+}
+#endregion
+
 #region IFocusLostMenuItem
 /// <summary>
 /// This interface can be implemented by any (derived) control or component that needs focus handling via the FocusLostMenuHelper.

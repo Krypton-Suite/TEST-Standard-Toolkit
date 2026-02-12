@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -25,6 +25,8 @@ public class VisualPopup : ContainerControl
     private bool _refreshAll;
     private readonly SimpleCall _refreshCall;
     private VisualPopupShadow? _shadow;
+    private bool _enableAcrylic;
+    private Color _acrylicColor = Color.FromArgb(180, 180, 180, 180);
     #endregion
 
     #region Identity
@@ -158,6 +160,9 @@ public class VisualPopup : ContainerControl
 
         // If we have a shadow then update it now
         _shadow?.Show(screenRect);
+
+        // Apply acrylic effect if enabled
+        ApplyAcrylicEffect();
 
         // Show the window without activating it (i.e. do not take focus)
         PI.ShowWindow(Handle, PI.ShowWindowCommands.SW_SHOWNOACTIVATE);
@@ -339,6 +344,72 @@ public class VisualPopup : ContainerControl
     /// </summary>
     /// <returns></returns>
     public ViewManager? GetViewManager() => ViewManager;
+
+    /// <summary>
+    /// Gets or sets whether acrylic blur effect is enabled for this popup.
+    /// </summary>
+    [Category(@"Appearance")]
+    [Description(@"Enables acrylic blur effect on the popup window (Windows 10 1803+).")]
+    [DefaultValue(false)]
+    public bool EnableAcrylic
+    {
+        get => _enableAcrylic;
+        set
+        {
+            if (_enableAcrylic != value)
+            {
+                _enableAcrylic = value;
+                if (IsHandleCreated)
+                {
+                    ApplyAcrylicEffect();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the tint color for the acrylic effect.
+    /// </summary>
+    [Category(@"Appearance")]
+    [Description(@"The tint color for the acrylic blur effect.")]
+    [DefaultValue(typeof(Color), "180, 180, 180, 180")]
+    public Color AcrylicColor
+    {
+        get => _acrylicColor;
+        set
+        {
+            if (_acrylicColor != value)
+            {
+                _acrylicColor = value;
+                if (IsHandleCreated && _enableAcrylic)
+                {
+                    ApplyAcrylicEffect();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Resets the EnableAcrylic property to its default value.
+    /// </summary>
+    public void ResetEnableAcrylic() => EnableAcrylic = false;
+
+    /// <summary>
+    /// Resets the AcrylicColor property to its default value.
+    /// </summary>
+    public void ResetAcrylicColor() => AcrylicColor = Color.FromArgb(180, 180, 180, 180);
+
+    /// <summary>
+    /// Indicates whether the EnableAcrylic property should be serialized.
+    /// </summary>
+    /// <returns>True if the property should be serialized; otherwise false.</returns>
+    public bool ShouldSerializeEnableAcrylic() => _enableAcrylic;
+
+    /// <summary>
+    /// Indicates whether the AcrylicColor property should be serialized.
+    /// </summary>
+    /// <returns>True if the property should be serialized; otherwise false.</returns>
+    public bool ShouldSerializeAcrylicColor() => _acrylicColor != Color.FromArgb(180, 180, 180, 180);
 
     #endregion
 
@@ -691,9 +762,44 @@ public class VisualPopup : ContainerControl
 
         base.WndProc(ref m);
     }
+
+    /// <summary>
+    /// Raises the HandleCreated event.
+    /// </summary>
+    /// <param name="e">An EventArgs that contains the event data.</param>
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        
+        // Apply acrylic effect if enabled when handle is created
+        if (_enableAcrylic)
+        {
+            ApplyAcrylicEffect();
+        }
+    }
     #endregion
 
     #region Implementation
+    /// <summary>
+    /// Applies or removes the acrylic blur effect based on the EnableAcrylic property.
+    /// </summary>
+    private void ApplyAcrylicEffect()
+    {
+        if (!IsHandleCreated || Handle == IntPtr.Zero)
+        {
+            return;
+        }
+
+        if (_enableAcrylic)
+        {
+            WindowUtilities.EnableAcrylic(this, _acrylicColor);
+        }
+        else
+        {
+            WindowUtilities.DisableAcrylic(this);
+        }
+    }
+
     private Rectangle CalculateBelowPopupRect(Point popupLocation, Size popupSize)
     {
         // Get the screen that the parent rectangle is mostly within, this is the

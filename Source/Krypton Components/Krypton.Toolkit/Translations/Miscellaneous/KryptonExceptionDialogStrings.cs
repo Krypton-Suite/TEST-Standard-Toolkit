@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -34,6 +34,7 @@ public class KryptonExceptionDialogStrings : GlobalId
     private const string DEFAULT_EXCEPTION_DIALOG_RESULTS_FOUND_APPENDAGE = @"found";
     private const string DEFAULT_EXCEPTION_DIALOG_NO_MATCHES_FOUND = @"No matches found.";
     private const string DEFAULT_EXCEPTION_DIALOG_TYPE_TO_SEARCH = @"Type to search...";
+    private const string DEFAULT_EXCEPTION_DIALOG_REPORT_BUG = @"Report Bug";
 
     #endregion
 
@@ -75,7 +76,8 @@ public class KryptonExceptionDialogStrings : GlobalId
                              ResultsAppendage.Equals(DEFAULT_EXCEPTION_DIALOG_RESULTS_APPENDAGE) &&
                              ResultsFoundAppendage.Equals(DEFAULT_EXCEPTION_DIALOG_RESULTS_FOUND_APPENDAGE) &&
                              NoMatchesFound.Equals(DEFAULT_EXCEPTION_DIALOG_NO_MATCHES_FOUND) &&
-                             TypeToSearch.Equals(DEFAULT_EXCEPTION_DIALOG_TYPE_TO_SEARCH);
+                             TypeToSearch.Equals(DEFAULT_EXCEPTION_DIALOG_TYPE_TO_SEARCH) &&
+                             ReportBug.Equals(DEFAULT_EXCEPTION_DIALOG_REPORT_BUG);
 
     #endregion
 
@@ -243,6 +245,15 @@ public class KryptonExceptionDialogStrings : GlobalId
     [RefreshProperties(RefreshProperties.All)]
     public string TypeToSearch { get; set; }
 
+    /// <summary>Gets or sets the report bug button text.</summary>
+    /// <value>The report bug button text.</value>
+    [Localizable(true)]
+    [Category(@"Values")]
+    [Description(@"The report bug button text for the exception dialog.")]
+    [DefaultValue(DEFAULT_EXCEPTION_DIALOG_REPORT_BUG)]
+    [RefreshProperties(RefreshProperties.All)]
+    public string ReportBug { get; set; }
+
     #endregion
 
     #region Implementation
@@ -285,6 +296,8 @@ public class KryptonExceptionDialogStrings : GlobalId
         NoMatchesFound = DEFAULT_EXCEPTION_DIALOG_NO_MATCHES_FOUND;
 
         TypeToSearch = DEFAULT_EXCEPTION_DIALOG_TYPE_TO_SEARCH;
+
+        ReportBug = DEFAULT_EXCEPTION_DIALOG_REPORT_BUG;
     }
 
     #endregion
