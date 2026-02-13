@@ -52,6 +52,14 @@
 			<SpecificVersion>True</SpecificVersion>
 			<Version>4.0.0.0</Version>
 		</Reference>
+		<Reference Include="System.IO.Compression, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" Condition="$(TargetFramework.StartsWith('net4'))">
+			<SpecificVersion>True</SpecificVersion>
+			<Version>4.0.0.0</Version>
+		</Reference>
+		<Reference Include="System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" Condition="$(TargetFramework.StartsWith('net4'))">
+			<SpecificVersion>True</SpecificVersion>
+			<Version>4.0.0.0</Version>
+		</Reference>
 	</ItemGroup>
 
 	<!-- WebView2: bundled DLLs in Lib/WebView2 (all target frameworks). Run Scripts\WebVew2\Populate-BundledWebView2.cmd to populate. -->
@@ -89,6 +97,7 @@
 	  <ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit 2022.csproj" />
 	  <ProjectReference Include="..\Krypton.Workspace\Krypton.Workspace 2022.csproj" />
 	</ItemGroup>
+
 
 	<ItemGroup>
 	  <EmbeddedResource Update="Components\KryptonSearchBox\Resource Files\SearchBoxImageResources.resx">

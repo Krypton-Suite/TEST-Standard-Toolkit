@@ -870,12 +870,18 @@ jobs:
             9.0.x
             10.0.x
 
-      # global.json dynamically generate
-      - name: Force .NET 10 SDK via global.json
-        # Kill switch check
+      # .NET 11 (Preview)
+      - name: Setup .NET 11 (Preview)
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 11.0.x
+          dotnet-quality: preview
+
+      # global.json dynamically generate (use latest SDK available)
+      - name: Force .NET 11 SDK via global.json
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         run: |
-          $sdkVersion = (dotnet --list-sdks | Select-String "10.0").ToString().Split(" ")[0]
+          $sdkVersion = (dotnet --list-sdks | Select-String "11.0").ToString().Split(" ")[0]
           Write-Output "Using SDK $sdkVersion"
           @"
           {
@@ -1174,12 +1180,19 @@ jobs:
             9.0.x
             10.0.x
 
-      # global.json dynamically generate
-      - name: Force .NET 10 SDK via global.json
+      # .NET 11 (Preview)
+      - name: Setup .NET 11 (Preview)
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 11.0.x
+          dotnet-quality: preview
+
+      # global.json dynamically generate (use latest SDK available)
+      - name: Force .NET 11 SDK via global.json
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         run: |
-          $sdkVersion = (dotnet --list-sdks | Select-String "10.0").ToString().Split(" ")[0]
+          $sdkVersion = (dotnet --list-sdks | Select-String "11.0").ToString().Split(" ")[0]
           Write-Output "Using SDK $sdkVersion"
           @"
           {
