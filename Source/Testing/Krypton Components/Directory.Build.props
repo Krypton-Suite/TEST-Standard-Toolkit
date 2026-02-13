@@ -46,7 +46,7 @@
 
 	<!-- Configure NuGet package output to separate directory for easier management -->
 	<PropertyGroup>
-		<PackageOutputPath>$(MSBuildThisFileDirectory)..\..\Artefacts\Packages\$(Configuration)\</PackageOutputPath>
+		<PackageOutputPath>$(MSBuildThisFileDirectory)..\..\..\Artefacts\Packages\$(Configuration)\</PackageOutputPath>
 	</PropertyGroup>
 
 	<Choose>
