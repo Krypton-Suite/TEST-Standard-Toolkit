@@ -28,15 +28,15 @@
 	<Choose>
 		<When Condition="'$(Configuration)' == 'Canary'">
 			<ItemGroup>
-				<None Include="../../../Assets/PNG/NuGet Package Icons/Krypton Canary.png" Link="Icon.png" Pack="true" PackagePath="" />
+				<None Include="../../../../Assets/PNG/NuGet Package Icons/Krypton Canary.png" Link="Icon.png" Pack="true" PackagePath="" />
 
-				<None Include="..\..\..\Documents\License\License.md">
+				<None Include="..\..\..\..\Documents\License\License.md">
 					<Pack>True</Pack>
 					<PackagePath>\</PackagePath>
 				</None>
 
 
-				<None Include="..\..\..\README.md">
+				<None Include="..\..\..\..\README.md">
 					<Pack>True</Pack>
 					<PackagePath>\</PackagePath>
 				</None>
@@ -61,15 +61,15 @@
 
 		<When Condition="'$(Configuration)' == 'Nightly'">
 			<ItemGroup>
-				<None Include="../../../Assets/PNG/NuGet Package Icons/Krypton Nightly.png" Link="Icon.png" Pack="true" PackagePath="" />
+				<None Include="../../../../Assets/PNG/NuGet Package Icons/Krypton Nightly.png" Link="Icon.png" Pack="true" PackagePath="" />
 
-				<None Include="..\..\..\Documents\License\License.md">
+				<None Include="..\..\..\..\Documents\License\License.md">
 					<Pack>True</Pack>
 					<PackagePath>\</PackagePath>
 				</None>
 
 
-				<None Include="..\..\..\README.md">
+				<None Include="..\..\..\..\README.md">
 					<Pack>True</Pack>
 					<PackagePath>\</PackagePath>
 				</None>
@@ -93,15 +93,15 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<None Include="../../../Assets/PNG/NuGet Package Icons/Krypton Stable.png" Link="Icon.png" Pack="true" PackagePath="" />
+				<None Include="../../../../Assets/PNG/NuGet Package Icons/Krypton Stable.png" Link="Icon.png" Pack="true" PackagePath="" />
 
-				<None Include="..\..\..\Documents\License\License.md">
+				<None Include="..\..\..\..\Documents\License\License.md">
 					<Pack>True</Pack>
 					<PackagePath>\</PackagePath>
 				</None>
 
 
-				<None Include="..\..\..\README.md">
+				<None Include="..\..\..\..\README.md">
 					<Pack>True</Pack>
 					<PackagePath>\</PackagePath>
 				</None>
