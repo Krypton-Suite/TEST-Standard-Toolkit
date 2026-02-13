@@ -84,7 +84,13 @@ public static class DebugTools
             if (IsGitHubReportingConfigured)
             {
                 var context = $"**Not Implemented context**\r\nMethod: {callingMethod}\r\nFile: {callingFilePath}\r\nLine: {lineNumber}";
-                KryptonGitHubIssueReportDialog.Show(Form.ActiveForm, _secretKey!, _configFilePath, context);
+                using var secureKey = new SecureString();
+                foreach (char c in _secretKey!)
+                {
+                    secureKey.AppendChar(c);
+                }
+                secureKey.MakeReadOnly();
+                KryptonGitHubIssueReportDialog.Show(Form.ActiveForm, secureKey, _configFilePath, context);
             }
             else
             {
