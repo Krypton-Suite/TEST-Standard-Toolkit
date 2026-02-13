@@ -1,185 +1,72 @@
-# Implement global RTL support for VisualSimpleBase controls
+# Fix blurry text rendering in Stimulsoft preview windows (#2913)
 
 ## Description
 
-This PR implements comprehensive Right-to-Left (RTL) layout support for all controls that inherit from `VisualSimpleBase`, with a detailed implementation for `KryptonMonthCalendar`. RTL support is now available globally through the base class, making it easy to enable RTL layouts for all VisualSimpleBase controls.
+Fixes an issue where Krypton Toolkit controls caused low-quality/blurry text rendering in Stimulsoft report preview windows. The problem occurred even when just referencing the Krypton library or adding a single Krypton control (e.g., `KryptonLabel`) to any form in the application.
 
-## Problem
+## Root Cause
 
-Previously, RTL support was not consistently implemented across VisualSimpleBase controls. Controls that inherit from `VisualSimpleBase` (such as `KryptonMonthCalendar`, `KryptonLabel`, `KryptonCheckBox`, `KryptonRadioButton`, `KryptonTrackBar`, `KryptonHeader`, `KryptonColorButton`, `KryptonCommandLinkButton`, `KryptonDropButton`, and `KryptonBreadCrumb`) did not have standardized RTL support.
-
-Additionally, `KryptonMonthCalendar` specifically did not properly mirror its layout when RTL mode was enabled, causing day names, dates, and navigation elements to remain in LTR order.
+Several Krypton controls were modifying `Graphics.TextRenderingHint` directly without properly saving and restoring the original value. This caused the text rendering hint to "leak" to other controls that shared the same graphics context, including Stimulsoft preview windows.
 
 ## Solution
 
-### 1. Global RTL Support in VisualSimpleBase
+All instances where `TextRenderingHint` was set directly have been updated to use the existing `GraphicsTextHint` helper class, which properly saves the original value, applies the new hint, and restores it when disposed (via `using` statement). This ensures that Krypton's text rendering settings are properly scoped and don't affect other controls.
 
-- Added `RightToLeftLayout` property to `VisualSimpleBase` class
-- Implemented private `_rightToLeftLayout` field to store RTL layout state
-- Overrode `RightToLeft` property to trigger repaint on changes
-- Added virtual `OnRightToLeftLayoutChanged()` method for derived classes to override
-- Added `OnRightToLeftChanged()` override to trigger layout updates
+## Changes Made
 
-This provides a consistent foundation for RTL support across all VisualSimpleBase controls:
-- `KryptonBreadCrumb`
-- `KryptonLabel`
-- `KryptonColorButton`
-- `KryptonCommandLinkButton`
-- `KryptonMonthCalendar`
-- `KryptonRadioButton`
-- `KryptonCheckBox`
-- `KryptonDropButton`
-- `KryptonHeader`
-- `KryptonTrackBar`
+### Fixed Controls
+1. **KryptonWrapLabel.cs** — Wrapped `TextRenderingHint` change with `GraphicsTextHint` before calling `base.OnPaint(e)`
+2. **KryptonComboBox.cs** — Wrapped `TextRenderingHint` change in the `DrawItem` event handler
+3. **KryptonTextBox.cs** — Wrapped `TextRenderingHint` change when drawing disabled text
+4. **KryptonMaskedTextBox.cs** — Same fix as `KryptonTextBox`
 
-### 2. RTL Implementation for KryptonMonthCalendar
+### Code Pattern
 
-Implemented comprehensive RTL support for `KryptonMonthCalendar`:
+**Before:**
+```csharp
+e.Graphics.TextRenderingHint = CommonHelper.PaletteTextHintToRenderingHint(hint);
+base.OnPaint(e);
+```
 
-#### ViewDrawMonthDays.cs
-- Modified `Layout()` and `RenderBefore()` methods to reverse day ordering in RTL mode
-- Updated day positioning calculations to start from the right in RTL
-- Adjusted `DayFromPoint()` and `DayNearPoint()` methods for correct mouse interaction in RTL
-- Used `CommonHelper.GetRtlAwareStep()` for proper movement calculations
+**After:**
+```csharp
+using (new GraphicsTextHint(e.Graphics, CommonHelper.PaletteTextHintToRenderingHint(hint)))
+{
+    base.OnPaint(e);
+}
+```
 
-#### ViewDrawMonthDayNames.cs
-- Modified `Layout()` and `RenderBefore()` methods to reverse day name ordering
-- Updated positioning to start from the right in RTL mode
-- Day names now display in reverse order (Sun, Sat, Fri, ... Mon) in RTL
+## Files Changed
 
-#### ViewLayoutContext.cs
-- Added `IsRightToLeftLayout` property for easy RTL detection from layout context
-- Added `RightToLeft` property to access control's RTL setting
-
-### 3. Global RTL Helper Methods
-
-#### CommonHelper.cs
-Added reusable RTL utility methods:
-- `IsRightToLeftLayout(Control)` - Checks if a control has RTL layout enabled
-- `GetRtlAwareXPosition(int, int, int, bool)` - Calculates X position for RTL layouts
-- `GetRtlAwareStep(int, bool)` - Returns step direction for RTL-aware movement
-- `GetRtlAwareIndex(int, int, bool)` - Maps indices for RTL-aware iteration
-- Updated `GetRightToLeftLayout(Control)` - Enhanced to support VisualSimpleBase and use reflection for other controls
-
-### 4. Integration with Existing RTL-Aware Components
-
-#### ButtonSpecManagerBase.cs
-- Updated `GetDockStyle()` to use `CommonHelper.IsRightToLeftLayout()` for consistent RTL detection
-- Button docking now correctly reverses in RTL mode
-
-#### ViewLayoutDocker.cs
-- Updated `CalculateDock()` to use `CommonHelper.IsRightToLeftLayout()` for consistent RTL detection
-- Dock styles now correctly invert left/right in RTL mode
-
-### 5. Demo Application
-
-Created comprehensive demo (`RTLControlsTest`) showcasing:
-- Toggle RTL layout dynamically
-- Multiple calendar configurations (LTR, RTL, multi-month, with features)
-- Property grid integration for testing RTL properties
-- Visual examples of all VisualSimpleBase controls with RTL support
-
-## Behavior
-
-### VisualSimpleBase Controls
-All controls inheriting from `VisualSimpleBase` now have:
-- `RightToLeft` property (inherited from Control, overridden for proper event handling)
-- `RightToLeftLayout` property (new, provided by VisualSimpleBase)
-- Automatic layout updates when RTL properties change
-- Virtual `OnRightToLeftLayoutChanged()` method for custom handling
-
-### KryptonMonthCalendar RTL Behavior
-When `RightToLeft = Yes` and `RightToLeftLayout = true`:
-- Day names are reversed (Sun, Sat, Fri, ... Mon)
-- Days are positioned from right to left
-- Multi-month calendars maintain RTL layout
-- Week numbers, today indicators, and bolded dates work correctly in RTL
-- Mouse interaction correctly maps to days in RTL mode
-- Navigation buttons are positioned correctly (handled by ButtonSpecManagerBase)
+- `Source/Krypton Components/Krypton.Toolkit/Controls Toolkit/KryptonWrapLabel.cs`
+- `Source/Krypton Components/Krypton.Toolkit/Controls Toolkit/KryptonComboBox.cs`
+- `Source/Krypton Components/Krypton.Toolkit/Controls Toolkit/KryptonTextBox.cs`
+- `Source/Krypton Components/Krypton.Toolkit/Controls Toolkit/KryptonMaskedTextBox.cs`
 
 ## Testing
 
 ### Manual Testing Steps
+1. Create a WinForms application that references both Krypton Toolkit and Stimulsoft
+2. Add any Krypton control (e.g., `KryptonLabel`) to a form
+3. Open a Stimulsoft report preview window
+4. Verify that text in the preview window is no longer blurry and renders with proper quality
 
-1. **KryptonMonthCalendar RTL Testing:**
-   - Open `RTLControlsTest` demo
-   - Use "Toggle RTL" button to enable/disable RTL on the calendar
-   - Verify day names are reversed in RTL mode
-   - Verify days are positioned from right to left
-   - Test date selection in RTL mode
-   - Test multi-month calendars in RTL mode
-   - Use PropertyGrid to change RTL properties and verify updates
+### Verification
+- All modified files compile without errors
+- No linter errors introduced
+- Changes follow existing codebase patterns (similar to `GraphicsHint` for `SmoothingMode`)
+- Backward compatible — no breaking changes
 
-2. **VisualSimpleBase Controls Testing:**
-   - Create instances of any VisualSimpleBase control
-   - Set `RightToLeft = RightToLeft.Yes`
-   - Set `RightToLeftLayout = true`
-   - Verify properties are available and can be set
-   - Verify layout updates occur when properties change
+## Impact
 
-3. **Integration Testing:**
-   - Verify ButtonSpecManagerBase correctly handles RTL for buttons
-   - Verify ViewLayoutDocker correctly inverts dock styles in RTL
-   - Test with multiple VisualSimpleBase controls in the same form
-
-## Files Changed
-
-### Core Implementation
-- `Source/Krypton Components/Krypton.Toolkit/Controls Visuals/VisualSimpleBase.cs`
-  - Added `_rightToLeftLayout` field
-  - Added `RightToLeftLayout` property
-  - Overrode `RightToLeft` property
-  - Added `OnRightToLeftChanged()` override
-  - Added virtual `OnRightToLeftLayoutChanged()` method
-
-- `Source/Krypton Components/Krypton.Toolkit/General/CommonHelper.cs`
-  - Added `IsRightToLeftLayout()` method
-  - Added `GetRtlAwareXPosition()` method
-  - Added `GetRtlAwareStep()` method
-  - Added `GetRtlAwareIndex()` method
-  - Updated `GetRightToLeftLayout()` to support VisualSimpleBase
-
-- `Source/Krypton Components/Krypton.Toolkit/View Layout/ViewLayoutContext.cs`
-  - Added `IsRightToLeftLayout` property
-  - Added `RightToLeft` property
-
-- `Source/Krypton Components/Krypton.Toolkit/View Draw/ViewDrawMonthDays.cs`
-  - Modified `Layout()` method for RTL day positioning
-  - Modified `RenderBefore()` method for RTL day rendering
-  - Updated `DayFromPoint()` and `DayNearPoint()` for RTL mouse interaction
-
-- `Source/Krypton Components/Krypton.Toolkit/View Draw/ViewDrawMonthDayNames.cs`
-  - Modified `Layout()` method for RTL day name positioning
-  - Modified `RenderBefore()` method for RTL day name rendering
-
-- `Source/Krypton Components/Krypton.Toolkit/ButtonSpec/ButtonSpecManagerBase.cs`
-  - Updated `GetDockStyle()` to use `CommonHelper.IsRightToLeftLayout()`
-
-- `Source/Krypton Components/Krypton.Toolkit/View Layout/ViewLayoutDocker.cs`
-  - Updated `CalculateDock()` to use `CommonHelper.IsRightToLeftLayout()`
-
-### Demo Application
-- `Source/Krypton Components/TestForm/RTLControlsTest.cs` (NEW)
-  - Comprehensive demo showcasing RTL support
-  - Multiple calendar examples with RTL toggle
-  - Property grid integration
-  - Visual examples of all VisualSimpleBase controls with RTL support
-
-- `Source/Krypton Components/TestForm/RTLControlsTest.Designer.cs` (NEW)
-  - Designer code for RTL demo form
-
-## Breaking Changes
-
-None. This is a new feature that adds RTL support without changing existing LTR behavior. All changes are additive and backward-compatible.
-
-## Benefits
-
-1. **Global RTL Support:** All VisualSimpleBase controls now inherit consistent RTL support from the base class
-2. **Easy to Extend:** New VisualSimpleBase controls automatically get RTL support
-3. **Reusable Helpers:** CommonHelper methods provide utilities for RTL calculations
-4. **Comprehensive Demo:** RTLControlsTest demonstrates RTL functionality
-5. **Consistent API:** Standardized RTL properties and event handling across all VisualSimpleBase controls
+- **Breaking Changes:** None
+- **TFM Impact:** None — works across all supported TFMs (`net472`, `net48`, `net481`, `net8.0-windows`, `net9.0-windows`, `net10.0-windows`)
+- **Performance:** Negligible — `GraphicsTextHint` is a lightweight wrapper with minimal overhead
 
 ## Related Issues
 
-This implementation provides the foundation for RTL support across all VisualSimpleBase controls and includes a complete implementation for KryptonMonthCalendar.
+Closes #2913
+
+## Notes
+
+This fix follows the same pattern already established in the codebase for managing graphics state (e.g., `GraphicsHint` for `SmoothingMode`). The `GraphicsTextHint` helper class was already available but wasn't being used consistently across all controls.
