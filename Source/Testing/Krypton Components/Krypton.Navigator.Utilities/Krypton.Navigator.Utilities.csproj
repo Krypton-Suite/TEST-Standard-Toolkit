@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Choose>
+    <When Condition="'$(Configuration)' == 'Nightly' Or '$(Configuration)' == 'Canary' Or '$(Configuration)' == 'Debug'">
+      <PropertyGroup>
+        <TargetFrameworks>net472;net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <TargetFrameworks>net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TFMs)' == 'all'">net472;net48;net481;net8.0-windows;net9.0-windows;net10.0-windows</TargetFrameworks>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Krypton.Navigator.Utilities</RootNamespace>
+    <AssemblyName>Krypton.Navigator.Utilities</AssemblyName>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Krypton.Navigator\StrongKrypton.snk</AssemblyOriginatorKeyFile>
+    <ApplicationIcon>Krypton.ico</ApplicationIcon>
+    <DelaySign>false</DelaySign>
+    <UseWindowsForms>true</UseWindowsForms>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <NeutralLanguage>en</NeutralLanguage>
+    <DisableImplicitNamespaceImports>true</DisableImplicitNamespaceImports>
+    <Configurations>Debug;Release;Installer;Nightly;Canary</Configurations>
+    <Nullable>enable</Nullable>
+    <WarningLevel>8</WarningLevel>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+    <ForceDesignerDPIUnaware>true</ForceDesignerDPIUnaware>
+    <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Krypton.Navigator.Utilities</PackageId>
+    <Description>Utility controls for Krypton.Navigator, including tabbed editors with KryptonRichTextBox or KryptonCodeEditor on each page.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" Condition="$(TargetFramework.StartsWith('net4'))">
+      <SpecificVersion>True</SpecificVersion>
+      <Version>4.0.0.0</Version>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\Krypton.Navigator\Krypton.ico" Link="Krypton.ico" Pack="false" />
+    <None Include="..\Krypton.Navigator\StrongKrypton.snk" Link="StrongKrypton.snk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Krypton.Navigator\Krypton.Navigator.csproj" />
+    <ProjectReference Include="..\Krypton.Toolkit\Krypton.Toolkit.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <OutputPath>..\..\..\Artefacts\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <NoWarn>1701;1702</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'!='Debug'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
+</Project>

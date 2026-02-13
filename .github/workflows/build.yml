@@ -66,7 +66,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Current/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
 
       - name: Build
         run: msbuild "Scripts/Build/nightly.proj" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU"
@@ -144,8 +144,8 @@ jobs:
           }
           if (-not $latestVersion) { $latestVersion = "1.0.3595.46" }
           Write-Host "Using WebView2 SDK version: $latestVersion"
-          dotnet add "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
-          dotnet restore "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
+          dotnet add "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
+          dotnet restore "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
           $nugetBasePath = "$env:USERPROFILE\.nuget\packages\microsoft.web.webview2\$latestVersion"
           $coreDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.Core.dll" | Select-Object -First 1
           Copy-Item (Join-Path $nugetBasePath $coreDll) "WebView2SDK\"
@@ -153,10 +153,10 @@ jobs:
           Copy-Item (Join-Path $nugetBasePath $winFormsDll) "WebView2SDK\"
           $loaderDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "WebView2Loader.dll" | Select-Object -First 1
           Copy-Item (Join-Path $nugetBasePath $loaderDll) "WebView2SDK\"
-          dotnet remove "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
+          dotnet remove "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
 
       - name: Restore
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Current/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
 
       - name: Build Release
         run: msbuild "Scripts/Build/build.proj" /t:Build /p:Configuration=Release /p:Platform="Any CPU"
@@ -167,7 +167,7 @@ jobs:
       - name: Get Version
         id: get_version
         run: |
-          $version = (dotnet build "Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj" --no-restore --verbosity quiet | Select-String "Version" | ForEach-Object { $_.Line.Split('=')[1].Trim() })
+          $version = (dotnet build "Source/Current/Krypton Components/Krypton.Toolkit/Krypton.Toolkit.csproj" --no-restore --verbosity quiet | Select-String "Version" | ForEach-Object { $_.Line.Split('=')[1].Trim() })
           if (-not $version) {
             $version = "100.25.1.1"  # Fallback version
           }
