@@ -117,8 +117,8 @@ jobs:
           }
           if (-not $latestVersion) { $latestVersion = "1.0.3595.46" }
           Write-Host "Using WebView2 SDK version: $latestVersion"
-          dotnet add "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
-          dotnet restore "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
+          dotnet add "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
+          dotnet restore "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
           $nugetBasePath = "$env:USERPROFILE\.nuget\packages\microsoft.web.webview2\$latestVersion"
           $coreDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.Core.dll" | Select-Object -First 1
           Copy-Item (Join-Path $nugetBasePath $coreDll) "WebView2SDK\"
@@ -126,12 +126,12 @@ jobs:
           Copy-Item (Join-Path $nugetBasePath $winFormsDll) "WebView2SDK\"
           $loaderDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "WebView2Loader.dll" | Select-Object -First 1
           Copy-Item (Join-Path $nugetBasePath $loaderDll) "WebView2SDK\"
-          dotnet remove "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
+          dotnet remove "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
 
       - name: Restore
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Current/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
 
       - name: Prepare Code Signing Certificate (Optional)
         # Kill switch check
@@ -246,7 +246,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
+              $proj = 'Source/Current/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -396,7 +396,7 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Current/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
 
       - name: Prepare Code Signing Certificate (Optional)
         # Kill switch check
@@ -511,7 +511,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
+              $proj = 'Source/Current/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -646,7 +646,7 @@ jobs:
       - name: Restore
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Current/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
 
       - name: Prepare Code Signing Certificate (Optional)
         # Kill switch check
@@ -761,7 +761,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
+              $proj = 'Source/Current/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -936,8 +936,8 @@ jobs:
           }
           if (-not $latestVersion) { $latestVersion = "1.0.3595.46" }
           Write-Host "Using WebView2 SDK version: $latestVersion"
-          dotnet add "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
-          dotnet restore "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
+          dotnet add "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
+          dotnet restore "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
           $nugetBasePath = "$env:USERPROFILE\.nuget\packages\microsoft.web.webview2\$latestVersion"
           $coreDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.Core.dll" | Select-Object -First 1
           Copy-Item (Join-Path $nugetBasePath $coreDll) "WebView2SDK\"
@@ -945,12 +945,12 @@ jobs:
           Copy-Item (Join-Path $nugetBasePath $winFormsDll) "WebView2SDK\"
           $loaderDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "WebView2Loader.dll" | Select-Object -First 1
           Copy-Item (Join-Path $nugetBasePath $loaderDll) "WebView2SDK\"
-          dotnet remove "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
+          dotnet remove "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
 
       - name: Restore
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Current/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
 
       - name: Prepare Code Signing Certificate (Optional)
         # Kill switch check
@@ -1065,7 +1065,7 @@ jobs:
           # Fallback: Try to read from csproj XML
           if (-not $version) {
             try {
-              $proj = 'Source/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
+              $proj = 'Source/Current/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
               [xml]$projXml = Get-Content $proj
               $versionNode = $projXml.SelectSingleNode("//Version")
               if ($versionNode) {
@@ -1240,8 +1240,8 @@ jobs:
           }
           if (-not $latestVersion) { $latestVersion = "1.0.3595.46" }
           Write-Host "Using WebView2 SDK version: $latestVersion"
-          dotnet add "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
-          dotnet restore "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
+          dotnet add "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
+          dotnet restore "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
           $nugetBasePath = "$env:USERPROFILE\.nuget\packages\microsoft.web.webview2\$latestVersion"
           $coreDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.Core.dll" | Select-Object -First 1
           Copy-Item (Join-Path $nugetBasePath $coreDll) "WebView2SDK\"
@@ -1249,12 +1249,12 @@ jobs:
           Copy-Item (Join-Path $nugetBasePath $winFormsDll) "WebView2SDK\"
           $loaderDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "WebView2Loader.dll" | Select-Object -First 1
           Copy-Item (Join-Path $nugetBasePath $loaderDll) "WebView2SDK\"
-          dotnet remove "Source/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
+          dotnet remove "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
 
       - name: Restore
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite.slnx"
+        run: dotnet restore "Source/Current/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
 
       - name: Prepare Code Signing Certificate (Optional)
         # Kill switch check
