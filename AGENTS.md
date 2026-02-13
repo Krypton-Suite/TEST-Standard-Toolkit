@@ -3,26 +3,26 @@
 ## Environment
 - OS: Windows
 - Shell: Use Command Prompt (`cmd.exe`) only; avoid Bash/Unix commands
-- Tools: Visual Studio 2022 (v17) and appropriate .NET SDKs starting with `net472`
+- Tools: Visual Studio 2026 (v18) and appropriate .NET SDKs starting with `net472`
 - Build scripts are Windows `.cmd` files under `Scripts/`
 - Do not run build scripts unless instructed to do so
 
 ## Project Structure & Module Organization
-- `Source/Krypton Components`: Core libraries (`Krypton.Toolkit`, `Krypton.Ribbon`, `Krypton.Navigator`, `Krypton.Workspace`, `Krypton.Docking`) and the solution `Krypton Toolkit Suite - VS2022.sln`
-- `Source/Krypton Components/TestForm`: WinForms sample app used to validate changes
-- `Source/TestHarnesses`: Small repro/test harnesses (e.g., `ThemeSwapRepro`)
-- `Scripts/`: Build and packaging scripts (`build-stable.cmd`, `build-canary.cmd`, `build-nightly.cmd`, `build.proj`)
+- `Source/Testing/Krypton Components`: Core libraries (`Krypton.Toolkit`, `Krypton.Ribbon`, `Krypton.Navigator`, `Krypton.Workspace`, `Krypton.Docking`) and the solution `Krypton Toolkit Suite - VS2022.sln`
+- `Source/Testing/Krypton Components/TestForm`: WinForms sample app used to validate changes
+- `Source/Testing/TestHarnesses`: Small repro/test harnesses (e.g., `ThemeSwapRepro`)
+- `Scripts//Testing/`: Build and packaging scripts (`build-stable.cmd`, `build-canary.cmd`, `build-nightly.cmd`, `build.proj`)
 - `Artefacts/`: Build outputs by configuration (e.g., `Artefacts/Debug`)
 - `Documents/`, `Assets/`, `Logs/`: Docs, images, and build logs
 
 ## Build, Test, and Development Commands
 - Build solution (Debug):
-  - `dotnet build "Source/Krypton Components/Krypton Toolkit Suite - VS2022.sln" -c Debug`
+  - `dotnet build "Source/Testing/Krypton Components/Krypton Toolkit Suite - VS2022.sln" -c Debug`
 - Run sample app:
-  - `dotnet run --project "Source/Krypton Components/TestForm/TestForm.csproj" -c Debug`
+  - `dotnet run --project "Source/Testing/Krypton Components/TestForm/TestForm.csproj" -c Debug`
 - Preset builds (Windows cmd):
-  - `Scripts/build-stable.cmd` | `Scripts/build-canary.cmd` | `Scripts/build-nightly.cmd`
-- Outputs land in `Artefacts/<Configuration>/`. Supported TFMs include `net472`, `net48`, `net481`, `net8.0-windows`, `net9.0-windows`, `net10.0-windows`
+  - `Scripts/Testing/build-stable.cmd` | `Scripts/Testing/build-canary.cmd` | `Scripts/Testing/build-nightly.cmd`
+- Outputs land in `Artefacts/<Configuration>/`. Supported TFMs include `net472`, `net48`, `net481`, `net8.0-windows`, `net9.0-windows`, `net10.0-windows`, `net11.0-windows`
 
 ## Coding Style & Naming Conventions
 - Line endings/encoding: CRLF, UTF-8 with BOM
@@ -42,11 +42,11 @@
 - Constraint: do not use `yield return` inside `catch` blocks
 
 ## Testing Guidelines
-- No formal unit test suite. Validate changes via `TestForm` scenarios and harnesses under `Source/TestHarnesses`
+- No formal unit test suite. Validate changes via `TestForm` scenarios and harnesses under `Source/Testing/TestHarnesses`
 - When fixing a bug, add/adjust a minimal repro in `TestForm` or a harness and describe manual steps in the PR
 
 ## Commit & Pull Request Guidelines
-- Commits: short, imperative subject; reference issues/PRs (e.g., `Fix autosizing (#2433)` or `2439 V100 datecell autosizing`)
+- Commits: short, imperative subject; reference issues/PRs (e.g., `Fix autosizing (#2433)` or `2439 V110 datecell autosizing`)
 - PRs: clear description, linked issues, screenshots/gifs for UI changes, notes on breaking changes/TFM impact
 
 ## Security & Configuration Tips
