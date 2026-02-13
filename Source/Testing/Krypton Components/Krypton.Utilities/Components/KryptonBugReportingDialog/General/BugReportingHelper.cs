@@ -48,8 +48,17 @@ public static class BugReportingHelper
     public static void ShowExceptionWithBugReporting(Exception exception, string githubSecretKey,
         Color? highlightColor = null, bool? showCopyButton = null, bool? showSearchBox = null, string? githubConfigPath = null)
     {
+        SecureString? secureKey = null;
+        if (githubSecretKey != null)
+        {
+            secureKey = new SecureString();
+            foreach (char c in githubSecretKey)
+            {
+                secureKey.AppendChar(c);
+            }
+        }
         Krypton.Toolkit.KryptonExceptionDialog.Show(exception, highlightColor, showCopyButton, showSearchBox,
-            null, githubSecretKey, githubConfigPath);
+            null, secureKey, githubConfigPath);
     }
 
     /// <summary>
