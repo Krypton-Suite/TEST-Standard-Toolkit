@@ -125,7 +125,7 @@ internal static class QRCodeGeneratorCore
             }
         }
 
-        throw new ArgumentException($"Data too long for QR code. Maximum ~{ByteCapacity[9, eccIndex]} bytes for ECC {eccLevel}.", nameof(data));
+        throw new ArgumentException($"Data too long for QR code. Maximum ~{ByteCapacity[9, eccIndex]} bytes for ECC {eccLevel}.", nameof(byteCount));
     }
 
     #endregion
