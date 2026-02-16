@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -21,6 +21,7 @@ public class ViewDrawMenuMonthCalendar : ViewComposite,
     #region Instance Fields
     private readonly KryptonContextMenuMonthCalendar _monthCalendar;
     private readonly IContextMenuProvider _provider;
+    private readonly ViewDrawDocker _drawDocker;
     private readonly ViewLayoutMonths _layoutMonths;
     private readonly bool _itemEnabled;
 
@@ -63,7 +64,12 @@ public class ViewDrawMenuMonthCalendar : ViewComposite,
             Enabled = _itemEnabled
         };
 
-        Add(_layoutMonths);
+        // Wrap in a docker so the month calendar body background (StateCommon.Back) is drawn
+        _drawDocker = new ViewDrawDocker(_monthCalendar.StateCommon.Back, _monthCalendar.StateCommon.Border, null)
+        {
+            { _layoutMonths, ViewDockStyle.Fill }
+        };
+        Add(_drawDocker);
     }
 
     /// <summary>

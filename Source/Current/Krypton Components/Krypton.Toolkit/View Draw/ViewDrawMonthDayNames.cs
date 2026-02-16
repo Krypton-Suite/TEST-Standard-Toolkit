@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -169,6 +169,16 @@ public class ViewDrawMonthDayNames : ViewLeaf,
 
         // Content palette depends on enabled state of the control
         PaletteState state = Enabled ? PaletteState.Normal : PaletteState.Disabled;
+
+        // Draw the day-of-week row background so custom calendar back color shows (Issue #1827)
+        IPaletteBack paletteBack = _calendar.StateNormal.DayOfWeek.Back;
+        if (paletteBack.GetBackDraw(state) == InheritBool.True)
+        {
+            using GraphicsPath path = context!.Renderer!.RenderStandardBorder.GetBackPath(context, ClientRectangle, _calendar.StateNormal.DayOfWeek.Border!,
+                VisualOrientation.Top, state)!;
+            using var gh = new GraphicsHint(context.Graphics, _calendar.StateNormal.DayOfWeek.Border!.GetBorderGraphicsHint(state));
+            context.Renderer.RenderStandardBack.DrawBack(context, ClientRectangle, path, paletteBack, VisualOrientation.Top, state, null);
+        }
 
         // Calculate starting X position based on RTL
         int startX = isRtl

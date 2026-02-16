@@ -2200,10 +2200,11 @@ public class KryptonCustomPaletteBase : PaletteBase
         // Set the file path
         SetCustomisedKryptonPaletteFilePath(Path.GetFullPath(ret));
 
-        // Set the palette name
-        // TODO: Get paletteName from the paletteBase
-
-        SetPaletteName(Path.GetFileName(ret));
+        // Use bundled name from file if present, otherwise fall back to filename
+        if (string.IsNullOrWhiteSpace(GetPaletteName()))
+        {
+            SetPaletteName(Path.GetFileName(ret));
+        }
 
         return ret;
     }
@@ -3114,6 +3115,12 @@ public class KryptonCustomPaletteBase : PaletteBase
                     $"Version '{version}' number is incompatible, only version {GlobalStaticValues.CURRENT_SUPPORTED_PALETTE_VERSION} or above can be imported.\nUse the PaletteUpgradeTool from the Application tab of the KryptonExplorer to upgrade.");
             }
 
+            // Restore bundled palette name so external themes display correctly (e.g. in KManager)
+            if (root.HasAttribute("Name"))
+            {
+                SetPaletteName(root.GetAttribute("Name"));
+            }
+
             // Grab the properties and images elements
             var props = root.SelectSingleNode(nameof(Properties)) as XmlElement;
             var images = root.SelectSingleNode(nameof(Images)) as XmlElement;
@@ -3135,10 +3142,6 @@ public class KryptonCustomPaletteBase : PaletteBase
             // Use reflection to import the palette hierarchy
             ImportImagesFromElement(images, imageCache);
             ImportObjectFromElement(props, imageCache, this);
-
-            // Set the palette name
-            // TODO: Get paletteName from the paletteBase
-            //SetPaletteName(root.SelectSingleNode(Name));
         }
         catch (Exception e)
         {
@@ -3263,6 +3266,11 @@ public class KryptonCustomPaletteBase : PaletteBase
             root.SetAttribute(nameof(Version), GlobalStaticValues.CURRENT_SUPPORTED_PALETTE_VERSION.ToString());
             root.SetAttribute("Generated",
                 $"{DateTime.Now.ToLongDateString()}, @{DateTime.Now.ToShortTimeString()}");
+            // Bundle the palette display name so it can be shown correctly when loaded (e.g. in KManager)
+            if (!string.IsNullOrWhiteSpace(PaletteName))
+            {
+                root.SetAttribute("Name", PaletteName);
+            }
             doc.AppendChild(root);
 
             // Add two children, one for storing actual palette values the other for cached images

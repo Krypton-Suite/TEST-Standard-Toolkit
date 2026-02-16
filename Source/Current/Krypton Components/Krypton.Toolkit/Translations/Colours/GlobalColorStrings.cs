@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -26,6 +26,7 @@ public class GlobalColorStrings : GlobalId
     private const string DEFAULT_PALETTE_COLORS = @"Palette Colors";
     private const string DEFAULT_STANDARD_COLORS = @"Standard Colors";
     private const string DEFAULT_RECENT_COLORS = @"Recent Colors";
+    private const string DEFAULT_CUSTOM_COLORS = @"Custom Colors";
     private const string DEFAULT_NO_COLOR = @"No Color";
 
     #endregion
@@ -58,6 +59,7 @@ public class GlobalColorStrings : GlobalId
                              PaletteColors.Equals(DEFAULT_PALETTE_COLORS) &&
                              StandardColors.Equals(DEFAULT_STANDARD_COLORS) &&
                              RecentColors.Equals(DEFAULT_RECENT_COLORS) &&
+                             CustomColors.Equals(DEFAULT_CUSTOM_COLORS) &&
                              NoColor.Equals(DEFAULT_NO_COLOR);
 
     /// <summary>
@@ -72,6 +74,7 @@ public class GlobalColorStrings : GlobalId
         PaletteColors = DEFAULT_PALETTE_COLORS;
         StandardColors = DEFAULT_STANDARD_COLORS;
         RecentColors = DEFAULT_RECENT_COLORS;
+        CustomColors = DEFAULT_CUSTOM_COLORS;
         NoColor = DEFAULT_NO_COLOR;
     }
 
@@ -122,6 +125,14 @@ public class GlobalColorStrings : GlobalId
     [DefaultValue(DEFAULT_RECENT_COLORS)]
     [RefreshProperties(RefreshProperties.All)]
     public string RecentColors { get; set; }
+
+    /// <summary>Gets or sets the custom colors string.</summary>
+    [Localizable(true)]
+    [Category(@"Visuals")]
+    [Description(@"Localised custom colors string.")]
+    [DefaultValue(DEFAULT_CUSTOM_COLORS)]
+    [RefreshProperties(RefreshProperties.All)]
+    public string CustomColors { get; set; }
 
     /// <summary>Gets or sets the no color string.</summary>
     [Localizable(true)]

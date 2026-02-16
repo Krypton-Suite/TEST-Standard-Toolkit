@@ -62,6 +62,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("Badge Test", "Comprehensive badge functionality demonstration for KryptonButton and KryptonCheckButton.", typeof(ButtonBadgeTest));
         CreateButton("Button Text Tracking", "Demonstrates alternate text color for tracking (hover) state on KryptonButton, KryptonCheckButton, KryptonColorButton and other controls (Issue #1326). Improves readability in dark themes.", typeof(ButtonTextTrackingExample));
         CreateButton("Buttons Test", "All the buttons you want to test.", typeof(ButtonsTest));
+        CreateButton("KryptonColorButton Custom Colours", "Comprehensive demo of KryptonColorButton custom colours (Issue #776): CustomColors, MaxCustomColors, and visibility. Only 10 colours, or custom + theme + standard, or cap display count.", typeof(KryptonColorButtonDemo));
         CreateButton("Bug 2914 Test", "Tests the fix for 2914.", typeof(Bug2914Test));
         CreateButton("Bug 2984 Separator Test", "Demo for Issue #2984: NullReferenceException in ViewDrawSeparator.RenderBefore. Exercises KryptonNavigator (Outlook), KryptonSplitContainer, and KryptonSeparator. Swap themes to verify no crash.", typeof(Bug2984SeparatorTest));
         CreateButton("Bug 2935 MDI multi-monitor", "Demo for issue #2935: maximized MDI child form border drawn on the correct monitor. Move the MDI parent to a second monitor, open and maximize a child; the border should stay on the same monitor.", typeof(Bug2935MdiMultiMonitorDemo));
@@ -105,6 +106,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("BreadCrumb", "Follow the breadcrumbs and find the treasure...", typeof(BreadCrumbTest));
         CreateButton("Calendar", string.Empty, typeof(CalendarTest));
         CreateButton("ComboBox/DateTimePicker Consistency", "Comprehensive demonstration of KComboBox and KDateTimePicker consistency fix (Issue #1651). Shows drop-down buttons stretching to full height and centered text.", typeof(ComboBoxDateTimePickerConsistencyDemo));
+        CreateButton("DateTimePicker Month Calendar Background", "Comprehensive demo of KryptonDateTimePicker month calendar custom background (Issue #1827): CalendarBackColor, theme default, presets (dark/light), and pick-a-color to style the drop-down calendar.", typeof(KryptonDateTimePickerMonthCalendarDemo));
         CreateButton("Drop-Down Arrows Demo", "Comprehensive demonstration of drop-down arrows: smaller size and DPI awareness (Issue #2129). Shows KryptonButton, KryptonDropButton, KryptonComboBox, KryptonDateTimePicker, KryptonColorButton, and KryptonNumericUpDown. Move window between monitors to verify DPI scaling.", typeof(DropDownArrowsDemo));
         CreateButton("Controls Test", string.Empty, typeof(ControlsTest));
         CreateButton("KryptonDataGridView Demo", string.Empty, typeof(DataGridViewDemo));

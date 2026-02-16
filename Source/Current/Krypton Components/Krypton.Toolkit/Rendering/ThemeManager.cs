@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -118,10 +118,24 @@ public class ThemeManager
 
     /// <summary>
     /// Returns the respective theme name for the given KryptonManager instance.
+    /// When the mode is Custom and the custom palette has a bundled name, that name is returned so it displays correctly (e.g. in KManager).
     /// </summary>
     /// <param name="manager">A valid reference to a KryptonManager instance.</param>
     /// <returns>The theme name.</returns>
-    public static string ReturnPaletteModeAsString(KryptonManager manager) => ReturnPaletteModeAsString(manager.GlobalPaletteMode);
+    public static string ReturnPaletteModeAsString(KryptonManager manager)
+    {
+        if (manager.GlobalPaletteMode == PaletteMode.Custom
+            && manager.GlobalCustomPalette is KryptonCustomPaletteBase customPalette)
+        {
+            var name = customPalette.GetPaletteName();
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                return name;
+            }
+        }
+
+        return ReturnPaletteModeAsString(manager.GlobalPaletteMode);
+    }
 
     /// <summary>
     /// Returns the palette mode as string.
