@@ -1,4 +1,10 @@
 <Project>
+	<!-- .NET 8+ centralized artifacts output (see https://learn.microsoft.com/en-us/dotnet/core/sdk/artifacts-output) -->
+	<PropertyGroup>
+		<UseArtifactsOutput>true</UseArtifactsOutput>
+		<ArtifactsPath>$(MSBuildThisFileDirectory)Artefacts</ArtifactsPath>
+	</PropertyGroup>
+
 	<Choose>
 		<When Condition="'$(Configuration)' == 'Canary'">
 			<PropertyGroup>

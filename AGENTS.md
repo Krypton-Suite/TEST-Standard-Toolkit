@@ -12,7 +12,7 @@
 - `Source/Testing/Krypton Components/TestForm`: WinForms sample app used to validate changes
 - `Source/Testing/TestHarnesses`: Small repro/test harnesses (e.g., `ThemeSwapRepro`)
 - `Scripts//Testing/`: Build and packaging scripts (`build-stable.cmd`, `build-canary.cmd`, `build-nightly.cmd`, `build.proj`)
-- `Artefacts/`: Build outputs by configuration (e.g., `Artefacts/Debug`)
+- `Artefacts/`: Build outputs ( .NET 8+ centralized layout: `bin/`, `obj/`, `package/`, `publish/` under `Artefacts/`)
 - `Documents/`, `Assets/`, `Logs/`: Docs, images, and build logs
 
 ## Build, Test, and Development Commands
@@ -22,7 +22,7 @@
   - `dotnet run --project "Source/Testing/Krypton Components/TestForm/TestForm.csproj" -c Debug`
 - Preset builds (Windows cmd):
   - `Scripts/Testing/build-stable.cmd` | `Scripts/Testing/build-canary.cmd` | `Scripts/Testing/build-nightly.cmd`
-- Outputs land in `Artefacts/<Configuration>/`. Supported TFMs include `net472`, `net48`, `net481`, `net8.0-windows`, `net9.0-windows`, `net10.0-windows`, `net11.0-windows`
+- Outputs land in `Artefacts/bin/<ProjectName>/<Pivot>/`; NuGet packages in `Artefacts/package/<Configuration>/`. Supported TFMs include `net472`, `net48`, `net481`, `net8.0-windows`, `net9.0-windows`, `net10.0-windows`, `net11.0-windows`
 
 ## Coding Style & Naming Conventions
 - Line endings/encoding: CRLF, UTF-8 with BOM

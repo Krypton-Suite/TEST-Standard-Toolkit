@@ -61,7 +61,6 @@
 
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <OutputPath>..\..\..\..\Artefacts\$(Configuration)\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup>
