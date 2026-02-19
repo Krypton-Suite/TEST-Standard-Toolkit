@@ -63,6 +63,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("Button Text Tracking", "Demonstrates alternate text color for tracking (hover) state on KryptonButton, KryptonCheckButton, KryptonColorButton and other controls (Issue #1326). Improves readability in dark themes.", typeof(ButtonTextTrackingExample));
         CreateButton("Buttons Test", "All the buttons you want to test.", typeof(ButtonsTest));
         CreateButton("KryptonColorButton Custom Colours", "Comprehensive demo of KryptonColorButton custom colours (Issue #776): CustomColors, MaxCustomColors, and visibility. Only 10 colours, or custom + theme + standard, or cap display count.", typeof(KryptonColorButtonDemo));
+        CreateButton("Borderless Form Demo", "Demo for Issue #2922: Borderless KryptonForm without system title bar flicker on startup. Form should appear directly in borderless state.", typeof(BorderlessFormDemo));
         CreateButton("Bug 2914 Test", "Tests the fix for 2914.", typeof(Bug2914Test));
         CreateButton("Bug 2984 Separator Test", "Demo for Issue #2984: NullReferenceException in ViewDrawSeparator.RenderBefore. Exercises KryptonNavigator (Outlook), KryptonSplitContainer, and KryptonSeparator. Swap themes to verify no crash.", typeof(Bug2984SeparatorTest));
         CreateButton("Bug 2935 MDI multi-monitor", "Demo for issue #2935: maximized MDI child form border drawn on the correct monitor. Move the MDI parent to a second monitor, open and maximize a child; the border should stay on the same monitor.", typeof(Bug2935MdiMultiMonitorDemo));

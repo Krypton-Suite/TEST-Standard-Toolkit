@@ -198,6 +198,9 @@ public class KryptonForm : VisualForm,
     // Compensate for Windows 11 outer accent border by shrinking the window region slightly
     private Rectangle _lastGripClientRect = Rectangle.Empty;
     private Timer? _clickTimer;
+    // Issue #2922: Workaround for borderless form briefly showing system title bar on startup
+    private bool _borderlessFormFirstShowPending;
+    private double _borderlessTargetOpacity = 1.0;
     private KryptonSystemMenu? _kryptonSystemMenu;
     // SystemMenu context menu components
     private KryptonContextMenu _systemMenuContextMenu;
@@ -1577,6 +1580,28 @@ public class KryptonForm : VisualForm,
         }
 
         base.OnControlRemoved(e);
+    }
+
+    /// <summary>
+    /// Prevents borderless forms from briefly displaying the system title bar on startup.
+    /// Issue: https://github.com/Krypton-Suite/Standard-Toolkit/issues/2922
+    /// </summary>
+    protected override void SetVisibleCore(bool value)
+    {
+        if (value && FormBorderStyle == FormBorderStyle.None && !DesignMode && !_borderlessFormFirstShowPending)
+        {
+            _borderlessFormFirstShowPending = true;
+            _borderlessTargetOpacity = Opacity;
+            Opacity = 0;
+            base.SetVisibleCore(true);
+            BeginInvoke(() =>
+            {
+                Opacity = _borderlessTargetOpacity;
+            });
+            return;
+        }
+
+        base.SetVisibleCore(value);
     }
 
     /// <summary>
