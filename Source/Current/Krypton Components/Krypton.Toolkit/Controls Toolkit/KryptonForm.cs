@@ -1866,6 +1866,29 @@ public class KryptonForm : VisualForm,
         return base.OnWM_NCLBUTTONDBLCLK(ref m);
     }
 
+    /// <summary>
+    /// Constrain maximized form to the screen's working area (excludes taskbar).
+    /// Fixes: https://github.com/Krypton-Suite/Standard-Toolkit/issues/3013
+    /// </summary>
+    protected override void OnWM_GETMINMAXINFO(ref Message m)
+    {
+        base.OnWM_GETMINMAXINFO(ref m);
+
+        if (!IsHandleCreated)
+        {
+            return;
+        }
+
+        Rectangle workArea = Screen.FromControl(this).WorkingArea;
+        PI.MINMAXINFO mmi = (PI.MINMAXINFO)Marshal.PtrToStructure(m.LParam, typeof(PI.MINMAXINFO))!;
+
+        // Clamp maximized size to working area (belt-and-suspenders for issue #3013)
+        mmi.ptMaxSize.X = Math.Min(mmi.ptMaxSize.X, workArea.Width);
+        mmi.ptMaxSize.Y = Math.Min(mmi.ptMaxSize.Y, workArea.Height);
+
+        Marshal.StructureToPtr(mmi, m.LParam, true);
+    }
+
     private void DrawSizingGripOverlayIfNeeded()
     {
         if (!ShouldShowSizingGrip())
