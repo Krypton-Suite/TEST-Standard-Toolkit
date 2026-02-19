@@ -281,9 +281,11 @@ public class KryptonToolTip : Component, IExtenderProvider
 
     /// <summary>
     /// Gets or sets the period of time the ToolTip remains visible if the pointer is stationary on a control.
+    /// Use 0 for infinite display (tooltip stays until the pointer leaves the control).
+    /// Unlike the standard WinForms ToolTip, values greater than 5000ms are supported on all Windows versions.
     /// </summary>
     [Category(@"Behavior")]
-    [Description(@"The period of time the ToolTip remains visible if the pointer is stationary on a control.")]
+    [Description(@"The period of time the ToolTip remains visible if the pointer is stationary on a control. Use 0 for infinite.")]
     [DefaultValue(5000)]
     public int AutoPopDelay
     {
@@ -594,8 +596,8 @@ public class KryptonToolTip : Component, IExtenderProvider
         // Show the Krypton tooltip
         ShowKryptonToolTip(e.AssociatedControl, toolTipText, toolTipTitle, Control.MousePosition);
 
-        // Start timer to hide tooltip after AutoPopDelay
-        if (_hideTimer != null)
+        // Start timer to hide tooltip after AutoPopDelay (0 = infinite, stays until mouse leaves)
+        if (_hideTimer != null && AutoPopDelay > 0)
         {
             _hideTimer.Interval = AutoPopDelay;
             _hideTimer.Stop();

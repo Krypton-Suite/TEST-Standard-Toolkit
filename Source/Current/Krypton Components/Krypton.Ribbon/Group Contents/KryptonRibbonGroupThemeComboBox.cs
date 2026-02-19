@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -106,6 +106,10 @@ public class KryptonRibbonGroupThemeComboBox : KryptonRibbonGroupComboBox, IKryp
         {
             return;
         }
+
+        // Refresh theme list so "Custom" shows as "Custom - [Theme Name]" when a custom palette has a name (issue #1031)
+        Items.Clear();
+        Items.AddRange(CommonHelperThemeSelectors.GetThemesArray());
 
         int idx = CommonHelperThemeSelectors.GetPaletteIndex(Items, mode);
         if (idx == SelectedIndex)
