@@ -1968,6 +1968,7 @@ public class KryptonForm : VisualForm,
     /// <summary>
     /// Constrain maximized form to the screen's working area (excludes taskbar).
     /// Fixes: https://github.com/Krypton-Suite/Standard-Toolkit/issues/3013
+    /// Fixes: https://github.com/Krypton-Suite/Standard-Toolkit/issues/3004 (multi-monitor positioning)
     /// </summary>
     protected override void OnWM_GETMINMAXINFO(ref Message m)
     {
@@ -1978,12 +1979,44 @@ public class KryptonForm : VisualForm,
             return;
         }
 
-        Rectangle workArea = Screen.FromControl(this).WorkingArea;
+        // ptMaxPosition and ptMaxSize must be in primary-monitor coordinates for the window manager
+        // to correctly adjust them when the window maximizes on a secondary monitor. See:
+        // https://devblogs.microsoft.com/oldnewthing/20150501-00/?p=44964
+        const int MONITOR_DEFAULTTOPRIMARY = 0x00000001;
+        const int MONITOR_DEFAULTTO_NEAREST = 0x00000002;
+
+        IntPtr hPrimary = PI.MonitorFromWindow(IntPtr.Zero, MONITOR_DEFAULTTOPRIMARY);
+        IntPtr hTarget = PI.MonitorFromWindow(m.HWnd, MONITOR_DEFAULTTO_NEAREST);
+
+        if (hPrimary == IntPtr.Zero || hTarget == IntPtr.Zero)
+        {
+            return;
+        }
+
+        PI.MONITORINFO primaryInfo = PI.GetMonitorInfo(hPrimary);
+        PI.MONITORINFO targetInfo = PI.GetMonitorInfo(hTarget);
+
         PI.MINMAXINFO mmi = (PI.MINMAXINFO)Marshal.PtrToStructure(m.LParam, typeof(PI.MINMAXINFO))!;
 
-        // Clamp maximized size to working area (belt-and-suspenders for issue #3013)
-        mmi.ptMaxSize.X = Math.Min(mmi.ptMaxSize.X, workArea.Width);
-        mmi.ptMaxSize.Y = Math.Min(mmi.ptMaxSize.Y, workArea.Height);
+        PI.RECT rcWork = targetInfo.rcWork;
+        PI.RECT rcTargetMonitor = targetInfo.rcMonitor;
+        PI.RECT rcPrimaryMonitor = primaryInfo.rcMonitor;
+
+        // Express maximized position in primary-monitor coordinates (required for multi-monitor)
+        mmi.ptMaxPosition.X = rcPrimaryMonitor.left + (rcWork.left - rcTargetMonitor.left);
+        mmi.ptMaxPosition.Y = rcPrimaryMonitor.top + (rcWork.top - rcTargetMonitor.top);
+        mmi.ptMaxSize.X = Math.Abs(rcWork.right - rcWork.left);
+        mmi.ptMaxSize.Y = Math.Abs(rcWork.bottom - rcWork.top);
+
+        // Preserve MaximumSize constraints from base (https://github.com/Krypton-Suite/Standard-Toolkit/issues/459)
+        if (MaximumSize.Width > mmi.ptMinTrackSize.X && MaximumSize.Width < mmi.ptMaxSize.X)
+        {
+            mmi.ptMaxSize.X = MaximumSize.Width;
+        }
+        if (MaximumSize.Height > mmi.ptMinTrackSize.Y && MaximumSize.Height < mmi.ptMaxSize.Y)
+        {
+            mmi.ptMaxSize.Y = MaximumSize.Height;
+        }
 
         Marshal.StructureToPtr(mmi, m.LParam, true);
     }

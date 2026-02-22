@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  * 
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -6,6 +6,8 @@
  *  
  */
 #endregion
+
+
 namespace Krypton.Toolkit;
 
 #region Static
@@ -185,12 +187,12 @@ internal static class CommonHelperThemeSelectors
     /// <returns>Returns the location in the list of items for defaultPalette.</returns>
     internal static int GetInitialSelectedIndex(PaletteMode defaultPalette, KryptonManager manager, IList items)
     {
-        PaletteMode pm = defaultPalette == PaletteMode.Global 
-                         && manager.GlobalPaletteMode != PaletteMode.Custom 
+        PaletteMode pm = defaultPalette == PaletteMode.Global
+                         && manager.GlobalPaletteMode != PaletteMode.Custom
                          && manager.GlobalPaletteMode != PaletteMode.Global
             ? manager.GlobalPaletteMode
             : defaultPalette;
-                
+
         return CommonHelperThemeSelectors.GetPaletteIndex(items, pm);
     }
 
@@ -217,14 +219,14 @@ internal static class CommonHelperThemeSelectors
             if (value != PaletteMode.Global)
             {
                 // Setting the index triggers OnSelectedIndexChanged()
-                result = CommonHelperThemeSelectors.GetPaletteIndex(items, defaultPalette);
+                result = GetPaletteIndex(items, defaultPalette);
             }
         }
 
         return result;
     }
 }
-   
+
 #endregion
 
 #region IKryptonThemeSelectorBase

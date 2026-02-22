@@ -44,7 +44,6 @@ public class ToolTipManager
     /// </summary>
     public ToolTipManager(ToolTipValues toolTipValues)
     {
-        // TODO: Setup callbacks when the interval are changed programmatically
         _startTimer = new System.Windows.Forms.Timer
         {
             Interval = toolTipValues.ShowIntervalDelay
@@ -62,6 +61,9 @@ public class ToolTipManager
             Interval = 100 // ReShowDelay
         };
         _detectMoveTimer.Tick += OnStopDetectMoveTimerTick;
+
+        toolTipValues.ShowIntervalDelayChanged += OnShowIntervalDelayChanged;
+        toolTipValues.CloseIntervalDelayChanged += OnCloseIntervalDelayChanged;
     }
 
     #endregion
@@ -96,7 +98,7 @@ public class ToolTipManager
 
         set
         {
-            // 0 = infinite; negative values are clamped to 0
+            // 0 = infinite display, but cannot have an interval less than 0
             if (value < 0)
             {
                 value = 0;
@@ -268,6 +270,7 @@ public class ToolTipManager
 
             // Raise event requesting the tooltip be shown
             OnShowToolTip(new ToolTipEventArgs(_startTarget!, Control.MousePosition));
+
             // Only start close timer when interval > 0 (0 = infinite display)
             if (_closeTimer.Interval > 0)
             {
@@ -320,6 +323,22 @@ public class ToolTipManager
         // Raises event indicating the tooltip should be removed
         _closeTimer.Stop();
         OnCancelToolTip();
+    }
+
+    private void OnShowIntervalDelayChanged(object? sender, EventArgs e)
+    {
+        if (sender is ToolTipValues values)
+        {
+            ShowInterval = values.ShowIntervalDelay;
+        }
+    }
+
+    private void OnCloseIntervalDelayChanged(object? sender, EventArgs e)
+    {
+        if (sender is ToolTipValues values)
+        {
+            CloseInterval = values.CloseIntervalDelay;
+        }
     }
 
     #endregion

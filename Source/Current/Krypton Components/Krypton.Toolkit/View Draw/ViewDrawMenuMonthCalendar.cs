@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -67,9 +67,15 @@ public class ViewDrawMenuMonthCalendar : ViewComposite,
         // Wrap in a docker so the month calendar body background (StateCommon.Back) is drawn
         _drawDocker = new ViewDrawDocker(_monthCalendar.StateCommon.Back, _monthCalendar.StateCommon.Border, null)
         {
-            { _layoutMonths, ViewDockStyle.Fill }
+            // Place the month calendar in the filling area of the docker
+            {
+                _layoutMonths, 
+                ViewDockStyle.Fill
+            }
         };
-        Add(_drawDocker);
+
+        // Add docker to the view hierarchy
+        Add(_layoutMonths);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -1061,17 +1061,22 @@ public class KryptonDateTimePicker : VisualControlBase,
         get => _calendarBackColor;
         set
         {
+            // Only interested in changes of value
             if (_calendarBackColor == value)
             {
                 return;
             }
 
+            // Store the new value
             _calendarBackColor = value;
+
+            // Update the palette with the new value
             if (_kmc != null)
             {
                 ApplyCalendarBackColorToPalette(_kmc, value);
             }
 
+            // Redraw to show the new color
             PerformNeedPaint(true);
         }
     }
@@ -2180,7 +2185,9 @@ public class KryptonDateTimePicker : VisualControlBase,
                 DayStyle = CalendarDayStyle,
                 HeaderStyle = CalendarHeaderStyle
             };
+
             ApplyCalendarBackColorToPalette(_kmc, _calendarBackColor);
+
             _kmc.DateChanged += OnMonthCalendarDateChanged;
             kcm.Items.Add(_kmc);
 
@@ -2264,6 +2271,7 @@ public class KryptonDateTimePicker : VisualControlBase,
             kmc.StateCommon.Day.Back.Color1 = Color.Empty;
             kmc.StateCommon.Day.Back.ColorStyle = PaletteColorStyle.Inherit;
             kmc.StateCommon.Day.Back.Draw = InheritBool.Inherit;
+
             kmc.StateCommon.Day.Border.Color1 = Color.Empty;
             kmc.StateCommon.Day.Border.ColorStyle = PaletteColorStyle.Inherit;
             kmc.StateCommon.Day.Border.Draw = InheritBool.Inherit;
@@ -2285,6 +2293,7 @@ public class KryptonDateTimePicker : VisualControlBase,
             kmc.StateCommon.Day.Back.Color1 = color;
             kmc.StateCommon.Day.Back.ColorStyle = PaletteColorStyle.Solid;
             kmc.StateCommon.Day.Back.Draw = InheritBool.True;
+
             kmc.StateCommon.Day.Border.Color1 = color;
             kmc.StateCommon.Day.Border.ColorStyle = PaletteColorStyle.Solid;
             kmc.StateCommon.Day.Border.Draw = InheritBool.True;

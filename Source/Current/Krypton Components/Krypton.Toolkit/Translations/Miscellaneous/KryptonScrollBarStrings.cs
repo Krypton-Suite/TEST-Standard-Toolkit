@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -19,11 +19,15 @@ public class KryptonScrollBarStrings : GlobalId
     private const string DEFAULT_SCROLL_BAR_PAGE_UP = @"Page Up";
     private const string DEFAULT_SCROLL_BAR_PAGE_LEFT = @"Page Left";
     private const string DEFAULT_SCROLL_BAR_PAGE_RIGHT = @"Page Right";
-    private const string DEFAULT_SCROLL_BAR_SCROLL_DOWN = @"Scoll Down";
+    private const string DEFAULT_SCROLL_BAR_SCROLL_DOWN = @"Scroll Down";
     private const string DEFAULT_SCROLL_BAR_SCROLL_HERE = @"Scroll Here";
     private const string DEFAULT_SCROLL_BAR_SCROLL_UP = @"Scroll Up";
     private const string DEFAULT_SCROLL_BAR_SCROLL_RIGHT = @"Scroll Right";
     private const string DEFAULT_SCROLL_BAR_SCROLL_LEFT = @"Scroll Left";
+    private const string DEFAULT_SCROLL_BAR_TOP = @"Top";
+    private const string DEFAULT_SCROLL_BAR_BOTTOM = @"Bottom";
+    private const string DEFAULT_SCROLL_BAR_LEFT = @"Left";
+    private const string DEFAULT_SCROLL_BAR_RIGHT = @"Right";
 
     #endregion
 
@@ -52,7 +56,11 @@ public class KryptonScrollBarStrings : GlobalId
                              ScrollHere.Equals(DEFAULT_SCROLL_BAR_SCROLL_HERE) &&
                              ScrollUp.Equals(DEFAULT_SCROLL_BAR_SCROLL_UP) &&
                              ScrollLeft.Equals(DEFAULT_SCROLL_BAR_SCROLL_LEFT) &&
-                             ScrollRight.Equals(DEFAULT_SCROLL_BAR_SCROLL_RIGHT);
+                             ScrollRight.Equals(DEFAULT_SCROLL_BAR_SCROLL_RIGHT) &&
+                             Top.Equals(DEFAULT_SCROLL_BAR_TOP) &&
+                             Bottom.Equals(DEFAULT_SCROLL_BAR_BOTTOM) &&
+                             Left.Equals(DEFAULT_SCROLL_BAR_LEFT) &&
+                             Right.Equals(DEFAULT_SCROLL_BAR_RIGHT);
 
     /// <summary>Resets this instance.</summary>
     public void Reset()
@@ -74,6 +82,14 @@ public class KryptonScrollBarStrings : GlobalId
         ScrollLeft = DEFAULT_SCROLL_BAR_SCROLL_LEFT;
 
         ScrollRight = DEFAULT_SCROLL_BAR_SCROLL_RIGHT;
+
+        Top = DEFAULT_SCROLL_BAR_TOP;
+
+        Bottom = DEFAULT_SCROLL_BAR_BOTTOM;
+
+        Left = DEFAULT_SCROLL_BAR_LEFT;
+
+        Right = DEFAULT_SCROLL_BAR_RIGHT;
     }
 
     /// <summary>Gets or sets the scrollbar page down string.</summary>
@@ -138,6 +154,34 @@ public class KryptonScrollBarStrings : GlobalId
     [DefaultValue(DEFAULT_SCROLL_BAR_SCROLL_LEFT)]
     [RefreshProperties(RefreshProperties.All)]
     public string ScrollLeft { get; set; }
+
+    /// <summary>Gets or sets the scrollbar 'Top' context menu item string.</summary>
+    [Category(@"Visuals")]
+    [Description(@"The scrollbar 'Top' context menu item string.")]
+    [DefaultValue(DEFAULT_SCROLL_BAR_TOP)]
+    [RefreshProperties(RefreshProperties.All)]
+    public string Top { get; set; }
+
+    /// <summary>Gets or sets the scrollbar 'Bottom' context menu item string.</summary>
+    [Category(@"Visuals")]
+    [Description(@"The scrollbar 'Bottom' context menu item string.")]
+    [DefaultValue(DEFAULT_SCROLL_BAR_BOTTOM)]
+    [RefreshProperties(RefreshProperties.All)]
+    public string Bottom { get; set; }
+
+    /// <summary>Gets or sets the scrollbar 'Left' context menu item string.</summary>
+    [Category(@"Visuals")]
+    [Description(@"The scrollbar 'Left' context menu item string.")]
+    [DefaultValue(DEFAULT_SCROLL_BAR_LEFT)]
+    [RefreshProperties(RefreshProperties.All)]
+    public string Left { get; set; }
+
+    /// <summary>Gets or sets the scrollbar 'Right' context menu item string.</summary>
+    [Category(@"Visuals")]
+    [Description(@"The scrollbar 'Right' context menu item string.")]
+    [DefaultValue(DEFAULT_SCROLL_BAR_RIGHT)]
+    [RefreshProperties(RefreshProperties.All)]
+    public string Right { get; set; }
 
     #endregion
 }

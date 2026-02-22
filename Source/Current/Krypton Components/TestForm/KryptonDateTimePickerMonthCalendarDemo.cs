@@ -1,13 +1,11 @@
-#region BSD License
+﻿#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
- *  Modifications by Peter Wagner (aka Wagnerp) & Simon Coghlan (aka Smurf-IV), et al. 2026. All rights reserved.
+ *  Modifications by Peter Wagner (aka Wagnerp) & Simon Coghlan (aka Smurf-IV), et al. 2026 - 2026. All rights reserved.
  *
  */
 #endregion
-
-using Krypton.Toolkit;
 
 namespace TestForm;
 
@@ -114,7 +112,7 @@ public partial class KryptonDateTimePickerMonthCalendarDemo : KryptonForm
     {
         if (focused == null)
         {
-            lblStatus.Values.Text = "Open any date picker drop-down to see the month calendar background.";
+            lblStatus.Values.Text = @"Open any date picker drop-down to see the month calendar background.";
             return;
         }
 
@@ -122,6 +120,6 @@ public partial class KryptonDateTimePickerMonthCalendarDemo : KryptonForm
         var colorText = color == Color.Empty
             ? "Theme default"
             : $"{color.Name} (R={color.R}, G={color.G}, B={color.B})";
-        lblStatus.Values.Text = $"CalendarBackColor: {colorText}  |  Open the drop-down to see the calendar.";
+        lblStatus.Values.Text = @$"CalendarBackColor: {colorText}  |  Open the drop-down to see the calendar.";
     }
 }

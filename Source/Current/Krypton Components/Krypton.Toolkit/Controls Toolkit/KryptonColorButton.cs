@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -1540,7 +1540,7 @@ public class KryptonColorButton : VisualSimpleBase, IButtonControl, IContentValu
         _separatorTheme.Visible = _headingTheme.Visible = _colorsTheme.Visible = VisibleThemes;
         _separatorStandard.Visible = _headingStandard.Visible = _colorsStandard.Visible = VisibleStandard;
         _separatorRecent.Visible = _headingRecent.Visible = _colorsRecent.Visible = VisibleRecent && (_recentColors.Count > 0);
-        var hasCustomColors = _customColors != null && _customColors.Length > 0;
+        var hasCustomColors = _customColors is { Length: > 0 };
         _separatorCustom.Visible = _headingCustom.Visible = _colorsCustom.Visible = VisibleCustomColors && hasCustomColors;
         _itemsNoColor.Visible = VisibleNoColor;
         _itemsMoreColors.Visible = VisibleMoreColors;
@@ -1592,12 +1592,12 @@ public class KryptonColorButton : VisualSimpleBase, IButtonControl, IContentValu
             _colorsRecent.SetCustomColors(colors);
         }
 
-        // Define the custom colors (one column per color, single row); cap at MaxCustomColors
+        // Define the custom colors (one column per color, single row), cap at MaxCustomColors
         if (hasCustomColors && VisibleCustomColors)
         {
             var count = Math.Min(_customColors!.Length, Math.Max(1, MaxCustomColors));
             var customGrid = new Color[count][];
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < _customColors.Length; i++)
             {
                 customGrid[i] = [_customColors[i]];
             }

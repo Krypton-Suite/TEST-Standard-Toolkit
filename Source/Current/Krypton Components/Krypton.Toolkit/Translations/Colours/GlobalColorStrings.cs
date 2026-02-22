@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -58,8 +58,8 @@ public class GlobalColorStrings : GlobalId
                              ThemeColors.Equals(DEFAULT_THEME_COLORS) &&
                              PaletteColors.Equals(DEFAULT_PALETTE_COLORS) &&
                              StandardColors.Equals(DEFAULT_STANDARD_COLORS) &&
-                             RecentColors.Equals(DEFAULT_RECENT_COLORS) &&
                              CustomColors.Equals(DEFAULT_CUSTOM_COLORS) &&
+                             RecentColors.Equals(DEFAULT_RECENT_COLORS) &&
                              NoColor.Equals(DEFAULT_NO_COLOR);
 
     /// <summary>
@@ -73,8 +73,8 @@ public class GlobalColorStrings : GlobalId
         ThemeColors = DEFAULT_THEME_COLORS;
         PaletteColors = DEFAULT_PALETTE_COLORS;
         StandardColors = DEFAULT_STANDARD_COLORS;
-        RecentColors = DEFAULT_RECENT_COLORS;
         CustomColors = DEFAULT_CUSTOM_COLORS;
+        RecentColors = DEFAULT_RECENT_COLORS;
         NoColor = DEFAULT_NO_COLOR;
     }
 

@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -18,10 +18,12 @@ namespace Krypton.Toolkit;
 public class ThemeManager
 {
     #region Private static fields
+
     private const string _msgBoxCaption = "ThemeManager";
 
     /// <summary>Prefix used when the theme array displays a custom palette with a name, e.g. "Custom - [My Theme Name]".</summary>
     internal const string CustomThemeNamePrefix = @"Custom - ";
+
     #endregion
 
     #region Properties
@@ -121,22 +123,27 @@ public class ThemeManager
 
     /// <summary>
     /// Returns the respective theme name for the given KryptonManager instance.
-    /// When the mode is Custom and the custom palette has a bundled name, that name is returned so it displays correctly (e.g. in KManager).
+    /// When the mode is Custom and the custom palette has a bundled name, that name is returned so it displays correctly (e.g. in KryptonManager).
     /// </summary>
     /// <param name="manager">A valid reference to a KryptonManager instance.</param>
     /// <returns>The theme name.</returns>
     public static string ReturnPaletteModeAsString(KryptonManager manager)
     {
-        if (manager.GlobalPaletteMode == PaletteMode.Custom
-            && manager.GlobalCustomPalette is KryptonCustomPaletteBase customPalette)
+        // When in Custom mode, attempt to return the custom palette's name if it exists, otherwise return the palette mode as string.
+        if (manager is { GlobalPaletteMode: PaletteMode.Custom, GlobalCustomPalette: { } customPalette })
         {
+            // Attempt to get the custom palette's name. If it exists and is not just whitespace, return it. Otherwise, return the palette mode as string.
             var name = customPalette.GetPaletteName();
+
+            // ReSharper disable once SuspiciousTypeConversion.Global - The check is necessary to ensure that the method exists before calling it, as GetPaletteName is not guaranteed to be implemented in all custom palettes.
             if (!string.IsNullOrWhiteSpace(name))
             {
+                // Return the custom palette's name if it exists and is not just whitespace.
                 return name;
             }
         }
 
+        // Return the palette mode as string if not in Custom mode or if the custom palette does not have a valid name.
         return ReturnPaletteModeAsString(manager.GlobalPaletteMode);
     }
 

@@ -2076,8 +2076,8 @@ public class KryptonCustomPaletteBase : PaletteBase
             {
                 paletteFileName = kofd.FileName;
 
-                // Set the theme name to the file name
-                PaletteName = paletteFileName;
+                // Set the theme name to the file name (without path or extension)
+                PaletteName = Path.GetFileNameWithoutExtension(paletteFileName);
             }
         }
         else
@@ -2095,8 +2095,8 @@ public class KryptonCustomPaletteBase : PaletteBase
             {
                 paletteFileName = dialog.FileName;
 
-                // Set the theme name to the file name
-                PaletteName = paletteFileName;
+                // Set the theme name to the file name (without path or extension)
+                PaletteName = Path.GetFileNameWithoutExtension(paletteFileName);
             }
         }
         if (!string.IsNullOrWhiteSpace(paletteFileName))
@@ -2126,8 +2126,8 @@ public class KryptonCustomPaletteBase : PaletteBase
         {
             paletteFileName = dialog.FileName;
 
-            // Set the theme name to the file name
-            PaletteName = paletteFileName;
+            // Set the theme name to the file name (without path or extension)
+            PaletteName = Path.GetFileNameWithoutExtension(paletteFileName);
         }
 
         if (!string.IsNullOrWhiteSpace(paletteFileName))
@@ -2203,6 +2203,7 @@ public class KryptonCustomPaletteBase : PaletteBase
         // Use bundled name from file if present, otherwise fall back to filename
         if (string.IsNullOrWhiteSpace(GetPaletteName()))
         {
+            // Set the theme name to the file name
             SetPaletteName(Path.GetFileName(ret));
         }
 
@@ -2240,6 +2241,8 @@ public class KryptonCustomPaletteBase : PaletteBase
             {
                 throw;
             }
+
+            KryptonExceptionHandler.CaptureException(aex);
 
             stream.Position = 0;
             PerformUpgrade(stream);
@@ -2456,8 +2459,8 @@ public class KryptonCustomPaletteBase : PaletteBase
             {
                 SetCustomisedKryptonPaletteFilePath(Path.GetFullPath(ksfd.FileName));
 
-                // Set the theme name to the file name
-                PaletteName = ksfd.FileName;
+                // Set the theme name to the file name (without path or extension)
+                PaletteName = Path.GetFileNameWithoutExtension(ksfd.FileName);
 
                 return Export(ksfd.FileName, true, false);
             }
@@ -2476,8 +2479,8 @@ public class KryptonCustomPaletteBase : PaletteBase
             {
                 SetCustomisedKryptonPaletteFilePath(Path.GetFullPath(dialog.FileName));
 
-                // Set the theme name to the file name
-                PaletteName = dialog.FileName;
+                // Set the theme name to the file name (without path or extension)
+                PaletteName = Path.GetFileNameWithoutExtension(dialog.FileName);
 
                 // Use the existing export overload that takes the target name
                 return Export(dialog.FileName, true, false);
@@ -2503,8 +2506,8 @@ public class KryptonCustomPaletteBase : PaletteBase
         {
             SetCustomisedKryptonPaletteFilePath(Path.GetFullPath(dialog.FileName));
 
-            // Set the theme name to the file name
-            PaletteName = dialog.FileName;
+            // Set the theme name to the file name (without path or extension)
+            PaletteName = Path.GetFileNameWithoutExtension(dialog.FileName);
 
             // Use the existing export overload that takes the target name
             return Export(dialog.FileName, true, false);
@@ -3115,7 +3118,7 @@ public class KryptonCustomPaletteBase : PaletteBase
                     $"Version '{version}' number is incompatible, only version {GlobalStaticValues.CURRENT_SUPPORTED_PALETTE_VERSION} or above can be imported.\nUse the PaletteUpgradeTool from the Application tab of the KryptonExplorer to upgrade.");
             }
 
-            // Restore bundled palette name so external themes display correctly (e.g. in KManager)
+            // Restore bundled palette name so external themes display correctly (e.g. in KryptonManager)
             if (root.HasAttribute("Name"))
             {
                 SetPaletteName(root.GetAttribute("Name"));
@@ -3256,7 +3259,7 @@ public class KryptonCustomPaletteBase : PaletteBase
             doc.AppendChild(doc.CreateComment(
                 "New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)"));
             doc.AppendChild(doc.CreateComment(
-                $"Modifications by Peter Wagner(aka Wagnerp) & Simon Coghlan(aka Smurf-IV), et al. 2017 - {DateTime.Now.Year}. All rights reserved."));
+                $"Modifications by Peter Wagner (aka Wagnerp) & Simon Coghlan (aka Smurf-IV), Giduac, tobitege, Lesandro, KamaniAR, et al. 2017 - {DateTime.Now.Year}. All rights reserved."));
             doc.AppendChild(doc.CreateComment("WARNING: Modifying this file may render it invalid for importing."));
             doc.AppendChild(doc.CreateComment($@"Date created: {DateTime.Now.ToLongDateString()}"));
 
@@ -3266,11 +3269,13 @@ public class KryptonCustomPaletteBase : PaletteBase
             root.SetAttribute(nameof(Version), GlobalStaticValues.CURRENT_SUPPORTED_PALETTE_VERSION.ToString());
             root.SetAttribute("Generated",
                 $"{DateTime.Now.ToLongDateString()}, @{DateTime.Now.ToShortTimeString()}");
-            // Bundle the palette display name so it can be shown correctly when loaded (e.g. in KManager)
+
+            // Bundle the palette display name so it can be shown correctly when loaded (e.g. in KryptonManager)
             if (!string.IsNullOrWhiteSpace(PaletteName))
             {
                 root.SetAttribute("Name", PaletteName);
             }
+
             doc.AppendChild(root);
 
             // Add two children, one for storing actual palette values the other for cached images
@@ -3535,8 +3540,9 @@ public class KryptonCustomPaletteBase : PaletteBase
                         {
                             var defaultAttribs = prop.GetCustomAttributes(typeof(DefaultValueAttribute), false);
 
-                            // Does this property have a default value attribute?
-                            if (defaultAttribs.Length == 1)
+                            // Does this property have at least one default value attribute?
+                            // Use the first one found (KryptonDefaultColor is a DefaultValueAttribute subclass)
+                            if (defaultAttribs.Length >= 1)
                             {
                                 // Cast to correct type
                                 var defaultAttrib = defaultAttribs[0] as DefaultValueAttribute;
@@ -3699,8 +3705,8 @@ public class KryptonCustomPaletteBase : PaletteBase
                             {
                                 var defaultAttribs = prop.GetCustomAttributes(typeof(DefaultValueAttribute), false);
 
-                                // Does this property have a default value attribute?
-                                if (defaultAttribs.Length == 1)
+                                // Does this property have at least one default value attribute?
+                                if (defaultAttribs.Length >= 1)
                                 {
                                     // Cast to correct type
                                     var defaultAttrib = (DefaultValueAttribute)defaultAttribs[0];

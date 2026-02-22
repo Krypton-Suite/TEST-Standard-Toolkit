@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -105,8 +105,10 @@ public class PaletteRibbonBack : Storage,
     /// <summary>
     /// Gets and sets the first background color for the ribbon item.
     /// </summary>
+    [KryptonPersist(false)]
     [Category(@"Visuals")]
     [Description(@"First background color for the ribbon item.")]
+    [DefaultValue(typeof(Color), "Empty")]
     [RefreshProperties(RefreshProperties.All)]
     public virtual Color BackColor1
     {
@@ -247,6 +249,7 @@ public class PaletteRibbonBack : Storage,
     /// <summary>
     /// Gets and sets the fifth background color for the ribbon item.
     /// </summary>
+    [KryptonPersist(false)]
     [Category(@"Visuals")]
     [Description(@"Fifth background color for the ribbon item.")]
     [DefaultValue(typeof(Color), "Empty")]

@@ -1,14 +1,11 @@
-#region BSD License
+﻿#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
- *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), et al. 2026. All rights reserved.
+ *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), et al. 2026 - 2026. All rights reserved.
  *
  */
 #endregion
-
-using System.Drawing;
-using Krypton.Toolkit;
 
 namespace TestForm;
 
@@ -18,13 +15,13 @@ namespace TestForm;
 /// </summary>
 public partial class KryptonColorButtonDemo : KryptonForm
 {
-    private static readonly Color[] DemoCustomColors =
+    private static readonly Color[] _demoCustomColors =
     [
         Color.Red, Color.Orange, Color.Yellow, Color.Lime, Color.Cyan,
         Color.Blue, Color.Magenta, Color.Gray, Color.White, Color.Black
     ];
 
-    private static readonly Color[] ExtendedCustomColors =
+    private static readonly Color[] _extendedCustomColors =
     [
         Color.Red, Color.OrangeRed, Color.Orange, Color.Gold, Color.Yellow,
         Color.Lime, Color.Green, Color.Cyan, Color.DodgerBlue, Color.Blue,
@@ -42,42 +39,42 @@ public partial class KryptonColorButtonDemo : KryptonForm
     private void SetupDemos()
     {
         // 1. Default: full theme, standard, recent (no custom colours)
-        btnDefault.Values.Text = "Default (Theme + Standard + Recent)";
+        btnDefault.Values.Text = @"Default (Theme + Standard + Recent)";
         btnDefault.CustomColorPreviewShape = KryptonColorButtonCustomColorPreviewShape.Circle;
 
         // 2. Only 10 custom colours – no theme/standard/recent
-        btnOnlyCustom.CustomColors = DemoCustomColors;
+        btnOnlyCustom.CustomColors = _demoCustomColors;
         btnOnlyCustom.VisibleThemes = false;
         btnOnlyCustom.VisibleStandard = false;
         btnOnlyCustom.VisibleRecent = false;
-        btnOnlyCustom.Values.Text = "Only 10 custom colours";
+        btnOnlyCustom.Values.Text = @"Only 10 custom colours";
         btnOnlyCustom.CustomColorPreviewShape = KryptonColorButtonCustomColorPreviewShape.Circle;
 
         // 3. Custom colours section alongside theme and standard
-        btnCustomAndBuiltIn.CustomColors = DemoCustomColors;
+        btnCustomAndBuiltIn.CustomColors = _demoCustomColors;
         btnCustomAndBuiltIn.VisibleThemes = true;
         btnCustomAndBuiltIn.VisibleStandard = true;
         btnCustomAndBuiltIn.VisibleRecent = true;
-        btnCustomAndBuiltIn.Values.Text = "Custom + Theme + Standard + Recent";
+        btnCustomAndBuiltIn.Values.Text = @"Custom + Theme + Standard + Recent";
         btnCustomAndBuiltIn.CustomColorPreviewShape = KryptonColorButtonCustomColorPreviewShape.Circle;
 
         // 4. MaxCustomColors = 6 (array has 16; only first 6 shown)
-        btnMaxCustom.CustomColors = ExtendedCustomColors;
+        btnMaxCustom.CustomColors = _extendedCustomColors;
         btnMaxCustom.MaxCustomColors = 6;
         btnMaxCustom.VisibleThemes = false;
         btnMaxCustom.VisibleStandard = false;
         btnMaxCustom.VisibleRecent = false;
-        btnMaxCustom.Values.Text = "MaxCustomColors = 6 (16 in list)";
+        btnMaxCustom.Values.Text = @"MaxCustomColors = 6 (16 in list)";
         btnMaxCustom.CustomColorPreviewShape = KryptonColorButtonCustomColorPreviewShape.Circle;
 
         // 5. Optional: No Color and More Colors hidden, only custom
-        btnNoMoreColors.CustomColors = DemoCustomColors;
+        btnNoMoreColors.CustomColors = _demoCustomColors;
         btnNoMoreColors.VisibleThemes = false;
         btnNoMoreColors.VisibleStandard = false;
         btnNoMoreColors.VisibleRecent = false;
         btnNoMoreColors.VisibleNoColor = false;
         btnNoMoreColors.VisibleMoreColors = false;
-        btnNoMoreColors.Values.Text = "Only custom (no No Color / More Colors)";
+        btnNoMoreColors.Values.Text = @"Only custom (no No Color / More Colors)";
         btnNoMoreColors.CustomColorPreviewShape = KryptonColorButtonCustomColorPreviewShape.Circle;
 
         UpdateSelectedLabel(btnDefault.SelectedColor);

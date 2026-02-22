@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
  *  Modifications by Peter Wagner(aka Wagnerp) & Simon Coghlan(aka Smurf-IV), tobitege et al. 2026 - 2026. All rights reserved.
@@ -68,7 +68,6 @@ public class ProgressBarTriStateRegionBackValues : Storage
 
     [Category(@"Visuals")]
     [Description(@"First background color.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
     [KryptonDefaultColor]
     public Color Color1
     {
@@ -87,7 +86,6 @@ public class ProgressBarTriStateRegionBackValues : Storage
 
     [Category(@"Visuals")]
     [Description(@"Second background color. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
     [KryptonDefaultColor]
     public Color Color2
     {
