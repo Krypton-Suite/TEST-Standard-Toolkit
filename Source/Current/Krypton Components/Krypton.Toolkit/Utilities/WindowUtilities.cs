@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -13,32 +13,42 @@ public static class WindowUtilities
 {
     #region Implementation
 
-    /*public static void EnableAcrylic(IWin32Window owner, Color blurColor)
+    /// <summary>
+    /// Enables the Acrylic (frosted glass) effect on the given window. Requires Windows 10 1803 (build 17134) or later.
+    /// </summary>
+    /// <param name="owner">The window to apply Acrylic to.</param>
+    /// <param name="tintColor">Tint color for the acrylic effect.</param>
+    public static void EnableAcrylic(IWin32Window owner, Color tintColor)
     {
-        if (owner is null)
+        ArgumentNullException.ThrowIfNull(owner);
+
+        if (!IsAcrylicSupported())
         {
-            throw new ArgumentNullException(nameof(owner));
+            return;
         }
 
-        var accentPolicy = new PI.AccentPolicy
-        {
-            AccentState = PI.ACCENT.ENABLE_ACRYLICBLURBEHIND,
-            GradientColor = ToAbgr(blurColor)
-        };
-
-        unsafe
-        {
-            PI.SetWindowCompositionAttribute(new HandleRef(owner, owner.Handle),
-                new PI.WindowCompositionAttributeData()
-                {
-                    Attribute = PI.WCA.ACCENT_POLICY,
-                    Data = &accentPolicy,
-                    DataLength = Marshal.SizeOf<PI.AccentPolicy>()
-                });
-        }
+        PI.Dwm.Windows10EnableAcrylic(owner.Handle, true, tintColor);
     }
 
-    private static uint ToAbgr(Color color) => ((uint)color.A << 24) | ((uint)color.B << 16) | ((uint)color.G << 8) | color.R;*/
+    /// <summary>
+    /// Disables the Acrylic effect on the given window.
+    /// </summary>
+    /// <param name="owner">The window to remove Acrylic from.</param>
+    public static void DisableAcrylic(IWin32Window owner)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+
+        PI.Dwm.Windows10EnableAcrylic(owner.Handle, false, Color.Empty);
+    }
+
+    /// <summary>
+    /// Gets whether the Acrylic effect is supported on the current OS (Windows 10 1803 / build 17134 or later).
+    /// </summary>
+    public static bool IsAcrylicSupported()
+    {
+        var info = OSUtilities.OsVersionInfo;
+        return info.MajorVersion >= 10 && info.BuildNumber >= 17134;
+    }
 
     #endregion
 }

@@ -143,6 +143,7 @@ public abstract class VisualForm : Form,
 
         // Hook into global static events
         KryptonManager.GlobalPaletteChanged += OnGlobalPaletteChanged;
+        KryptonManager.GlobalAcrylicChanged += OnGlobalAcrylicChanged;
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
         ShadowValues = new ShadowValues();
@@ -187,6 +188,7 @@ public abstract class VisualForm : Form,
 
             // Unhook from global static events
             KryptonManager.GlobalPaletteChanged -= OnGlobalPaletteChanged;
+            KryptonManager.GlobalAcrylicChanged -= OnGlobalAcrylicChanged;
             SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         }
 
@@ -203,11 +205,11 @@ public abstract class VisualForm : Form,
 
     #region Public
 
-    /*public AcrylicValues AcrylicValues { get; } = new AcrylicValues();
+    public AcrylicValues AcrylicValues { get; } = new AcrylicValues();
 
     private void ResetAcrylicValues() => AcrylicValues.Reset();
 
-    private bool ShouldSerializeAcrylicValues() => !AcrylicValues.IsDefault;*/
+    private bool ShouldSerializeAcrylicValues() => !AcrylicValues.IsDefault;
 
     /// <summary>
     /// Gets the DpiX of the view.
@@ -846,10 +848,7 @@ public abstract class VisualForm : Form,
             // Do nothing
         }
 
-        //if (AcrylicValues.EnableAcrylic)
-        //{
-        //    WindowUtilities.EnableAcrylic(this, AcrylicValues.AcrylicColor);
-        //}
+        UpdateAcrylicEffect();
 
         base.OnHandleCreated(e);
 
@@ -1768,6 +1767,25 @@ public abstract class VisualForm : Form,
             OnNeedPaint(LocalCustomPalette!, new NeedLayoutEventArgs(true));
 
             GlobalPaletteChanged?.Invoke(sender, e);
+        }
+    }
+
+    private void OnGlobalAcrylicChanged(object? sender, EventArgs e) => UpdateAcrylicEffect();
+
+    private void UpdateAcrylicEffect()
+    {
+        if (!IsHandleCreated)
+        {
+            return;
+        }
+
+        if (KryptonManager.UseAcrylic && AcrylicValues.EnableAcrylic)
+        {
+            WindowUtilities.EnableAcrylic(this, AcrylicValues.AcrylicColor);
+        }
+        else
+        {
+            WindowUtilities.DisableAcrylic(this);
         }
     }
 

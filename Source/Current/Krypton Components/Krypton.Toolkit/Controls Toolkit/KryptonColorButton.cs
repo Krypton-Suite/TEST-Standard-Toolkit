@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -45,6 +45,7 @@ public class KryptonColorButton : VisualSimpleBase, IButtonControl, IContentValu
     private bool _useMnemonic;
     private bool _allowFullOpen;
     private bool _clickOverriden;
+    private bool _isSelectable = true;
     private KryptonColorButtonCustomColorPreviewShape _customColorPreviewShape;
     private ThemeColorSortMode _themeColorSortMode;
 
@@ -906,6 +907,27 @@ public class KryptonColorButton : VisualSimpleBase, IButtonControl, IContentValu
                 SetCustomColorPreviewShape(value);
 
                 PerformNeedPaint(true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the button can receive focus when clicked.
+    /// When <c>false</c>, clicking the button does not steal focus from the currently active
+    /// control — useful for on-screen keyboards where input must remain in a text field or grid cell.
+    /// </summary>
+    [Category(@"Behavior")]
+    [Description(@"When false, the button does not receive focus when clicked. Useful for on-screen keyboards so that input goes to the currently focused control.")]
+    [DefaultValue(true)]
+    public bool IsSelectable
+    {
+        get => _isSelectable;
+        set
+        {
+            if (_isSelectable != value)
+            {
+                _isSelectable = value;
+                SetStyle(ControlStyles.Selectable, value);
             }
         }
     }

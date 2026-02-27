@@ -21,6 +21,8 @@ public class ToolTipManager
     private readonly System.Windows.Forms.Timer _startTimer;
     private readonly System.Windows.Forms.Timer _detectMoveTimer;
     private readonly System.Windows.Forms.Timer _closeTimer;
+    /// <summary>Logical close interval in ms; 0 = infinite. Stored separately because Timer.Interval cannot be 0.</summary>
+    private int _closeInterval;
     private ViewBase? _startTarget;
     private ViewBase? _currentTarget;
     private bool _showingToolTips;
@@ -50,9 +52,11 @@ public class ToolTipManager
         };
         _startTimer.Tick += OnStartTimerTick;
 
+        // Timer.Interval must be >= 1; 0 means infinite so use a placeholder for the timer
+        _closeInterval = toolTipValues.CloseIntervalDelay < 0 ? 0 : toolTipValues.CloseIntervalDelay;
         _closeTimer = new System.Windows.Forms.Timer
         {
-            Interval = toolTipValues.CloseIntervalDelay
+            Interval = _closeInterval > 0 ? _closeInterval : 1
         };
         _closeTimer.Tick += OnCloseTimerTick;
 
@@ -94,17 +98,19 @@ public class ToolTipManager
     /// </summary>
     public int CloseInterval
     {
-        get => _closeTimer.Interval;
+        get => _closeInterval;
 
         set
         {
-            // 0 = infinite display, but cannot have an interval less than 0
+            // 0 = infinite display; negative values are clamped to 0
             if (value < 0)
             {
                 value = 0;
             }
 
-            _closeTimer.Interval = value;
+            _closeInterval = value;
+            // Timer.Interval must be >= 1, so use a placeholder when 0 (infinite)
+            _closeTimer.Interval = value > 0 ? value : 1;
         }
     }
     #endregion
@@ -272,8 +278,9 @@ public class ToolTipManager
             OnShowToolTip(new ToolTipEventArgs(_startTarget!, Control.MousePosition));
 
             // Only start close timer when interval > 0 (0 = infinite display)
-            if (_closeTimer.Interval > 0)
+            if (_closeInterval > 0)
             {
+                _closeTimer.Interval = _closeInterval;
                 _closeTimer.Start();
             }
         }

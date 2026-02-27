@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -227,6 +227,11 @@ public class KryptonGlobalToolkitStrings : GlobalId
     /// <value>The win32 system menu strings.</value>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public static SystemMenuStrings Win32SystemMenuStrings { get; } = new SystemMenuStrings();
+
+    /// <summary>Gets the form title bar strings.</summary>
+    /// <value>The form title bar strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static FormTitleBarStrings FormTitleBarStrings { get; } = new FormTitleBarStrings();
 
     #endregion
 
@@ -716,6 +721,20 @@ public class KryptonGlobalToolkitStrings : GlobalId
     /// <summary>Resets the win32 system menu strings.</summary>
     public void ResetSystemMenuStrings() => Win32SystemMenuStrings.ResetValues();
 
+    /// <summary>Gets the form title bar strings.</summary>
+    /// <value>The form title bar strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of form title bar strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public FormTitleBarStrings TitleBarStrings => FormTitleBarStrings;
+
+    private bool ShouldSerializeFormTitleBarStrings() => !FormTitleBarStrings.IsDefault;
+
+    /// <summary>Resets the form title bar strings.</summary>
+    public void ResetFormTitleBarStrings() => FormTitleBarStrings.Reset();
+
     #endregion
 
     #region Identity
@@ -759,8 +778,9 @@ public class KryptonGlobalToolkitStrings : GlobalId
                                ShouldSerializeToastNotificationIconStrings() ||
                                ShouldSerializeTabBorderStyleStrings() || ShouldSerializeTabStyleStrings() ||
                                ShouldSerializeToastNotificationStrings() || ShouldSerializeToolBarStrings() ||
-                               ShouldSerializeSplashScreenStringsStrings() || ShouldSerializeMiscellaneousStrings() || 
-                               ShouldSerializeMessageBoxStringsStrings() || ShouldSerializeSystemMenuStrings());
+                               ShouldSerializeSplashScreenStringsStrings() || ShouldSerializeMiscellaneousStrings() ||
+                               ShouldSerializeMessageBoxStringsStrings() || ShouldSerializeSystemMenuStrings() ||
+                               ShouldSerializeFormTitleBarStrings());
 
     /// <summary>Resets this instance.</summary>
     public void Reset()
@@ -807,6 +827,7 @@ public class KryptonGlobalToolkitStrings : GlobalId
         ResetMessageBoxStrings();
         ResetSearchBoxStrings();
         ResetSystemMenuStrings();
+        ResetFormTitleBarStrings();
     }
 
     #endregion

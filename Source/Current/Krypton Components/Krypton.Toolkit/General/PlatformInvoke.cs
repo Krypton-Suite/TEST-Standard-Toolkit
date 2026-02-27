@@ -4218,6 +4218,45 @@ No 	                    No 	                    Show text only
             }
         }
 
+        /// <summary>
+        /// Enables or disables the Acrylic (frosted glass) blur effect on a window.
+        /// Requires Windows 10 1803 (build 17134) or later.
+        /// </summary>
+        /// <param name="hWnd">Window handle.</param>
+        /// <param name="enabled">True to enable Acrylic; false to disable.</param>
+        /// <param name="tintColor">Tint color for the acrylic effect (ABGR format used internally).</param>
+        public static void Windows10EnableAcrylic(IntPtr hWnd, bool enabled, Color tintColor)
+        {
+            var gradientColor = enabled
+                ? (int)(((uint)tintColor.A << 24) | ((uint)tintColor.B << 16) | ((uint)tintColor.G << 8) | tintColor.R)
+                : 0;
+
+            var accPolicy = new AccentPolicy(
+                enabled ? DWMACCENTSTATE.ACCENT_ENABLE_ACRYLICBLURBEHIND : DWMACCENTSTATE.ACCENT_DISABLED,
+                AccentFlags.UserGradientColour,
+                gradientColor,
+                0);
+
+            IntPtr accentPtr = IntPtr.Zero;
+            try
+            {
+                var accentSize = SizeOf(accPolicy);
+                accentPtr = AllocHGlobal(accentSize);
+                Marshal.StructureToPtr(accPolicy, accentPtr, false);
+                var data = new WindowCompositionAttribData(WindowCompositionAttribute.WCA_ACCENT_POLICY,
+                    accentPtr, accentSize);
+
+                SetWindowCompositionAttribute(hWnd, ref data);
+            }
+            finally
+            {
+                if (accentPtr != IntPtr.Zero)
+                {
+                    FreeHGlobal(accentPtr);
+                }
+            }
+        }
+
         public static bool WindowEnableBlurBehind(IntPtr hWnd, bool enabled)
         {
             //Create and populate the Blur Behind structure
