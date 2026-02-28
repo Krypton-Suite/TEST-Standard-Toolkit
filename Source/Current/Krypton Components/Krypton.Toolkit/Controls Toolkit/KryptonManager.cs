@@ -26,6 +26,7 @@ public sealed class KryptonManager : Component
     // Initialize the global state
     private static bool _globalApplyToolstrips = true;
     private static bool _globalUseThemeFormChromeBorderWidth = true;
+    private static bool _globalAcrylicEnabled = true;
     private static bool _globalShowAdministratorSuffix = true;
     internal static bool _globalUseKryptonFileDialogs = true;
     private static bool _globalUseKryptonScrollbars = false;
@@ -163,6 +164,13 @@ public sealed class KryptonManager : Component
     public static event EventHandler? GlobalUseThemeFormChromeBorderWidthChanged;
 
     /// <summary>
+    /// Occurs when the global Acrylic (Fluent Design) setting changes.
+    /// </summary>
+    [Category(@"Property Changed")]
+    [Description(@"Occurs when the value of the GlobalAcrylicEnabled property is changed.")]
+    public static event EventHandler? GlobalAcrylicChanged;
+
+    /// <summary>
     /// Occurs when the touchscreen support setting or scale factor changes.
     /// </summary>
     [Category(@"Property Changed")]
@@ -242,6 +250,7 @@ public sealed class KryptonManager : Component
                                ShouldSerializeToolkitColors() ||
                                ShouldSerializeGlobalApplyToolstrips() ||
                                ShouldSerializeGlobalUseThemeFormChromeBorderWidth() ||
+                               ShouldSerializeGlobalAcrylicEnabled() ||
                                ShouldSerializeShowAdministratorSuffix() ||
                                ShouldSerializeToolkitStrings() ||
                                ShouldSerializeUseKryptonFileDialogs() ||
@@ -259,6 +268,7 @@ public sealed class KryptonManager : Component
         ResetToolkitColors();
         ResetGlobalApplyToolstrips();
         ResetGlobalUseThemeFormChromeBorderWidth();
+        ResetGlobalAcrylicEnabled();
         ResetShowAdministratorSuffix();
         ResetToolkitStrings();
         ResetUseKryptonFileDialogs();
@@ -431,6 +441,21 @@ public sealed class KryptonManager : Component
     private bool ShouldSerializeGlobalUseThemeFormChromeBorderWidth() => !GlobalUseThemeFormChromeBorderWidth;
     private void ResetGlobalUseThemeFormChromeBorderWidth() => GlobalUseThemeFormChromeBorderWidth = true;
 
+    /// <summary>
+    /// Gets or sets a value indicating whether Acrylic (frosted glass) effect is allowed on KryptonForm instances.
+    /// When false, no forms use Acrylic regardless of per-form AcrylicValues.EnableAcrylic.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Enable or disable Acrylic (Fluent Design) effect globally. When false, no forms use Acrylic.")]
+    [DefaultValue(true)]
+    public bool GlobalAcrylicEnabled
+    {
+        get => UseAcrylic;
+        set => UseAcrylic = value;
+    }
+    private bool ShouldSerializeGlobalAcrylicEnabled() => !GlobalAcrylicEnabled;
+    private void ResetGlobalAcrylicEnabled() => GlobalAcrylicEnabled = true;
+
     /// <summary>Gets the toolkit strings that can be localised.</summary>
     [Category(@"Data")]
     [Description(@"A collection of global toolkit strings that can be localised.")]
@@ -572,6 +597,26 @@ public sealed class KryptonManager : Component
 
                 // Fire change event
                 OnGlobalUseThemeFormChromeBorderWidthChanged(EventArgs.Empty);
+            }
+        }
+    }
+    #endregion
+
+    #region Static UseAcrylic
+    /// <summary>
+    /// Gets and sets the global flag that allows Acrylic (frosted glass) effect on KryptonForm instances.
+    /// </summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public static bool UseAcrylic
+    {
+        get => _globalAcrylicEnabled;
+
+        set
+        {
+            if (_globalAcrylicEnabled != value)
+            {
+                _globalAcrylicEnabled = value;
+                OnGlobalAcrylicChanged(EventArgs.Empty);
             }
         }
     }
@@ -1544,6 +1589,8 @@ public sealed class KryptonManager : Component
     }
 
     private static void OnGlobalUseThemeFormChromeBorderWidthChanged(EventArgs e) => GlobalUseThemeFormChromeBorderWidthChanged?.Invoke(null, e);
+
+    private static void OnGlobalAcrylicChanged(EventArgs e) => GlobalAcrylicChanged?.Invoke(null, e);
 
     private static void OnGlobalPaletteChanged(EventArgs e)
     {

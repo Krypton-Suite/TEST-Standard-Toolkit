@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
  *  Modifications by Peter Wagner(aka Wagnerp) & Simon Coghlan(aka Smurf-IV), tobitege et al. 2026 - 2026. All rights reserved.
@@ -72,7 +72,6 @@ public class ProgressBarTriStateCommonBaseValues : Storage
 
     [Category(@"Visuals")]
     [Description(@"First background color. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
     [KryptonDefaultColor]
     public Color BackColor1
     {
@@ -82,7 +81,6 @@ public class ProgressBarTriStateCommonBaseValues : Storage
 
     [Category(@"Visuals")]
     [Description(@"Second background color. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
     [KryptonDefaultColor]
     public Color BackColor2
     {
@@ -154,7 +152,6 @@ public class ProgressBarTriStateCommonBaseValues : Storage
 
     [Category(@"Visuals")]
     [Description(@"First text color. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
     [KryptonDefaultColor]
     public Color TextColor1
     {
@@ -164,7 +161,6 @@ public class ProgressBarTriStateCommonBaseValues : Storage
 
     [Category(@"Visuals")]
     [Description(@"Second text color. Empty uses default.")]
-    [DefaultValue(typeof(Color), nameof(Color.Empty))]
     [KryptonDefaultColor]
     public Color TextColor2
     {

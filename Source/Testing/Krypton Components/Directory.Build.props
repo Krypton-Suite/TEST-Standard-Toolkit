@@ -44,10 +44,7 @@
 		<Version>$(LibraryVersion)</Version>
 	</PropertyGroup>
 
-	<!-- Configure NuGet package output to separate directory for easier management -->
-	<PropertyGroup>
-		<PackageOutputPath>$(MSBuildThisFileDirectory)..\..\..\Artefacts\Packages\$(Configuration)\</PackageOutputPath>
-	</PropertyGroup>
+	<!-- NuGet package output is controlled by UseArtifactsOutput (Artefacts\package\$(Configuration)\) in root Directory.Build.props -->
 
 	<Choose>
 		<When Condition="'$(Configuration)' == 'Canary'">

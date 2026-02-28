@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -43,7 +43,18 @@ public class KryptonPaletteFont : Storage
     /// </summary>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public override bool IsDefault => (CommonLongTextFont == new Font("Segoe UI", 9f)) && (CommonShortTextFont == new Font("Segoe UI", 9f));
+    public override bool IsDefault => FontsAreDefault(CommonLongTextFont) && FontsAreDefault(CommonShortTextFont);
+
+    private static bool FontsAreDefault(Font? font)
+    {
+        if (font == null)
+        {
+            return false;
+        }
+
+        return font.Name == "Segoe UI" && Math.Abs(font.Size - 9f) < 0.001f
+               && font.Style == FontStyle.Regular && font.Unit == GraphicsUnit.Point;
+    }
 
     #endregion
 

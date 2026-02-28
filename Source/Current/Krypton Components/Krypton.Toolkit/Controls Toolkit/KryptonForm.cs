@@ -198,9 +198,16 @@ public class KryptonForm : VisualForm,
     // Compensate for Windows 11 outer accent border by shrinking the window region slightly
     private Rectangle _lastGripClientRect = Rectangle.Empty;
     private Timer? _clickTimer;
+    // Issue #2922: Workaround for borderless form briefly showing system title bar on startup
+    private bool _borderlessFormFirstShowPending;
+    private double _borderlessTargetOpacity = 1.0;
     private KryptonSystemMenu? _kryptonSystemMenu;
     // SystemMenu context menu components
     private KryptonContextMenu _systemMenuContextMenu;
+    // TitleBar
+    private KryptonFormTitleBar? _titleBar;
+    private ViewDrawDocker? _titleBarDocker;
+    private ButtonSpecManagerDraw? _titleBarButtonManager;
     #endregion
 
     #region Identity
@@ -350,6 +357,33 @@ public class KryptonForm : VisualForm,
 
     #region Private SizeGrip
     private float GetDpiFactor() => DeviceDpi / 96F;
+
+    /// <summary>
+    /// Gets the size (width and height) of the top-left corner hit-test area when maximized.
+    /// Theme-related (uses caption height or form button size) and scaled by DPI/zoom. Issue #3012.
+    /// </summary>
+    private int GetTopLeftCornerHitTestSize()
+    {
+        const int defaultAt96Dpi = 20;
+
+        // Prefer theme-derived size: caption height (varies by theme, e.g. Material 44px)
+        int captionHeight = _drawHeading?.ClientRectangle.Height ?? 0;
+        if (captionHeight > 0)
+        {
+            return Math.Max(1, captionHeight);
+        }
+
+        // Else use form button size (theme-dependent)
+        Rectangle closeRect = _buttonManager.GetButtonRectangle(ButtonSpecClose);
+        int buttonSize = Math.Max(closeRect.Height, closeRect.Width);
+        if (buttonSize > 0)
+        {
+            return Math.Max(1, buttonSize);
+        }
+
+        // Fallback: default size scaled by DPI/zoom
+        return Math.Max(1, (int)Math.Round(defaultAt96Dpi * GetDpiFactor()));
+    }
 
     /// <summary>
     /// Determines whether the form-level sizing grip should be shown.
@@ -581,6 +615,12 @@ public class KryptonForm : VisualForm,
             ButtonSpecMin.Dispose();
             ButtonSpecMax.Dispose();
             ButtonSpecClose.Dispose();
+
+            // Dispose the title bar button manager
+            _titleBarButtonManager?.Destruct();
+            _titleBarButtonManager = null;
+            _titleBarDocker?.Dispose();
+            _titleBarDocker = null;
 
             // Dispose the click timer
             _clickTimer?.Dispose();
@@ -1117,6 +1157,38 @@ public class KryptonForm : VisualForm,
     public FormButtonSpecCollection ButtonSpecs { get; }
 
     /// <summary>
+    /// Gets or sets the <see cref="KryptonFormTitleBar"/> component that hosts button-spec items
+    /// in the title bar caption area, to the left of the form title text.
+    /// Set to <c>null</c> to remove any previously attached title bar toolbar.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"Title bar component that hosts button-spec items in the form caption area.")]
+    [DefaultValue(null)]
+    public KryptonFormTitleBar? TitleBar
+    {
+        get => _titleBar;
+        set
+        {
+            if (_titleBar == value)
+            {
+                return;
+            }
+
+            if (_titleBar != null)
+            {
+                DetachTitleBar(_titleBar);
+            }
+
+            _titleBar = value;
+
+            if (_titleBar != null)
+            {
+                AttachTitleBar(_titleBar);
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets access to the minimize button spec.
     /// </summary>
     [Browsable(false)]
@@ -1579,6 +1651,42 @@ public class KryptonForm : VisualForm,
         base.OnControlRemoved(e);
     }
 
+    /// <inheritdoc />
+    protected override void SetVisibleCore(bool value)
+    {
+        // When showing a borderless form for the first time we want to start with an opacity of 0 and then fade in to the target opacity.
+        // This is because some themes (e.g. Windows 11) have a fade in animation for borderless windows,
+        // but if we start with the target opacity then the animation is not smooth as it animates from fully
+        // transparent to the target opacity instead of from 0 to the target opacity.
+        if (value && FormBorderStyle == FormBorderStyle.None && !DesignMode && !_borderlessFormFirstShowPending)
+        {
+            // Set a flag to indicate we are in the middle of the first show of a borderless form, so we don't interfere with subsequent calls to SetVisibleCore
+            _borderlessFormFirstShowPending = true;
+
+            // Cache the target opacity to restore after the first show
+            _borderlessTargetOpacity = Opacity;
+
+            // Start with an opacity of 0 to allow the fade in animation to work smoothly
+            Opacity = 0;
+
+            // Let the form become visible with the new opacity value
+            base.SetVisibleCore(true);
+
+            // Use BeginInvoke to ensure the opacity change happens after the form is shown, which allows the fade in animation to work correctly
+            BeginInvoke(() =>
+            {
+                // Clear the flag to indicate the first show is complete
+                Opacity = _borderlessTargetOpacity;
+            });
+
+            // We have handled the first show, so exit to avoid calling base.SetVisibleCore again
+            return;
+        }
+
+        // For subsequent calls to SetVisibleCore we just call the base method with the provided value
+        base.SetVisibleCore(value);
+    }
+
     /// <summary>
     /// Raises the Load event.
     /// </summary>
@@ -1696,6 +1804,7 @@ public class KryptonForm : VisualForm,
 
         // Recreate buttons when RTL changes to update their positions
         _buttonManager?.RecreateButtons();
+        _titleBarButtonManager?.RecreateButtons();
     }
 
     /// <summary>
@@ -1839,6 +1948,62 @@ public class KryptonForm : VisualForm,
         }
 
         return base.OnWM_NCLBUTTONDBLCLK(ref m);
+    }
+
+    /// <summary>
+    /// Constrain maximized form to the screen's working area (excludes taskbar).
+    /// Fixes: https://github.com/Krypton-Suite/Standard-Toolkit/issues/3013
+    /// Fixes: https://github.com/Krypton-Suite/Standard-Toolkit/issues/3004 (multi-monitor positioning)
+    /// </summary>
+    protected override void OnWM_GETMINMAXINFO(ref Message m)
+    {
+        base.OnWM_GETMINMAXINFO(ref m);
+
+        if (!IsHandleCreated)
+        {
+            return;
+        }
+
+        // ptMaxPosition and ptMaxSize must be in primary-monitor coordinates for the window manager
+        // to correctly adjust them when the window maximizes on a secondary monitor. See:
+        // https://devblogs.microsoft.com/oldnewthing/20150501-00/?p=44964
+        const int MONITOR_DEFAULTTOPRIMARY = 0x00000001;
+        const int MONITOR_DEFAULTTO_NEAREST = 0x00000002;
+
+        IntPtr hPrimary = PI.MonitorFromWindow(IntPtr.Zero, MONITOR_DEFAULTTOPRIMARY);
+        IntPtr hTarget = PI.MonitorFromWindow(m.HWnd, MONITOR_DEFAULTTO_NEAREST);
+
+        if (hPrimary == IntPtr.Zero || hTarget == IntPtr.Zero)
+        {
+            return;
+        }
+
+        PI.MONITORINFO primaryInfo = PI.GetMonitorInfo(hPrimary);
+        PI.MONITORINFO targetInfo = PI.GetMonitorInfo(hTarget);
+
+        PI.MINMAXINFO mmi = (PI.MINMAXINFO)Marshal.PtrToStructure(m.LParam, typeof(PI.MINMAXINFO))!;
+
+        PI.RECT rcWork = targetInfo.rcWork;
+        PI.RECT rcTargetMonitor = targetInfo.rcMonitor;
+        PI.RECT rcPrimaryMonitor = primaryInfo.rcMonitor;
+
+        // Express maximized position in primary-monitor coordinates (required for multi-monitor)
+        mmi.ptMaxPosition.X = rcPrimaryMonitor.left + (rcWork.left - rcTargetMonitor.left);
+        mmi.ptMaxPosition.Y = rcPrimaryMonitor.top + (rcWork.top - rcTargetMonitor.top);
+        mmi.ptMaxSize.X = Math.Abs(rcWork.right - rcWork.left);
+        mmi.ptMaxSize.Y = Math.Abs(rcWork.bottom - rcWork.top);
+
+        // Preserve MaximumSize constraints from base (https://github.com/Krypton-Suite/Standard-Toolkit/issues/459)
+        if (MaximumSize.Width > mmi.ptMinTrackSize.X && MaximumSize.Width < mmi.ptMaxSize.X)
+        {
+            mmi.ptMaxSize.X = MaximumSize.Width;
+        }
+        if (MaximumSize.Height > mmi.ptMinTrackSize.Y && MaximumSize.Height < mmi.ptMaxSize.Y)
+        {
+            mmi.ptMaxSize.Y = MaximumSize.Height;
+        }
+
+        Marshal.StructureToPtr(mmi, m.LParam, true);
     }
 
     private void DrawSizingGripOverlayIfNeeded()
@@ -2052,6 +2217,29 @@ public class KryptonForm : VisualForm,
             return new IntPtr(PI.HT.CLIENT);
         }
 
+        // Issue #3012: When maximized, clicking the top-left corner should show system menu (LTR) or close (RTL)
+        bool isMaximized = GetWindowState() == FormWindowState.Maximized;
+        if (isMaximized)
+        {
+            // Corner size is theme-related (caption/button size) and scaled by DPI/zoom
+            int cornerSize = GetTopLeftCornerHitTestSize();
+            Rectangle topLeftCorner = new Rectangle(0, 0, cornerSize, cornerSize);
+
+            if (topLeftCorner.Contains(pt))
+            {
+                // For RTL layouts, top-left corner should close the form
+                // For LTR layouts, top-left corner should show system menu
+                if (RightToLeftLayout)
+                {
+                    return new IntPtr(PI.HT.CLOSE);
+                }
+                else
+                {
+                    return new IntPtr(PI.HT.MENU);
+                }
+            }
+        }
+
         using (var context = new ViewLayoutContext(this, Renderer))
         {
             // Discover if the form icon is being Displayed
@@ -2107,6 +2295,13 @@ public class KryptonForm : VisualForm,
             // Is mouse over one of the borders?
             if (isResizable && (mouseView == _drawDocker || pt.Y < _drawHeading.ClientRectangle.Height))
             {
+                // Issue #3011 (regression of #2096): When maximized, top edge/corners must return HTCAPTION
+                // so the user can drag from the very top; HTTOP/HTTOPLEFT/HTTOPRIGHT prevent dragging.
+                if (GetWindowState() == FormWindowState.Maximized && pt.Y <= Math.Max(borders.Top, HT_CORNER))
+                {
+                    return new IntPtr(PI.HT.CAPTION);
+                }
+
                 // Is point over the left border?
                 if ((borders.Left > 0) && (pt.X <= borders.Left))
                 {
@@ -2630,39 +2825,13 @@ public class KryptonForm : VisualForm,
     {
         if (MdiParent == null)
         {
-            // Fix for #2457, please do not remove!!!
-            // For RTL layout mode, disable region clipping to prevent border issues
-            if (RightToLeftLayout)
-            {
-                SuspendPaint();
-                _regionWindowState = FormWindowState.Maximized;
-                UpdateBorderRegion(null); // No region clipping in RTL mode
-                ResumePaint();
-                return;
-            }
-
-            // Get the size of each window border
-            var xBorder = PI.GetSystemMetrics(PI.SM_.CXSIZEFRAME) * 2;
-            var yBorder = PI.GetSystemMetrics(PI.SM_.CYSIZEFRAME) * 2;
-
-            // Fix for #2457, please do not remove!!!
-            // Get the actual border widths from the form's border palette
-            var formBorder = StateCommon?.Border as PaletteFormBorder;
-            var (leftBorder, topBorder) = formBorder?.BorderWidths(FormBorderStyle) ?? (xBorder / 2, yBorder / 2);
-            var rightBorder = leftBorder; // Use same width for right border
-            var bottomBorder = topBorder; // Use same width for bottom border
-
-            // Calculate the maximized region with proper border handling
-            var maximizedRect = new Rectangle(
-                leftBorder,
-                topBorder,
-                Width - (leftBorder + rightBorder),
-                Height - (topBorder + bottomBorder));
-
-            // Use this as the new region
+            // Fix for #2457 / #3012: Do not apply a clipping region when maximized.
+            // For RTL layout mode, disable region clipping to prevent border issues (#2457).
+            // For all maximized forms, skip region so the title bar, control box, and left/top/bottom
+            // edges are not cut off (#3012 - controlbox and buttonspace not show full when maximized).
             SuspendPaint();
             _regionWindowState = FormWindowState.Maximized;
-            UpdateBorderRegion(new Region(maximizedRect));
+            UpdateBorderRegion(null);
             ResumePaint();
         }
         else
@@ -3010,6 +3179,67 @@ public class KryptonForm : VisualForm,
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
         return base.ProcessCmdKey(ref msg, keyData);
+    }
+
+    private void AttachTitleBar([DisallowNull] KryptonFormTitleBar titleBar)
+    {
+        titleBar.SetOwnerForm(this);
+
+        // Build a docker injected on the Right edge of _drawHeading so buttons appear
+        // to the right of the form icon and title (between title text and min/max/close).
+        _titleBarDocker = new ViewDrawDocker(StateActive.Header.Back, StateActive.Header.Border, StateActive.Header,
+            PaletteMetricBool.None, PaletteMetricPadding.None, VisualOrientation.Top);
+
+        _titleBarButtonManager = new ButtonSpecManagerDraw(
+            this,
+            Redirector,
+            titleBar.ButtonSpecs,
+            null,
+            [_titleBarDocker],
+            [StateCommon.Header],
+            [PaletteMetricInt.HeaderButtonEdgeInsetForm],
+            [PaletteMetricPadding.HeaderButtonPaddingForm],
+            CreateToolStripRenderer,
+            OnNeedPaint);
+
+        _titleBarButtonManager.ToolTipManager = ToolTipManager;
+
+        InjectViewElement(_titleBarDocker, ViewDockStyle.Right);
+
+        titleBar.ButtonSpecInserted += OnTitleBarButtonSpecChanged;
+        titleBar.ButtonSpecRemoved += OnTitleBarButtonSpecChanged;
+
+        RecreateMinMaxCloseButtons();
+        PerformNeedPaint(true);
+    }
+
+    private void DetachTitleBar([DisallowNull] KryptonFormTitleBar titleBar)
+    {
+        titleBar.ButtonSpecInserted -= OnTitleBarButtonSpecChanged;
+        titleBar.ButtonSpecRemoved -= OnTitleBarButtonSpecChanged;
+
+        if (_titleBarDocker != null)
+        {
+            RevokeViewElement(_titleBarDocker, ViewDockStyle.Right);
+        }
+
+        _titleBarButtonManager?.Destruct();
+        _titleBarButtonManager = null;
+
+        _titleBarDocker?.Dispose();
+        _titleBarDocker = null;
+
+        titleBar.SetOwnerForm(null);
+
+        RecreateMinMaxCloseButtons();
+        PerformNeedPaint(true);
+    }
+
+    private void OnTitleBarButtonSpecChanged(object? sender, ButtonSpecEventArgs e)
+    {
+        _titleBarButtonManager?.RefreshButtons();
+        RecreateMinMaxCloseButtons();
+        PerformNeedPaint(true);
     }
 
     #endregion
