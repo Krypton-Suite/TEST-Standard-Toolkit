@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -1402,6 +1402,12 @@ public class KryptonDomainUpDown : VisualControlBase,
             if (MinimumSize.Height > 0)
             {
                 retSize.Height = Math.Max(MinimumSize.Height, retSize.Height);
+            }
+
+            // Apply the minimum control height independent of font size
+            if (MinimumControlHeight > 0)
+            {
+                retSize.Height = Math.Max(MinimumControlHeight, retSize.Height);
             }
 
             return retSize;

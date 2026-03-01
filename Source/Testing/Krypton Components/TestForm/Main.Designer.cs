@@ -97,6 +97,7 @@ namespace TestForm
             this.ktrkProgressValues = new Krypton.Toolkit.KryptonTrackBar();
             this.kryptonButton3 = new Krypton.Toolkit.KryptonButton();
             this.kbtnIntegratedToolbar = new Krypton.Toolkit.KryptonButton();
+            this.kbtnTitleBarDemo = new Krypton.Toolkit.KryptonButton();
             this.kbtnTestMessagebox = new Krypton.Toolkit.KryptonButton();
             this.kryptonButton2 = new Krypton.Toolkit.KryptonButton();
             this.kryptonButton1 = new Krypton.Toolkit.KryptonButton();
@@ -201,6 +202,7 @@ namespace TestForm
             this.kryptonPanel1.Controls.Add(this.ktrkProgressValues);
             this.kryptonPanel1.Controls.Add(this.kryptonButton3);
             this.kryptonPanel1.Controls.Add(this.kbtnIntegratedToolbar);
+            this.kryptonPanel1.Controls.Add(this.kbtnTitleBarDemo);
             this.kryptonPanel1.Controls.Add(this.kbtnTestMessagebox);
             this.kryptonPanel1.Controls.Add(this.kryptonButton2);
             this.kryptonPanel1.Controls.Add(this.kryptonButton1);
@@ -834,6 +836,17 @@ namespace TestForm
             this.kbtnIntegratedToolbar.Values.Text = "Integrated Toolbar (Form5)";
             this.kbtnIntegratedToolbar.Click += new System.EventHandler(this.kbtnIntegratedToolbar_Click);
             // 
+            // kbtnTitleBarDemo
+            // 
+            this.kbtnTitleBarDemo.Location = new System.Drawing.Point(10, 236);
+            this.kbtnTitleBarDemo.Margin = new System.Windows.Forms.Padding(2);
+            this.kbtnTitleBarDemo.Name = "kbtnTitleBarDemo";
+            this.kbtnTitleBarDemo.Size = new System.Drawing.Size(227, 20);
+            this.kbtnTitleBarDemo.TabIndex = 8;
+            this.kbtnTitleBarDemo.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            this.kbtnTitleBarDemo.Values.Text = "TitleBar Demo (#3112)";
+            this.kbtnTitleBarDemo.Click += new System.EventHandler(this.kbtnTitleBarDemo_Click);
+            // 
             // kbtnTestMessagebox
             // 
             this.kbtnTestMessagebox.Location = new System.Drawing.Point(10, 184);
@@ -1056,6 +1069,7 @@ namespace TestForm
         private Krypton.Toolkit.ButtonSpecAny buttonSpecAny10;
         private Krypton.Toolkit.KryptonIntegratedToolbarPrintCommand kryptonIntegratedToolbarPrintCommand1;
         private Krypton.Toolkit.KryptonButton kbtnIntegratedToolbar;
+        private Krypton.Toolkit.KryptonButton kbtnTitleBarDemo;
         private Krypton.Toolkit.KryptonButton kryptonButton3;
         private Krypton.Toolkit.KryptonTrackBar ktrkProgressValues;
         private Krypton.Toolkit.KryptonProgressBar kryptonProgressBar1;

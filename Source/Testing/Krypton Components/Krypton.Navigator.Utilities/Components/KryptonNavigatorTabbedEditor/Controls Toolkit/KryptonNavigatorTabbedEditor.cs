@@ -14,6 +14,8 @@ using System;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Drawing;
+using System.Windows.Forms;
+
 using Krypton.Navigator;
 using Krypton.Toolkit;
 

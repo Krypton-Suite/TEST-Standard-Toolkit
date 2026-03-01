@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -255,6 +255,23 @@ internal class KryptonColorButtonActionList : DesignerActionList
             }
         }
     }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the button can receive focus when clicked.
+    /// </summary>
+    public bool IsSelectable
+    {
+        get => _colorButton.IsSelectable;
+
+        set
+        {
+            if (_colorButton.IsSelectable != value)
+            {
+                _service?.OnComponentChanged(_colorButton, null, _colorButton.IsSelectable, value);
+                _colorButton.IsSelectable = value;
+            }
+        }
+    }
     #endregion
 
     #region Public Override
@@ -286,6 +303,8 @@ internal class KryptonColorButtonActionList : DesignerActionList
             actions.Add(new DesignerActionPropertyItem(nameof(SelectedColour), @"Selected Colour", @"Values", @"The selected colour."));
             actions.Add(new DesignerActionPropertyItem(nameof(AllowFullOpen), @"Allow Full Open", @"Values", @"Allows the color dialog to fully open."));
             actions.Add(new DesignerActionPropertyItem(nameof(SelectedRect), nameof(SelectedRect), @"Visuals", @"Selected color drawing rectangle."));
+            actions.Add(new DesignerActionHeaderItem(@"Behavior"));
+            actions.Add(new DesignerActionPropertyItem(nameof(IsSelectable), nameof(IsSelectable), @"Behavior", @"When false, the button does not receive focus when clicked. Useful for on-screen keyboards so that input goes to the currently focused control."));
             actions.Add(new DesignerActionHeaderItem(@"Visuals"));
             actions.Add(new DesignerActionPropertyItem(nameof(PaletteMode), @"Palette", @"Visuals", @"Palette applied to drawing"));
         }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
 	<OutputType>Library</OutputType>
@@ -533,6 +533,7 @@
 	<EmbeddedResource Include="ToolboxBitmaps\KryptonButtonSpec.bmp" />
 	<EmbeddedResource Include="ToolboxBitmaps\KryptonGroupPanel.bmp" />
 	<EmbeddedResource Include="ToolboxBitmaps\KryptonForm.bmp" />
+	<EmbeddedResource Include="ToolboxBitmaps\KryptonFormTitleBar.bmp" />
 	<EmbeddedResource Include="ToolboxBitmaps\KryptonLinkLabel.bmp" />
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * 
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -2765,8 +2765,8 @@ public class KryptonWorkspace : VisualContainerControl,
 
         // Are both items allowed to be resized by the user?
         // (at design time we can get null references)
-        if (/*(after == null)
-            ||*/ !after.WorkspaceAllowResizing
+        if ((after == null)
+            || !after.WorkspaceAllowResizing
                  || (before == null)
                  || !before.WorkspaceAllowResizing
            )

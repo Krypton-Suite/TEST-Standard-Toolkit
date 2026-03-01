@@ -1325,6 +1325,12 @@ public class KryptonTextBox : VisualControlBase,
                 retSize.Height = Math.Max(MinimumSize.Height, retSize.Height);
             }
 
+            // Apply the minimum control height independent of font size
+            if (MinimumControlHeight > 0)
+            {
+                retSize.Height = Math.Max(MinimumControlHeight, retSize.Height);
+            }
+
             return retSize;
         }
         else
