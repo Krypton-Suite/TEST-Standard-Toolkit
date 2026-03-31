@@ -70,14 +70,14 @@ jobs:
       - name: Setup MSBuild
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
         with:
           msbuild-architecture: x64
 
       - name: Setup 
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: NuGet/setup-nuget@v2.0.1
+        uses: NuGet/setup-nuget@v3
 
       - name: Cache NuGet
         # Kill switch check
@@ -374,14 +374,14 @@ jobs:
       - name: Setup MSBuild
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
         with:
           msbuild-architecture: x64
 
       - name: Setup NuGet
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: NuGet/setup-nuget@v2.0.1
+        uses: NuGet/setup-nuget@v3
 
       - name: Cache NuGet
         # Kill switch check
@@ -624,14 +624,14 @@ jobs:
       - name: Setup MSBuild
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
         with:
           msbuild-architecture: x64
 
       - name: Setup NuGet
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        uses: NuGet/setup-nuget@v2.0.1
+        uses: NuGet/setup-nuget@v3
 
       - name: Cache NuGet
         # Kill switch check
@@ -895,14 +895,14 @@ jobs:
       - name: Setup MSBuild
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
         with:
           msbuild-architecture: x64
 
       - name: Setup NuGet
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        uses: NuGet/setup-nuget@v2.0.1
+        uses: NuGet/setup-nuget@v3
 
       - name: Cache NuGet
         # Kill switch check
@@ -1206,14 +1206,14 @@ jobs:
       - name: Setup MSBuild
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
         with:
           msbuild-architecture: x64
 
       - name: Setup NuGet
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        uses: NuGet/setup-nuget@v2.0.1
+        uses: NuGet/setup-nuget@v3
 
       - name: Cache NuGet
         # Kill switch check
