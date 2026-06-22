@@ -39,7 +39,7 @@ jobs:
       - name: Checkout
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # .NET 9 and 10
       - name: Setup .NET
@@ -343,7 +343,7 @@ jobs:
       - name: Checkout
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # .NET 9 and 10
       - name: Setup .NET
@@ -608,7 +608,7 @@ jobs:
       - name: Checkout
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # .NET 6, 7 and 8 - needed for net6.0-windows, net7.0-windows and net8.0-windows targets
       - name: Setup .NET 6, 7 and 8
@@ -858,7 +858,7 @@ jobs:
       - name: Checkout
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # .NET 9 and 10
       - name: Setup .NET
@@ -1168,7 +1168,7 @@ jobs:
       - name: Checkout
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # .NET 9 and 10
       - name: Setup .NET
