@@ -82,7 +82,7 @@ jobs:
       - name: Cache NuGet
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
@@ -386,7 +386,7 @@ jobs:
       - name: Cache NuGet
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
@@ -636,7 +636,7 @@ jobs:
       - name: Cache NuGet
         # Kill switch check
         if: steps.lts_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
@@ -907,7 +907,7 @@ jobs:
       - name: Cache NuGet
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
@@ -1218,7 +1218,7 @@ jobs:
       - name: Cache NuGet
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
