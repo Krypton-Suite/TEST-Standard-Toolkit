@@ -37,7 +37,7 @@ jobs:
 
       - name: Checkout
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup .NET
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
