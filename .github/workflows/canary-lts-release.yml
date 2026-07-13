@@ -7,6 +7,9 @@
 
 name: Canary LTS Release
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -15,7 +18,7 @@ on:
 
 jobs:
   canary-lts-release:
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     if: github.ref == 'refs/heads/V105-LTS' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
     steps:
@@ -39,7 +42,7 @@ jobs:
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
         uses: actions/checkout@v7
 
-      - name: Setup .NET
+      - name: Setup .NET (9 and 10)
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
@@ -47,18 +50,67 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Setup .NET 11 (Preview)
+      - name: Setup .NET 11 (stable)
+        id: setup_dotnet11_stable_lts
+        continue-on-error: true
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 11.0.x
+          dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
+
+      - name: Setup .NET 11 (preview fallback)
+        if: steps.canary_lts_kill_switch.outputs.enabled == 'true' && steps.setup_dotnet11_stable_lts.outcome == 'failure'
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
           dotnet-quality: preview
 
-      - name: Force .NET 11 SDK via global.json
+      # USE_DOTNET_PREVIEW=false skips preview SDK; global.json uses stable SDK below.
+      - name: Setup .NET Preview
+        if: steps.canary_lts_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false'
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION }}
+          dotnet-quality: preview
+
+      # Pin sdk.version for CI; preview band follows USE_DOTNET_PREVIEW; stable path prefers .NET 11 for net11.0-windows TFMs.
+      - name: Pin SDK via global.json
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
+        env:
+          DOTNET_PREVIEW_SDK_BAND: ${{ vars.DOTNET_PREVIEW_SDK_BAND }}
+          USE_DOTNET_PREVIEW: ${{ vars.USE_DOTNET_PREVIEW }}
         run: |
-          $sdkVersion = (dotnet --list-sdks | Select-String "11.0").ToString().Split(" ")[0]
-          Write-Output "Using SDK $sdkVersion"
+          $ErrorActionPreference = 'Stop'
+          function Get-ListedSdkVersion([string]$Pattern) {
+            $hit = dotnet --list-sdks | Select-String $Pattern | Select-Object -Last 1
+            if (-not $hit) { return $null }
+            $line = $hit.Line.TrimEnd()
+            if ($line -match '^(\d+\.\d+\.\d+)\s') { return $Matches[1] }
+            return (($line -split '\s+', 2)[0])
+          }
+
+          $usePreview = $env:USE_DOTNET_PREVIEW -ne 'false'
+          $sdkVersion = $null
+          if (-not $usePreview) {
+            $sdkVersion = Get-ListedSdkVersion '11.0'
+            if (-not $sdkVersion) { $sdkVersion = Get-ListedSdkVersion '10.0' }
+            if (-not $sdkVersion) { $sdkVersion = Get-ListedSdkVersion '9.0' }
+          } else {
+            if (-not $env:DOTNET_PREVIEW_SDK_BAND) {
+              Write-Error 'DOTNET_PREVIEW_SDK_BAND is not set (repository variable).'
+            }
+            $sdkVersion = Get-ListedSdkVersion $env:DOTNET_PREVIEW_SDK_BAND
+            if (-not $sdkVersion) {
+              $sdkVersion = Get-ListedSdkVersion '11.0'
+            }
+            if (-not $sdkVersion) {
+              $sdkVersion = Get-ListedSdkVersion '10.0'
+            }
+          }
+          if (-not $sdkVersion) {
+            Write-Error 'Could not resolve an SDK version for global.json.'
+          }
+          Write-Host "Using SDK $sdkVersion"
           @"
           {
             "sdk": {
@@ -87,47 +139,54 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Setup WebView2 SDK
-        if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
-        shell: pwsh
-        run: |
-          if (-not (Test-Path "WebView2SDK")) { mkdir WebView2SDK }
-          $packageId = "Microsoft.Web.WebView2"
-          $latestVersion = $null
-          try {
-            $searchUrl = "https://azuresearch-usnc.nuget.org/query?q=$packageId&prerelease=false&semVerLevel=2.0.0&take=1"
-            $searchResponse = Invoke-RestMethod -Uri $searchUrl -Method Get
-            if ($searchResponse.data -and $searchResponse.data.Count -gt 0) {
-              $latestVersion = $searchResponse.data[0].version
-            }
-          } catch {
-            try {
-              $apiUrl = "https://api.nuget.org/v3-flatcontainer/$packageId/index.json"
-              $response = Invoke-RestMethod -Uri $apiUrl -Method Get
-              if ($response.versions) {
-                $stableVersions = $response.versions | Where-Object { $_ -notmatch '[-]' -and $_ -match '^\d+\.\d+\.\d+$' }
-                if ($stableVersions) {
-                  $latestVersion = $stableVersions | Sort-Object { [System.Version]$_ } -Descending | Select-Object -First 1
-                }
-              }
-            } catch {}
-          }
-          if (-not $latestVersion) { $latestVersion = "1.0.3595.46" }
-          Write-Host "Using WebView2 SDK version: $latestVersion"
-          dotnet add "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2 --version $latestVersion
-          dotnet restore "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj"
-          $nugetBasePath = "$env:USERPROFILE\.nuget\packages\microsoft.web.webview2\$latestVersion"
-          $coreDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.Core.dll" | Select-Object -First 1
-          Copy-Item (Join-Path $nugetBasePath $coreDll) "WebView2SDK\"
-          $winFormsDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.WinForms.dll" | Select-Object -First 1
-          Copy-Item (Join-Path $nugetBasePath $winFormsDll) "WebView2SDK\"
-          $loaderDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "WebView2Loader.dll" | Select-Object -First 1
-          Copy-Item (Join-Path $nugetBasePath $loaderDll) "WebView2SDK\"
-          dotnet remove "Source/Current/Krypton Components/Krypton.Utilities/Krypton.Utilities.csproj" package Microsoft.Web.WebView2
+      # V105-LTS: no Krypton.Toolkit.Utilities project and no WebView2 build dependency.
+      # Uncomment for V120-LTS only (see build.yml "Populate WebView2"); runs on refs/heads/V120-LTS.
+      # - name: Setup WebView2 SDK
+      #   if: steps.canary_lts_kill_switch.outputs.enabled == 'true' && github.ref == 'refs/heads/V120-LTS'
+      #   shell: pwsh
+      #   run: |
+      #     if (-not (Test-Path "WebView2SDK")) { mkdir WebView2SDK }
+      #     $packageId = "Microsoft.Web.WebView2"
+      #     $latestVersion = $null
+      #     try {
+      #       $searchUrl = "https://azuresearch-usnc.nuget.org/query?q=$packageId&prerelease=false&semVerLevel=2.0.0&take=1"
+      #       $searchResponse = Invoke-RestMethod -Uri $searchUrl -Method Get
+      #       if ($searchResponse.data -and $searchResponse.data.Count -gt 0) {
+      #         $latestVersion = $searchResponse.data[0].version
+      #       }
+      #     } catch {
+      #       try {
+      #         $apiUrl = "https://api.nuget.org/v3-flatcontainer/$packageId/index.json"
+      #         $response = Invoke-RestMethod -Uri $apiUrl -Method Get
+      #         if ($response.versions) {
+      #           $stableVersions = $response.versions | Where-Object { $_ -notmatch '[-]' -and $_ -match '^\d+\.\d+\.\d+$' }
+      #           if ($stableVersions) {
+      #             $latestVersion = $stableVersions | Sort-Object { [System.Version]$_ } -Descending | Select-Object -First 1
+      #           }
+      #         }
+      #       } catch {}
+      #     }
+      #     if (-not $latestVersion) { $latestVersion = "1.0.3595.46" }
+      #     Write-Host "Using WebView2 SDK version: $latestVersion"
+      #     $utilProj = Join-Path $env:GITHUB_WORKSPACE "Source\Krypton Components\Krypton.Toolkit.Utilities\Krypton.Toolkit.Utilities.csproj"
+      #     dotnet add "$utilProj" package Microsoft.Web.WebView2 --version $latestVersion
+      #     dotnet restore "$utilProj"
+      #     $nugetBasePath = "$env:USERPROFILE\.nuget\packages\microsoft.web.webview2\$latestVersion"
+      #     $coreDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.Core.dll" | Select-Object -First 1
+      #     Copy-Item (Join-Path $nugetBasePath $coreDll) "WebView2SDK\"
+      #     $winFormsDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "Microsoft.Web.WebView2.WinForms.dll" | Select-Object -First 1
+      #     Copy-Item (Join-Path $nugetBasePath $winFormsDll) "WebView2SDK\"
+      #     $loaderDll = Get-ChildItem -Path $nugetBasePath -Recurse -Name "WebView2Loader.dll" | Select-Object -First 1
+      #     Copy-Item (Join-Path $nugetBasePath $loaderDll) "WebView2SDK\"
+      #     [xml]$proj = Get-Content $utilProj
+      #     $nodes = $proj.SelectNodes("//PackageReference[@Include='$packageId']")
+      #     foreach ($node in $nodes) { $node.ParentNode.RemoveChild($node) | Out-Null }
+      #     $proj.Save($utilProj)
+      #     Write-Host "Removed temporary WebView2 PackageReference entries"
 
       - name: Restore
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
-        run: dotnet restore "Source/Current/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx"
+        run: dotnet restore "Source/Krypton Components/Krypton Toolkit Suite 2022 - VS2022.slnx" -p:Configuration=Canary -p:TFMs=all
 
       - name: Prepare Code Signing Certificate (Optional)
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
@@ -155,26 +214,36 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $buildArgs = 'Scripts/Build/canary.proj /t:Build /p:Configuration=Canary /p:Platform="Any CPU"'
+          # /m: multi-processor MSBuild (matches Scripts/Build/build-nightly.cmd and local .proj orchestration).
+          $buildArgs = @(
+            '/m',
+            'Scripts/Build/canarylongtermstable.proj',
+            '/t:Build',
+            '/restore',
+            '/p:Configuration=Canary',
+            '/p:Platform=Any CPU',
+            '/p:UseArtifactsOutput=true'
+          )
 
           if (${{ steps.prepare_cert.outputs.cert_available }} -eq 'true') {
-            $buildArgs += ' /p:EnableAuthenticodeSigning=true'
-            $buildArgs += " /p:AuthenticodeCertificatePath=`"${{ steps.prepare_cert.outputs.cert_path }}`""
+            $buildArgs += '/p:EnableAuthenticodeSigning=true'
+            $buildArgs += "/p:AuthenticodeCertificatePath=${{ steps.prepare_cert.outputs.cert_path }}"
             if ($env:AUTHENTICODE_CERT_PASSWORD) {
-              $buildArgs += " /p:AuthenticodeCertificatePassword=`"$env:AUTHENTICODE_CERT_PASSWORD`""
+              $buildArgs += "/p:AuthenticodeCertificatePassword=$env:AUTHENTICODE_CERT_PASSWORD"
             }
             Write-Host "Building with Authenticode signing enabled"
           } else {
             Write-Host "Building without Authenticode signing"
           }
 
-          msbuild $buildArgs
+          & msbuild @buildArgs
         env:
           AUTHENTICODE_CERT_PASSWORD: ${{ secrets.AUTHENTICODE_CERT_PASSWORD }}
 
+      # /m: parallel pack across TFMs/projects on the runner (same as Build step above).
       - name: Pack Canary
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
-        run: msbuild "Scripts/Build/canary.proj" /t:Pack /p:Configuration=Canary /p:Platform="Any CPU"
+        run: msbuild /m "Scripts/Build/canarylongtermstable.proj" /t:Pack /restore /p:Configuration=Canary /p:Platform="Any CPU" /p:UseArtifactsOutput=true
 
       - name: Push NuGet Packages to nuget.org
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
@@ -190,9 +259,16 @@ jobs:
 
           $packages = Get-ChildItem "Artefacts/Packages/Canary/*.nupkg" -ErrorAction SilentlyContinue
           $publishedAny = $false
+          $repoRoot = if ($null -ne $env:GITHUB_WORKSPACE -and $env:GITHUB_WORKSPACE -ne '') { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
+          . (Join-Path $repoRoot 'Scripts/CI/StandardToolkitNupkgGuard.ps1')
+          $standardToolkitNupkgSizeGateFailed = $false
 
           if ($packages) {
             foreach ($package in $packages) {
+              if (-not (Test-StandardToolkitNupkgPushAllowed -Package $package)) {
+                $standardToolkitNupkgSizeGateFailed = $true
+                continue
+              }
               Write-Output "Pushing Canary LTS package: $($package.Name)"
               try {
                 $output = dotnet nuget push "$($package.FullName)" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate 2>&1 | Out-String
@@ -211,9 +287,14 @@ jobs:
             Write-Output "No NuGet packages found to push"
           }
 
+          if ($standardToolkitNupkgSizeGateFailed) {
+            exit 1
+          }
+
           echo "packages_published=$publishedAny" >> $env:GITHUB_OUTPUT
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          STANDARD_TOOLKIT_MIN_NUPKG_MB: ${{ vars.STANDARD_TOOLKIT_MIN_NUPKG_MB }}
 
       - name: Get Version
         if: steps.canary_lts_kill_switch.outputs.enabled == 'true'
@@ -222,27 +303,45 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $version = $null
+          $proj = 'Source/Current/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
+          $msbuildConfig = 'Canary'
 
           try {
-            $dllPath = Get-ChildItem "Artefacts/Canary/net48/Krypton.Toolkit.dll" -ErrorAction Stop
-            $assemblyVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dllPath.FullName).Version
-            $version = $assemblyVersion.ToString()
-            Write-Host "Got version from assembly: $version"
+            $evaluated = (& dotnet msbuild "$proj" -getProperty:Version -p:Configuration=$msbuildConfig -nologo -v:q).Trim()
+            if ($evaluated) {
+              if ($evaluated -match '^[1-9]\d{2,}\.\d+\.\d+\.\d+$') {
+                $version = $evaluated
+                Write-Host "Got version from MSBuild: $version"
+              } else {
+                Write-Warning "Ignoring unexpected MSBuild version '$evaluated'."
+              }
+            }
           } catch {
-            Write-Host "Could not read version from assembly: $_"
+            Write-Host "Could not read version from MSBuild: $_"
           }
 
           if (-not $version) {
             try {
-              $proj = 'Source/Current/Krypton Components/Krypton.Toolkit/Krypton.Toolkit 2022.csproj'
-              [xml]$projXml = Get-Content $proj
-              $versionNode = $projXml.SelectSingleNode("//Version")
-              if ($versionNode) {
-                $version = $versionNode.InnerText.Trim()
-                Write-Host "Got version from csproj: $version"
+              $dllRelativePaths = @(
+                "artifacts/bin/$msbuildConfig/net48/Krypton.Toolkit.dll",
+                "Bin/$msbuildConfig/net48/Krypton.Toolkit.dll",
+                "Artefacts/$msbuildConfig/net48/Krypton.Toolkit.dll"
+              )
+              $dllPath = $null
+              foreach ($p in $dllRelativePaths) {
+                if (Test-Path -LiteralPath $p) { $dllPath = Get-Item -LiteralPath $p; break }
+              }
+              if (-not $dllPath) { throw "Krypton.Toolkit.dll not found under artifacts, Bin, or Artefacts." }
+              $assemblyVersion = [System.Reflection.AssemblyName]::GetAssemblyName($dllPath.FullName).Version
+              $assemblyVersionText = $assemblyVersion.ToString()
+              if ($assemblyVersionText -match '^[1-9]\d{2,}\.\d+\.\d+\.\d+$') {
+                $version = $assemblyVersionText
+                Write-Host "Got version from assembly: $version"
+              } else {
+                Write-Warning "Ignoring unexpected assembly version '$assemblyVersionText' from $($dllPath.FullName)."
               }
             } catch {
-              Write-Host "Could not read version from csproj: $_"
+              Write-Host "Could not read version from assembly: $_"
             }
           }
 
