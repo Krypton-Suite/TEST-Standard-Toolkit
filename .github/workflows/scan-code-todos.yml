@@ -77,7 +77,7 @@ jobs:
         if: steps.kill_switch.outputs.enabled == 'true'
         shell: bash
         run: |
-          if [ "$GITHUB_REPOSITORY" != "Krypton-Suite/Standard-Toolkit" ]; then
+          if [ "$GITHUB_REPOSITORY" != "Krypton-Suite/TEST-Standard-Toolkit" ]; then
             echo "::error::Invalid repository: $GITHUB_REPOSITORY"
             exit 1
           fi
