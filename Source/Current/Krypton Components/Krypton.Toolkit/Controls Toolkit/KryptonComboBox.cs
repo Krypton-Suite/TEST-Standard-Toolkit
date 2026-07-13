@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -981,6 +981,7 @@ public class KryptonComboBox : VisualControlBase,
     private bool _alwaysActive;
     private int _cachedHeight;
     private int _hoverIndex;
+    private bool _dropDownWidthSet;
 
     // #1697 Work-around
     // When changing DropDownStyle while the control is disabled the newly selected style was not applied.
@@ -1811,16 +1812,29 @@ public class KryptonComboBox : VisualControlBase,
 
     /// <summary>
     /// Gets and sets the width, in pixels, of the drop-down box in a KryptonComboBox.
+    /// When not explicitly set, the drop-down width follows the control width (matching standard ComboBox behaviour).
     /// </summary>
     [Category(@"Behavior")]
     [Description(@"The width, in pixels, of the drop-down box in a KryptonComboBox.")]
     [EditorBrowsable(EditorBrowsableState.Always)]
     [Browsable(true)]
-    [DefaultValue(200)]
     public int DropDownWidth
     {
-        get => _comboBox.DropDownWidth;
-        set => _comboBox.DropDownWidth = value;
+        get => _dropDownWidthSet ? _comboBox.DropDownWidth : Width;
+        set
+        {
+            _dropDownWidthSet = true;
+            _comboBox.DropDownWidth = value;
+        }
+    }
+
+    private bool ShouldSerializeDropDownWidth() => _dropDownWidthSet;
+
+    /// <summary>Resets the DropDownWidth to its default (follows the control width).</summary>
+    public void ResetDropDownWidth()
+    {
+        _dropDownWidthSet = false;
+        _comboBox.DropDownWidth = Width;
     }
 
     /// <summary>
@@ -2263,6 +2277,12 @@ public class KryptonComboBox : VisualControlBase,
                 retSize.Height = Math.Max(MinimumSize.Height, retSize.Height);
             }
 
+            // Apply the minimum control height independent of font size
+            if (MinimumControlHeight > 0)
+            {
+                retSize.Height = Math.Max(MinimumControlHeight, retSize.Height);
+            }
+
             return retSize;
         }
 
@@ -2681,6 +2701,13 @@ public class KryptonComboBox : VisualControlBase,
     {
         // Let base class raise events
         base.OnResize(e);
+
+        // Keep the inner combo's DropDownWidth in sync when it hasn't been explicitly set,
+        // mirroring the standard ComboBox behaviour where the drop-down tracks the control width.
+        if (!_dropDownWidthSet)
+        {
+            _comboBox.DropDownWidth = Width;
+        }
 
         // We must have a layout calculation
         ForceControlLayout();

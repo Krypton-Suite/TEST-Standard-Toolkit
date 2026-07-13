@@ -37,6 +37,7 @@ public class KryptonToolTip : Component, IExtenderProvider
     private readonly Dictionary<Control, EventHandler> _mouseLeaveHandlers;
     private ToolTipDrawMode _drawMode;
     private Color _stripColor;
+    private int _autoPopDelay = 5000;
     #endregion
 
     #region Events
@@ -84,7 +85,7 @@ public class KryptonToolTip : Component, IExtenderProvider
         // Create hide timer
         _hideTimer = new System.Windows.Forms.Timer
         {
-            Interval = AutoPopDelay
+            Interval = 5000
         };
         _hideTimer.Tick += OnHideTimerTick;
 
@@ -281,18 +282,30 @@ public class KryptonToolTip : Component, IExtenderProvider
 
     /// <summary>
     /// Gets or sets the period of time the ToolTip remains visible if the pointer is stationary on a control.
+    /// Use 0 for infinite display (tooltip stays until the pointer leaves the control).
+    /// Unlike the standard WinForms ToolTip, values greater than 5000ms are supported on all Windows versions.
     /// </summary>
     [Category(@"Behavior")]
-    [Description(@"The period of time the ToolTip remains visible if the pointer is stationary on a control.")]
+    [Description(@"The period of time the ToolTip remains visible if the pointer is stationary on a control. Use 0 for infinite.")]
     [DefaultValue(5000)]
     public int AutoPopDelay
     {
-        get => _toolTip?.AutoPopDelay ?? 5000;
+        get => _autoPopDelay;
         set
         {
+            int sanitized = value < 0 ? 0 : value;
+            _autoPopDelay = sanitized;
+            // Native ToolTip rejects 0 and shows "Property value is not valid"; we don't use its timing for display (we cancel and show our own).
             if (_toolTip != null)
             {
-                _toolTip.AutoPopDelay = value;
+                try
+                {
+                    _toolTip.AutoPopDelay = sanitized == 0 ? 5000 : sanitized;
+                }
+                catch
+                {
+                    // Designer or native control may reject some values; keep our stored value.
+                }
             }
         }
     }
@@ -594,8 +607,8 @@ public class KryptonToolTip : Component, IExtenderProvider
         // Show the Krypton tooltip
         ShowKryptonToolTip(e.AssociatedControl, toolTipText, toolTipTitle, Control.MousePosition);
 
-        // Start timer to hide tooltip after AutoPopDelay
-        if (_hideTimer != null)
+        // Start timer to hide tooltip after AutoPopDelay (0 = infinite, stays until mouse leaves)
+        if (_hideTimer != null && AutoPopDelay > 0)
         {
             _hideTimer.Interval = AutoPopDelay;
             _hideTimer.Stop();

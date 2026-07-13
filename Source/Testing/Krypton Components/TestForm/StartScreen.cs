@@ -89,6 +89,7 @@ public partial class StartScreen : KryptonForm
         CreateButton("Ribbon / Navigator / Workspace", string.Empty, typeof(RibbonNavigatorWorkspaceTest));
         CreateButton("Splash Screen", string.Empty, typeof(SplashScreenExample));
         CreateButton("Theme Controls", string.Empty, typeof(ThemeControlExamples));
+        CreateButton("Tooltip Extended/Infinite Timeout", "Comprehensive demo of extended and infinite tooltip timeout (Issue #3075). Krypton tooltips support AutoPopDelay > 5000ms and 0 (infinite) on all Windows versions.", typeof(TooltipTimeoutTest));
         CreateButton("Toast", "For breakfast....?", typeof(ToastNotificationTestChoice));
         CreateButton("WorkspaceTest", string.Empty, typeof(WorkspaceTest));
         CreateButton("Blur Example", string.Empty, typeof(BlurExampleForm));

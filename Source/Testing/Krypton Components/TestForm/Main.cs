@@ -100,7 +100,11 @@ public partial class Main : KryptonForm
 
     private void kbtnIntegratedToolbar_Click(object sender, EventArgs e)
     {
-            
+    }
+
+    private void kbtnTitleBarDemo_Click(object sender, EventArgs e)
+    {
+        new KryptonFormTitleBarDemo().Show();
     }
 
     private void kryptonButton3_Click(object sender, EventArgs e)

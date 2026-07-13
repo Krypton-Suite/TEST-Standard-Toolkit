@@ -229,6 +229,9 @@ public class KryptonForm : VisualForm,
     // Compensate for Windows 11 outer accent border by shrinking the window region slightly
     private Rectangle _lastGripClientRect = Rectangle.Empty;
     private Timer? _clickTimer;
+    // Issue #2922: Workaround for borderless form briefly showing system title bar on startup
+    private bool _borderlessFormFirstShowPending;
+    private double _borderlessTargetOpacity = 1.0;
     private KryptonSystemMenu? _kryptonSystemMenu;
     // SystemMenu context menu components
     private KryptonContextMenu _systemMenuContextMenu;
@@ -1672,6 +1675,28 @@ public class KryptonForm : VisualForm,
     }
 
     /// <summary>
+    /// Prevents borderless forms from briefly displaying the system title bar on startup.
+    /// Issue: https://github.com/Krypton-Suite/Standard-Toolkit/issues/2922
+    /// </summary>
+    protected override void SetVisibleCore(bool value)
+    {
+        if (value && FormBorderStyle == FormBorderStyle.None && !DesignMode && !_borderlessFormFirstShowPending)
+        {
+            _borderlessFormFirstShowPending = true;
+            _borderlessTargetOpacity = Opacity;
+            Opacity = 0;
+            base.SetVisibleCore(true);
+            BeginInvoke(() =>
+            {
+                Opacity = _borderlessTargetOpacity;
+            });
+            return;
+        }
+
+        base.SetVisibleCore(value);
+    }
+
+    /// <summary>
     /// Raises the Load event.
     /// </summary>
     /// <param name="e">An EventArgs containing event data.</param>
@@ -1940,6 +1965,62 @@ public class KryptonForm : VisualForm,
         return base.OnWM_NCLBUTTONDBLCLK(ref m);
     }
 
+    /// <summary>
+    /// Constrain maximized form to the screen's working area (excludes taskbar).
+    /// Fixes: https://github.com/Krypton-Suite/Standard-Toolkit/issues/3013
+    /// Fixes: https://github.com/Krypton-Suite/Standard-Toolkit/issues/3004 (multi-monitor positioning)
+    /// </summary>
+    protected override void OnWM_GETMINMAXINFO(ref Message m)
+    {
+        base.OnWM_GETMINMAXINFO(ref m);
+
+        if (!IsHandleCreated)
+        {
+            return;
+        }
+
+        // ptMaxPosition and ptMaxSize must be in primary-monitor coordinates for the window manager
+        // to correctly adjust them when the window maximizes on a secondary monitor. See:
+        // https://devblogs.microsoft.com/oldnewthing/20150501-00/?p=44964
+        const int MONITOR_DEFAULTTOPRIMARY = 0x00000001;
+        const int MONITOR_DEFAULTTO_NEAREST = 0x00000002;
+
+        IntPtr hPrimary = PI.MonitorFromWindow(IntPtr.Zero, MONITOR_DEFAULTTOPRIMARY);
+        IntPtr hTarget = PI.MonitorFromWindow(m.HWnd, MONITOR_DEFAULTTO_NEAREST);
+
+        if (hPrimary == IntPtr.Zero || hTarget == IntPtr.Zero)
+        {
+            return;
+        }
+
+        PI.MONITORINFO primaryInfo = PI.GetMonitorInfo(hPrimary);
+        PI.MONITORINFO targetInfo = PI.GetMonitorInfo(hTarget);
+
+        PI.MINMAXINFO mmi = (PI.MINMAXINFO)Marshal.PtrToStructure(m.LParam, typeof(PI.MINMAXINFO))!;
+
+        PI.RECT rcWork = targetInfo.rcWork;
+        PI.RECT rcTargetMonitor = targetInfo.rcMonitor;
+        PI.RECT rcPrimaryMonitor = primaryInfo.rcMonitor;
+
+        // Express maximized position in primary-monitor coordinates (required for multi-monitor)
+        mmi.ptMaxPosition.X = rcPrimaryMonitor.left + (rcWork.left - rcTargetMonitor.left);
+        mmi.ptMaxPosition.Y = rcPrimaryMonitor.top + (rcWork.top - rcTargetMonitor.top);
+        mmi.ptMaxSize.X = Math.Abs(rcWork.right - rcWork.left);
+        mmi.ptMaxSize.Y = Math.Abs(rcWork.bottom - rcWork.top);
+
+        // Preserve MaximumSize constraints from base (https://github.com/Krypton-Suite/Standard-Toolkit/issues/459)
+        if (MaximumSize.Width > mmi.ptMinTrackSize.X && MaximumSize.Width < mmi.ptMaxSize.X)
+        {
+            mmi.ptMaxSize.X = MaximumSize.Width;
+        }
+        if (MaximumSize.Height > mmi.ptMinTrackSize.Y && MaximumSize.Height < mmi.ptMaxSize.Y)
+        {
+            mmi.ptMaxSize.Y = MaximumSize.Height;
+        }
+
+        Marshal.StructureToPtr(mmi, m.LParam, true);
+    }
+
     private void DrawSizingGripOverlayIfNeeded()
     {
         if (!ShouldShowSizingGrip())
@@ -2191,6 +2272,13 @@ public class KryptonForm : VisualForm,
             // Is mouse over one of the borders?
             if (isResizable && (mouseView == _drawDocker || pt.Y < _drawHeading.ClientRectangle.Height))
             {
+                // Issue #3011 (regression of #2096): When maximized, top edge/corners must return HTCAPTION
+                // so the user can drag from the very top; HTTOP/HTTOPLEFT/HTTOPRIGHT prevent dragging.
+                if (GetWindowState() == FormWindowState.Maximized && pt.Y <= Math.Max(borders.Top, HT_CORNER))
+                {
+                    return new IntPtr(PI.HT.CAPTION);
+                }
+
                 // Is point over the left border?
                 if ((borders.Left > 0) && (pt.X <= borders.Left))
                 {
