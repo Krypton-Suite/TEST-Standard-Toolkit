@@ -1384,20 +1384,35 @@ public class RenderStandard : RenderBase
 				shortTextRectToDraw = standard.ShortTextRect;
 			}
 
-			// Get the rectangle to use when dealing with gradients
-			Rectangle gradientRect = context.GetAlignedRectangle(palette.GetContentShortTextColorAlign(state), shortTextRectToDraw);
-
-			// Use standard helper routine to create appropriate color brush
-			Color color1 = palette.GetContentShortTextColor1(state);
-			PaletteColorStyle colorStyle = palette.GetContentShortTextColorStyle(state);
-			using (Brush colorBrush = CreateColorBrush(gradientRect,
-					   color1,
-					   palette.GetContentShortTextColor2(state),
-					   colorStyle,
-					   palette.GetContentShortTextColorAngle(state),
-					   orientation))
+			// Form caption RTL: pre-mirror text so that when the window DC mirrors the bitmap, glyphs appear correct.
+			bool shortPreMirror = palette.GetContentStyle() == PaletteContentStyle.HeaderForm
+				&& CommonHelper.IsRightToLeftLayout(context.Control)
+				&& orientation == VisualOrientation.Top
+				&& shortTextRectToDraw.Width > 0;
+			GraphicsState? shortGs = shortPreMirror ? context.Graphics.Save() : null;
+			if (shortPreMirror)
 			{
-				if (!AccurateText.DrawString(context.Graphics,
+				context.Graphics.TranslateTransform(shortTextRectToDraw.Right, 0);
+				context.Graphics.ScaleTransform(-1, 1);
+				context.Graphics.TranslateTransform(-shortTextRectToDraw.Left, 0);
+			}
+
+			try
+			{
+				// Get the rectangle to use when dealing with gradients
+				Rectangle gradientRect = context.GetAlignedRectangle(palette.GetContentShortTextColorAlign(state), shortTextRectToDraw);
+
+				// Use standard helper routine to create appropriate color brush
+				Color color1 = palette.GetContentShortTextColor1(state);
+				PaletteColorStyle colorStyle = palette.GetContentShortTextColorStyle(state);
+				using (Brush colorBrush = CreateColorBrush(gradientRect,
+						   color1,
+						   palette.GetContentShortTextColor2(state),
+						   colorStyle,
+						   palette.GetContentShortTextColorAngle(state),
+						   orientation))
+				{
+					if (!AccurateText.DrawString(context.Graphics,
 						colorBrush,
 						shortTextRectToDraw,
 						context.Control.RightToLeft,
@@ -1417,37 +1432,45 @@ public class RenderStandard : RenderBase
 						state,
 						standard.ShortTextMemento);
 				}
-			}
+				}
 
-			Image shortImage = palette.GetContentShortTextImage(state)!;
-			PaletteImageStyle shortImageStyle = palette.GetContentShortTextImageStyle(state);
+				Image shortImage = palette.GetContentShortTextImage(state)!;
+				PaletteImageStyle shortImageStyle = palette.GetContentShortTextImageStyle(state);
 
-			// Do we need to draw the image?
-			if (ShouldDrawImage(shortImage))
-			{
-				// Get the rectangle to use when dealing with gradients
-				Rectangle imageRect = context.GetAlignedRectangle(palette.GetContentShortTextImageAlign(state), shortTextRectToDraw);
-
-				// Use standard helper routine to create appropriate image brush
-				using Brush imageBrush = CreateImageBrush(imageRect, shortImage, shortImageStyle);
-				if (!AccurateText.DrawString(context.Graphics,
-						imageBrush,
-						shortTextRectToDraw,
-						context.Control.RightToLeft,
-						standard.Orientation,
-						state,
-						standard.ShortTextMemento!))
+				// Do we need to draw the image?
+				if (ShouldDrawImage(shortImage))
 				{
-					// Failed to draw means the font is likely to be invalid, get a fresh font
-					standard.ShortTextMemento!.Font = palette.GetContentShortTextNewFont(state)!;
+					// Get the rectangle to use when dealing with gradients
+					Rectangle imageRect = context.GetAlignedRectangle(palette.GetContentShortTextImageAlign(state), shortTextRectToDraw);
 
-					AccurateText.DrawString(context.Graphics,
-						imageBrush,
-						shortTextRectToDraw,
-						context.Control.RightToLeft,
-						standard.Orientation,
-						state,
-						standard.ShortTextMemento);
+					// Use standard helper routine to create appropriate image brush
+					using Brush imageBrush = CreateImageBrush(imageRect, shortImage, shortImageStyle);
+					if (!AccurateText.DrawString(context.Graphics,
+							imageBrush,
+							shortTextRectToDraw,
+							context.Control.RightToLeft,
+							standard.Orientation,
+							state,
+							standard.ShortTextMemento!))
+					{
+						// Failed to draw means the font is likely to be invalid, get a fresh font
+						standard.ShortTextMemento!.Font = palette.GetContentShortTextNewFont(state)!;
+
+						AccurateText.DrawString(context.Graphics,
+							imageBrush,
+							shortTextRectToDraw,
+							context.Control.RightToLeft,
+							standard.Orientation,
+							state,
+							standard.ShortTextMemento);
+					}
+				}
+			}
+			finally
+			{
+				if (shortPreMirror && shortGs != null)
+				{
+					context.Graphics.Restore(shortGs);
 				}
 			}
 		}
@@ -1462,20 +1485,35 @@ public class RenderStandard : RenderBase
 				longTextRectToDraw = standard.LongTextRect;
 			}
 
-			// Get the rectangle to use when dealing with gradients
-			Rectangle gradientRect = context.GetAlignedRectangle(palette.GetContentLongTextColorAlign(state), longTextRectToDraw);
-
-			// Use standard helper routine to create appropriate color brush
-			Color color1 = palette.GetContentLongTextColor1(state);
-			PaletteColorStyle colorStyle = palette.GetContentLongTextColorStyle(state);
-			using (Brush colorBrush = CreateColorBrush(gradientRect,
-					   color1,
-					   palette.GetContentLongTextColor2(state),
-					   colorStyle,
-					   palette.GetContentLongTextColorAngle(state),
-					   orientation))
+			// Form caption RTL: pre-mirror text so that when the window DC mirrors the bitmap, glyphs appear correct.
+			bool longPreMirror = palette.GetContentStyle() == PaletteContentStyle.HeaderForm
+				&& CommonHelper.IsRightToLeftLayout(context.Control)
+				&& orientation == VisualOrientation.Top
+				&& longTextRectToDraw.Width > 0;
+			GraphicsState? longGs = longPreMirror ? context.Graphics.Save() : null;
+			if (longPreMirror)
 			{
-				if (!AccurateText.DrawString(context.Graphics,
+				context.Graphics.TranslateTransform(longTextRectToDraw.Right, 0);
+				context.Graphics.ScaleTransform(-1, 1);
+				context.Graphics.TranslateTransform(-longTextRectToDraw.Left, 0);
+			}
+
+			try
+			{
+				// Get the rectangle to use when dealing with gradients
+				Rectangle gradientRect = context.GetAlignedRectangle(palette.GetContentLongTextColorAlign(state), longTextRectToDraw);
+
+				// Use standard helper routine to create appropriate color brush
+				Color color1 = palette.GetContentLongTextColor1(state);
+				PaletteColorStyle colorStyle = palette.GetContentLongTextColorStyle(state);
+				using (Brush colorBrush = CreateColorBrush(gradientRect,
+						   color1,
+						   palette.GetContentLongTextColor2(state),
+						   colorStyle,
+						   palette.GetContentLongTextColorAngle(state),
+						   orientation))
+				{
+					if (!AccurateText.DrawString(context.Graphics,
 						colorBrush,
 						longTextRectToDraw,
 						context.Control.RightToLeft,
@@ -1494,37 +1532,45 @@ public class RenderStandard : RenderBase
 						state,
 						standard.LongTextMemento);
 				}
-			}
+				}
 
-			Image longImage = palette.GetContentLongTextImage(state)!;
-			PaletteImageStyle longImageStyle = palette.GetContentLongTextImageStyle(state);
+				Image longImage = palette.GetContentLongTextImage(state)!;
+				PaletteImageStyle longImageStyle = palette.GetContentLongTextImageStyle(state);
 
-			// Do we need to draw the image?
-			if (ShouldDrawImage(longImage))
-			{
-				// Get the rectangle to use when dealing with gradients
-				Rectangle imageRect = context.GetAlignedRectangle(palette.GetContentLongTextImageAlign(state), longTextRectToDraw);
-
-				// Use standard helper routine to create appropriate image brush
-				using Brush imageBrush = CreateImageBrush(imageRect, longImage, longImageStyle);
-				if (!AccurateText.DrawString(context.Graphics,
-						imageBrush,
-						longTextRectToDraw,
-						context.Control.RightToLeft,
-						standard.Orientation,
-						state,
-						standard.LongTextMemento!))
+				// Do we need to draw the image?
+				if (ShouldDrawImage(longImage))
 				{
-					// Failed to draw means the font is likely to be invalid, get a fresh font
-					standard.LongTextMemento!.Font = palette.GetContentLongTextNewFont(state)!;
+					// Get the rectangle to use when dealing with gradients
+					Rectangle imageRect = context.GetAlignedRectangle(palette.GetContentLongTextImageAlign(state), longTextRectToDraw);
 
-					AccurateText.DrawString(context.Graphics,
-						imageBrush,
-						longTextRectToDraw,
-						context.Control.RightToLeft,
-						standard.Orientation,
-						state,
-						standard.LongTextMemento);
+					// Use standard helper routine to create appropriate image brush
+					using Brush imageBrush = CreateImageBrush(imageRect, longImage, longImageStyle);
+					if (!AccurateText.DrawString(context.Graphics,
+							imageBrush,
+							longTextRectToDraw,
+							context.Control.RightToLeft,
+							standard.Orientation,
+							state,
+							standard.LongTextMemento!))
+					{
+						// Failed to draw means the font is likely to be invalid, get a fresh font
+						standard.LongTextMemento!.Font = palette.GetContentLongTextNewFont(state)!;
+
+						AccurateText.DrawString(context.Graphics,
+							imageBrush,
+							longTextRectToDraw,
+							context.Control.RightToLeft,
+							standard.Orientation,
+							state,
+							standard.LongTextMemento);
+					}
+				}
+			}
+			finally
+			{
+				if (longPreMirror && longGs != null)
+				{
+					context.Graphics.Restore(longGs);
 				}
 			}
 		}
@@ -5947,9 +5993,12 @@ public class RenderStandard : RenderBase
 			textFont = captionFont;
 		}
 
+		// Form captions: do not reverse character order; the typeface handles RTL scripts.
+		RightToLeft textRtl = paletteContent.GetContentStyle() == PaletteContentStyle.HeaderForm ? RightToLeft.No : rtl;
+
 		// Get a pixel accurate measure of text drawing space needed
 		memento.ShortTextMemento = AccurateText.MeasureString(g,
-			rtl,
+			textRtl,
 			shortText,
 			textFont!,
 			memento.ShortTextTrimming,
@@ -6027,9 +6076,12 @@ public class RenderStandard : RenderBase
 				textFont = captionFont;
 			}
 
+			// Form captions: do not reverse character order; the typeface handles RTL scripts.
+			RightToLeft textRtl = paletteContent.GetContentStyle() == PaletteContentStyle.HeaderForm ? RightToLeft.No : rtl;
+
 			// Get a pixel accurate measure of text drawing space needed
 			memento.LongTextMemento = AccurateText.MeasureString(g!,
-				rtl,
+				textRtl,
 				longText,
 				textFont!,
 				memento.LongTextTrimming,

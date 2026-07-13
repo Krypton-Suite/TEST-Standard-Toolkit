@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -41,6 +41,7 @@ public abstract class VisualControlBase : Control,
     protected VisualPopupToolTip? visualBasePopupToolTip;
     private readonly ToolTipManager _toolTipManager;
     private bool _isForwardingValidationFromChild;
+    private int _minimumControlHeight;
 
     #endregion
 
@@ -486,6 +487,28 @@ public abstract class VisualControlBase : Control,
     /// Resets the ToolTipValues property to its default value.
     /// </summary>
     public void ResetToolTipValues() => ToolTipValues.Reset();
+
+    /// <summary>
+    /// Gets or sets a minimum height for the control, independent of font size.
+    /// When set to a value greater than zero, the control height will never fall below
+    /// this value, allowing input controls to be aligned to a consistent design height
+    /// regardless of the active palette font. Set to 0 to use the palette-driven preferred height.
+    /// </summary>
+    [Category(@"Layout")]
+    [Description(@"Specifies a minimum height for the control, independent of font size. Set to 0 to use the palette-driven preferred height.")]
+    [DefaultValue(0)]
+    public virtual int MinimumControlHeight
+    {
+        get => _minimumControlHeight;
+        set
+        {
+            if (_minimumControlHeight != value)
+            {
+                _minimumControlHeight = value;
+                PerformLayout();
+            }
+        }
+    }
 
     #endregion
 
