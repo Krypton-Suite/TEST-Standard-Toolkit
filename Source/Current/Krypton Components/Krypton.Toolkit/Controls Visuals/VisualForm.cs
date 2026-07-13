@@ -143,6 +143,7 @@ public abstract class VisualForm : Form,
 
         // Hook into global static events
         KryptonManager.GlobalPaletteChanged += OnGlobalPaletteChanged;
+        KryptonManager.GlobalAcrylicChanged += OnGlobalAcrylicChanged;
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
         ShadowValues = new ShadowValues();
@@ -187,6 +188,7 @@ public abstract class VisualForm : Form,
 
             // Unhook from global static events
             KryptonManager.GlobalPaletteChanged -= OnGlobalPaletteChanged;
+            KryptonManager.GlobalAcrylicChanged -= OnGlobalAcrylicChanged;
             SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         }
 
@@ -203,11 +205,11 @@ public abstract class VisualForm : Form,
 
     #region Public
 
-    /*public AcrylicValues AcrylicValues { get; } = new AcrylicValues();
+    public AcrylicValues AcrylicValues { get; } = new AcrylicValues();
 
     private void ResetAcrylicValues() => AcrylicValues.Reset();
 
-    private bool ShouldSerializeAcrylicValues() => !AcrylicValues.IsDefault;*/
+    private bool ShouldSerializeAcrylicValues() => !AcrylicValues.IsDefault;
 
     /// <summary>
     /// Gets the DpiX of the view.
@@ -846,10 +848,7 @@ public abstract class VisualForm : Form,
             // Do nothing
         }
 
-        //if (AcrylicValues.EnableAcrylic)
-        //{
-        //    WindowUtilities.EnableAcrylic(this, AcrylicValues.AcrylicColor);
-        //}
+        UpdateAcrylicEffect();
 
         base.OnHandleCreated(e);
 
@@ -1102,11 +1101,9 @@ public abstract class VisualForm : Form,
                     break;
                 case PI.WM_.GETMINMAXINFO:
                     OnWM_GETMINMAXINFO(ref m);
-                    /* Setting handled to false enables the application to process its own Min/Max requirements,
-                     * as mentioned by jason.bullard (comment from September 22, 2011) on http://gallery.expression.microsoft.com/ZuneWindowBehavior/ */
-                    // https://github.com/Krypton-Suite/Standard-Toolkit/issues/459
-                    // Still got to call - base - to allow the "application to process its own Min/Max requirements" !!
-                    base.WndProc(ref m);
+                    // Call DefWndProc directly instead of base.WndProc so our MINMAXINFO (work area from OnWM_GETMINMAXINFO)
+                    // is not overwritten by Form.MaximizedBounds. Fixes issue #3013 - maximized form exceeding work area.
+                    DefWndProc(ref m);
                     return;
             }
         }
@@ -1624,33 +1621,29 @@ public abstract class VisualForm : Form,
                         // If we managed to get a compatible bitmap
                         if (hBitmap != IntPtr.Zero)
                         {
-                            // Use a DC compatible with the window's monitor so border draws on the correct
-                            // screen when the form is on a secondary monitor (fixes #2935).
-                            IntPtr memDC = PI.CreateCompatibleDC(hDC);
-                            IntPtr oldBitmap = memDC != IntPtr.Zero
-                                ? PI.SelectObject(memDC, hBitmap)
-                                : PI.SelectObject(_screenDC, hBitmap);
+                            // Must use the screen device context for the bitmap when drawing into the
+                            // bitmap otherwise the Opacity and RightToLeftLayout will not work correctly.
+                            // Select the new bitmap into the screen DC
+                            IntPtr oldBitmap = PI.SelectObject(_screenDC, hBitmap);
 
                             try
                             {
-                                IntPtr drawDC = memDC != IntPtr.Zero ? memDC : _screenDC;
                                 // Drawing is easier when using a Graphics instance
-                                using (Graphics g = Graphics.FromHdc(drawDC))
+                                using (Graphics g = Graphics.FromHdc(_screenDC))
                                 {
                                     WindowChromePaint(g, windowBounds);
                                 }
 
-                                // Now blit from the bitmap to the window
-                                PI.BitBlt(hDC, 0, 0, windowBounds.Width, windowBounds.Height, drawDC, 0, 0, PI.SRCCOPY);
+                                // Now blit from the bitmap to the screen
+                                PI.BitBlt(hDC, 0, 0, windowBounds.Width, windowBounds.Height, _screenDC, 0, 0, PI.SRCCOPY);
                             }
                             finally
                             {
-                                PI.SelectObject(memDC != IntPtr.Zero ? memDC : _screenDC, oldBitmap);
+                                // Restore the original bitmap
+                                PI.SelectObject(_screenDC, oldBitmap);
+
+                                // Delete the temporary bitmap
                                 PI.DeleteObject(hBitmap);
-                                if (memDC != IntPtr.Zero)
-                                {
-                                    PI.DeleteDC(memDC);
-                                }
                             }
                         }
                         else
@@ -1774,6 +1767,25 @@ public abstract class VisualForm : Form,
             OnNeedPaint(LocalCustomPalette!, new NeedLayoutEventArgs(true));
 
             GlobalPaletteChanged?.Invoke(sender, e);
+        }
+    }
+
+    private void OnGlobalAcrylicChanged(object? sender, EventArgs e) => UpdateAcrylicEffect();
+
+    private void UpdateAcrylicEffect()
+    {
+        if (!IsHandleCreated)
+        {
+            return;
+        }
+
+        if (KryptonManager.UseAcrylic && AcrylicValues.EnableAcrylic)
+        {
+            WindowUtilities.EnableAcrylic(this, AcrylicValues.AcrylicColor);
+        }
+        else
+        {
+            WindowUtilities.DisableAcrylic(this);
         }
     }
 
