@@ -1,4 +1,4 @@
-﻿# New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
+# New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
 # Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), tobitege et al. 2026 - 2026. All rights reserved.
 #
 # Scans a selected branch for inline TODO/ToDo comments and opens GitHub issues ([#3899]).
@@ -364,7 +364,7 @@ jobs:
 
       - name: Upload scan results
         if: steps.kill_switch.outputs.enabled == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: code-todo-scan-${{ steps.scan_branch.outputs.ref }}
           path: todo-matches.json
