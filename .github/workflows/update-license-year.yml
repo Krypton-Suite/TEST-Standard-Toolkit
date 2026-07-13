@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout alpha
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: alpha
           fetch-depth: 0
@@ -58,7 +58,7 @@ jobs:
 
       - name: Create pull request into alpha
         if: steps.update_year.outputs.dry_run != 'true' && steps.update_year.outputs.updated_files != '0'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: alpha
