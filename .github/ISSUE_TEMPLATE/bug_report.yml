@@ -18,6 +18,8 @@ body:
         // FIXME(issue): Short description of the defect
         ```
 
+        See the [developer guide](https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/Documents/scan-code-todos-developer-guide.md) for details.
+
   - type: input
     id: summary
     attributes:
@@ -120,12 +122,8 @@ body:
       multiple: false
       options:
         - Docking
-        - Docking Utilities
         - Navigator
-        - Navigator Utilities
         - Ribbon
-        - Ribbon Utilities
         - Toolkit
-        - Krypton Toolkit
+        - Utilities
         - Workspace
-        - Workspace Utilities
