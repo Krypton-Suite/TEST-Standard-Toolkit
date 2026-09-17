@@ -1,0 +1,1181 @@
+﻿#region BSD License
+/*
+ * 
+ *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
+ *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac, Ahmed Abdelhameed, tobitege,  KamaniAR, Lesandro Gotardo (aka lesandrog), Jorge A. Avilés (aka mcpbcs) et al. 2023 - 2026. All rights reserved. 
+ *  
+ */
+#endregion
+
+namespace Krypton.Toolkit;
+
+/// <summary>Access 'Global' Krypton string settings.</summary>
+[TypeConverter(typeof(ExpandableObjectConverter))]
+public class KryptonGlobalToolkitStrings : GlobalId
+{
+    #region Static Strings
+
+    /// <summary>Gets the canonical common string collections (owns general, control-box, system-menu, commands, and file-system strings).</summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static CommonStrings CommonToolkitStrings { get; } = new CommonStrings();
+
+    /// <summary>Gets the color strings.</summary>
+    /// <value>The color strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static GlobalColorStrings GlobalColorStrings { get; } = new GlobalColorStrings();
+
+    /// <summary>Gets the spec style strings.</summary>
+    /// <value>The spec style strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static ButtonStyleStrings ButtonStyles { get; } = new ButtonStyleStrings();
+
+    /// <summary>Gets the custom toolkit strings.</summary>
+    /// <value>The custom toolkit strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static CustomToolkitStrings CustomToolkitStrings { get; } = new CustomToolkitStrings();
+
+    /// <summary>Gets the general ribbon strings.</summary>
+    /// <value>The general ribbon strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static GeneralRibbonStrings GeneralRibbonStrings { get; } = new GeneralRibbonStrings();
+
+    /// <summary>Gets the strings.</summary>
+    /// <value>The strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static GeneralToolkitStrings GeneralToolkitStrings => CommonToolkitStrings.General;
+
+    /// <summary>Gets the grid view style strings.</summary>
+    /// <value>The grid view style strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static DataGridViewStyleStrings DataGridViewStyles { get; } = new DataGridViewStyleStrings();
+
+    /// <summary>Gets the file system list view strings.</summary>
+    /// <value>The file system list view strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonFileSystemListViewStrings KryptonFileSystemListViewStrings => CommonToolkitStrings.FileSystem;
+
+    /// <summary>Gets the style strings.</summary>
+    /// <value>The style strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static GridStyleStrings GridStyles { get; } = new GridStyleStrings();
+
+    /// <summary>Gets the group collapsed target strings.</summary>
+    /// <value>The group collapsed target strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static HeaderGroupCollapsedTargetStrings GroupCollapsedTargetStrings { get; } =
+        new HeaderGroupCollapsedTargetStrings();
+
+    /// <summary>Gets the header styles.</summary>
+    /// <value>The header styles.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static HeaderStyleStrings HeaderStyles { get; } = new HeaderStyleStrings();
+
+    /// <summary>Gets the input control styles.</summary>
+    /// <value>The input control styles.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static InputControlStyleStrings InputControlStyles { get; } = new InputControlStyleStrings();
+
+    /// <summary>Gets the tool bar strings.</summary>
+    /// <value>The tool bar strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static IntegratedToolBarStrings IntegratedToolBarStrings { get; } = new IntegratedToolBarStrings();
+
+    /// <summary>Gets the link behavior strings.</summary>
+    /// <value>The link behavior strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonLinkBehaviorStrings KryptonLinkBehaviorStrings { get; } = new KryptonLinkBehaviorStrings();
+
+    /// <summary>Gets the krypton label style strings.</summary>
+    /// <value>The krypton label style strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static LabelStyleStrings KryptonLabelStyleStrings { get; } = new LabelStyleStrings();
+
+    /// <summary>Gets the back style strings.</summary>
+    /// <value>The back style strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PaletteBackStyleStrings PaletteBackStyleStrings { get; } = new PaletteBackStyleStrings();
+
+    /// <summary>Gets the border style strings.</summary>
+    /// <value>The border style strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PaletteBorderStyleStrings PaletteBorderStyleStrings { get; } = new PaletteBorderStyleStrings();
+
+    /// <summary>Gets the button orientation strings.</summary>
+    /// <value>The button orientation strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PaletteButtonOrientationStrings PaletteButtonOrientationStrings { get; } =
+        new PaletteButtonOrientationStrings();
+
+    /// <summary>Gets the button spec styles.</summary>
+    /// <value>The button spec styles.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PaletteButtonSpecStyleStrings PaletteButtonSpecStyleStrings { get; } = new PaletteButtonSpecStyleStrings();
+
+    /// <summary>Gets the button style strings.</summary>
+    /// <value>The button style strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PaletteButtonStyleStrings PaletteButtonStyleStrings { get; } = new PaletteButtonStyleStrings();
+
+    /// <summary>Gets the content style strings.</summary>
+    /// <value>The content style strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PaletteContentStyleStrings ContentStyleStrings { get; } = new PaletteContentStyleStrings();
+
+    /// <summary>Gets the image effect strings.</summary>
+    /// <value>The image effect strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PaletteImageEffectStrings ImageEffectStrings { get; } = new PaletteImageEffectStrings();
+
+    /// <summary>Gets the image style strings.</summary>
+    /// <value>The image style strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PaletteImageStyleStrings ImageStyleStrings { get; } = new PaletteImageStyleStrings();
+
+    /// <summary>Gets the mode strings.</summary>
+    /// <value>The mode strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PaletteModeStrings ModeStrings { get; } = new PaletteModeStrings();
+
+    /// <summary>Gets the text trim strings.</summary>
+    /// <value>The text trim strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PaletteTextTrimStrings TextTrimStrings { get; } = new PaletteTextTrimStrings();
+
+    /// <summary>Gets the placement mode strings.</summary>
+    /// <value>The placement mode strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static PlacementModeStrings PlacementModeStrings { get; } = new PlacementModeStrings();
+
+    /// <summary>Gets the separator styles.</summary>
+    /// <value>The separator styles.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static SeparatorStyleStrings SeparatorStyles { get; } = new SeparatorStyleStrings();
+
+    /// <summary>Gets the tab border styles.</summary>
+    /// <value>The tab border styles.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static TabBorderStyleStrings TabBorderStyles { get; } = new TabBorderStyleStrings();
+
+    /// <summary>Gets the tab styles.</summary>
+    /// <value>The tab styles.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static TabStyleStrings TabStyles { get; } = new TabStyleStrings();
+
+    /// <summary>Gets the toast notification icon.</summary>
+    /// <value>The toast notification icon.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static ToastNotificationIconStrings ToastNotificationIcon { get; } = new ToastNotificationIconStrings();
+
+    /// <summary>Gets the basic application information strings.</summary>
+    /// <value>The basic application information strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonAboutBoxBasicApplicationInformationStrings KryptonAboutBoxBasicApplicationInformationStrings { get; } = new KryptonAboutBoxBasicApplicationInformationStrings();
+
+    /// <summary>Gets the bug reporting dialog strings.</summary>
+    /// <value>The bug reporting dialog strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonBugReportingDialogStrings KryptonBugReportingDialogStrings { get; } = new KryptonBugReportingDialogStrings();
+
+    /// <summary>Gets the about box strings.</summary>
+    /// <value>The about box strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonAboutBoxStrings KryptonAboutBoxStrings { get; } = new KryptonAboutBoxStrings();
+
+    /// <summary>Gets the exception dialog strings.</summary>
+    /// <value>The exception dialog strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonExceptionDialogStrings KryptonExceptionDialogStrings { get; } = new KryptonExceptionDialogStrings();
+
+    /// <summary>Gets the foldable dialog strings.</summary>
+    /// <value>The foldable dialog strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonFoldableDialogStrings KryptonFoldableDialogStrings { get; } = new KryptonFoldableDialogStrings();
+
+    /// <summary>Gets the miscellaneous theme strings.</summary>
+    /// <value>The miscellaneous theme strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonMiscellaneousThemeStrings KryptonMiscellaneousThemeStrings { get; } =
+        new KryptonMiscellaneousThemeStrings();
+
+    public static KryptonPrintPreviewDialogStrings KryptonPrintPreviewDialogStrings { get; } =
+        new KryptonPrintPreviewDialogStrings();
+
+    /// <summary>Gets the scroll bar strings.</summary>
+    /// <value>The scroll bar strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonScrollBarStrings KryptonScrollBarStrings { get; } = new KryptonScrollBarStrings();
+
+    /// <summary>Gets the context menu strings.</summary>
+    /// <value>The context menu strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonContextMenuStrings KryptonContextMenuStrings { get; } = new KryptonContextMenuStrings();
+
+    /// <summary>Gets the toast notification strings.</summary>
+    /// <value>The toast notification strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonToastNotificationStrings KryptonToastNotificationStrings { get; } =
+        new KryptonToastNotificationStrings();
+
+    /// <summary>Gets the krypton tool strip item strings.</summary>
+    /// <value>The krypton tool strip item strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonToolStripItemStrings KryptonToolStripItemStrings { get; } = new KryptonToolStripItemStrings();
+
+    /// <summary>Gets the krypton splash screen strings.</summary>
+    /// <value>The krypton splash screen strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static SplashScreenStrings KryptonSplashScreenStrings { get; } = new SplashScreenStrings();
+
+    /// <summary>Gets the krypton miscellaneous strings.</summary>
+    /// <value>The krypton miscellaneous strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonMiscellaneousStrings KryptonMiscellaneousStrings { get; } = new KryptonMiscellaneousStrings();
+
+    /// <summary>Gets the krypton message box strings.</summary>
+    /// <value>The krypton message box strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static MessageBoxStrings KryptonMessageBoxStrings { get; } = new MessageBoxStrings();
+    
+    /// <summary>Gets the krypton search box strings.</summary>
+    /// <value>The krypton search box strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonSearchBoxStrings KryptonSearchBoxStrings { get; } = new KryptonSearchBoxStrings();
+
+    /// <summary>Gets the custom file dialog strings.</summary>
+    /// <value>The custom file dialog strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonCustomFileDialogStrings KryptonCustomFileDialogStrings { get; } = new KryptonCustomFileDialogStrings();
+
+    /// <summary>Gets the win32 system menu strings.</summary>
+    /// <value>The win32 system menu strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static SystemMenuStrings Win32SystemMenuStrings => CommonToolkitStrings.SystemMenu;
+
+    /// <summary>Gets the form control-box (caption button) tooltip strings.</summary>
+    /// <value>The control-box strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static ControlBoxStrings ControlBoxStrings => CommonToolkitStrings.ControlBox;
+
+    /// <summary>Gets the form title bar strings.</summary>
+    /// <value>The form title bar strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static FormTitleBarStrings FormTitleBarStrings { get; } = new FormTitleBarStrings();
+
+    /// <summary>Gets the navigator form integration strings.</summary>
+    /// <value>The navigator form integration strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static NavigatorFormIntegrationStrings NavigatorFormIntegrationStrings { get; } = new NavigatorFormIntegrationStrings();
+
+    /// <summary>Gets the editor settings strings.</summary>
+    /// <value>The editor settings strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonEditorSettingsStrings EditorSettingsStrings { get; } = new KryptonEditorSettingsStrings();
+
+    /// <summary>Gets the collection editor strings.</summary>
+    /// <value>The collection editor strings.</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public static KryptonCollectionEditorStrings KryptonCollectionEditorStrings { get; } = new KryptonCollectionEditorStrings();
+
+    #endregion
+
+    #region Public
+
+    /// <summary>Gets the palette back style strings.</summary>
+    /// <value>The palette back style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of palette back style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PaletteBackStyleStrings BackStyleStrings => PaletteBackStyleStrings;
+    private bool ShouldSerializeBackStyleStrings() => !PaletteBackStyleStrings.IsDefault;
+    private void ResetBackStyleStrings() => PaletteBackStyleStrings.Reset();
+
+    /// <summary>Gets the button spec style strings.</summary>
+    /// <value>The button spec style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of button spec style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public ButtonStyleStrings ButtonStyleStrings => ButtonStyles;
+    private bool ShouldSerializeButtonStyleStrings() => !ButtonStyles.IsDefault;
+    private void ResetButtonStyleStrings() => ButtonStyles.Reset();
+
+    /// <summary>Gets the palette border style strings.</summary>
+    /// <value>The palette border style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of palette border style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PaletteBorderStyleStrings BorderStyleStrings => PaletteBorderStyleStrings;
+    private bool ShouldSerializeBorderStyleStrings() => !PaletteBorderStyleStrings.IsDefault;
+    private void ResetBorderStyleStrings() => PaletteBorderStyleStrings.Reset();
+
+    /// <summary>Gets the palette button orientation strings.</summary>
+    /// <value>The palette button orientation strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of palette button orientation strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PaletteButtonOrientationStrings ButtonOrientationStrings => PaletteButtonOrientationStrings;
+    private bool ShouldSerializeButtonOrientationStrings() => !PaletteButtonOrientationStrings.IsDefault;
+    private void ResetButtonOrientationStrings() => PaletteButtonOrientationStrings.Reset();
+
+    /// <summary>Gets the palette button spec style strings.</summary>
+    /// <value>The palette button spec style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of palette button spec style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PaletteButtonSpecStyleStrings ButtonSpecStyleStrings => PaletteButtonSpecStyleStrings;
+    private bool ShouldSerializeButtonSpecStyleStrings() => !PaletteButtonSpecStyleStrings.IsDefault;
+    private void ResetButtonSpecStyleStrings() => PaletteButtonSpecStyleStrings.Reset();
+
+    /// <summary>Gets the palette button style strings.</summary>
+    /// <value>The palette button style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of palette button style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PaletteButtonStyleStrings PaletteButtonStyles => PaletteButtonStyleStrings;
+    private bool ShouldSerializePaletteButtonStyles() => !PaletteButtonStyleStrings.IsDefault;
+    private void ResetPaletteButtonStyles() => PaletteButtonStyleStrings.Reset();
+
+    /// <summary>Gets the global color strings.</summary>
+    /// <value>The global color strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of color strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public GlobalColorStrings ColorStrings => GlobalColorStrings;
+    private bool ShouldSerializeColorStrings() => !GlobalColorStrings.IsDefault;
+    private void ResetColorStrings() => GlobalColorStrings.Reset();
+
+    /// <summary>Gets the custom toolkit strings.</summary>
+    /// <value>The custom toolkit strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of custom toolkit strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public CustomToolkitStrings CustomStrings => CustomToolkitStrings;
+    private bool ShouldSerializeCustomStrings() => !CustomToolkitStrings.IsDefault;
+    private void ResetCustomStrings() => CustomToolkitStrings.ResetValues();
+
+    /// <summary>Gets the general ribbon strings.</summary>
+    /// <value>The general ribbon strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of general ribbon strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public GeneralRibbonStrings RibbonStrings => GeneralRibbonStrings;
+    private bool ShouldSerializeGeneralRibbonStrings() => !GeneralRibbonStrings.IsDefault;
+    private void ResetGeneralRibbonStrings() => GeneralRibbonStrings.Reset();
+
+    /// <summary>Gets the general toolkit strings.</summary>
+    /// <value>The general toolkit strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of general toolkit strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    [ToolkitStringsCanonicalAlias]
+    public GeneralToolkitStrings GeneralStrings => GeneralToolkitStrings;
+    private bool ShouldSerializeGeneralStrings() => !GeneralToolkitStrings.IsDefault;
+    private void ResetGeneralStrings() => GeneralToolkitStrings.Reset();
+
+    /// <summary>
+    /// Gets or sets whether matching toolkit strings prefer text from the installed Windows language pack (MUI).
+    /// </summary>
+    /// <remarks>
+    /// When enabled, general dialog buttons and form control-box tooltips load from <c>user32.dll</c>,
+    /// and file-system list column headers load from <c>shell32.dll</c>.
+    /// Custom XML/JSON translations still apply when this is <c>false</c>. Default is <c>false</c>.
+    /// </remarks>
+    [Category(@"Visuals")]
+    [Description(@"When true, matching dialog, control-box, and Explorer-style strings use the installed Windows language pack.")]
+    [DefaultValue(false)]
+    public bool UseWindowsLanguagePackStrings
+    {
+        get => CommonToolkitStrings.UseOSStrings;
+        set => CommonToolkitStrings.UseOSStrings = value;
+    }
+
+    private bool ShouldSerializeUseWindowsLanguagePackStrings() => UseWindowsLanguagePackStrings;
+    private void ResetUseWindowsLanguagePackStrings() => UseWindowsLanguagePackStrings = false;
+
+    /// <summary>Gets the canonical common string collections.</summary>
+    [Category(@"Visuals")]
+    [Description(@"Canonical collection of shared dialog, control-box, system-menu, command, and file-system strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public CommonStrings CommonStrings => CommonToolkitStrings;
+
+    private bool ShouldSerializeCommonStrings() => !CommonToolkitStrings.IsDefault;
+
+    private void ResetCommonStrings() => CommonToolkitStrings.Reset();
+
+    [Category(@"Visuals")]
+    [Description(@"Collection of file system list view strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    [ToolkitStringsCanonicalAlias]
+    public KryptonFileSystemListViewStrings FileSystemListViewStrings => KryptonFileSystemListViewStrings;
+
+    private bool ShouldSerializeFileSystemListViewStrings() => !KryptonFileSystemListViewStrings.IsDefault;
+
+    private void ResetFileSystemListViewStrings() => KryptonFileSystemListViewStrings.Reset();
+
+    /// <summary>Gets the integrated toolbar button strings.</summary>
+    /// <value>The integrated toolbar button strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of integrated toolbar button strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public IntegratedToolBarStrings ToolBarStrings => IntegratedToolBarStrings;
+    private bool ShouldSerializeToolBarStrings() => !IntegratedToolBarStrings.IsDefault;
+    private void ResetToolBarStrings() => IntegratedToolBarStrings.Reset();
+
+    /// <summary>Gets the form title bar strings.</summary>
+    /// <value>The form title bar strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of form title bar strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public FormTitleBarStrings TitleBarStrings => FormTitleBarStrings;
+
+    private bool ShouldSerializeTitleBarStrings() => !FormTitleBarStrings.IsDefault;
+
+    private void ResetTitleBarStrings() => FormTitleBarStrings.Reset();
+
+    /// <summary>Gets the navigator form integration strings.</summary>
+    /// <value>The navigator form integration strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of navigator form integration strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public NavigatorFormIntegrationStrings NavigatorIntegrationStrings => NavigatorFormIntegrationStrings;
+
+    private bool ShouldSerializeNavigatorIntegrationStrings() => !NavigatorFormIntegrationStrings.IsDefault;
+
+    private void ResetNavigatorIntegrationStrings() => NavigatorFormIntegrationStrings.Reset();
+
+    /// <summary>Gets the link behavior style strings.</summary>
+    /// <value>The link behavior style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of link behavior style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonLinkBehaviorStrings LinkBehaviorStrings => KryptonLinkBehaviorStrings;
+    private bool ShouldSerializeLinkBehaviorStrings() => !KryptonLinkBehaviorStrings.IsDefault;
+    private void ResetLinkBehaviorStrings() => KryptonLinkBehaviorStrings.Reset();
+
+    /// <summary>Gets the link style strings.</summary>
+    /// <value>The link style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of link style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public LabelStyleStrings LabelStyleStrings => KryptonLabelStyleStrings;
+    private bool ShouldSerializeLabelStyleStrings() => !KryptonLabelStyleStrings.IsDefault;
+    private void ResetLabelStyleStrings() => KryptonLabelStyleStrings.Reset();
+
+    /// <summary>Gets the palette content style strings.</summary>
+    /// <value>The palette content style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of palette mode strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PaletteContentStyleStrings PaletteContentStyleStrings => ContentStyleStrings;
+    private bool ShouldSerializePaletteContentStyleStrings() => !ContentStyleStrings.IsDefault;
+    private void ResetPaletteContentStyleStrings() => ContentStyleStrings.Reset();
+
+    /// <summary>Gets the image effect strings.</summary>
+    /// <value>The image effect strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of image effect strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PaletteImageEffectStrings PaletteImageEffectStrings => ImageEffectStrings;
+    private bool ShouldSerializePaletteImageEffectStrings() => !ImageEffectStrings.IsDefault;
+    private void ResetPaletteImageEffectStrings() => ImageEffectStrings.Reset();
+
+    /// <summary>Gets the image style strings.</summary>
+    /// <value>The image style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of image style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PaletteImageStyleStrings PaletteImageStyleStrings => ImageStyleStrings;
+    private bool ShouldSerializePaletteImageStyleStrings() => !ImageStyleStrings.IsDefault;
+    private void ResetPaletteImageStyleStrings() => ImageStyleStrings.Reset();
+
+    /// <summary>Gets the palette mode strings.</summary>
+    /// <value>The palette mode strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of palette mode strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PaletteModeStrings PaletteModeStrings => ModeStrings;
+    private bool ShouldSerializePaletteModeStrings() => !ModeStrings.IsDefault;
+    private void ResetPaletteModeStrings() => ModeStrings.Reset();
+
+    /// <summary>Gets the palette text trim strings.</summary>
+    /// <value>The palette text trim strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of palette text trim strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PaletteTextTrimStrings PaletteTextTrimStrings => TextTrimStrings;
+    private bool ShouldSerializePaletteTextTrimStrings() => !TextTrimStrings.IsDefault;
+    private void ResetPaletteTextTrimStrings() => TextTrimStrings.Reset();
+
+    /// <summary>Gets the placement mode strings.</summary>
+    /// <value>The placement mode strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of placement mode strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public PlacementModeStrings PlacementMode => PlacementModeStrings;
+    private bool ShouldSerializePlacementModeStrings() => !PlacementModeStrings.IsDefault;
+    private void ResetPlacementModeStrings() => PlacementModeStrings.Reset();
+
+    /// <summary>Gets the separator style strings.</summary>
+    /// <value>The separator style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of separator style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public SeparatorStyleStrings SeparatorStyleStrings => SeparatorStyles;
+    private bool ShouldSerializeSeparatorStyleStrings() => !SeparatorStyles.IsDefault;
+    private void ResetSeparatorStyleStrings() => SeparatorStyles.Reset();
+
+    /// <summary>Gets the tab border style strings.</summary>
+    /// <value>The tab border style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of tab border style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public TabBorderStyleStrings TabBorderStyleStrings => TabBorderStyles;
+    private bool ShouldSerializeTabBorderStyleStrings() => !TabBorderStyles.IsDefault;
+    private void ResetTabBorderStyleStrings() => TabBorderStyles.Reset();
+
+    /// <summary>Gets the tab style strings.</summary>
+    /// <value>The tab style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of tab style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public TabStyleStrings TabStyleStrings => TabStyles;
+    private bool ShouldSerializeTabStyleStrings() => !TabStyles.IsDefault;
+    private void ResetTabStyleStrings() => TabStyles.Reset();
+
+    /// <summary>Gets the toast notification icon strings.</summary>
+    /// <value>The toast notification icon strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of toast notification icon strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public ToastNotificationIconStrings ToastNotificationIconStrings => ToastNotificationIcon;
+
+    private bool ShouldSerializeToastNotificationIconStrings() => !ToastNotificationIcon.IsDefault;
+
+    /// <summary>Resets the toast notification icon strings.</summary>
+    public void ResetToastNotificationIconStrings() => ToastNotificationIcon.Reset();
+
+    /// <summary>Gets the krypton about box basic application information strings.</summary>
+    /// <value>The krypton about box basic application information strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of about box basic application information strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonAboutBoxBasicApplicationInformationStrings AboutBoxBasicStrings => KryptonAboutBoxBasicApplicationInformationStrings;
+    private bool ShouldSerializeAboutBoxBasicStrings() => !KryptonAboutBoxBasicApplicationInformationStrings.IsDefault;
+    private void ResetAboutBoxBasicStrings() => KryptonAboutBoxBasicApplicationInformationStrings.Reset();
+
+    /// <summary>Gets the krypton bug reporting dialog strings.</summary>
+    /// <value>The krypton bug reporting dialog strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of bug reporting dialog strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonBugReportingDialogStrings BugReportingDialogStrings => KryptonBugReportingDialogStrings;
+
+    private bool ShouldSerializeBugReportingDialogStrings() => !KryptonBugReportingDialogStrings.IsDefault;
+
+    /// <summary>Resets the krypton bug reporting dialog strings.</summary>
+    private void ResetBugReportingDialogStrings() => KryptonBugReportingDialogStrings.Reset();
+
+    /// <summary>Gets the krypton about box strings.</summary>
+    /// <value>The krypton about box strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of about box strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonAboutBoxStrings AboutBoxStrings => KryptonAboutBoxStrings;
+    private bool ShouldSerializeAboutBoxStrings() => !KryptonAboutBoxStrings.IsDefault;
+    private void ResetAboutBoxStrings() => KryptonAboutBoxStrings.Reset();
+
+    /// <summary>Gets the krypton exception dialog strings.</summary>
+    /// <value>The krypton exception dialog strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of exception dialog strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonExceptionDialogStrings ExceptionDialogStrings => KryptonExceptionDialogStrings;
+    private bool ShouldSerializeExceptionDialogStrings() => !KryptonExceptionDialogStrings.IsDefault;
+    private void ResetExceptionDialogStrings() => KryptonExceptionDialogStrings.Reset();
+
+    /// <summary>Gets the krypton foldable dialog strings.</summary>
+    /// <value>The krypton foldable dialog strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of foldable dialog strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonFoldableDialogStrings FoldableDialogStrings => KryptonFoldableDialogStrings;
+    private bool ShouldSerializeFoldableDialogStrings() => !KryptonFoldableDialogStrings.IsDefault;
+    private void ResetFoldableDialogStrings() => KryptonFoldableDialogStrings.Reset();
+
+    /// <summary>Gets the krypton print preview dialog strings.</summary>
+    /// <value>The krypton print preview dialog strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of print preview dialog strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonPrintPreviewDialogStrings PrintPreviewDialogStrings => KryptonPrintPreviewDialogStrings;
+    private bool ShouldSerializePrintPreviewDialogStrings() => !KryptonPrintPreviewDialogStrings.IsDefault;
+    private void ResetMiscellaneousPrintPreviewDialogStrings() => KryptonPrintPreviewDialogStrings.Reset();
+
+    /// <summary>Gets the krypton miscellaneous theme strings.</summary>
+    /// <value>The krypton miscellaneous theme strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of miscellaneous theme strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonMiscellaneousThemeStrings MiscellaneousThemeStrings => KryptonMiscellaneousThemeStrings;
+    private bool ShouldSerializeMiscellaneousThemeStrings() => !KryptonMiscellaneousThemeStrings.IsDefault;
+    private void ResetMiscellaneousThemeStrings() => KryptonMiscellaneousThemeStrings.Reset();
+
+    /// <summary>Gets the scrollbar strings.</summary>
+    /// <value>The scrollbar strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of scrollbar strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonScrollBarStrings ScrollBarStrings => KryptonScrollBarStrings;
+    private bool ShouldSerializeScrollBarStrings() => !KryptonScrollBarStrings.IsDefault;
+    private void ResetScrollBarStrings() => KryptonScrollBarStrings.Reset();
+
+    /// <summary>Gets the context menu strings.</summary>
+    /// <value>The context menu strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of context menu strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonContextMenuStrings ContextMenuStrings => KryptonContextMenuStrings;
+    private bool ShouldSerializeContextMenuStrings() => !KryptonContextMenuStrings.IsDefault;
+    private void ResetContextMenuStrings() => KryptonContextMenuStrings.Reset();
+
+    /// <summary>Gets the data grid view strings.</summary>
+    /// <value>The data grid view strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of data grid view strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public DataGridViewStyleStrings GridViewStyleStrings => DataGridViewStyles;
+    private bool ShouldSerializeGridViewStyleStrings() => !DataGridViewStyles.IsDefault;
+    private void ResetGridViewStyleStrings() => DataGridViewStyles.Reset();
+
+    /// <summary>Gets the grid style strings.</summary>
+    /// <value>The grid style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of grid style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public GridStyleStrings GridStyleStrings => GridStyles;
+    private bool ShouldSerializeGridStyleStrings() => !GridStyles.IsDefault;
+    private void ResetGridStyleStrings() => GridStyles.Reset();
+
+    /// <summary>Gets the header group collapsed target strings.</summary>
+    /// <value>The header group collapsed target strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of header group collapsed target strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public HeaderGroupCollapsedTargetStrings HeaderGroupCollapsedTargetStrings => GroupCollapsedTargetStrings;
+    private bool ShouldSerializeHeaderGroupCollapsedTargetStrings() => !GroupCollapsedTargetStrings.IsDefault;
+    private void ResetHeaderGroupCollapsedTargetStrings() => GroupCollapsedTargetStrings.Reset();
+
+    /// <summary>Gets the header style strings.</summary>
+    /// <value>The header style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of header style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public HeaderStyleStrings HeaderStyleStrings => HeaderStyles;
+    private bool ShouldSerializeHeaderStyleStrings() => !HeaderStyles.IsDefault;
+    private void ResetHeaderStyleStrings() => HeaderStyles.Reset();
+
+    /// <summary>Gets the input control style strings.</summary>
+    /// <value>The input control style strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of input control style strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public InputControlStyleStrings InputControlStyleStrings => InputControlStyles;
+    private bool ShouldSerializeInputControlStyleStrings() => !InputControlStyles.IsDefault;
+    private void ResetInputControlStyleStrings() => InputControlStyles.Reset();
+
+    /// <summary>Gets the krypton toast notification strings.</summary>
+    /// <value>The krypton toast notification strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of toast notificaion strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonToastNotificationStrings ToastNotificationStrings => KryptonToastNotificationStrings;
+
+    private bool ShouldSerializeToastNotificationStrings() => !KryptonToastNotificationStrings.IsDefault;
+
+    /// <summary>Resets the krypton toast notification strings.</summary>
+    public void ResetToastNotificationStrings() => KryptonToastNotificationStrings.Reset();
+
+    /// <summary>Gets the krypton tool strip item strings.</summary>
+    /// <value>The krypton tool strip item strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of tool strip item strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonToolStripItemStrings ToolStripItemStrings => KryptonToolStripItemStrings;
+
+    private bool ShouldSerializeToolStripItemStrings() => !KryptonToolStripItemStrings.IsDefault;
+
+    /// <summary>Resets the krypton tool strip item strings.</summary>
+    public void ResetToolStripItemStrings() => KryptonToolStripItemStrings.Reset();
+
+    /// <summary>Gets the krypton splash screen strings.</summary>
+    /// <value>The krypton splash screen strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of splash screen strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public SplashScreenStrings SplashScreenStrings => KryptonSplashScreenStrings;
+
+    private bool ShouldSerializeSplashScreenStringsStrings() => !KryptonSplashScreenStrings.IsDefault;
+
+    /// <summary>Resets the krypton splash screen strings.</summary>
+    public void ResetSplashScreenStringsStrings() => KryptonSplashScreenStrings.Reset();
+
+    /// <summary>Gets the miscellaneous strings.</summary>
+    /// <value>The miscellaneous strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of miscellaneous strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonMiscellaneousStrings MiscellaneousStrings => KryptonMiscellaneousStrings;
+
+    private bool ShouldSerializeMiscellaneousStrings() => !KryptonMiscellaneousStrings.IsDefault;
+
+    public void ResetMiscellaneousStrings() => KryptonMiscellaneousStrings.Reset();
+
+    /// <summary>Gets the message box strings.</summary>
+    /// <value>The message box strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of message box strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public MessageBoxStrings MessageBoxStrings => KryptonMessageBoxStrings;
+
+    private bool ShouldSerializeMessageBoxStringsStrings() => !KryptonMessageBoxStrings.IsDefault;
+
+    /// <summary>Resets the krypton message box strings.</summary>
+    public void ResetMessageBoxStrings() => KryptonMessageBoxStrings.Reset();
+
+    /// <summary>Gets the krypton search box strings.</summary>
+    /// <value>The krypton search box strings.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of search box strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonSearchBoxStrings SearchBoxStrings => KryptonSearchBoxStrings;
+
+    private bool ShouldSerializeSearchBoxStrings() => !KryptonSearchBoxStrings.IsDefault;
+
+    /// <summary>Resets the krypton search box strings.</summary>
+    public void ResetSearchBoxStrings() => KryptonSearchBoxStrings.Reset();
+
+    /// <summary>Gets the custom file dialog strings.</summary>
+    /// <value>Cue and related strings for the managed custom file/folder dialogs.</value>
+    [Category(@"Visuals")]
+    [Description(@"Collection of custom file dialog strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonCustomFileDialogStrings CustomFileDialogStrings => KryptonCustomFileDialogStrings;
+
+    private bool ShouldSerializeCustomFileDialogStrings() => !KryptonCustomFileDialogStrings.IsDefault;
+
+    /// <summary>Resets the custom file dialog strings.</summary>
+    public void ResetCustomFileDialogStrings() => KryptonCustomFileDialogStrings.Reset();
+
+    /// <summary>Gets the win32 system menu strings.</summary>
+    [Category(@"Visuals")]
+    [Description(@"Collection of win32 system menu strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    [ToolkitStringsCanonicalAlias]
+    public SystemMenuStrings SystemMenuStrings => Win32SystemMenuStrings;
+
+    private bool ShouldSerializeSystemMenuStrings() => !Win32SystemMenuStrings.IsDefault;
+
+    /// <summary>Resets the win32 system menu strings.</summary>
+    public void ResetSystemMenuStrings() => Win32SystemMenuStrings.ResetValues();
+
+    /// <summary>Gets the form control-box (caption button) tooltip strings.</summary>
+    [Category(@"Visuals")]
+    [Description(@"Collection of Minimize/Maximize/Restore/Close/Help control-box tooltip strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    [ToolkitStringsCanonicalAlias]
+    public ControlBoxStrings ControlBoxButtonStrings => ControlBoxStrings;
+
+    private bool ShouldSerializeControlBoxButtonStrings() => !ControlBoxStrings.IsDefault;
+
+    /// <summary>Resets the control-box tooltip strings.</summary>
+    public void ResetControlBoxButtonStrings() => ControlBoxStrings.Reset();
+
+    /// <summary>Gets the editor settings strings.</summary>
+    [Category(@"Visuals")]
+    [Description(@"Collection of editor settings strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonEditorSettingsStrings EditorSettingStrings => EditorSettingsStrings;
+
+    private bool ShouldSerializeEditorSettingStrings() => !EditorSettingsStrings.IsDefault;
+
+    /// <summary>Resets the editor settings strings.</summary>
+    public void ResetEditorSettingStrings() => EditorSettingsStrings.Reset();
+
+    /// <summary>Gets the collection editor strings.</summary>
+    [Category(@"Visuals")]
+    [Description(@"Collection of collection editor strings.")]
+    [MergableProperty(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    [Localizable(true)]
+    public KryptonCollectionEditorStrings CollectionEditorStrings => KryptonCollectionEditorStrings;
+
+    private bool ShouldSerializeCollectionEditorStrings() => !KryptonCollectionEditorStrings.IsDefault;
+
+    /// <summary>Resets the collection editor strings.</summary>
+    public void ResetCollectionEditorStrings() => KryptonCollectionEditorStrings.Reset();
+
+    #endregion
+
+    #region Identity
+
+    /// <summary>Initializes a new instance of the <see cref="KryptonGlobalToolkitStrings" /> class.</summary>
+    public KryptonGlobalToolkitStrings()
+    {
+        //ThrowHelper.ThrowNotImplementedException();
+    }
+
+    /// <inheritdoc />
+    public override string ToString() => !IsDefault ? "Modified" : string.Empty;
+
+    #endregion
+
+    #region Implementation
+
+    /// <summary>Gets a value indicating whether this instance is default.</summary>
+    /// <value><c>true</c> if this instance is default; otherwise, <c>false</c>.</value>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool IsDefault => !(ShouldSerializeAboutBoxBasicStrings() || ShouldSerializeAboutBoxStrings() ||
+                               ShouldSerializeBugReportingDialogStrings() ||
+                               ShouldSerializeExceptionDialogStrings() || ShouldSerializePrintPreviewDialogStrings() ||
+                               ShouldSerializeBackStyleStrings() || ShouldSerializeBorderStyleStrings() ||
+                               ShouldSerializeButtonOrientationStrings() ||
+                               ShouldSerializeButtonSpecStyleStrings() || ShouldSerializeButtonStyleStrings() ||
+                               ShouldSerializeColorStrings() || ShouldSerializeCustomStrings() ||
+                               ShouldSerializeFileSystemListViewStrings() ||
+                               ShouldSerializeGeneralRibbonStrings() || ShouldSerializeGeneralStrings() ||
+                               ShouldSerializeCommonStrings() ||
+                               ShouldSerializeUseWindowsLanguagePackStrings() ||
+                               ShouldSerializeGridStyleStrings() || ShouldSerializeGridViewStyleStrings() ||
+                               ShouldSerializeHeaderGroupCollapsedTargetStrings() ||
+                               ShouldSerializeHeaderStyleStrings() || ShouldSerializeInputControlStyleStrings() ||
+                               ShouldSerializeLabelStyleStrings() || ShouldSerializeLinkBehaviorStrings() ||
+                               ShouldSerializeMiscellaneousThemeStrings() ||
+                               ShouldSerializePaletteButtonStyles() ||
+                               ShouldSerializePaletteContentStyleStrings() ||
+                               ShouldSerializePaletteImageEffectStrings() ||
+                               ShouldSerializePaletteImageStyleStrings() || ShouldSerializePaletteModeStrings() ||
+                               ShouldSerializePaletteTextTrimStrings() || ShouldSerializePlacementModeStrings() ||
+                               ShouldSerializeScrollBarStrings() || ShouldSerializeContextMenuStrings() ||
+                               ShouldSerializeSeparatorStyleStrings() ||
+                               ShouldSerializeToastNotificationIconStrings() ||
+                               ShouldSerializeTabBorderStyleStrings() || ShouldSerializeTabStyleStrings() ||
+                               ShouldSerializeToastNotificationStrings() || ShouldSerializeToolStripItemStrings() || ShouldSerializeToolBarStrings() ||
+                               ShouldSerializeSplashScreenStringsStrings() || ShouldSerializeMiscellaneousStrings() ||
+                               ShouldSerializeMessageBoxStringsStrings() || ShouldSerializeSystemMenuStrings() ||
+                               ShouldSerializeControlBoxButtonStrings() ||
+                               ShouldSerializeTitleBarStrings() || ShouldSerializeEditorSettingStrings() || 
+                               ShouldSerializeCollectionEditorStrings() ||
+                               ShouldSerializeSearchBoxStrings() ||
+                               ShouldSerializeCustomFileDialogStrings() || ShouldSerializeNavigatorIntegrationStrings());
+
+    /// <summary>Resets this instance.</summary>
+    public void Reset()
+    {
+        ResetAboutBoxBasicStrings();
+        ResetAboutBoxStrings();
+        ResetBugReportingDialogStrings();
+        ResetExceptionDialogStrings();
+        ResetBackStyleStrings();
+        ResetBorderStyleStrings();
+        ResetButtonOrientationStrings();
+        ResetButtonSpecStyleStrings();
+        ResetButtonStyleStrings();
+        ResetColorStrings();
+        ResetCustomStrings();
+        ResetFileSystemListViewStrings();
+        ResetUseWindowsLanguagePackStrings();
+        ResetCommonStrings();
+        ResetMiscellaneousPrintPreviewDialogStrings();
+        ResetGeneralRibbonStrings();
+        ResetGeneralStrings();
+        ResetGridStyleStrings();
+        ResetGridViewStyleStrings();
+        ResetHeaderGroupCollapsedTargetStrings();
+        ResetHeaderStyleStrings();
+        ResetInputControlStyleStrings();
+        ResetLabelStyleStrings();
+        ResetLinkBehaviorStrings();
+        ResetMiscellaneousThemeStrings();
+        ResetPaletteButtonStyles();
+        ResetPaletteContentStyleStrings();
+        ResetPaletteImageEffectStrings();
+        ResetPaletteImageStyleStrings();
+        ResetPaletteModeStrings();
+        ResetPaletteTextTrimStrings();
+        ResetPlacementModeStrings();
+        ResetScrollBarStrings();
+        ResetContextMenuStrings();
+        ResetSeparatorStyleStrings();
+        ResetTabBorderStyleStrings();
+        ResetTabStyleStrings();
+        ResetToastNotificationIconStrings();
+        ResetToolStripItemStrings();
+        ResetToastNotificationStrings();
+        ResetToolBarStrings();
+        ResetSplashScreenStringsStrings();
+        ResetMiscellaneousStrings();
+        ResetMessageBoxStrings();
+        ResetSearchBoxStrings();
+        ResetCustomFileDialogStrings();
+        ResetSystemMenuStrings();
+        ResetControlBoxButtonStrings();
+        ResetTitleBarStrings();
+        ResetNavigatorIntegrationStrings();
+        ResetEditorSettingStrings();
+        ResetCollectionEditorStrings();
+    }
+
+    #region Translations Persistence
+
+    /// <summary>
+    /// Exports the current Krypton toolkit string set to a versioned XML document.
+    /// </summary>
+    public XmlDocument ExportToXmlDocument(bool includeDefaults = false) => ToolkitStringsXmlPersistence.Export(this, includeDefaults);
+
+    /// <summary>
+    /// Exports the current Krypton toolkit string set to a versioned XML file.
+    /// </summary>
+    public void ExportToXmlFile(string filename, bool includeDefaults = false)
+    {
+        if (string.IsNullOrWhiteSpace(filename))
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(filename));
+        }
+
+        var doc = ExportToXmlDocument(includeDefaults);
+        doc.Save(filename);
+    }
+
+    /// <summary>
+    /// Imports toolkit strings from the specified versioned XML document.
+    /// </summary>
+    /// <param name="doc">The XML document to import from.</param>
+    /// <param name="resetFirst">When <c>true</c>, resets all strings to their defaults before applying the file values.</param>
+    /// <param name="refreshOpenForms">When <c>true</c>, invalidates and refreshes all open forms after import.</param>
+    /// <param name="warnOnCultureMismatch">When <c>true</c>, writes a debug warning if the file culture differs from the current UI culture.</param>
+    public void ImportFromXmlDocument(XmlDocument doc, bool resetFirst = true, bool refreshOpenForms = true, bool warnOnCultureMismatch = true) =>
+        ToolkitStringsXmlPersistence.Import(this, doc, resetFirst, refreshOpenForms, warnOnCultureMismatch);
+
+    /// <summary>
+    /// Imports toolkit strings from a versioned XML file.
+    /// </summary>
+    /// <param name="filename">Path to the ToolkitTranslations.xml file.</param>
+    /// <param name="resetFirst">When <c>true</c>, resets all strings to their defaults before applying the file values.</param>
+    /// <param name="refreshOpenForms">When <c>true</c>, invalidates and refreshes all open forms after import.</param>
+    /// <param name="warnOnCultureMismatch">When <c>true</c>, writes a debug warning if the file culture differs from the current UI culture.</param>
+    public void ImportFromXmlFile(string filename, bool resetFirst = true, bool refreshOpenForms = true, bool warnOnCultureMismatch = true)
+    {
+        if (string.IsNullOrWhiteSpace(filename))
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(filename));
+        }
+
+        var doc = new XmlDocument();
+        doc.Load(filename);
+        ImportFromXmlDocument(doc, resetFirst, refreshOpenForms, warnOnCultureMismatch);
+    }
+
+    /// <summary>
+    /// Exports the current toolkit string set to the specified stream.
+    /// </summary>
+    /// <param name="stream">The stream to write the XML to.</param>
+    /// <param name="includeDefaults">When <c>true</c>, writes every string even if it matches the default value.</param>
+    public void ExportToStream(Stream stream, bool includeDefaults = false) =>
+        ToolkitStringsXmlPersistence.ExportToStream(this, stream, includeDefaults);
+
+    /// <summary>
+    /// Imports toolkit strings from the specified stream containing a versioned ToolkitTranslations.xml document.
+    /// </summary>
+    /// <param name="stream">The stream to read the XML from.</param>
+    /// <param name="resetFirst">When <c>true</c>, resets all strings to their defaults before applying the file values.</param>
+    /// <param name="refreshOpenForms">When <c>true</c>, invalidates and refreshes all open forms after import.</param>
+    /// <param name="warnOnCultureMismatch">When <c>true</c>, writes a debug warning if the file culture differs from the current UI culture.</param>
+    public void ImportFromStream(Stream stream, bool resetFirst = true, bool refreshOpenForms = true, bool warnOnCultureMismatch = true) =>
+        ToolkitStringsXmlPersistence.ImportFromStream(this, stream, resetFirst, refreshOpenForms, warnOnCultureMismatch);
+
+    /// <summary>
+    /// Exports the current toolkit string set to a JSON string.
+    /// </summary>
+    /// <param name="includeDefaults">When <c>true</c>, writes every string even if it matches the default value.</param>
+    public string ExportToJson(bool includeDefaults = false) =>
+        ToolkitStringsJsonPersistence.Export(this, includeDefaults);
+
+    /// <summary>
+    /// Exports the current toolkit string set to a JSON file.
+    /// </summary>
+    /// <param name="filename">Path to the destination file.</param>
+    /// <param name="includeDefaults">When <c>true</c>, writes every string even if it matches the default value.</param>
+    public void ExportToJsonFile(string filename, bool includeDefaults = false) =>
+        ToolkitStringsJsonPersistence.ExportToFile(this, filename, includeDefaults);
+
+    /// <summary>
+    /// Imports toolkit strings from a JSON file.
+    /// </summary>
+    /// <param name="filename">Path to the JSON file.</param>
+    /// <param name="resetFirst">When <c>true</c>, resets all strings to their defaults before applying the file values.</param>
+    /// <param name="refreshOpenForms">When <c>true</c>, invalidates and refreshes all open forms after import.</param>
+    public void ImportFromJsonFile(string filename, bool resetFirst = true, bool refreshOpenForms = true) =>
+        ToolkitStringsJsonPersistence.ImportFromFile(this, filename, resetFirst, refreshOpenForms);
+
+    /// <summary>
+    /// Analyzes catalog coverage for a translations XML document without mutating live strings.
+    /// </summary>
+    public ToolkitStringsCoverage AnalyzeTranslationsFromXml(XmlDocument doc) =>
+        ToolkitStringsXmlPersistence.Analyze(this, doc);
+
+    /// <summary>
+    /// Analyzes catalog coverage for a translations JSON string without mutating live strings.
+    /// </summary>
+    public ToolkitStringsCoverage AnalyzeTranslationsFromJson(string json) =>
+        ToolkitStringsJsonPersistence.Analyze(this, json);
+
+    /// <summary>
+    /// Analyzes a translations XML or JSON file against this string catalog without applying it.
+    /// </summary>
+    public ToolkitStringsCoverage AnalyzeTranslationsFromFile(string filename)
+    {
+        if (string.IsNullOrWhiteSpace(filename))
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(filename));
+        }
+
+        if (Path.GetExtension(filename).Equals(@".json", StringComparison.OrdinalIgnoreCase))
+        {
+            var json = File.ReadAllText(filename, Encoding.UTF8);
+            return ToolkitStringsJsonPersistence.Analyze(this, json, filename);
+        }
+
+        var doc = new XmlDocument();
+        doc.Load(filename);
+        return ToolkitStringsXmlPersistence.Analyze(this, doc, filename);
+    }
+
+    /// <summary>
+    /// Imports an existing translations file into this catalog, then rewrites the file so newly
+    /// added toolkit keys appear with English defaults while preserving already-translated values.
+    /// </summary>
+    /// <param name="filename">Path to the XML or JSON file to upgrade.</param>
+    /// <param name="includeDefaults">When <c>true</c>, writes the full catalog (recommended).</param>
+    /// <returns>Coverage for the rewritten file.</returns>
+    public ToolkitStringsCoverage MergeMissingTranslationsToFile(string filename, bool includeDefaults = true)
+    {
+        if (string.IsNullOrWhiteSpace(filename))
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(filename));
+        }
+
+        if (Path.GetExtension(filename).Equals(@".json", StringComparison.OrdinalIgnoreCase))
+        {
+            return ToolkitStringsJsonPersistence.MergeMissingToFile(this, filename, includeDefaults);
+        }
+
+        return ToolkitStringsXmlPersistence.MergeMissingToFile(this, filename, includeDefaults);
+    }
+
+    #endregion
+
+    #endregion
+}

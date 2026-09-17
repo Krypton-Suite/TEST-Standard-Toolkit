@@ -1,0 +1,406 @@
+﻿#region BSD License
+/*
+ *
+ *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
+ *  Modifications by Peter Wagner(aka Wagnerp) & Simon Coghlan(aka Smurf-IV), tobitege et al. 2024 - 2026. All rights reserved.
+ *
+ */
+#endregion
+
+namespace Krypton.Toolkit;
+
+/// <summary>Allows the user to change themes using a <see cref="KryptonComboBox"/>.</summary>
+/// <seealso cref="KryptonComboBox" />
+[Designer("Krypton.Toolkit.KryptonStubDesigner, " + KryptonWinFormsDesignerSdk.AssemblyName)]
+public class KryptonThemeComboBox : KryptonComboBox, IKryptonThemeSelectorBase
+{
+    #region Instance Fields
+
+    /// <summary> When we change the palette, Krypton Manager will notify us that there was a change. Since we are changing it that notification can be skipped.</summary>
+    private bool _isLocalUpdate = false;
+    /// <summary> Suppress code execution in the SelectedIndexChanged event handler, when a theme change via the KManager has been performed.</summary>
+    private bool _isExternalUpdate = false;
+    /// <summary> Backing var for the DefaultPalette property.</summary>
+    private PaletteMode _defaultPalette = PaletteMode.Global;
+    /// <summary> Whether extra catalogued palettes appear in the list.</summary>
+    private bool _showExtraThemes = true;
+    /// <summary> Local Krypton Manager instance.</summary>
+    private readonly KryptonManager _manager;
+    /// <summary> User defined palette.</summary>
+    private KryptonCustomPaletteBase? _kryptonCustomPalette = null;
+
+    #endregion
+
+    #region Identity
+
+    /// <summary>Initializes a new instance of the <see cref="KryptonThemeComboBox" /> class.</summary>
+    public KryptonThemeComboBox()
+    {
+        _manager = new KryptonManager();
+        DropDownStyle = ComboBoxStyle.DropDownList;
+
+        Items.Clear();
+        Items.AddRange(CommonHelperThemeSelectors.GetThemesArray(_showExtraThemes));
+
+        // Sets the intial palette from either global or DefaultPalette property
+        SelectedIndex = CommonHelperThemeSelectors.GetInitialSelectedIndex(DefaultPalette, _manager, Items);
+
+    }
+    #endregion
+
+    #region Public
+
+    /// <inheritdoc/>
+    [Category(@"Visuals")]
+    [Description(@"The default palette mode.")]
+    [DefaultValue(PaletteMode.Global)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public PaletteMode DefaultPalette
+    {
+        get => _defaultPalette;
+        set => SelectedIndex = CommonHelperThemeSelectors.DefaultPaletteSetter(ref _defaultPalette, value, Items, SelectedIndex);
+    }
+
+    private void ResetDefaultPalette() => DefaultPalette = PaletteMode.Global;
+    private bool ShouldSerializeDefaultPalette() => _defaultPalette != PaletteMode.Global;
+
+    /// <summary>
+    /// Gets or sets whether extra (non-core) catalogued palettes appear in the drop-down.
+    /// </summary>
+    [Category(@"Visuals")]
+    [Description(@"When false, only core Toolkit palettes are listed.")]
+    [DefaultValue(true)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
+    public bool ShowExtraThemes
+    {
+        get => _showExtraThemes;
+        set
+        {
+            if (_showExtraThemes == value)
+            {
+                return;
+            }
+
+            _showExtraThemes = value;
+            ReloadThemeItems();
+        }
+    }
+
+    #endregion
+
+    #region Implementation
+
+    /// <summary>
+    /// Theme resolution must use the list item string (same approach as <see cref="KryptonThemeListBox"/>).
+    /// For an owner-draw <see cref="KryptonComboBox"/>, <see cref="Control.Text"/> can lag or stay empty when
+    /// <see cref="ComboBox.SelectedIndex"/> is set programmatically, which would otherwise map to
+    /// <see cref="PaletteMode.Global"/> and revert the selection (see #3283).
+    /// </summary>
+    private string GetSelectedThemeName()
+    {
+        if (SelectedIndex > -1 && SelectedItem is string s && s.Length > 0)
+        {
+            return s;
+        }
+
+        return Text ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Routine that will be executed when the control is fully instantiated.
+    /// </summary>
+    /// <param name="e">EventArgs param. Not used in this implementation.</param>
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        // React to theme changes from outside this control.
+        KryptonManager.GlobalPaletteChanged += KryptonManagerGlobalPaletteChanged;
+        ThemeManager.RegisteredThemesChanged += ThemeManagerRegisteredThemesChanged;
+        base.OnHandleCreated(e);
+    }
+
+    /// <inheritdoc />
+    protected override void OnHandleDestroyed(EventArgs e)
+    {
+        KryptonManager.GlobalPaletteChanged -= KryptonManagerGlobalPaletteChanged;
+        ThemeManager.RegisteredThemesChanged -= ThemeManagerRegisteredThemesChanged;
+        base.OnHandleDestroyed(e);
+    }
+
+    private void ThemeManagerRegisteredThemesChanged(object? sender, EventArgs e)
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        ReloadThemeItems();
+    }
+
+    private void ReloadThemeItems()
+    {
+        _isExternalUpdate = true;
+        try
+        {
+            string previous = GetSelectedThemeName();
+            var fallback = KryptonManager.CurrentGlobalPaletteMode;
+            int idx = CommonHelperThemeSelectors.ReloadThemeItems(Items, _showExtraThemes, previous, fallback);
+            SelectedIndex = idx;
+        }
+        finally
+        {
+            _isExternalUpdate = false;
+        }
+    }
+
+    /// <summary>
+    /// This method will run when the KryptonManager.GlobalPaletteChanged event is fired.<br/>
+    /// It will synchronize the SelectedIndex with the newly assigned Global Palette.
+    /// </summary>
+    /// <param name="sender">Object that intiated the call.</param>
+    /// <param name="e">Eventargs object data (not used).</param>
+    private void KryptonManagerGlobalPaletteChanged(object? sender, EventArgs e)
+    {
+        if (_isLocalUpdate)
+        {
+            return;
+        }
+
+        var mode = KryptonManager.CurrentGlobalPaletteMode;
+        if (mode == PaletteMode.Global)
+        {
+            return;
+        }
+
+        // Refresh theme list so "Custom" shows as "Custom - [Theme Name]" when a custom palette has a name (issue #1031).
+        // Suppress SelectedIndexChanged apply for Items.Clear()/restore: a deferred apply would
+        // re-select the previous builtin theme and wipe an ad-hoc custom palette.
+        _isExternalUpdate = true;
+        int idx;
+        var deferCommit = false;
+        try
+        {
+            string previous = GetSelectedThemeName();
+            idx = CommonHelperThemeSelectors.ReloadThemeItemsForGlobalChange(Items, _showExtraThemes, previous, mode);
+            if (idx == SelectedIndex)
+            {
+                return;
+            }
+
+            deferCommit = ThemeChangeCoordinator.InProgress && !IsDisposed && IsHandleCreated;
+            if (deferCommit)
+            {
+                BeginInvoke((System.Windows.Forms.MethodInvoker)(() => CommitThemeSelection(idx)));
+            }
+            else
+            {
+                // If the handle is not yet created (or disposed), update immediately to avoid InvalidOperationException
+                CommitThemeSelection(idx);
+            }
+        }
+        finally
+        {
+            if (!deferCommit)
+            {
+                _isExternalUpdate = false;
+            }
+        }
+    }
+
+    private void CommitThemeSelection(int idx)
+    {
+        try
+        {
+            if (IsDisposed || !IsHandleCreated)
+            {
+                return;
+            }
+
+            _isExternalUpdate = true;
+            SelectedIndex = idx;
+        }
+        finally
+        {
+            _isExternalUpdate = false;
+        }
+    }
+
+    #endregion
+
+    #region Protected Overrides
+
+    /// <inheritdoc />
+    protected override void OnSelectedIndexChanged(EventArgs e)
+    {
+        // Capture before any deferred work. Items.Clear() during a palette sync queues this
+        // handler, and _isExternalUpdate may already be false by the time BeginInvoke runs.
+        var isExternalUpdate = _isExternalUpdate;
+
+        // Disable redraw immediately to reduce flicker; defer the heavy theme swap until after WM_COMMAND unwinds
+        if (IsHandleCreated)
+        {
+            PI.SendMessage(Handle, PI.SETREDRAW, IntPtr.Zero, IntPtr.Zero);
+        }
+
+        if (!IsHandleCreated)
+        {
+            if (!CommonHelperThemeSelectors.OnSelectedIndexChanged(ref _isLocalUpdate, isExternalUpdate, ref _defaultPalette, GetSelectedThemeName(), _manager, _kryptonCustomPalette))
+            {
+                SelectedIndex = CommonHelperThemeSelectors.GetPaletteIndex(Items, _manager.GlobalPaletteMode);
+            }
+
+            base.OnSelectedIndexChanged(e);
+            return;
+        }
+
+        if (isExternalUpdate)
+        {
+            base.OnSelectedIndexChanged(e);
+            RestoreThemeComboRedraw();
+            return;
+        }
+
+        BeginInvoke((System.Windows.Forms.MethodInvoker)(() =>
+        {
+            if (IsDisposed || !IsHandleCreated)
+            {
+                return;
+            }
+            // Mark this form as the initiator so redraw is not disabled for it during the change
+            ThemeChangeCoordinator.Begin(FindForm());
+            try
+            {
+                if (!CommonHelperThemeSelectors.OnSelectedIndexChanged(ref _isLocalUpdate, isExternalUpdate, ref _defaultPalette, GetSelectedThemeName(), _manager, _kryptonCustomPalette))
+                {
+                    // theme change failed; resync index to current global palette
+                    SelectedIndex = CommonHelperThemeSelectors.GetPaletteIndex(Items, _manager.GlobalPaletteMode);
+                }
+
+                base.OnSelectedIndexChanged(e);
+            }
+            finally
+            {
+                ThemeChangeCoordinator.End();
+            }
+
+            RestoreThemeComboRedraw();
+        }));
+    }
+
+    private void RestoreThemeComboRedraw()
+    {
+        if (!IsHandleCreated)
+        {
+            return;
+        }
+
+        // Re-enable redraw and perform a single composited repaint to reduce flicker
+        PI.SendMessage(Handle, PI.SETREDRAW, (IntPtr)1, IntPtr.Zero);
+        var form = FindForm();
+        if (form is { IsHandleCreated: true })
+        {
+            // Force full subtree invalidation and a one-pass update including children and frame
+            form.Invalidate(true);
+            PI.RedrawWindow(form.Handle, IntPtr.Zero, IntPtr.Zero,
+                PI.RDW_INVALIDATE | PI.RDW_ALLCHILDREN | PI.RDW_UPDATENOW | PI.RDW_FRAME);
+        }
+        else
+        {
+            Invalidate(true);
+            Update();
+        }
+    }
+
+    #endregion
+
+    #region Removed Designer Visibility
+
+    /// <summary>
+    /// Gets and sets the text associated with the control.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [AllowNull]
+    public override string Text
+    {
+        //nullable operator removed
+        get => base.Text;
+        set => base.Text = value;
+    }
+
+    /// <summary>Gets or sets the format specifier characters that indicate how a value is to be Displayed.</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public new string FormatString
+    {
+        get => base.FormatString;
+        set => base.FormatString = value;
+    }
+
+    /// <summary>
+    /// Gets and sets the appearance and functionality of the KryptonComboBox.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public new ComboBoxStyle DropDownStyle
+    {
+        get => base.DropDownStyle;
+        set => base.DropDownStyle = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the items in the KryptonComboBox.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public new ComboBox.ObjectCollection Items => base.Items;
+
+    /// <summary>Gets or sets the draw mode of the combobox.</summary>
+    /// <value>The draw mode of the combobox.</value>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public new DrawMode DrawMode
+    {
+        get => base.DrawMode;
+        set => base.DrawMode = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the StringCollection to use when the AutoCompleteSource property is set to CustomSource.
+    /// </summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public new AutoCompleteStringCollection AutoCompleteCustomSource
+    {
+        get => base.AutoCompleteCustomSource;
+        set => base.AutoCompleteCustomSource = value;
+    }
+
+    /// <summary>Gets or sets the text completion behavior of the combobox.</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public new AutoCompleteMode AutoCompleteMode
+    {
+        get => base.AutoCompleteMode;
+        set => base.AutoCompleteMode = value;
+    }
+
+    /// <summary>Gets or sets the autocomplete source, which can be one of the values from AutoCompleteSource enumeration.</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public new AutoCompleteSource AutoCompleteSource
+    {
+        get => base.AutoCompleteSource;
+        set => base.AutoCompleteSource = value;
+    }
+
+    /// <summary>Gets and sets the selected index.</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public new int SelectedIndex
+    {
+        get => base.SelectedIndex;
+        set => base.SelectedIndex = value;
+    }
+
+    #endregion
+}
