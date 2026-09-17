@@ -1,5 +1,10 @@
 <Project>
 	<Import Project="..\..\Directory.Build.props" />
+	<PropertyGroup>
+		<ExcludeNet11>true</ExcludeNet11>
+	</PropertyGroup>
+	<Import Project="..\Build\Krypton.Orchestration.targets" />
+	<Import Project="..\Build\Krypton.Pack.targets" />
 
 	<PropertyGroup>
 		<RootFolder>$(MSBuildProjectDirectory)</RootFolder>
@@ -8,26 +13,22 @@
 		<NightlyZipName>Krypton-Nightly</NightlyZipName>
 	</PropertyGroup>
 
-	<Target Name="Clean">
+	<Target Name="Clean" DependsOnTargets="Restore">
 		<ItemGroup>
-			<Projects Include="..\..\Source\Current\Krypton Components\Krypton.*\*.csproj" />
+			<Projects Include="..\..\Source\Krypton Components\Krypton.*\*.csproj" />
 		</ItemGroup>
-		<MSBuild Projects="@(Projects)" Properties="Configuration=$(Configuration);TFMs=all" Targets="Clean" />
+		<MSBuild Projects="@(Projects)" Properties="Configuration=$(Configuration);TFMs=all;ExcludeNet11=true" Targets="Restore" BuildInParallel="false" />
+		<MSBuild Projects="@(Projects)" Properties="Configuration=$(Configuration);TFMs=all;ExcludeNet11=true" Targets="Clean" BuildInParallel="false" />
 	</Target>
 
 	<Target Name="Restore">
 		<ItemGroup>
-			<Projects Include="..\..\Source\Current\Krypton Components\Krypton.*\*.csproj" />
+			<Projects Include="..\..\Source\Krypton Components\Krypton.*\*.csproj" />
 		</ItemGroup>
-		<MSBuild Projects="@(Projects)" Properties="Configuration=$(Configuration);TFMs=all" Targets="Restore" />
+		<MSBuild Projects="@(Projects)" Properties="Configuration=$(Configuration);TFMs=all;ExcludeNet11=true" Targets="Restore" BuildInParallel="false" />
 	</Target>
 
-	<Target Name="Build" DependsOnTargets="Restore">
-		<ItemGroup>
-			<Projects Include="..\..\Source\Current\Krypton Components\Krypton.*\*.csproj" />
-		</ItemGroup>
-		<MSBuild Projects="@(Projects)" Properties="Configuration=$(Configuration);TFMs=all" />
-	</Target>
+	<Target Name="Build" DependsOnTargets="Restore;KryptonBuild" />
 
 	<Target Name="Rebuild" DependsOnTargets="Clean;Build" />
 
@@ -36,22 +37,6 @@
 			<NugetPkgs Include="..\Bin\Packages\Nightly\*.nupkg" />
 		</ItemGroup>
 		<Delete Files="@(NugetPkgs)" />
-	</Target>
-
-	<Target Name="PackAll">
-		<ItemGroup>
-			<Projects Include="..\..\Source\Current\Krypton Components\Krypton.*\*.csproj" />
-		</ItemGroup>
-		<ItemGroup>
-			<NugetAssets Include="..\..\Source\Current\Krypton Components\Krypton.*\obj\*.json" />
-			<NugetAssets Include="..\..\Source\Current\Krypton Components\Krypton.*\obj\*.cache" />
-			<NugetAssets Include="..\..\Source\Current\Krypton Components\Krypton.*\obj\*.g.targets" />
-			<NugetAssets Include="..\..\Source\Current\Krypton Components\Krypton.*\obj\*.g.props" />
-		</ItemGroup>
-		<MSBuild Projects="@(Projects)" Properties="Configuration=$(Configuration);TFMs=all" Targets="Clean" />
-		<Delete Files="@(NugetAssets)" />
-		<MSBuild Projects="@(Projects)" Properties="Configuration=$(Configuration);TFMs=all" Targets="Restore" />
-		<MSBuild Projects="@(Projects)" Properties="Configuration=$(Configuration);TFMs=all" Targets="Pack" />
 	</Target>
 
 	<Target Name="Pack" DependsOnTargets="CleanPackages;PackAll" />
