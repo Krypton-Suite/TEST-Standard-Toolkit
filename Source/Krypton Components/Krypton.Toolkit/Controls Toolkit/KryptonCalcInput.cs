@@ -547,7 +547,7 @@ public class KryptonCalcInput : VisualControlBase, IContainedInputControl
     /// </summary>
     [Category(@"Appearance")]
     [Description(@"The current value of the numeric up-down control.")]
-    [DefaultValue(0.0d)]
+    [DefaultValue(typeof(decimal), "0")]
     [Bindable(true)]
     public decimal Value
     {
@@ -630,6 +630,29 @@ public class KryptonCalcInput : VisualControlBase, IContainedInputControl
     [Editor(typeof(KryptonDesignerButtonSpecAnyCollectionEditor), typeof(UITypeEditor))]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public CalcButtonSpecCollection ButtonSpecs { get; }
+
+    /// <summary>
+    /// Gets and sets how multiple ButtonSpecs on the same edge are arranged.
+    /// </summary>
+    /// <remarks>
+    /// Default is <see cref="ButtonSpecEdgeArrange.SideBySide"/>. Set
+    /// <see cref="ButtonSpecEdgeArrange.StackAlongEdge"/> on tall hosts to stack Far/Near
+    /// ButtonSpecs vertically. Independent of <see cref="ButtonSpec.FillHeight"/>.
+    /// </remarks>
+    [Category(@"Visuals")]
+    [Description(@"How multiple ButtonSpecs on the same edge are arranged.")]
+    [DefaultValue(ButtonSpecEdgeArrange.SideBySide)]
+    public ButtonSpecEdgeArrange ButtonSpecEdgeArrange
+    {
+        get => _buttonManager?.EdgeArrange ?? ButtonSpecEdgeArrange.SideBySide;
+        set
+        {
+            if (_buttonManager != null)
+            {
+                _buttonManager.EdgeArrange = value;
+            }
+        }
+    }
 
     /// <summary>
     /// Gets access to the common textbox appearance entries that other states can override.

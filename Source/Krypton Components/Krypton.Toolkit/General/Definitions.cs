@@ -1278,6 +1278,26 @@ public enum RelativeEdgeAlign
 }
 #endregion
 
+#region Enum ButtonSpecEdgeArrange
+
+/// <summary>
+/// Specifies how multiple <see cref="ButtonSpec"/> instances on the same edge are arranged.
+/// </summary>
+public enum ButtonSpecEdgeArrange
+{
+    /// <summary>
+    /// Pack ButtonSpecs side-by-side along the Near/Far axis (historic default).
+    /// </summary>
+    SideBySide,
+
+    /// <summary>
+    /// Stack ButtonSpecs along the host edge (vertically on a top/bottom docker).
+    /// </summary>
+    StackAlongEdge
+}
+
+#endregion
+
 #region Enum RelativePositionAlign
 /// <summary>
 /// Specifies a relative alignment position.
@@ -3568,6 +3588,34 @@ public interface IFocusLostMenuItem
 }
 #endregion
 
+
+#region Enum PropertyGridToolImage
+/// <summary>
+/// Specifies which KryptonPropertyGrid toolbar image a palette should provide.
+/// </summary>
+public enum PropertyGridToolImage
+{
+    /// <summary>
+    /// Alphabetical (A-Z) sort toolbar image.
+    /// </summary>
+    Alphabetical,
+
+    /// <summary>
+    /// Categorized sort toolbar image.
+    /// </summary>
+    Categorized,
+
+    /// <summary>
+    /// Property pages toolbar image.
+    /// </summary>
+    PropertyPages,
+
+    /// <summary>
+    /// Events (lightning bolt) toolbar image.
+    /// </summary>
+    Events
+}
+#endregion
 #region Enum OverlayImagePosition
 /// <summary>
 /// Specifies the position of an overlay image relative to the main image.
@@ -5048,6 +5096,28 @@ public enum KryptonPaletteFileFormat
 
 #endregion
 
+#region Enum KryptonTextBoxInputMode
+
+/// <summary>
+/// Restricts which characters <see cref="KryptonTextBox"/> accepts from typing and paste.
+/// </summary>
+public enum KryptonTextBoxInputMode
+{
+    /// <summary>Accept any character (default WinForms behaviour).</summary>
+    Any = 0,
+
+    /// <summary>Accept digit characters only (<see cref="char.IsDigit(char)"/>).</summary>
+    Digits = 1,
+
+    /// <summary>Accept letter characters only (<see cref="char.IsLetter(char)"/>).</summary>
+    Letters = 2,
+
+    /// <summary>Accept letters and digits (<see cref="char.IsLetterOrDigit(char)"/>).</summary>
+    Alphanumeric = 3
+}
+
+#endregion
+
 #region Enum InternalLoadingCircleStylePresets
 
 /// <summary>
@@ -5066,6 +5136,31 @@ internal enum InternalLoadingCircleStylePresets
 
     /// <summary>Default custom geometry.</summary>
     Custom
+}
+
+#endregion
+
+#region Enum FormCaptionTextBoxEdge
+
+/// <summary>
+/// Edge of the <see cref="KryptonCaptionForm"/> caption where a caption control is placed.
+/// </summary>
+public enum FormCaptionTextBoxEdge
+{
+    /// <summary>
+    /// At the left of the caption, after left-docked title-bar button specs and before the icon and title.
+    /// </summary>
+    Left = 0,
+
+    /// <summary>
+    /// Before the minimize, maximize, and close buttons.
+    /// </summary>
+    Right = 1,
+
+    /// <summary>
+    /// In the centre of the caption, between the side chrome. The title keeps the near side of the slot.
+    /// </summary>
+    Center = 2
 }
 
 #endregion

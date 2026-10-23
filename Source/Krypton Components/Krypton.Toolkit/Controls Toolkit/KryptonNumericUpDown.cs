@@ -1201,7 +1201,7 @@ public class KryptonNumericUpDown : VisualControlBase,
     /// </summary>
     [Category(@"Data")]
     [Description(@"Indicates the amount to increment or decrement one each button click.")]
-    [DefaultValue(1.0d)]
+    [DefaultValue(typeof(decimal), "1")]
     public decimal Increment
     {
         get => _numericUpDown.Increment;
@@ -1214,7 +1214,7 @@ public class KryptonNumericUpDown : VisualControlBase,
     [Category(@"Data")]
     [Description(@"Indicates the maximum value for the numeric up-down control.")]
     [RefreshProperties(RefreshProperties.All)]
-    [DefaultValue(100.0d)]
+    [DefaultValue(typeof(decimal), "100")]
     public decimal Maximum
     {
         get => _numericUpDown.Maximum;
@@ -1227,7 +1227,7 @@ public class KryptonNumericUpDown : VisualControlBase,
     [Category(@"Data")]
     [Description(@"Indicates the minimum value for the numeric up-down control.")]
     [RefreshProperties(RefreshProperties.All)]
-    [DefaultValue(0.0d)]
+    [DefaultValue(typeof(decimal), "0")]
     public decimal Minimum
     {
         get => _numericUpDown.Minimum;
@@ -1252,7 +1252,7 @@ public class KryptonNumericUpDown : VisualControlBase,
     /// </summary>
     [Category(@"Appearance")]
     [Description(@"The current value of the numeric up-down control.")]
-    [DefaultValue(0.0d)]
+    [DefaultValue(typeof(decimal), "0")]
     [Bindable(true)]
     public decimal Value
     {
@@ -1437,6 +1437,29 @@ public class KryptonNumericUpDown : VisualControlBase,
     [Editor(typeof(KryptonDesignerButtonSpecAnyCollectionEditor), typeof(UITypeEditor))]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public NumericUpDownButtonSpecCollection ButtonSpecs { get; }
+
+    /// <summary>
+    /// Gets and sets how multiple ButtonSpecs on the same edge are arranged.
+    /// </summary>
+    /// <remarks>
+    /// Default is <see cref="ButtonSpecEdgeArrange.SideBySide"/>. Set
+    /// <see cref="ButtonSpecEdgeArrange.StackAlongEdge"/> on tall hosts to stack Far/Near
+    /// ButtonSpecs vertically. Independent of <see cref="ButtonSpec.FillHeight"/>.
+    /// </remarks>
+    [Category(@"Visuals")]
+    [Description(@"How multiple ButtonSpecs on the same edge are arranged.")]
+    [DefaultValue(ButtonSpecEdgeArrange.SideBySide)]
+    public ButtonSpecEdgeArrange ButtonSpecEdgeArrange
+    {
+        get => _buttonManager?.EdgeArrange ?? ButtonSpecEdgeArrange.SideBySide;
+        set
+        {
+            if (_buttonManager != null)
+            {
+                _buttonManager.EdgeArrange = value;
+            }
+        }
+    }
 
     /// <summary>
     /// Gets access to the common textbox appearance entries that other states can override.

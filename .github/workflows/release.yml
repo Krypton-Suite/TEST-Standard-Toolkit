@@ -1,10 +1,18 @@
 # New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
 # Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), tobitege et al. 2025 - 2026. All rights reserved.
+#
+# NUGET: Trusted publishing via NuGet/login. Secret NUGET_USER is the nuget.org profile name.
+# nuget.org needs a policy for this workflow file, Krypton-Suite/Standard-Toolkit, environment production.
+#
+# MARKETPLACE: publish-templates-marketplace submits the stable templates VSIX after
+# release-master. Secret VSMARKETPLACE_PAT (Marketplace Manage) on environment production.
+# VSMARKETPLACE_PRIVATE=false makes the listing public. Any other value keeps it private.
 
 name: Release
 
 permissions:
-  contents: read
+  contents: write
+  id-token: write
 
 on:
   push:
@@ -20,6 +28,8 @@ jobs:
     runs-on: windows-2025-vs2026
     environment: production  # Requires approval before publishing
     if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    outputs:
+      templates_tag: ${{ steps.publish_templates.outputs.tag }}
 
     steps:
       # Release kill switch
@@ -54,18 +64,18 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Setup .NET 11 (stable)
-        id: setup_dotnet11_stable_master
+      - name: Setup .NET Preview (stable)
+        id: setup_dotnetpreview_stable_master
         continue-on-error: true
         # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
 
-      - name: Setup .NET 11 (preview fallback)
+      - name: Setup .NET Preview (preview fallback)
         # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.setup_dotnet11_stable_master.outcome == 'failure'
+        if: steps.release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false' && steps.setup_dotnetpreview_stable_master.outcome == 'failure'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
@@ -151,9 +161,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Populate WebView2 (Latest)
-        # Kill switch check
+      - name: Resolve Krypton toolkit major version
         if: steps.release_kill_switch.outputs.enabled == 'true'
+        id: krypton_major_version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repoRoot = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
+          . (Join-Path $repoRoot 'Scripts/CI/Test-KryptonInteropInPackages.ps1')
+          $major = Get-KryptonToolkitMajorVersion -Configuration Release
+          echo "major=$major" >> $env:GITHUB_OUTPUT
+
+      - name: Populate WebView2 (Latest)
+        # Kill switch check; WEBVIEW2_MINIMUM_SUPPORTED_VERSION defaults to 110 when unset
+        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.krypton_major_version.outputs.major >= (vars.WEBVIEW2_MINIMUM_SUPPORTED_VERSION || 110)
         shell: pwsh
         run: |
           $root = $env:GITHUB_WORKSPACE
@@ -205,18 +226,7 @@ jobs:
         if: steps.release_kill_switch.outputs.enabled == 'true'
         run: msbuild /m "Scripts/Build/build.proj" /t:Pack /restore /p:Configuration=Release /p:Platform="Any CPU" /p:UseArtifactsOutput=true
 
-      # Verify Krypton.Interop is present in NuGet packages (V110+ only)
-      - name: Resolve Krypton toolkit major version
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        id: krypton_major_version
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $repoRoot = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
-          . (Join-Path $repoRoot 'Scripts/CI/Test-KryptonInteropInPackages.ps1')
-          $major = Get-KryptonToolkitMajorVersion -Configuration Release
-          echo "major=$major" >> $env:GITHUB_OUTPUT
-
+      # Verify Krypton.Interop is present in NuGet packages (V110+ only; major resolved earlier for WebView2 gate)
       - name: Verify Krypton.Interop in NuGet packages
         if: steps.release_kill_switch.outputs.enabled == 'true' && steps.krypton_major_version.outputs.major >= 110
         shell: pwsh
@@ -244,6 +254,14 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ steps.nuget_cache_restore.outputs.cache-primary-key }}
 
+      - name: NuGet login (OIDC)
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true' && github.repository == 'Krypton-Suite/Standard-Toolkit'
+        id: nuget_login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
@@ -251,10 +269,15 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if (-not $env:NUGET_API_KEY) {
-            Write-Warning "NUGET_API_KEY not set - skipping NuGet push"
+          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/Standard-Toolkit') {
+            Write-Warning "NuGet trusted publishing is only configured for Krypton-Suite/Standard-Toolkit - skipping NuGet push"
             echo "packages_published=false" >> $env:GITHUB_OUTPUT
             exit 0
+          }
+
+          if (-not $env:NUGET_API_KEY) {
+            Write-Error "NuGet trusted publishing did not provide an API key. Set the NUGET_USER secret to the nuget.org profile name."
+            exit 1
           }
 
           $packageCandidates = @(
@@ -298,7 +321,7 @@ jobs:
 
           echo "packages_published=$publishedAny" >> $env:GITHUB_OUTPUT
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget_login.outputs.NUGET_API_KEY }}
           STANDARD_TOOLKIT_MIN_NUPKG_MB: ${{ vars.STANDARD_TOOLKIT_MIN_NUPKG_MB }}
 
       - name: Get Version
@@ -352,12 +375,21 @@ jobs:
 
           if (-not $version) {
             Write-Warning "Version not found, using fallback."
-            $version = "100.25.1.1"
+            $version = vars.FALLBACK_LTS_VERSION
           }
 
           Write-Host "Final determined version: $version"
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "tag=v$version" >> $env:GITHUB_OUTPUT
+
+      - name: Publish Visual Studio templates
+        id: publish_templates
+        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        uses: ./.github/actions/publish-templates
+        with:
+          channel: stable
+          source-branch: master
+          release-disabled: ${{ vars.TEMPLATES_RELEASE_DISABLED }}
 
       - name: Announce Release on Discord
         # Kill switch check
@@ -372,6 +404,10 @@ jobs:
           $sha = (git rev-parse HEAD).Trim()
           $shortSha = $sha.Substring(0, [Math]::Min(7, $sha.Length))
           $commitUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/commit/$sha"
+          $templatesUrl = '${{ steps.publish_templates.outputs.release_url }}'.Trim()
+          if ([string]::IsNullOrWhiteSpace($templatesUrl)) {
+            $templatesUrl = (& "$env:GITHUB_WORKSPACE/Scripts/CI/Get-TemplatesReleaseUrl.ps1" -Channel 'stable' | Select-Object -Last 1).ToString().Trim()
+          }
 
           $payload = @{
             embeds = @(
@@ -397,6 +433,11 @@ jobs:
                     inline = $false
                   }
                   @{
+                    name = "🧩 Visual Studio Templates"
+                    value = "[Latest templates release]($templatesUrl)"
+                    inline = $false
+                  }
+                  @{
                     name = "🎯 Target Frameworks"
                     value = "• .NET Framework 4.7.2`n• .NET Framework 4.8`n• .NET Framework 4.8.1`n• .NET 8.0`n• .NET 9.0`n• .NET 10.0"
                     inline = $false
@@ -418,6 +459,36 @@ jobs:
           Invoke-RestMethod -Uri "${{ secrets.DISCORD_WEBHOOK_MASTER }}" -Method Post -Body $payload -ContentType "application/json"
         env:
           DISCORD_WEBHOOK_MASTER: ${{ secrets.DISCORD_WEBHOOK_MASTER }}
+
+  publish-templates-marketplace:
+    needs: release-master
+    if: needs.release-master.result == 'success' && needs.release-master.outputs.templates_tag != ''
+    runs-on: windows-2025-vs2026
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download stable templates VSIX
+        uses: actions/download-artifact@v7
+        with:
+          name: templates-stable
+          path: artifacts/templates
+
+      - name: Publish VSIX to the Visual Studio Marketplace
+        shell: pwsh
+        env:
+          VSMARKETPLACE_PAT: ${{ secrets.VSMARKETPLACE_PAT }}
+          VSMARKETPLACE_PRIVATE: ${{ vars.VSMARKETPLACE_PRIVATE }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vsix = Get-ChildItem -Path "artifacts\templates" -Filter *.vsix -Recurse -File |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $vsix) { throw "Stable templates artifact did not contain a VSIX." }
+          & "$env:GITHUB_WORKSPACE/Scripts/CI/Publish-TemplatesMarketplace.ps1" `
+            -VsixPath $vsix.FullName `
+            -RepoRoot $env:GITHUB_WORKSPACE
 
   release-v105-lts:
     runs-on: windows-2025-vs2026
@@ -457,18 +528,18 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Setup .NET 11 (stable)
-        id: setup_dotnet11_stable_v105
+      - name: Setup .NET Preview (stable)
+        id: setup_dotnetpreview_stable_v105
         continue-on-error: true
         # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true'
+        if: steps.release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
 
-      - name: Setup .NET 11 (preview fallback)
+      - name: Setup .NET Preview (preview fallback)
         # Kill switch check
-        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.setup_dotnet11_stable_v105.outcome == 'failure'
+        if: steps.release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false' && steps.setup_dotnetpreview_stable_v105.outcome == 'failure'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
@@ -535,9 +606,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Populate WebView2 (Latest)
-        # Kill switch check
+      - name: Resolve Krypton toolkit major version
         if: steps.release_kill_switch.outputs.enabled == 'true'
+        id: krypton_major_version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repoRoot = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
+          . (Join-Path $repoRoot 'Scripts/CI/Test-KryptonInteropInPackages.ps1')
+          $major = Get-KryptonToolkitMajorVersion -Configuration Release
+          echo "major=$major" >> $env:GITHUB_OUTPUT
+
+      - name: Populate WebView2 (Latest)
+        # Kill switch check; WEBVIEW2_MINIMUM_SUPPORTED_VERSION defaults to 110 when unset
+        if: steps.release_kill_switch.outputs.enabled == 'true' && steps.krypton_major_version.outputs.major >= (vars.WEBVIEW2_MINIMUM_SUPPORTED_VERSION || 110)
         shell: pwsh
         run: |
           $root = $env:GITHUB_WORKSPACE
@@ -589,18 +671,7 @@ jobs:
         if: steps.release_kill_switch.outputs.enabled == 'true'
         run: msbuild /m "Scripts/Build/build.proj" /t:Pack /restore /p:Configuration=Release /p:Platform="Any CPU" /p:UseArtifactsOutput=true
 
-      # Verify Krypton.Interop is present in NuGet packages (V110+ only)
-      - name: Resolve Krypton toolkit major version
-        if: steps.release_kill_switch.outputs.enabled == 'true'
-        id: krypton_major_version
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $repoRoot = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
-          . (Join-Path $repoRoot 'Scripts/CI/Test-KryptonInteropInPackages.ps1')
-          $major = Get-KryptonToolkitMajorVersion -Configuration Release
-          echo "major=$major" >> $env:GITHUB_OUTPUT
-
+      # Verify Krypton.Interop is present in NuGet packages (V110+ only; major resolved earlier for WebView2 gate)
       - name: Verify Krypton.Interop in NuGet packages
         if: steps.release_kill_switch.outputs.enabled == 'true' && steps.krypton_major_version.outputs.major >= 110
         shell: pwsh
@@ -619,6 +690,14 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ steps.nuget_cache_restore.outputs.cache-primary-key }}
 
+      - name: NuGet login (OIDC)
+        # Kill switch check
+        if: steps.release_kill_switch.outputs.enabled == 'true' && github.repository == 'Krypton-Suite/Standard-Toolkit'
+        id: nuget_login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
         if: steps.release_kill_switch.outputs.enabled == 'true'
@@ -626,10 +705,15 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if (-not $env:NUGET_API_KEY) {
-            Write-Warning "NUGET_API_KEY not set - skipping NuGet push"
+          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/Standard-Toolkit') {
+            Write-Warning "NuGet trusted publishing is only configured for Krypton-Suite/Standard-Toolkit - skipping NuGet push"
             echo "packages_published=false" >> $env:GITHUB_OUTPUT
             exit 0
+          }
+
+          if (-not $env:NUGET_API_KEY) {
+            Write-Error "NuGet trusted publishing did not provide an API key. Set the NUGET_USER secret to the nuget.org profile name."
+            exit 1
           }
 
           $packageCandidates = @(
@@ -673,7 +757,7 @@ jobs:
 
           echo "packages_published=$publishedAny" >> $env:GITHUB_OUTPUT
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget_login.outputs.NUGET_API_KEY }}
           STANDARD_TOOLKIT_MIN_NUPKG_MB: ${{ vars.STANDARD_TOOLKIT_MIN_NUPKG_MB }}
 
       - name: Get Version
@@ -727,7 +811,7 @@ jobs:
 
           if (-not $version) {
             Write-Warning "Version not found, using fallback."
-            $version = "100.25.1.1"
+            $version = vars.FALLBACK_LTS_VERSION
           }
 
           Write-Host "Final determined version: $version"
@@ -832,18 +916,18 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Setup .NET 11 (stable)
-        id: setup_dotnet11_stable_canary
+      - name: Setup .NET Preview (stable)
+        id: setup_dotnetpreview_stable_canary
         continue-on-error: true
         # Kill switch check
-        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
 
-      - name: Setup .NET 11 (preview fallback)
+      - name: Setup .NET Preview (preview fallback)
         # Kill switch check
-        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.setup_dotnet11_stable_canary.outcome == 'failure'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false' && steps.setup_dotnetpreview_stable_canary.outcome == 'failure'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
@@ -1013,6 +1097,14 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ steps.nuget_cache_restore.outputs.cache-primary-key }}
 
+      - name: NuGet login (OIDC)
+        # Kill switch check
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && github.repository == 'Krypton-Suite/Standard-Toolkit'
+        id: nuget_login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push NuGet Packages to nuget.org
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
@@ -1020,10 +1112,15 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if (-not $env:NUGET_API_KEY) {
-            Write-Warning "NUGET_API_KEY not set - skipping NuGet push"
+          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/Standard-Toolkit') {
+            Write-Warning "NuGet trusted publishing is only configured for Krypton-Suite/Standard-Toolkit - skipping NuGet push"
             echo "packages_published=false" >> $env:GITHUB_OUTPUT
             exit 0
+          }
+
+          if (-not $env:NUGET_API_KEY) {
+            Write-Error "NuGet trusted publishing did not provide an API key. Set the NUGET_USER secret to the nuget.org profile name."
+            exit 1
           }
 
           $packageCandidates = @(
@@ -1067,7 +1164,7 @@ jobs:
 
           echo "packages_published=$publishedAny" >> $env:GITHUB_OUTPUT
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget_login.outputs.NUGET_API_KEY }}
           STANDARD_TOOLKIT_MIN_NUPKG_MB: ${{ vars.STANDARD_TOOLKIT_MIN_NUPKG_MB }}
 
       - name: Get Version
@@ -1121,12 +1218,21 @@ jobs:
 
           if (-not $version) {
             Write-Warning "Version not found, using fallback."
-            $version = "100.25.1.1"
+            $version = vars.FALLBACK_STABLE_VERSION
           }
 
           Write-Host "Final determined version: $version"
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "tag=v$version-canary" >> $env:GITHUB_OUTPUT
+
+      - name: Publish Visual Studio templates
+        id: publish_templates
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        uses: ./.github/actions/publish-templates
+        with:
+          channel: canary
+          source-branch: canary
+          release-disabled: ${{ vars.TEMPLATES_RELEASE_DISABLED }}
 
       - name: Announce Canary Release on Discord
         # Kill switch check
@@ -1141,6 +1247,10 @@ jobs:
           $sha = (git rev-parse HEAD).Trim()
           $shortSha = $sha.Substring(0, [Math]::Min(7, $sha.Length))
           $commitUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/commit/$sha"
+          $templatesUrl = '${{ steps.publish_templates.outputs.release_url }}'.Trim()
+          if ([string]::IsNullOrWhiteSpace($templatesUrl)) {
+            $templatesUrl = (& "$env:GITHUB_WORKSPACE/Scripts/CI/Get-TemplatesReleaseUrl.ps1" -Channel 'canary' | Select-Object -Last 1).ToString().Trim()
+          }
 
           $payload = @{
             embeds = @(
@@ -1163,6 +1273,11 @@ jobs:
                   @{
                     name = "📦 NuGet Packages"
                     value = "• [Krypton.Toolkit.Canary](https://www.nuget.org/packages/Krypton.Toolkit.Canary)`n• [Krypton.Ribbon.Canary](https://www.nuget.org/packages/Krypton.Ribbon.Canary)`n• [Krypton.Navigator.Canary](https://www.nuget.org/packages/Krypton.Navigator.Canary)`n• [Krypton.Workspace.Canary](https://www.nuget.org/packages/Krypton.Workspace.Canary)`n• [Krypton.Docking.Canary](https://www.nuget.org/packages/Krypton.Docking.Canary)`n• [Krypton.Standard.Toolkit.Canary](https://www.nuget.org/packages/Krypton.Standard.Toolkit.Canary)"
+                    inline = $false
+                  }
+                  @{
+                    name = "🧩 Visual Studio Templates"
+                    value = "[Latest templates release]($templatesUrl)"
                     inline = $false
                   }
                   @{
@@ -1225,8 +1340,8 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Setup .NET 11 (stable)
-        id: setup_dotnet11_stable_alpha
+      - name: Setup .NET Preview (stable)
+        id: setup_dotnetpreview_stable_alpha
         continue-on-error: true
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
@@ -1234,9 +1349,9 @@ jobs:
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
 
-      - name: Setup .NET 11 (preview fallback)
+      - name: Setup .NET Preview (preview fallback)
         # Kill switch check
-        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.setup_dotnet11_stable_alpha.outcome == 'failure'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.setup_dotnetpreview_stable_alpha.outcome == 'failure'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}

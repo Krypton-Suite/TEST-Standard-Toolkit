@@ -7,6 +7,9 @@
 #
 # Runs only when code is pushed to the Canary branch (or when triggered manually).
 # Does not run on a schedule.
+#
+# NUGET: Trusted publishing via NuGet/login. Secret NUGET_USER is the nuget.org profile name.
+# nuget.org needs a policy for this workflow file, Krypton-Suite/Standard-Toolkit, environment production.
 
 name: Canary Release
 
@@ -17,7 +20,8 @@ on:
   workflow_dispatch:  # Allow manual triggering
 
 permissions:
-  contents: read
+  contents: write
+  id-token: write
 
 jobs:
   canary:
@@ -122,16 +126,17 @@ jobs:
             9.0.x
             10.0.x
 
-      - name: Setup .NET 11 (stable)
-        id: setup_dotnet11_stable_canary_yml
+      - name: Setup .NET Preview (stable)
+        id: setup_dotnetpreview_stable_canary_yml
         continue-on-error: true
-        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
+        # Skip setup-dotnet preview if USE_DOTNET_PREVIEW=false (repo variable).
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
 
-      - name: Setup .NET 11 (preview fallback)
-        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.setup_dotnet11_stable_canary_yml.outcome == 'failure'
+      - name: Setup .NET Preview (preview fallback)
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false' && steps.setup_dotnetpreview_stable_canary_yml.outcome == 'failure'
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
@@ -215,9 +220,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      # Prerelease WebView2 required for net11.0-windows; stable packages do not support .NET 11 yet.
-      - name: Resolve WebView2 version
+      - name: Resolve Krypton toolkit major version
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
+        id: krypton_major_version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repoRoot = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
+          . (Join-Path $repoRoot 'Scripts/CI/Test-KryptonInteropInPackages.ps1')
+          $major = Get-KryptonToolkitMajorVersion -Configuration Canary
+          echo "major=$major" >> $env:GITHUB_OUTPUT
+
+      # WebView2 when toolkit major >= WEBVIEW2_MINIMUM_SUPPORTED_VERSION (default 110).
+      - name: Resolve WebView2 version
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.krypton_major_version.outputs.major >= (vars.WEBVIEW2_MINIMUM_SUPPORTED_VERSION || 110)
         id: webview2_version
         shell: pwsh
         run: |
@@ -226,7 +242,7 @@ jobs:
           & (Join-Path $repoRoot 'Scripts/CI/Populate-WebView2.ps1') -Prerelease -ResolveVersionOnly -WriteGitHubOutputVersion
 
       - name: Restore WebView2 cache
-        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.krypton_major_version.outputs.major >= (vars.WEBVIEW2_MINIMUM_SUPPORTED_VERSION || 110)
         id: webview2_cache_restore
         uses: actions/cache/restore@v6
         continue-on-error: true
@@ -237,7 +253,7 @@ jobs:
             webview2-${{ runner.os }}-
 
       - name: Populate WebView2 (Preview)
-        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.krypton_major_version.outputs.major >= (vars.WEBVIEW2_MINIMUM_SUPPORTED_VERSION || 110)
         shell: pwsh
         env:
           WEBVIEW2_VERSION: ${{ steps.webview2_version.outputs.version }}
@@ -247,7 +263,7 @@ jobs:
           & (Join-Path $repoRoot 'Scripts/CI/Populate-WebView2.ps1') -Prerelease -Version $env:WEBVIEW2_VERSION
 
       - name: Save WebView2 cache
-        if: success() && steps.canary_release_kill_switch.outputs.enabled == 'true'
+        if: success() && steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.krypton_major_version.outputs.major >= (vars.WEBVIEW2_MINIMUM_SUPPORTED_VERSION || 110)
         uses: actions/cache/save@v6
         continue-on-error: true
         with:
@@ -267,18 +283,7 @@ jobs:
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         run: msbuild /m "Scripts/Build/canary.proj" /t:Pack /restore /p:Configuration=Canary /p:Platform="Any CPU" /p:UseArtifactsOutput=true
 
-      # Verify Krypton.Interop is present in the NuGet packages (V110+ only)
-      - name: Resolve Krypton toolkit major version
-        if: steps.canary_release_kill_switch.outputs.enabled == 'true'
-        id: krypton_major_version
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $repoRoot = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
-          . (Join-Path $repoRoot 'Scripts/CI/Test-KryptonInteropInPackages.ps1')
-          $major = Get-KryptonToolkitMajorVersion -Configuration Canary
-          echo "major=$major" >> $env:GITHUB_OUTPUT
-
+      # Verify Krypton.Interop is present in the NuGet packages (V110+ only; major resolved earlier for WebView2 gate)
       - name: Verify Krypton.Interop in NuGet packages
         if: steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.krypton_major_version.outputs.major >= 110
         shell: pwsh
@@ -305,16 +310,28 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ steps.nuget_cache_restore.outputs.cache-primary-key }}
 
+      - name: NuGet login (OIDC)
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && github.repository == 'Krypton-Suite/Standard-Toolkit'
+        id: nuget_login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push NuGet Packages to nuget.org
         if: steps.canary_release_kill_switch.outputs.enabled == 'true'
         id: push_nuget
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if (-not $env:NUGET_API_KEY) {
-            Write-Warning "NUGET_API_KEY not set - skipping NuGet push"
+          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/Standard-Toolkit') {
+            Write-Warning "NuGet trusted publishing is only configured for Krypton-Suite/Standard-Toolkit - skipping NuGet push"
             echo "packages_published=false" >> $env:GITHUB_OUTPUT
             exit 0
+          }
+
+          if (-not $env:NUGET_API_KEY) {
+            Write-Error "NuGet trusted publishing did not provide an API key. Set the NUGET_USER secret to the nuget.org profile name."
+            exit 1
           }
 
           $packageCandidates = @(
@@ -357,7 +374,7 @@ jobs:
 
           echo "packages_published=$publishedAny" >> $env:GITHUB_OUTPUT
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget_login.outputs.NUGET_API_KEY }}
           STANDARD_TOOLKIT_MIN_NUPKG_MB: ${{ vars.STANDARD_TOOLKIT_MIN_NUPKG_MB }}
 
       - name: Get Version
@@ -417,6 +434,15 @@ jobs:
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "tag=v$version-canary" >> $env:GITHUB_OUTPUT
 
+      - name: Publish Visual Studio templates
+        id: publish_templates
+        if: steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        uses: ./.github/actions/publish-templates
+        with:
+          channel: canary
+          source-branch: ${{ github.ref_name }}
+          release-disabled: ${{ vars.TEMPLATES_RELEASE_DISABLED }}
+
       - name: Announce Canary Release on Discord
         # Kill switch check
         if: steps.canary_release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
@@ -430,6 +456,10 @@ jobs:
           $sha = (git rev-parse HEAD).Trim()
           $shortSha = $sha.Substring(0, [Math]::Min(7, $sha.Length))
           $commitUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/commit/$sha"
+          $templatesUrl = '${{ steps.publish_templates.outputs.release_url }}'.Trim()
+          if ([string]::IsNullOrWhiteSpace($templatesUrl)) {
+            $templatesUrl = (& "$env:GITHUB_WORKSPACE/Scripts/CI/Get-TemplatesReleaseUrl.ps1" -Channel 'canary' | Select-Object -Last 1).ToString().Trim()
+          }
 
           $payload = @{
             embeds = @(
@@ -452,6 +482,11 @@ jobs:
                   @{
                     name = "📦 NuGet Packages"
                     value = "• [Krypton.Toolkit.Canary](https://www.nuget.org/packages/Krypton.Toolkit.Canary)`n• [Krypton.Themes.Canary](https://www.nuget.org/packages/Krypton.Themes.Canary)`n• [Krypton.Ribbon.Canary](https://www.nuget.org/packages/Krypton.Ribbon.Canary)`n• [Krypton.Navigator.Canary](https://www.nuget.org/packages/Krypton.Navigator.Canary)`n• [Krypton.Workspace.Canary](https://www.nuget.org/packages/Krypton.Workspace.Canary)`n• [Krypton.Docking.Canary](https://www.nuget.org/packages/Krypton.Docking.Canary)`n• [Krypton.Standard.Toolkit.Canary](https://www.nuget.org/packages/Krypton.Standard.Toolkit.Canary)"
+                    inline = $false
+                  }
+                  @{
+                    name = "🧩 Visual Studio Templates"
+                    value = "[Latest templates release]($templatesUrl)"
                     inline = $false
                   }
                   @{
