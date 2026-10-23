@@ -4,17 +4,39 @@
 # KILL-SWITCH: To disable this workflow, set repository variable NIGHTLY_DISABLED=true
 # Location: Repository Settings → Secrets and variables → Actions → Variables tab
 # To re-enable: Set NIGHTLY_DISABLED=false or delete the variable
+#
+# SKIP CHANGE CHECK: Set repository variable SKIP_NIGHTLY_24_HOUR_CHECK=true to always force a nightly
+# build (scheduled or manual), or enable the skip_change_check workflow_dispatch input for a one-off run.
+# Either override forces a build even when there are no commits, or only .github-only commits, in the
+# last 24 hours.
+#
+# SCHEDULED PUBLISH DAYS: In addition to the daily 24-hour change check, the workflow can also publish
+# on 1 January and on UTC days of the year whose number ends in 0 (e.g. 10, 20, 30, 100, 300, 310),
+# even when there are no qualifying commits. Enable each rule via repository variables:
+#   NIGHTLY_SCHEDULED_PUBLISH_JAN1_ENABLED=true
+#   NIGHTLY_SCHEDULED_PUBLISH_DAY_ENDS_ZERO_ENABLED=true
+#
+# NUGET: Trusted publishing via NuGet/login (up to 3 attempts). Secret NUGET_USER is the nuget.org profile name.
+# A transient OIDC failure skips the NuGet push instead of failing the nightly. Package pushes retry with backoff.
+# nuget.org needs a policy for this workflow file, Krypton-Suite/Standard-Toolkit, environment production.
 
 name: Nightly Release
 
 permissions:
-  contents: read
+  contents: write
+  id-token: write
 
 on:
   schedule:
-    # Run nightly build automatically at midnight UTC every day
-    - cron: '0 0 * * *'
+    # Run at 23:42 UTC (~18 min before midnight; off-hour to reduce schedule queue delays)
+    - cron: '42 23 * * *'
   workflow_dispatch:  # Allow manual triggering for testing
+    inputs:
+      skip_change_check:
+        description: Skip the 24-hour change check and force a build (even for .github-only changes)
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   nightly:
@@ -47,10 +69,16 @@ jobs:
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         shell: pwsh
+        env:
+          EXPECTED_REPOSITORY: ${{ vars.EXPECTED_REPOSITORY }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/Standard-Toolkit') {
-            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on Krypton-Suite/Standard-Toolkit"
+          $expectedRepository = $env:EXPECTED_REPOSITORY
+          if ([string]::IsNullOrWhiteSpace($expectedRepository)) {
+            $expectedRepository = 'Krypton-Suite/Standard-Toolkit'
+          }
+          if ($env:GITHUB_REPOSITORY -ne $expectedRepository) {
+            Write-Error "Security: Invalid repository '$env:GITHUB_REPOSITORY'. This workflow should only run on $expectedRepository"
             exit 1
           }
           Write-Host "✓ Repository verified: $env:GITHUB_REPOSITORY"
@@ -111,51 +139,93 @@ jobs:
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
         id: check_changes
         shell: pwsh
+        env:
+          SKIP_CHANGE_CHECK_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.skip_change_check == true && 'true' || 'false' }}
+          SKIP_NIGHTLY_24_HOUR_CHECK: ${{ vars.SKIP_NIGHTLY_24_HOUR_CHECK }}
+          NIGHTLY_SCHEDULED_PUBLISH_JAN1_ENABLED: ${{ vars.NIGHTLY_SCHEDULED_PUBLISH_JAN1_ENABLED }}
+          NIGHTLY_SCHEDULED_PUBLISH_DAY_ENDS_ZERO_ENABLED: ${{ vars.NIGHTLY_SCHEDULED_PUBLISH_DAY_ENDS_ZERO_ENABLED }}
         run: |
           $ErrorActionPreference = 'Stop'
 
-          # Get commits from last 24 hours on alpha branch
+          if ($env:SKIP_CHANGE_CHECK_INPUT -eq 'true' -or $env:SKIP_NIGHTLY_24_HOUR_CHECK -eq 'true') {
+            $reason = if ($env:SKIP_CHANGE_CHECK_INPUT -eq 'true') { 'workflow_dispatch input' } else { 'SKIP_NIGHTLY_24_HOUR_CHECK=true' }
+            Write-Host "Change check skipped via $reason - forcing nightly build"
+            echo "has_changes=true" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          # Get commits from last 24 hours on alpha that touch paths outside .github.
+          # Use rev-list pathspec (merge-aware). Per-commit git diff-tree without -m misses
+          # merge/PR commits, so Source-only merges were incorrectly treated as .github-only
+          # and skipped. Exclude .github so automated CI syncs do not trigger a release.
           $yesterday = (Get-Date).AddDays(-1).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss")
-          $commitCount = git rev-list --count --since="$yesterday" alpha
+          $commitCount = [int](git rev-list --count --since="$yesterday" alpha -- . ':(exclude).github')
 
-          Write-Host "Commits in last 24 hours: $commitCount"
+          Write-Host "Commits in last 24 hours (excluding .github-only changes): $commitCount"
 
-          if ([int]$commitCount -gt 0) {
-            Write-Host "Changes detected - proceeding with nightly build"
+          $todayUtc = (Get-Date).ToUniversalTime()
+          $dayOfYear = $todayUtc.DayOfYear
+          $jan1PublishEnabled = $env:NIGHTLY_SCHEDULED_PUBLISH_JAN1_ENABLED -eq 'true'
+          $dayEndsZeroPublishEnabled = $env:NIGHTLY_SCHEDULED_PUBLISH_DAY_ENDS_ZERO_ENABLED -eq 'true'
+          $forcedPublishDay = $false
+          $forcedPublishReason = $null
+
+          if ($jan1PublishEnabled -and $todayUtc.Month -eq 1 -and $todayUtc.Day -eq 1) {
+            $forcedPublishDay = $true
+            $forcedPublishReason = 'scheduled publish day (1 January; NIGHTLY_SCHEDULED_PUBLISH_JAN1_ENABLED=true)'
+          } elseif ($dayEndsZeroPublishEnabled -and ($dayOfYear % 10 -eq 0)) {
+            $forcedPublishDay = $true
+            $forcedPublishReason = "scheduled publish day (day $dayOfYear of year ends in 0; NIGHTLY_SCHEDULED_PUBLISH_DAY_ENDS_ZERO_ENABLED=true)"
+          }
+
+          if ($forcedPublishDay) {
+            Write-Host "Scheduled publish day matched: $forcedPublishReason"
+          } elseif ($todayUtc.Month -eq 1 -and $todayUtc.Day -eq 1) {
+            Write-Host '1 January matched, but NIGHTLY_SCHEDULED_PUBLISH_JAN1_ENABLED is not true - scheduled publish skipped'
+          } elseif ($dayOfYear % 10 -eq 0) {
+            Write-Host "Day $dayOfYear of year ends in 0, but NIGHTLY_SCHEDULED_PUBLISH_DAY_ENDS_ZERO_ENABLED is not true - scheduled publish skipped"
+          }
+
+          if ($commitCount -gt 0 -or $forcedPublishDay) {
+            if ($commitCount -gt 0) {
+              Write-Host "Changes detected - proceeding with nightly build"
+            } else {
+              Write-Host "No recent changes, but scheduled publish day - proceeding with nightly build"
+            }
             echo "has_changes=true" >> $env:GITHUB_OUTPUT
           } else {
-            Write-Host "No changes detected - skipping nightly build"
+            Write-Host "No changes detected (or only .github-only changes) and not a scheduled publish day - skipping nightly build"
             echo "has_changes=false" >> $env:GITHUB_OUTPUT
           }
 
       - name: Skip notification
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'false'
         run: |
-          Write-Host "::notice::No commits in the last 24 hours. Skipping nightly build and publish."
+          Write-Host "::notice::No commits (other than .github-only changes) in the last 24 hours and not a scheduled publish day. Skipping nightly build and publish."
 
       # .NET 9 and 10; .NET 11 for net11.0-windows (DOTNET_PREVIEW_SETUP_VERSION when set, else 11.0.x).
       - name: Setup .NET (9 and 10)
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
             9.0.x
             10.0.x
 
-      - name: Setup .NET 11 (stable)
-        id: setup_dotnet11_stable_nightly
+      - name: Setup .NET Preview (stable)
+        id: setup_dotnetpreview_stable_nightly
         continue-on-error: true
         # Kill switch check
-        if: steps.nightly_release_kill_switch.outputs.enabled == 'true'
-        uses: actions/setup-dotnet@v5
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false'
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
 
-      - name: Setup .NET 11 (preview fallback)
+      - name: Setup .NET Preview (preview fallback)
         # Kill switch check
-        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.setup_dotnet11_stable_nightly.outcome == 'failure'
-        uses: actions/setup-dotnet@v5
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false' && steps.setup_dotnetpreview_stable_nightly.outcome == 'failure'
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION != '' && vars.DOTNET_PREVIEW_SETUP_VERSION || '11.0.x' }}
           dotnet-quality: preview
@@ -164,7 +234,7 @@ jobs:
       - name: Setup .NET Preview
         # Kill switch check
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && vars.USE_DOTNET_PREVIEW != 'false'
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ vars.DOTNET_PREVIEW_SETUP_VERSION }}
           dotnet-quality: preview
@@ -235,9 +305,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      # Prerelease WebView2 required for net11.0-windows; stable packages do not support .NET 11 yet.
-      - name: Resolve WebView2 version
+      - name: Resolve Krypton toolkit major version
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
+        id: krypton_major_version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repoRoot = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
+          . (Join-Path $repoRoot 'Scripts/CI/Test-KryptonInteropInPackages.ps1')
+          $major = Get-KryptonToolkitMajorVersion -Configuration Nightly
+          echo "major=$major" >> $env:GITHUB_OUTPUT
+
+      # WebView2 when toolkit major >= WEBVIEW2_MINIMUM_SUPPORTED_VERSION (default 110).
+      - name: Resolve WebView2 version
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && steps.krypton_major_version.outputs.major >= (vars.WEBVIEW2_MINIMUM_SUPPORTED_VERSION || 110)
         id: webview2_version
         shell: pwsh
         run: |
@@ -246,7 +327,7 @@ jobs:
           & (Join-Path $repoRoot 'Scripts/CI/Populate-WebView2.ps1') -Prerelease -ResolveVersionOnly -WriteGitHubOutputVersion
 
       - name: Restore WebView2 cache
-        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && steps.krypton_major_version.outputs.major >= (vars.WEBVIEW2_MINIMUM_SUPPORTED_VERSION || 110)
         id: webview2_cache_restore
         uses: actions/cache/restore@v6
         continue-on-error: true
@@ -257,7 +338,7 @@ jobs:
             webview2-${{ runner.os }}-
 
       - name: Populate WebView2 (Preview)
-        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && steps.krypton_major_version.outputs.major >= (vars.WEBVIEW2_MINIMUM_SUPPORTED_VERSION || 110)
         shell: pwsh
         env:
           WEBVIEW2_VERSION: ${{ steps.webview2_version.outputs.version }}
@@ -267,7 +348,7 @@ jobs:
           & (Join-Path $repoRoot 'Scripts/CI/Populate-WebView2.ps1') -Prerelease -Version $env:WEBVIEW2_VERSION
 
       - name: Save WebView2 cache
-        if: success() && steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
+        if: success() && steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && steps.krypton_major_version.outputs.major >= (vars.WEBVIEW2_MINIMUM_SUPPORTED_VERSION || 110)
         uses: actions/cache/save@v6
         continue-on-error: true
         with:
@@ -287,14 +368,107 @@ jobs:
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
         run: msbuild /m "Scripts/Build/nightly.proj" /t:Pack /restore /p:Configuration=Nightly /p:Platform="Any CPU" /p:UseArtifactsOutput=true
 
+      # Verify Krypton.Interop is present in NuGet packages (V110+ only; major resolved earlier for WebView2 gate)
+      - name: Verify Krypton.Interop in NuGet packages
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && steps.krypton_major_version.outputs.major >= 110
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repoRoot = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
+          . (Join-Path $repoRoot 'Scripts/CI/Test-KryptonInteropInPackages.ps1')
+          Test-KryptonInteropInPackages -Configuration Nightly -MinimumMajorVersion 110 -SkipIfInteropProjectMissing
+
+      - name: Verify WinForms Designer SDK in NuGet packages
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && steps.krypton_major_version.outputs.major >= 110
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repoRoot = if ($env:GITHUB_WORKSPACE) { $env:GITHUB_WORKSPACE } else { (Get-Location).Path }
+          . (Join-Path $repoRoot 'Scripts/CI/Test-KryptonDesignerSdkInPackages.ps1')
+          Test-KryptonDesignerSdkInPackages -Configuration Nightly -MinimumMajorVersion 110 -SkipIfDesignerSdkProjectMissing
+
+      - name: NuGet login (OIDC) attempt 1
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && github.repository == 'Krypton-Suite/Standard-Toolkit'
+        id: nuget_login_1
+        uses: NuGet/login@v1
+        continue-on-error: true
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Wait before NuGet login attempt 2
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && github.repository == 'Krypton-Suite/Standard-Toolkit' && steps.nuget_login_1.outcome != 'success'
+        shell: pwsh
+        run: Start-Sleep -Seconds 20
+
+      - name: NuGet login (OIDC) attempt 2
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && github.repository == 'Krypton-Suite/Standard-Toolkit' && steps.nuget_login_1.outcome != 'success'
+        id: nuget_login_2
+        uses: NuGet/login@v1
+        continue-on-error: true
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Wait before NuGet login attempt 3
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && github.repository == 'Krypton-Suite/Standard-Toolkit' && steps.nuget_login_1.outcome != 'success' && steps.nuget_login_2.outcome != 'success'
+        shell: pwsh
+        run: Start-Sleep -Seconds 40
+
+      - name: NuGet login (OIDC) attempt 3
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && github.repository == 'Krypton-Suite/Standard-Toolkit' && steps.nuget_login_1.outcome != 'success' && steps.nuget_login_2.outcome != 'success'
+        id: nuget_login_3
+        uses: NuGet/login@v1
+        continue-on-error: true
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Consolidate NuGet login output
+        id: nuget_login_consolidate
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true' && github.repository == 'Krypton-Suite/Standard-Toolkit'
+        shell: pwsh
+        env:
+          NUGET_API_KEY_1: ${{ steps.nuget_login_1.outputs.NUGET_API_KEY }}
+          NUGET_API_KEY_2: ${{ steps.nuget_login_2.outputs.NUGET_API_KEY }}
+          NUGET_API_KEY_3: ${{ steps.nuget_login_3.outputs.NUGET_API_KEY }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $keys = @(
+            @{ Attempt = 1; Value = $env:NUGET_API_KEY_1 },
+            @{ Attempt = 2; Value = $env:NUGET_API_KEY_2 },
+            @{ Attempt = 3; Value = $env:NUGET_API_KEY_3 }
+          )
+
+          foreach ($entry in $keys) {
+            $key = $entry.Value
+            if ($key -and $key.Trim() -ne '') {
+              $key = $key.Trim()
+              Write-Output "::add-mask::$key"
+              [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "NUGET_API_KEY=$key`n")
+              Write-Host "Using NUGET API key from attempt $($entry.Attempt)"
+              exit 0
+            }
+          }
+
+          [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "NUGET_API_KEY=`n")
+          Write-Warning "NuGet OIDC login did not produce an API key after retries; publishing will be skipped."
+
       - name: Push NuGet Packages to nuget.org
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
         id: push_nuget
         shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.nuget_login_consolidate.outputs.NUGET_API_KEY }}
+          STANDARD_TOOLKIT_MIN_NUPKG_MB: ${{ vars.STANDARD_TOOLKIT_MIN_NUPKG_MB }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if (-not $env:NUGET_API_KEY) {
-            Write-Warning "NUGET_API_KEY not set - skipping NuGet push"
+          if ($env:GITHUB_REPOSITORY -ne 'Krypton-Suite/Standard-Toolkit') {
+            Write-Warning "NuGet trusted publishing is only configured for Krypton-Suite/Standard-Toolkit - skipping NuGet push"
+            echo "packages_published=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          if (-not $env:NUGET_API_KEY -or $env:NUGET_API_KEY.Trim() -eq '') {
+            Write-Warning "NuGet OIDC login did not return an API key; skipping package push."
             echo "packages_published=false" >> $env:GITHUB_OUTPUT
             exit 0
           }
@@ -316,18 +490,36 @@ jobs:
                 continue
               }
               Write-Output "Pushing package: $($package.Name)"
-              try {
-                $output = dotnet nuget push "$($package.FullName)" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate 2>&1 | Out-String
-                Write-Output $output
-                # Check if package was actually pushed (not skipped)
-                if ($output -notmatch "already exists" -and $output -notmatch "was not pushed") {
-                  $publishedAny = $true
-                  Write-Host "Package $($package.Name) was published"
-                } else {
-                  Write-Host "Package $($package.Name) already exists - skipped"
+
+              $attempt = 0
+              $maxAttempts = 3
+              $pushed = $false
+              while ($attempt -lt $maxAttempts -and -not $pushed) {
+                $attempt++
+                try {
+                  $output = dotnet nuget push "$($package.FullName)" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate 2>&1 | Out-String
+                  $exitCode = $LASTEXITCODE
+                  Write-Output $output
+                  if ($exitCode -ne 0) {
+                    throw "dotnet nuget push exited with code $exitCode"
+                  }
+                  if ($output -notmatch "already exists" -and $output -notmatch "was not pushed") {
+                    $publishedAny = $true
+                    Write-Host "Package $($package.Name) was published"
+                  } else {
+                    Write-Host "Package $($package.Name) already exists - skipped"
+                  }
+                  $pushed = $true
+                } catch {
+                  Write-Warning "Attempt ${attempt}: Failed to push $($package.Name): $_"
+                  if ($attempt -lt $maxAttempts) {
+                    $sleep = [math]::Pow(2, $attempt)
+                    Write-Host "Retrying in $sleep seconds..."
+                    Start-Sleep -Seconds $sleep
+                  } else {
+                    Write-Warning "All attempts to push $($package.Name) failed; continuing with next package."
+                  }
                 }
-              } catch {
-                Write-Warning "Failed to push $($package.Name): $_"
               }
             }
           } else {
@@ -339,9 +531,6 @@ jobs:
           }
 
           echo "packages_published=$publishedAny" >> $env:GITHUB_OUTPUT
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-          STANDARD_TOOLKIT_MIN_NUPKG_MB: ${{ vars.STANDARD_TOOLKIT_MIN_NUPKG_MB }}
 
       - name: Get Version
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.check_changes.outputs.has_changes == 'true'
@@ -414,6 +603,46 @@ jobs:
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "tag=v$version-nightly" >> $env:GITHUB_OUTPUT
 
+      # Nightly checks out alpha. Copy the action from the workflow commit when alpha does not have it yet.
+      - name: Checkout templates publish action overlay
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          sparse-checkout: .github/actions/publish-templates
+          sparse-checkout-cone-mode: true
+          path: _templates-action-overlay
+
+      - name: Ensure templates publish action
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dest = Join-Path $env:GITHUB_WORKSPACE '.github/actions/publish-templates/action.yml'
+          if (Test-Path -LiteralPath $dest) {
+            Write-Host 'Templates publish action already present on the checked-out branch.'
+            exit 0
+          }
+          $src = Join-Path $env:GITHUB_WORKSPACE '_templates-action-overlay/.github/actions/publish-templates/action.yml'
+          if (-not (Test-Path -LiteralPath $src)) {
+            Write-Error @"
+          .github/actions/publish-templates/action.yml is missing on alpha and on workflow ref ($env:GITHUB_SHA).
+          Merge the templates publish action into alpha in the same change set as these workflow updates.
+          "@
+          }
+          New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dest) | Out-Null
+          Copy-Item -LiteralPath $src -Destination $dest -Force
+          Write-Host 'Copied templates publish action from workflow ref onto alpha checkout.'
+
+      - name: Publish Visual Studio templates
+        id: publish_templates
+        if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
+        uses: ./.github/actions/publish-templates
+        with:
+          channel: alpha
+          source-branch: alpha
+          release-disabled: ${{ vars.TEMPLATES_RELEASE_DISABLED }}
+
       - name: Announce Nightly Release on Discord
         if: steps.nightly_release_kill_switch.outputs.enabled == 'true' && steps.push_nuget.outputs.packages_published == 'True'
         shell: pwsh
@@ -423,10 +652,19 @@ jobs:
             exit 0
           }
 
+          $sha = (git rev-parse HEAD).Trim()
+          $shortSha = $sha.Substring(0, [Math]::Min(7, $sha.Length))
+          $commitUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/commit/$sha"
+          $templatesUrl = '${{ steps.publish_templates.outputs.release_url }}'.Trim()
+          if ([string]::IsNullOrWhiteSpace($templatesUrl)) {
+            $templatesUrl = (& "$env:GITHUB_WORKSPACE/Scripts/CI/Get-TemplatesReleaseUrl.ps1" -Channel 'alpha' | Select-Object -Last 1).ToString().Trim()
+          }
+
           $payload = @{
             embeds = @(
               @{
                 title = "🚀 Krypton Toolkit Nightly Release"
+                url = $commitUrl
                 description = "A new nightly build is now available for bleeding-edge testing!"
                 color = 10181046
                 fields = @(
@@ -436,8 +674,18 @@ jobs:
                     inline = $true
                   }
                   @{
+                    name = "🔗 Commit"
+                    value = "[``$shortSha``]($commitUrl)"
+                    inline = $true
+                  }
+                  @{
                     name = "📦 NuGet Packages"
-                    value = "• [Krypton.Toolkit.Nightly](https://www.nuget.org/packages/Krypton.Toolkit.Nightly)`n• [Krypton.Ribbon.Nightly](https://www.nuget.org/packages/Krypton.Ribbon.Nightly)`n• [Krypton.Navigator.Nightly](https://www.nuget.org/packages/Krypton.Navigator.Nightly)`n• [Krypton.Workspace.Nightly](https://www.nuget.org/packages/Krypton.Workspace.Nightly)`n• [Krypton.Docking.Nightly](https://www.nuget.org/packages/Krypton.Docking.Nightly)`n• [Krypton.Standard.Toolkit.Nightly](https://www.nuget.org/packages/Krypton.Standard.Toolkit.Nightly)"
+                    value = "• [Krypton.Toolkit.Nightly](https://www.nuget.org/packages/Krypton.Toolkit.Nightly)`n• [Krypton.Themes.Nightly](https://www.nuget.org/packages/Krypton.Themes.Nightly)`n• [Krypton.Ribbon.Nightly](https://www.nuget.org/packages/Krypton.Ribbon.Nightly)`n• [Krypton.Navigator.Nightly](https://www.nuget.org/packages/Krypton.Navigator.Nightly)`n• [Krypton.Workspace.Nightly](https://www.nuget.org/packages/Krypton.Workspace.Nightly)`n• [Krypton.Docking.Nightly](https://www.nuget.org/packages/Krypton.Docking.Nightly)`n• [Krypton.Standard.Toolkit.Nightly](https://www.nuget.org/packages/Krypton.Standard.Toolkit.Nightly)"
+                    inline = $false
+                  }
+                  @{
+                    name = "🧩 Visual Studio Templates"
+                    value = "[Latest templates release]($templatesUrl)"
                     inline = $false
                   }
                   @{
