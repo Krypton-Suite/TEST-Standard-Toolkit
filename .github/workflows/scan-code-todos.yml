@@ -40,7 +40,6 @@ on:
           - prerelease
           - V110
           - V105-LTS
-          - V85-LTS
           # END: long-lived-branches
           - other
       branch_custom:
@@ -63,8 +62,14 @@ on:
       max_issues:
         description: Maximum new issues to create per run
         required: true
-        default: 25
-        type: number
+        default: '25'
+        type: choice
+        options:
+          - '5'
+          - '10'
+          - '25'
+          - '50'
+          - '100'
       group_duplicates:
         description: Group identical comment text into one issue
         required: true
@@ -78,7 +83,7 @@ on:
       notify_discord:
         description: Post a run summary to Discord (requires secret DISCORD_WEBHOOK_CODE_TODOS)
         required: true
-        default: false
+        default: true 
         type: boolean
 
 permissions:
@@ -366,10 +371,15 @@ jobs:
             const lineNumber = event.data.line_number;
             const lineText = event.data.lines?.text || '';
             const captures = event.data.submatches || [];
-            const markerRaw = (captures[0]?.match?.text || '').trim();
-            let commentText = (captures[1]?.match?.text || '').trim();
+            // ripgrep --json submatches carry the whole match (no capture groups),
+            // so the marker word and comment text are re-parsed from the match text.
+            const matchText = (captures[0]?.match?.text || '').trim();
+            const parsed = matchText.match(/^(TODO|ToDo|FIXME|HACK)\b(?:\s*\(\s*issue\s*\))?\s*[:\s]*(.*)$/i);
+            const markerRaw = (parsed?.[1] || '').trim();
+            let commentText = (parsed?.[2] || '').trim();
             if (!commentText) {
-              const fallback = lineText.match(/(?:TODO|ToDo|FIXME|HACK)(?:\s*\(\s*issue\s*\))?\s*[:\s]+(.+)$/i);
+              // lines.text keeps its trailing newline; trim it or (.+)$ can never match.
+              const fallback = lineText.trimEnd().match(/(?:TODO|ToDo|FIXME|HACK)(?:\s*\(\s*issue\s*\))?\s*[:\s]+(.+)$/i);
               commentText = (fallback?.[1] || '').trim();
             }
 
@@ -453,13 +463,13 @@ jobs:
             const fingerprintSuffix = ' -->';
 
             const todoLabels = [
-              'todo :spiral_notepad:',
+              ':spiral_notepad: todo',
               'backlog',
               'version:all versions',
             ];
 
             const hackLabels = [
-              'todo :spiral_notepad:',
+              ':spiral_notepad: todo',
               'has workaround',
               'backlog',
               'version:all versions',
@@ -852,7 +862,7 @@ jobs:
                 const { data } = await github.rest.issues.listForRepo({
                   owner,
                   repo,
-                  labels: 'todo :spiral_notepad:',
+                  labels: ':spiral_notepad: todo',
                   state: 'all',
                   per_page: 100,
                   page,
@@ -956,7 +966,7 @@ jobs:
                 const { data } = await github.rest.issues.listForRepo({
                   owner,
                   repo,
-                  labels: 'todo :spiral_notepad:',
+                  labels: ':spiral_notepad: todo',
                   state: 'all',
                   per_page: 100,
                   page,
@@ -1223,6 +1233,7 @@ jobs:
           JOB_STATUS: ${{ job.status }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           if [ -z "$DISCORD_WEBHOOK" ]; then
@@ -1230,11 +1241,20 @@ jobs:
             exit 0
           fi
 
+          sha="${SHA:-${GITHUB_SHA:-}}"
+          if git rev-parse HEAD >/dev/null 2>&1; then
+            sha="$(git rev-parse HEAD)"
+          fi
+          short_sha="${sha:0:7}"
+          commit_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${sha}"
+
           if [ -f scan-summary.json ]; then
             payload="$(jq -n \
               --arg repo "$REPOSITORY" \
               --arg run_url "$RUN_URL" \
               --arg job_status "$JOB_STATUS" \
+              --arg short_sha "$short_sha" \
+              --arg commit_url "$commit_url" \
               --argjson summary "$(cat scan-summary.json)" \
               '
               def n($v): if $v == null then "n/a" else ($v|tostring) end;
@@ -1244,9 +1264,11 @@ jobs:
               {
                 embeds: [{
                   title: ("📝 Code TODO scan" + $dry),
+                  url: $commit_url,
                   description: (
                     "**Repository:** " + $repo + "\n" +
                     "**Branch:** `" + ($summary.branch // "unknown") + "`\n" +
+                    "**Commit:** [`" + $short_sha + "`](" + $commit_url + ")\n" +
                     "**Marker mode:** " + $mode + "\n" +
                     "**Job status:** " + $job_status + "\n\n" +
                     "**Scan**\n" +
@@ -1277,12 +1299,16 @@ jobs:
               --arg repo "$REPOSITORY" \
               --arg run_url "$RUN_URL" \
               --arg job_status "$JOB_STATUS" \
+              --arg short_sha "$short_sha" \
+              --arg commit_url "$commit_url" \
               '
               {
                 embeds: [{
                   title: "📝 Code TODO scan",
+                  url: $commit_url,
                   description: (
                     "**Repository:** " + $repo + "\n" +
+                    "**Commit:** [`" + $short_sha + "`](" + $commit_url + ")\n" +
                     "**Job status:** " + $job_status + "\n\n" +
                     "The workflow did not complete the issue sync step (no scan summary was produced).\n\n" +
                     "[View workflow run](" + $run_url + ")"
