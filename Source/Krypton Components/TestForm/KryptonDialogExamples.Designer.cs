@@ -1,0 +1,137 @@
+﻿namespace TestForm
+{
+    partial class KryptonDialogExamples
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.kryptonPanel1 = new Krypton.Toolkit.KryptonPanel();
+            this.kbtnColorDialog = new Krypton.Toolkit.KryptonButton();
+            this.kbtnPrintDialog = new Krypton.Toolkit.KryptonButton();
+            this.kbtnFontDialog = new Krypton.Toolkit.KryptonButton();
+            this.kbtnLongInput = new Krypton.Toolkit.KryptonButton();
+            this.kbtnExceptionDialog = new Krypton.Toolkit.KryptonButton();
+            this.klblHint = new Krypton.Toolkit.KryptonWrapLabel();
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel1)).BeginInit();
+            this.kryptonPanel1.SuspendLayout();
+            this.SuspendLayout();
+            // 
+            // kryptonPanel1
+            // 
+            this.kryptonPanel1.Controls.Add(this.klblHint);
+            this.kryptonPanel1.Controls.Add(this.kbtnExceptionDialog);
+            this.kryptonPanel1.Controls.Add(this.kbtnLongInput);
+            this.kryptonPanel1.Controls.Add(this.kbtnFontDialog);
+            this.kryptonPanel1.Controls.Add(this.kbtnPrintDialog);
+            this.kryptonPanel1.Controls.Add(this.kbtnColorDialog);
+            this.kryptonPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.kryptonPanel1.Location = new System.Drawing.Point(0, 0);
+            this.kryptonPanel1.Name = "kryptonPanel1";
+            this.kryptonPanel1.Size = new System.Drawing.Size(360, 230);
+            this.kryptonPanel1.TabIndex = 0;
+            // 
+            // kbtnColorDialog
+            // 
+            this.kbtnColorDialog.Location = new System.Drawing.Point(13, 13);
+            this.kbtnColorDialog.Name = "kbtnColorDialog";
+            this.kbtnColorDialog.Size = new System.Drawing.Size(201, 25);
+            this.kbtnColorDialog.TabIndex = 0;
+            this.kbtnColorDialog.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            this.kbtnColorDialog.Values.Text = "Color Dialog";
+            this.kbtnColorDialog.Click += new System.EventHandler(this.kbtnColorDialog_Click);
+            // 
+            // kbtnPrintDialog
+            // 
+            this.kbtnPrintDialog.Location = new System.Drawing.Point(13, 75);
+            this.kbtnPrintDialog.Name = "kbtnPrintDialog";
+            this.kbtnPrintDialog.Size = new System.Drawing.Size(201, 25);
+            this.kbtnPrintDialog.TabIndex = 1;
+            this.kbtnPrintDialog.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            this.kbtnPrintDialog.Values.Text = "Print Dialog";
+            this.kbtnPrintDialog.Click += new System.EventHandler(this.kbtnPrintDialog_Click);
+            // 
+            // kbtnFontDialog
+            // 
+            this.kbtnFontDialog.Location = new System.Drawing.Point(13, 44);
+            this.kbtnFontDialog.Name = "kbtnFontDialog";
+            this.kbtnFontDialog.Size = new System.Drawing.Size(201, 25);
+            this.kbtnFontDialog.TabIndex = 2;
+            this.kbtnFontDialog.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            this.kbtnFontDialog.Values.Text = "Font Dialog";
+            this.kbtnFontDialog.Click += new System.EventHandler(this.kbtnFontDialog_Click);
+            // 
+            // kbtnLongInput
+            // 
+            this.kbtnLongInput.Location = new System.Drawing.Point(13, 106);
+            this.kbtnLongInput.Name = "kbtnLongInput";
+            this.kbtnLongInput.Size = new System.Drawing.Size(330, 25);
+            this.kbtnLongInput.TabIndex = 3;
+            this.kbtnLongInput.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            this.kbtnLongInput.Values.Text = "Long input prompt";
+            this.kbtnLongInput.Click += new System.EventHandler(this.kbtnLongInput_Click);
+            // 
+            // kbtnExceptionDialog
+            // 
+            this.kbtnExceptionDialog.Location = new System.Drawing.Point(13, 137);
+            this.kbtnExceptionDialog.Name = "kbtnExceptionDialog";
+            this.kbtnExceptionDialog.Size = new System.Drawing.Size(330, 25);
+            this.kbtnExceptionDialog.TabIndex = 4;
+            this.kbtnExceptionDialog.Values.DropDownArrowColor = System.Drawing.Color.Empty;
+            this.kbtnExceptionDialog.Values.Text = "Exception dialog";
+            this.kbtnExceptionDialog.Click += new System.EventHandler(this.kbtnExceptionDialog_Click);
+            // 
+            // klblHint
+            // 
+            this.klblHint.Location = new System.Drawing.Point(13, 168);
+            this.klblHint.Name = "klblHint";
+            this.klblHint.Size = new System.Drawing.Size(330, 48);
+            this.klblHint.Text = "Long prompts grow the input box. The exception dialog is resizable and stays on the monitor.";
+            // 
+            // KryptonDialogExamples
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(360, 230);
+            this.Controls.Add(this.kryptonPanel1);
+            this.Name = "KryptonDialogExamples";
+            this.Text = "KryptonDialogExamples";
+            ((System.ComponentModel.ISupportInitialize)(this.kryptonPanel1)).EndInit();
+            this.kryptonPanel1.ResumeLayout(false);
+            this.ResumeLayout(false);
+
+        }
+
+        #endregion
+
+        private KryptonPanel kryptonPanel1;
+        private KryptonButton kbtnColorDialog;
+        private KryptonButton kbtnFontDialog;
+        private KryptonButton kbtnPrintDialog;
+        private KryptonButton kbtnLongInput;
+        private KryptonButton kbtnExceptionDialog;
+        private KryptonWrapLabel klblHint;
+    }
+}

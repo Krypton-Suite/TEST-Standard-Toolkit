@@ -1,0 +1,259 @@
+﻿#region BSD License
+/*
+ * 
+ * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
+ *  © Component Factory Pty Ltd, 2006 - 2016, All rights reserved.
+ * 
+ *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
+ *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac, Ahmed Abdelhameed, tobitege,  KamaniAR, Lesandro Gotardo (aka lesandrog), Jorge A. Avilés (aka mcpbcs) et al. 2017 - 2026. All rights reserved.
+ *  
+ *  Modified: Monday 12th April, 2021 @ 18:00 GMT
+ *
+ */
+#endregion
+
+namespace Krypton.Ribbon;
+
+/// <summary>
+/// Return inherited values unless empty in which case return the context color.
+/// </summary>
+public class PaletteRibbonContextDouble : IPaletteRibbonBack,
+    IPaletteRibbonText
+{
+    #region Instance Fields
+    private readonly KryptonRibbon _ribbon;
+    private PaletteRibbonDoubleInheritOverride _inherit;
+
+    #endregion
+
+    #region Identity
+    /// <summary>
+    /// Initialize a new instance of the PaletteRibbonContextDouble class.
+    /// </summary>
+    /// <param name="ribbon">Reference to ribbon control.</param>
+    public PaletteRibbonContextDouble([DisallowNull] KryptonRibbon ribbon)
+    {
+        Debug.Assert(ribbon is not null);
+
+        _ribbon = ribbon ?? ThrowHelper.ThrowArgumentNullException(ribbon);
+        LightBackground = false;
+    }
+    #endregion
+
+    #region RibbonTab
+    /// <summary>
+    /// Gets and sets the associated ribbon tab.
+    /// </summary>
+    public KryptonRibbonTab? RibbonTab { get; set; }
+
+    #endregion
+
+    #region LightBackground
+    /// <summary>
+    /// Gets and sets a value indicating if the text is being drawn on a light coloured background.
+    /// </summary>
+    public bool LightBackground { get; set; }
+
+    #endregion
+
+    #region SetInherit
+    /// <summary>
+    /// Sets the inheritance parent.
+    /// </summary>
+    public void SetInherit(PaletteRibbonDoubleInheritOverride inherit) => _inherit = inherit;
+    #endregion
+
+    #region BackColorStyle
+    /// <summary>
+    /// Gets the background drawing style for the ribbon item.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Color value.</returns>
+    public PaletteRibbonColorStyle GetRibbonBackColorStyle(PaletteState state)
+    {
+        PaletteRibbonColorStyle style = _inherit.GetRibbonBackColorStyle(state);
+        if (_ribbon.RibbonShape != PaletteRibbonShape.Office2024
+            || _ribbon.StateCommon.RibbonGeneral.TabMarker != PaletteRibbonTabMarker.Pill)
+        {
+            return style;
+        }
+
+        // The theme always reports the line styles. Pill is a per-ribbon choice.
+        if (style == PaletteRibbonColorStyle.RibbonTabSelected2024)
+        {
+            return PaletteRibbonColorStyle.RibbonTabSelected2024Pill;
+        }
+
+        if (style == PaletteRibbonColorStyle.RibbonTabTracking2024)
+        {
+            return PaletteRibbonColorStyle.RibbonTabTracking2024Pill;
+        }
+
+        return style;
+    }
+
+    #endregion
+
+    #region BackColor1
+    /// <summary>
+    /// Gets the first background color for the ribbon item.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Color value.</returns>
+    public Color GetRibbonBackColor1(PaletteState state)
+    {
+        // Selected Office 2024 context tabs underline with the context colour.
+        if (Office2024ContextTab && IsContextChecked(state))
+        {
+            Color contextColor = CheckForContextColor();
+            if (contextColor != Color.Empty)
+            {
+                return contextColor;
+            }
+        }
+
+        Color retColor = _inherit.GetRibbonBackColor1(state);
+
+        // If empty then try and recover the context specific color
+        if (retColor == Color.Empty)
+        {
+            retColor = CheckForContextColor();
+        }
+
+        return retColor;
+    }
+    #endregion
+
+    #region BackColor2
+    /// <summary>
+    /// Gets the second background color for the ribbon item.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Color value.</returns>
+    public Color GetRibbonBackColor2(PaletteState state)
+    {
+        Color retColor = _inherit.GetRibbonBackColor2(state);
+
+        // If empty then try and recover the context specific color
+        if (retColor == Color.Empty)
+        {
+            retColor = CheckForContextColor();
+        }
+
+        return retColor;
+    }
+    #endregion
+
+    #region BackColor3
+    /// <summary>
+    /// Gets the third background color for the ribbon item.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Color value.</returns>
+    public Color GetRibbonBackColor3(PaletteState state)
+    {
+        Color retColor = _inherit.GetRibbonBackColor3(state);
+
+        // If empty then try and recover the context specific color
+        if (retColor == Color.Empty)
+        {
+            retColor = CheckForContextColor();
+        }
+
+        return retColor;
+    }
+    #endregion
+
+    #region BackColor4
+    /// <summary>
+    /// Gets the fourth background color for the ribbon item.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Color value.</returns>
+    public Color GetRibbonBackColor4(PaletteState state)
+    {
+        Color retColor = _inherit.GetRibbonBackColor4(state);
+
+        // If empty then try and recover the context specific color
+        if (retColor == Color.Empty)
+        {
+            retColor = CheckForContextColor();
+        }
+
+        return retColor;
+    }
+    #endregion
+
+    #region BackColor5
+    /// <summary>
+    /// Gets the fifth background color for the ribbon item.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Color value.</returns>
+    public Color GetRibbonBackColor5(PaletteState state)
+    {
+        Color retColor = _inherit.GetRibbonBackColor5(state);
+
+        // If empty then try and recover the context specific color
+        if (retColor == Color.Empty)
+        {
+            retColor = CheckForContextColor();
+        }
+
+        return retColor;
+    }
+    #endregion
+
+    #region TextColor
+    /// <summary>
+    /// Gets the tab color for the item text.
+    /// </summary>
+    /// <param name="state">Palette value should be applicable to this state.</param>
+    /// <returns>Color value.</returns>
+    public Color GetRibbonTextColor(PaletteState state)
+    {
+        // Office 2024 context tabs use the context colour for the label.
+        if (Office2024ContextTab && IsContextTabState(state))
+        {
+            Color contextColor = CheckForContextColor();
+            if (contextColor != Color.Empty)
+            {
+                return contextColor;
+            }
+        }
+
+        return _inherit.GetRibbonTextColor(state);
+    }
+    #endregion
+
+    #region Implementation
+    private Color CheckForContextColor()
+    {
+        // We need an associated ribbon tab
+        // Does the ribbon tab have a context setting?
+        if (!string.IsNullOrEmpty(RibbonTab?.ContextName))
+        {
+            // Find the context definition for this context
+            KryptonRibbonContext? ribbonContext = _ribbon.RibbonContexts[RibbonTab!.ContextName];
+
+            // Should always work, but you never know!
+            if (ribbonContext != null)
+            {
+                return ribbonContext.ContextColor;
+            }
+        }
+
+        return Color.Empty;
+    }
+
+    private bool Office2024ContextTab =>
+        _ribbon.RibbonShape == PaletteRibbonShape.Office2024 && !string.IsNullOrEmpty(RibbonTab?.ContextName);
+
+    private static bool IsContextChecked(PaletteState state) =>
+        state == PaletteState.ContextCheckedNormal || state == PaletteState.ContextCheckedTracking;
+
+    private static bool IsContextTabState(PaletteState state) =>
+        (state & PaletteState.Context) == PaletteState.Context;
+
+    #endregion
+}

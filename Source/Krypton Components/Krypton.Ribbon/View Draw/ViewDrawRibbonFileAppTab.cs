@@ -1,0 +1,269 @@
+﻿#region BSD License
+/*
+ * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
+ *  © Component Factory Pty Ltd, 2006 - 2016, All rights reserved.
+ * 
+ *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
+ *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac, Ahmed Abdelhameed, tobitege,  KamaniAR, Lesandro Gotardo (aka lesandrog), Jorge A. Avilés (aka mcpbcs) et al. 2017 - 2026. All rights reserved.
+ */
+#endregion
+
+namespace Krypton.Ribbon;
+
+/// <summary>
+/// Draws the "File Application tab"
+/// </summary>
+internal class ViewDrawRibbonFileAppTab : ViewComposite, 
+    IContentValues
+{
+    #region Instance Fields
+    private readonly KryptonRibbon _ribbon;
+    private IDisposable?[] _mementos;
+    private readonly PaletteRibbonGeneral _paletteGeneral;
+    private readonly FileApplicationTabToContent _contentProvider;
+    private readonly Padding _preferredBorder; // = new(17, 4, 17, 3);
+    #endregion
+
+    #region Identity
+    /// <summary>
+    /// Initialize a new instance of the ViewDrawRibbonAppTab class.
+    /// </summary>
+    /// <param name="ribbon">Owning control instance.</param>
+    public ViewDrawRibbonFileAppTab([DisallowNull] KryptonRibbon ribbon)
+    {
+        Debug.Assert(ribbon != null);
+
+        _preferredBorder = new Padding((int)(17 * FactorDpiX), (int)(4 * FactorDpiY), (int)(17 * FactorDpiX), (int)(3 * FactorDpiY));
+        _ribbon = ribbon!;
+        _mementos = new IDisposable[4];
+
+        // Use a class to convert from application tab to content interface
+        _paletteGeneral = _ribbon.StateCommon.RibbonGeneral;
+        _contentProvider = new FileApplicationTabToContent(_ribbon, _paletteGeneral);
+
+        // Create and add the draw content for display inside the tab
+        Add(new ViewDrawContent(_contentProvider, this, VisualOrientation.Top));
+    }
+
+    /// <summary>
+    /// Obtains the String representation of this instance.
+    /// </summary>
+    /// <returns>User readable name of the instance.</returns>
+    public override string ToString() =>
+        // Return the class name and instance identifier
+        $@"ViewDrawRibbonAppTab:{Id}";
+
+    /// <summary>
+    /// Clean up any resources being used.
+    /// </summary>
+    /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            if (_mementos != null!)
+            {
+                foreach (IDisposable? memento in _mementos)
+                {
+                    memento?.Dispose();
+                }
+
+                _mementos = null!;
+            }
+        }
+
+        base.Dispose(disposing);
+    }
+    #endregion
+
+    #region Layout
+    /// <summary>
+    /// Discover the preferred size of the element.
+    /// </summary>
+    /// <param name="context">Layout context.</param>
+    public override Size GetPreferredSize([DisallowNull] ViewLayoutContext context)
+    {
+        Debug.Assert(context != null);
+
+        // Get base class calculated preferred size
+        Size preferredSize = base.GetPreferredSize(context!);
+
+        // Add on the fixed border extra
+        preferredSize.Width += _preferredBorder.Horizontal;
+        preferredSize.Height += _preferredBorder.Vertical;
+        if (_ribbon.RibbonShape == PaletteRibbonShape.Office2024)
+        {
+            int band = RenderStandard.RibbonTabMarkBand2024(FactorDpiY, _paletteGeneral.TabMarker == PaletteRibbonTabMarker.Pill, _paletteGeneral.TabMarkerGlow);
+            preferredSize.Height += Math.Max(0, band - _preferredBorder.Bottom);
+        }
+
+        return preferredSize;
+    }
+
+    /// <summary>
+    /// Perform a layout of the elements.
+    /// </summary>
+    /// <param name="context">Layout context.</param>
+    public override void Layout([DisallowNull] ViewLayoutContext context)
+    {
+        Debug.Assert(context != null);
+
+        // We take on all the available display area
+        ClientRectangle = context!.DisplayRectangle;
+        if (_ribbon.RibbonShape != PaletteRibbonShape.Office2024)
+        {
+            base.Layout(context);
+            return;
+        }
+
+        // Keep the label above the line and its glow.
+        int band = RenderStandard.RibbonTabMarkBand2024(FactorDpiY, _paletteGeneral.TabMarker == PaletteRibbonTabMarker.Pill, _paletteGeneral.TabMarkerGlow);
+        Rectangle display = context.DisplayRectangle;
+        context.DisplayRectangle = new Rectangle(display.X, display.Y + _preferredBorder.Top, display.Width, Math.Max(0, display.Height - _preferredBorder.Top - band));
+        base.Layout(context);
+        context.DisplayRectangle = display;
+    }
+    #endregion
+
+    #region Paint
+    /// <summary>
+    /// Perform rendering before child elements are rendered.
+    /// </summary>
+    /// <param name="context">Rendering context.</param>
+    public override void RenderBefore([DisallowNull] RenderContext context) 
+    {
+        if (context.Renderer is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(context.Renderer));
+        }
+
+        IPaletteRibbonFileAppTab palette;
+        int memento;
+        var localState = State;
+        // Find the correct palette to use that matches the button state
+        switch (State)
+        {
+            default:
+            case PaletteState.Normal:
+                if (_ribbon.Enabled)
+                {
+                    palette = _ribbon.StateNormal.RibbonFileAppTab;
+                    memento = 0;
+                }
+                else
+                {
+                    localState = PaletteState.Disabled;
+                    palette = _ribbon.StateNormal.RibbonFileAppTab;
+                    memento = 3;
+                }
+                break;
+            case PaletteState.Tracking:
+                palette = _ribbon.StateNormal.RibbonFileAppTab;
+                memento = 1;
+                break;
+            case PaletteState.Pressed:
+                palette = _ribbon.StateNormal.RibbonFileAppTab;
+                memento = 2;
+                break;
+        }
+
+        // Office 2024 draws its own line or pill. Older shapes use the renderer.
+        if (_ribbon.RibbonShape == PaletteRibbonShape.Office2024)
+        {
+            Color marker = Color.Empty;
+            if ((localState & PaletteState.Pressed) == PaletteState.Pressed)
+            {
+                marker = palette.GetRibbonFileAppTabTopColor(localState);
+            }
+            else if ((localState & PaletteState.Tracking) == PaletteState.Tracking)
+            {
+                marker = palette.GetRibbonFileAppTabBottomColor(localState);
+            }
+
+            RenderStandard.DrawRibbonTabMarker2024(context, ClientRectangle, marker, _paletteGeneral.TabMarker, _paletteGeneral.TabMarkerGlow);
+            _mementos[memento]?.Dispose();
+            _mementos[memento] = null;
+            return;
+        }
+
+        // Draw the background
+        _mementos[memento] = context.Renderer.RenderRibbon.DrawRibbonFileApplicationTab(_ribbon.RibbonShape, context, ClientRectangle, 
+            localState,
+            palette,
+            _mementos[memento]);
+    }
+    #endregion
+
+    #region IContentValues
+    /// <summary>
+    /// Gets the image used for the ribbon tab.
+    /// </summary>
+    /// <param name="state">Tab state.</param>
+    /// <returns>Image.</returns>
+    public Image? GetImage(PaletteState state) => null;
+
+    /// <summary>
+    /// Gets the image color that should be interpreted as transparent.
+    /// </summary>
+    /// <param name="state">Tab state.</param>
+    /// <returns>Transparent Color.</returns>
+    public Color GetImageTransparentColor(PaletteState state) => Color.Empty;
+
+    /// <summary>
+    /// Gets the short text used as the main ribbon title.
+    /// </summary>
+    /// <returns>Title string.</returns>
+    public string GetShortText() => _ribbon.RibbonShape == PaletteRibbonShape.Office2013
+        ? _ribbon.RibbonFileAppTab.FileAppTabText.ToUpper()
+        : _ribbon.RibbonFileAppTab.FileAppTabText;
+
+    /// <summary>
+    /// Gets the long text used as the secondary ribbon title.
+    /// </summary>
+    /// <returns>Title string.</returns>
+    public string GetLongText() => string.Empty;
+
+    /// <summary>
+    /// Gets the overlay image.
+    /// </summary>
+    /// <param name="state">The state for which the overlay image is needed.</param>
+    /// <returns>Overlay image value, or null if no overlay image is set.</returns>
+    public Image? GetOverlayImage(PaletteState state) => null;
+
+    /// <summary>
+    /// Gets the overlay image color that should be transparent.
+    /// </summary>
+    /// <param name="state">The state for which the overlay image is needed.</param>
+    /// <returns>Color value.</returns>
+    public Color GetOverlayImageTransparentColor(PaletteState state) => SharedStaticVariables.EMPTY_COLOR;
+
+    /// <summary>
+    /// Gets the position of the overlay image relative to the main image.
+    /// </summary>
+    /// <param name="state">The state for which the overlay position is needed.</param>
+    /// <returns>Overlay image position.</returns>
+    public OverlayImagePosition GetOverlayImagePosition(PaletteState state) => OverlayImagePosition.TopRight;
+
+    /// <summary>
+    /// Gets the scaling mode for the overlay image.
+    /// </summary>
+    /// <param name="state">The state for which the overlay scale mode is needed.</param>
+    /// <returns>Overlay image scale mode.</returns>
+    public OverlayImageScaleMode GetOverlayImageScaleMode(PaletteState state) => OverlayImageScaleMode.None;
+
+    /// <summary>
+    /// Gets the scale factor for the overlay image (used when scale mode is Percentage or ProportionalToMain).
+    /// </summary>
+    /// <param name="state">The state for which the overlay scale factor is needed.</param>
+    /// <returns>Scale factor (0.0 to 2.0).</returns>
+    public float GetOverlayImageScaleFactor(PaletteState state) => 0.5f;
+
+    /// <summary>
+    /// Gets the fixed size for the overlay image (used when scale mode is FixedSize).
+    /// </summary>
+    /// <param name="state">The state for which the overlay fixed size is needed.</param>
+    /// <returns>Fixed size.</returns>
+    public Size GetOverlayImageFixedSize(PaletteState state) => new Size(16, 16);
+
+    #endregion
+}
