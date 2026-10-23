@@ -1,0 +1,153 @@
+#region BSD License
+/*
+ *
+ *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
+ *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), Giduac, Ahmed Abdelhameed, tobitege,  KamaniAR, Lesandro Gotardo (aka lesandrog), Jorge A. Avilés (aka mcpbcs) et al. 2023 - 2026. All rights reserved.
+ *
+ */
+#endregion
+
+// ReSharper disable MemberCanBePrivate.Global
+
+namespace Krypton.Toolkit;
+
+/// <summary>
+///  'File Browser dialog' from which the user can select a Directory.
+/// </summary>
+[DesignerCategory(@"code")]
+[Designer("Krypton.Toolkit.KryptonFolderBrowserDialogDesigner, " + KryptonWinFormsDesignerSdk.AssemblyName)]
+[Description("Displays a Kryptonised version of the standard 'File Browser dialog' from which the user can select a Directory.")]
+[ToolboxBitmap(typeof(FolderBrowserDialog), @"ToolboxBitmaps.KryptonFolderBrowserDialog.bmp")]
+[ToolboxItem(true)]
+public class KryptonFolderBrowserDialog : ShellDialogWrapper, IDisposable
+{
+#if NET8_0_OR_GREATER
+        private readonly FolderBrowserDialog _internalOpenFileDialog = new();// { AutoUpgradeEnabled = true };
+#else
+    private readonly ShellBrowserDialogTFM _internalOpenFileDialog = new ShellBrowserDialogTFM();
+#endif
+
+    /// <inheritdoc />
+    protected override DialogResult ShowActualDialog(IWin32Window? owner) =>
+#if NET8_0_OR_GREATER
+        _internalOpenFileDialog.ShowDialog(owner);
+#else
+        // Avoid nested ShellDialogWrapper.ShowDialog (second CBT/host pass).
+        _internalOpenFileDialog.ShowFolderDialogCore(owner);
+#endif
+
+    private protected override bool WndActivated(object sender, MsdnMag.CbtEventArgs e) =>
+        base.WndActivated(sender, e);
+
+#if NET8_0_OR_GREATER
+        /// <inheritdoc />
+        public override Guid? ClientGuid
+        {
+            get => _internalOpenFileDialog.ClientGuid;
+            set => _internalOpenFileDialog.ClientGuid = value;
+        }
+#endif
+    /// <summary>
+    ///  Gets the directory path of the folder the user picked.
+    ///  Sets the directory path of the initial folder shown in the dialog box.
+    /// </summary>
+    [Browsable(true)]
+    [DefaultValue("")]
+    // ToDo V120 LTS: Migrate designer editor to a Krypton-themed equivalent (replaces System.Windows.Forms.Design.SelectedPathEditor).
+    [Editor(@"System.Windows.Forms.Design.SelectedPathEditor", typeof(UITypeEditor))]
+    [Localizable(true)]
+    [Category(@"FolderBrowsing")]
+    [Description(@"Sets the directory path of the initial folder shown in the dialog box.")]
+    [AllowNull]
+    public string SelectedPath
+    {
+        get => _internalOpenFileDialog.SelectedPath;
+        set => _internalOpenFileDialog.SelectedPath = value!;
+    }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        ///  Gets or sets the initial directory displayed by the folder browser dialog.
+        /// </summary>
+        [Category(@"FolderBrowsing")]
+        [DefaultValue("")]
+        [Editor(KryptonWinFormsDesignerSdk.InitialDirectoryEditor, typeof(UITypeEditor))]
+        [Description(@"Gets or sets the initial directory displayed by the folder browser dialog")]
+        [AllowNull]
+        public string InitialDirectory
+        {
+            get => _internalOpenFileDialog.InitialDirectory;
+            set => _internalOpenFileDialog.InitialDirectory = value!;
+        }
+#endif
+
+    /// <summary>
+    ///  Gets/sets the root node of the directory tree.
+    /// </summary>
+    [Browsable(true)]
+    [DefaultValue(Environment.SpecialFolder.Desktop)]
+    [Localizable(false)]
+    [Category(@"FolderBrowsing")]
+    [Description(@"Gets/sets the root node of the directory tree")]
+    //[TypeConverter(typeof(SpecialFolderEnumConverter))]
+    public Environment.SpecialFolder RootFolder
+    {
+        get => _internalOpenFileDialog.RootFolder;
+        set => _internalOpenFileDialog.RootFolder = value;
+    }
+
+    private string? _title;
+
+    /// <inheritdoc />
+    [AllowNull]
+    public override string Title
+    {
+        get => _title ?? string.Empty;
+        set => _title = value;
+    }
+
+    /// <summary>Resets all properties to their default values.</summary>
+    public override void Reset() => _internalOpenFileDialog.Reset();
+
+    /// <inheritdoc />
+    public override string ToString() => _internalOpenFileDialog.ToString();
+
+    /// <inheritdoc />
+    public void Dispose() => _internalOpenFileDialog.Dispose();
+
+    internal override KryptonDialogOptions CreateDialogOptions() => new KryptonDialogOptions
+    {
+        Kind = KryptonDialogKind.SelectFolder,
+        Title = Title,
+        Icon = Icon,
+        InitialDirectory =
+#if NET8_0_OR_GREATER
+            InitialDirectory ?? string.Empty,
+#else
+            SelectedPath ?? string.Empty,
+#endif
+        CurrentPath = SelectedPath ?? string.Empty,
+        FileName = string.Empty,
+        RootFolder = RootFolder
+    };
+
+    internal override KryptonDialogResult CaptureDialogResult()
+    {
+        var selectedPath = SelectedPath ?? string.Empty;
+        return new KryptonDialogResult
+        {
+            SelectedPath = selectedPath,
+            FileName = selectedPath,
+            FileNames = string.IsNullOrWhiteSpace(selectedPath) ? Array.Empty<string>() : new[] { selectedPath }
+        };
+    }
+
+    internal override void ApplyDialogResult(KryptonDialogResult result)
+    {
+        SelectedPath = result.SelectedPath;
+#if NET8_0_OR_GREATER
+        InitialDirectory = result.SelectedPath;
+#endif
+    }
+
+}
