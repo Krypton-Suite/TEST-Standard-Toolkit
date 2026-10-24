@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <NoWarn>$(NoWarn);WFO5002</NoWarn>
@@ -218,6 +218,12 @@
     <Compile Update="KryptonToolkit\Feature\WinFormsDesignerSdkDemo.Designer.cs">
       <DependentUpon>WinFormsDesignerSdkDemo.cs</DependentUpon>
     </Compile>
+    <Compile Update="KryptonToolkit\Feature\WindowsXPThemesDemo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="KryptonToolkit\Feature\WindowsXPThemesDemo.Designer.cs">
+      <DependentUpon>WindowsXPThemesDemo.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
@@ -226,6 +232,9 @@
     </EmbeddedResource>
     <EmbeddedResource Update="KryptonToolkit\Feature\BorderlessFormDemo.resx">
       <DependentUpon>BorderlessFormDemo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Update="KryptonToolkit\Feature\WindowsXPThemesDemo.resx">
+      <DependentUpon>WindowsXPThemesDemo.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Update="KryptonToolkit\Feature\KryptonSplitButtonDemo.resx">
       <DependentUpon>KryptonSplitButtonDemo.cs</DependentUpon>

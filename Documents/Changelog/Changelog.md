@@ -1,4 +1,4 @@
-﻿# ![Krypton logo](https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/Krypton.png?raw=true) Standard Toolkit - ChangeLog
+# ![Krypton logo](https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/Krypton.png?raw=true) Standard Toolkit - ChangeLog
 
 =======
 
@@ -45,6 +45,8 @@
 
 ## 2026-11-30 - Build 2611 (V110 RTM) - November 2026
 
+- Implemented, Windows XP visual-style Extra themes in `Krypton.Themes`: Luna Blue / Olive / Silver, Royale, Royale Noir, Zune, and Embedded, with a dedicated XP renderer in `Krypton.Toolkit` and typed bitmaps from `Krypton.Resources`.
+   - To use, you will need to download the [Krypton.Standard.Toolkit](https://www.nuget.org/packages/Krypton.Standard.Toolkit) NuGet package (or reference `Krypton.Themes` alongside `Krypton.Toolkit`), so the Extra themes are discovered at runtime.
 - Resolved [#4591](https://github.com/Krypton-Suite/Standard-Toolkit/issues/4591), Events button is missing in `KryptonPropertyGrid`
 - Implemented, Themeable `KryptonPropertyGrid` toolbar icons (alphabetical, categorized, property pages, and events) via palette `Images.PropertyGrid` / `GetPropertyGridImage`, and app-wide via `KryptonManager.Images.PropertyGridImages`. Builtin themes read `PropertyGridImageResources` (currently null) through `GetBuiltinPropertyGridImage`. Resolve order is control palette, then manager images, then stock WinForms.
 - Resolved, `KryptonPropertyGrid` no longer asserts in `PaletteRedirectGrids` when a custom palette is applied (grid styles were queried with `FocusOverride`).

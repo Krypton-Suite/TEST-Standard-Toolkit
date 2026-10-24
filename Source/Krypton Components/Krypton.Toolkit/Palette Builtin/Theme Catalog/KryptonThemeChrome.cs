@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -26,6 +26,7 @@ public static class KryptonThemeChrome
             case KryptonThemeChromeKind.ProfessionalOffice2003:
             case KryptonThemeChromeKind.Office2007:
             case KryptonThemeChromeKind.Sparkle:
+            case KryptonThemeChromeKind.WindowsXP:
                 return KryptonThemeShieldIconStyle.Vista;
             case KryptonThemeChromeKind.Office2010:
             case KryptonThemeChromeKind.Office2013:
@@ -84,6 +85,7 @@ public static class KryptonThemeChrome
                 KryptonManager.Images.ToolbarImages.SetToolBarImages(ToolkitStaticVariables.SystemToolBarImages);
                 break;
             case KryptonThemeChromeKind.ProfessionalOffice2003:
+            case KryptonThemeChromeKind.WindowsXP:
                 KryptonManager.Images.ToolbarImages.SetToolBarImages(ToolkitStaticVariables.Office2003ToolBarImages);
                 break;
             case KryptonThemeChromeKind.Office2007:
@@ -147,6 +149,11 @@ public static class KryptonThemeChrome
         if (name.StartsWith(@"Retro", StringComparison.Ordinal))
         {
             return KryptonThemeChromeKind.Retro;
+        }
+
+        if (name.StartsWith(@"WindowsXP", StringComparison.Ordinal))
+        {
+            return KryptonThemeChromeKind.WindowsXP;
         }
 
         if (name.StartsWith(@"MacOS", StringComparison.Ordinal))

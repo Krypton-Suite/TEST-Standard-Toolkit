@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
  *  © Component Factory Pty Ltd, 2006 - 2016, (Version 4.5.0.0) All rights reserved.
@@ -5041,7 +5041,10 @@ public enum KryptonThemeChromeKind
     MacOS,
 
     /// <summary>RetroUI chrome.</summary>
-    Retro
+    Retro,
+
+    /// <summary>Windows XP visual-style chrome (Luna, Royale, Zune, Embedded).</summary>
+    WindowsXP
 }
 
 #endregion

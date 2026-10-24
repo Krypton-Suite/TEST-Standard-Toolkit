@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  * Original BSD 3-Clause License (https://github.com/ComponentFactory/Krypton/blob/master/LICENSE)
@@ -911,6 +911,11 @@ public enum RendererMode
     /// Specifies the RenderRetro be used.
     /// </summary>
     Retro,
+
+    /// <summary>
+    /// Specifies the RenderWindowsXPLuna be used (Windows XP visual-style family).
+    /// </summary>
+    WindowsXP,
 
     /// <summary>
     /// Specifies the RenderAqua be used.
