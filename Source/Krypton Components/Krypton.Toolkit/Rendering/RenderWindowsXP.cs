@@ -15,6 +15,12 @@ public class RenderWindowsXP : RenderStandard
     private readonly Func<Bitmap?> _buttonSprite;
 
     /// <summary>
+    /// Gets the standard Windows XP user-interface font.
+    /// </summary>
+    /// <remarks>XP themes use Tahoma independently of the host operating system's default UI font.</remarks>
+    public static Font DefaultFont => new("Tahoma", 8.25f, FontStyle.Regular, GraphicsUnit.Point);
+
+    /// <summary>
     /// Initialize a new instance of the <see cref="RenderWindowsXP"/> class.
     /// </summary>
     /// <param name="buttonSprite">Factory that returns the XP push-button sprite sheet for ToolStrip buttons.</param>
