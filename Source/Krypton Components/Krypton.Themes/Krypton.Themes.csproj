@@ -34,12 +34,6 @@
     <IncludeKryptonGlobalSuppressionsLink>true</IncludeKryptonGlobalSuppressionsLink>
   </PropertyGroup>
 
-  <!--
-    XP palette files were introduced in both the legacy flat folders and the
-    newer "Windows XP/Windows XP ..." hierarchy. SDK default compile globs
-    include both copies, producing duplicate type definitions. Keep the newer
-    hierarchy as canonical and exclude only the legacy duplicate source files.
-  -->
   <ItemGroup>
     <Compile Remove="Palette Builtin\Windows XP Embedded\EmbeddedColors.cs" />
     <Compile Remove="Palette Builtin\Windows XP Embedded\PaletteWindowsXPEmbedded.cs" />
