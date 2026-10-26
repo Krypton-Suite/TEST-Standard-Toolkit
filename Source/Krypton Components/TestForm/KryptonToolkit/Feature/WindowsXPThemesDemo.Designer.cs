@@ -174,6 +174,7 @@ namespace TestForm
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.ClientSize = new System.Drawing.Size(784, 461);
             this.Controls.Add(this.kryptonPanel1);
             this.Controls.Add(this.menuStrip1);
