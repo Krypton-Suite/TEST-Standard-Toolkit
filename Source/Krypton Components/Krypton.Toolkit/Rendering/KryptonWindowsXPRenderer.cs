@@ -50,23 +50,100 @@ public sealed class KryptonWindowsXPRenderer : KryptonProfessionalRenderer
     /// <inheritdoc />
     protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
     {
-        if (e.Item is ToolStripMenuItem { Selected: true })
+        if (e.Item is not ToolStripMenuItem menuItem)
         {
-            var bounds = new Rectangle(Point.Empty, e.Item.Size);
-            using (var brush = new SolidBrush(KCT.MenuItemSelected))
-            using (var pen = new Pen(KCT.MenuItemBorder))
+            base.OnRenderMenuItemBackground(e);
+            return;
+        }
+
+        var bounds = new Rectangle(Point.Empty, e.Item.Size);
+        if (menuItem.Selected)
+        {
+            // Luna's menu tracking state is a flat blue selection with a fine,
+            // dark-blue keyline rather than the Office-style glossy gradient.
+            using var brush = new SolidBrush(KCT.MenuItemSelected);
+            using var pen = new Pen(KCT.MenuItemBorder);
+            e.Graphics.FillRectangle(brush, bounds);
+            if (bounds.Width > 1 && bounds.Height > 1)
             {
-                e.Graphics.FillRectangle(brush, bounds);
-                if (bounds.Width > 1 && bounds.Height > 1)
-                {
-                    e.Graphics.DrawRectangle(pen, 0, 0, bounds.Width - 1, bounds.Height - 1);
-                }
+                e.Graphics.DrawRectangle(pen, 0, 0, bounds.Width - 1, bounds.Height - 1);
             }
 
             return;
         }
 
+        if (e.ToolStrip is ContextMenuStrip or ToolStripDropDownMenu)
+        {
+            using var brush = new SolidBrush(KCT.ContextMenuBack);
+            e.Graphics.FillRectangle(brush, bounds);
+            return;
+        }
+
+        // MenuStrip items are painted by the strip background until tracked.
+        if (e.ToolStrip is MenuStrip)
+        {
+            return;
+        }
+
         base.OnRenderMenuItemBackground(e);
+    }
+
+ 
+    /// <inheritdoc />
+    protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+    {
+        if (e.ToolStrip is ContextMenuStrip or ToolStripDropDownMenu)
+        {
+            var bounds = new Rectangle(Point.Empty, e.ToolStrip.Size);
+            if (bounds.Width > 1 && bounds.Height > 1)
+            {
+                using var pen = new Pen(KCT.ContextMenuBorder);
+                e.Graphics.DrawRectangle(pen, 0, 0, bounds.Width - 1, bounds.Height - 1);
+            }
+
+            return;
+        }
+
+        var stripBounds = new Rectangle(Point.Empty, e.ToolStrip.Size);
+        if (stripBounds.Width > 1 && stripBounds.Height > 1)
+        {
+            using var pen = new Pen(KCT.ToolStripBorder);
+            e.Graphics.DrawRectangle(pen, 0, 0, stripBounds.Width - 1, stripBounds.Height - 1);
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
+    {
+        var bounds = e.AffectedBounds;
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return;
+        }
+
+        using var darkPen = new Pen(KCT.SeparatorDark);
+        using var lightPen = new Pen(KCT.SeparatorLight);
+
+        if (e.Vertical)
+        {
+            var x = bounds.Left + bounds.Width / 2;
+            e.Graphics.DrawLine(darkPen, x, bounds.Top + 2, x, bounds.Bottom - 3);
+            e.Graphics.DrawLine(lightPen, x + 1, bounds.Top + 2, x + 1, bounds.Bottom - 3);
+            return;
+        }
+
+        var inset = e.ToolStrip is ContextMenuStrip or ToolStripDropDownMenu ? 28 : 3;
+        var left = bounds.Left + inset;
+        var right = bounds.Right - 4;
+        var y = bounds.Top + bounds.Height / 2;
+        if (right >= left)
+        {
+            e.Graphics.DrawLine(darkPen, left, y, right, y);
+            if (y + 1 < bounds.Bottom)
+            {
+                e.Graphics.DrawLine(lightPen, left, y + 1, right, y + 1);
+            }
+        }
     }
 
     /// <inheritdoc />
