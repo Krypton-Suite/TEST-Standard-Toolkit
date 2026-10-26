@@ -32,10 +32,21 @@ public sealed class KryptonWindowsXPRenderer : KryptonProfessionalRenderer
             return;
         }
 
-        // XP menu bars and tool strips use a subtle vertical colour transition,
-        // rather than a single flat fill.
-        var begin = KCT.ToolStripGradientBegin;
-        var end = KCT.ToolStripGradientEnd;
+        // Classic XP drop-down menus are a flat white/cream surface. Menu bars
+        // and toolbars use their own restrained vertical gradient.
+        if (e.ToolStrip is ContextMenuStrip or ToolStripDropDownMenu)
+        {
+            using var menuBrush = new SolidBrush(KCT.ContextMenuBack);
+            e.Graphics.FillRectangle(menuBrush, bounds);
+            return;
+        }
+
+        var begin = e.ToolStrip is MenuStrip
+            ? KCT.MenuStripGradientBegin
+            : KCT.ToolStripGradientBegin;
+        var end = e.ToolStrip is MenuStrip
+            ? KCT.MenuStripGradientEnd
+            : KCT.ToolStripGradientEnd;
         if (begin == end || bounds.Height == 1)
         {
             using var brush = new SolidBrush(begin);
