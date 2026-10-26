@@ -60,7 +60,7 @@ public abstract class PaletteWindowsXPLunaBase : PaletteProfessionalSystem
 
             PaletteBackStyle.FormMain or PaletteBackStyle.FormCustom1 or PaletteBackStyle.FormCustom2
                 or PaletteBackStyle.FormCustom3 or PaletteBackStyle.HeaderForm
-                => Luna.CaptionFill,
+                => Luna.CaptionFill2,
 
             PaletteBackStyle.HeaderPrimary or PaletteBackStyle.HeaderSecondary or PaletteBackStyle.HeaderCustom1
                 or PaletteBackStyle.HeaderCustom2 or PaletteBackStyle.HeaderCustom3
@@ -120,6 +120,16 @@ public abstract class PaletteWindowsXPLunaBase : PaletteProfessionalSystem
         return style switch
         {
             PaletteBackStyle.ButtonStandalone or PaletteBackStyle.ButtonGallery or PaletteBackStyle.ButtonAlternate
+                or PaletteBackStyle.ButtonLowProfile or PaletteBackStyle.ButtonBreadCrumb or PaletteBackStyle.ButtonListItem
+                or PaletteBackStyle.ButtonCommand or PaletteBackStyle.ButtonButtonSpec or PaletteBackStyle.ButtonCluster
+                or PaletteBackStyle.ButtonNavigatorStack or PaletteBackStyle.ButtonNavigatorOverflow
+                or PaletteBackStyle.ButtonNavigatorMini or PaletteBackStyle.ButtonForm or PaletteBackStyle.ButtonFormClose
+                or PaletteBackStyle.ButtonCustom1 or PaletteBackStyle.ButtonCustom2 or PaletteBackStyle.ButtonCustom3
+                or PaletteBackStyle.ButtonInputControl or PaletteBackStyle.ButtonCalendarDay
+                => PaletteColorStyle.Linear,
+            PaletteBackStyle.FormMain or PaletteBackStyle.FormCustom1 or PaletteBackStyle.FormCustom2
+                or PaletteBackStyle.FormCustom3 or PaletteBackStyle.HeaderForm
+                or PaletteBackStyle.ButtonStandalone or PaletteBackStyle.ButtonGallery or PaletteBackStyle.ButtonAlternate
                 or PaletteBackStyle.ButtonLowProfile or PaletteBackStyle.ButtonBreadCrumb or PaletteBackStyle.ButtonListItem
                 or PaletteBackStyle.ButtonCommand or PaletteBackStyle.ButtonButtonSpec or PaletteBackStyle.ButtonCluster
                 or PaletteBackStyle.ButtonNavigatorStack or PaletteBackStyle.ButtonNavigatorOverflow
