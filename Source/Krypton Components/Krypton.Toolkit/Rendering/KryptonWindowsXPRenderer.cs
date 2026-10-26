@@ -26,10 +26,25 @@ public sealed class KryptonWindowsXPRenderer : KryptonProfessionalRenderer
     /// <inheritdoc />
     protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e)
     {
-        using (var brush = new SolidBrush(KCT.ToolStripGradientBegin))
+        var bounds = new Rectangle(Point.Empty, e.ToolStrip.Size);
+        if (bounds.Width <= 0 || bounds.Height <= 0)
         {
-            e.Graphics.FillRectangle(brush, new Rectangle(Point.Empty, e.ToolStrip.Size));
+            return;
         }
+
+        // XP menu bars and tool strips use a subtle vertical colour transition,
+        // rather than a single flat fill.
+        var begin = KCT.ToolStripGradientBegin;
+        var end = KCT.ToolStripGradientEnd;
+        if (begin == end || bounds.Height == 1)
+        {
+            using var brush = new SolidBrush(begin);
+            e.Graphics.FillRectangle(brush, bounds);
+            return;
+        }
+
+        using var gradient = new LinearGradientBrush(bounds, begin, end, LinearGradientMode.Vertical);
+        e.Graphics.FillRectangle(gradient, bounds);
     }
 
     /// <inheritdoc />
