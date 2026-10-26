@@ -45,17 +45,12 @@ public class RenderWindowsXP : RenderStandard
         VisualOrientation orientation,
         PaletteState state)
     {
-        if (rect.Width <= 0 || rect.Height <= 0 ||
-            palette.GetBorderDraw(state) != InheritBool.True ||
-            !CommonHelper.HasABorder(palette.GetBorderDrawBorders(state)) ||
-            palette.GetBorderWidth(state) <= 0)
-        {
-            var path = new GraphicsPath();
-            path.AddRectangle(rect);
-            return path;
-        }
-
-        return base.GetBackPath(context, rect, palette, orientation, state);
+        // XP's classic controls use square geometry in every state. Do not delegate
+        // to RenderStandard here: its rounded-path logic can leak into XP palettes
+        // when a control has a non-zero border rounding value.
+        var path = new GraphicsPath();
+        path.AddRectangle(rect);
+        return path;
     }
 
     /// <inheritdoc />
@@ -99,7 +94,7 @@ public class RenderWindowsXP : RenderStandard
         var graphics = context.Graphics;
         var oldSmoothing = graphics.SmoothingMode;
         var oldPixel = graphics.PixelOffsetMode;
-        var oldClip = graphics.Clip;
+        using var oldClip = graphics.Clip;
 
         graphics.SmoothingMode = SmoothingMode.None;
         graphics.PixelOffsetMode = PixelOffsetMode.None;
@@ -108,24 +103,11 @@ public class RenderWindowsXP : RenderStandard
         {
             graphics.SetClip(path, CombineMode.Intersect);
 
-            using (var brush = new LinearGradientBrush(rect, top, bottom, 90f))
-            {
-                graphics.FillRectangle(brush, rect);
-            }
-
-            if (rect.Width > 1 && rect.Height > 1)
-            {
-                using (var lightPen = new Pen(WindowsXPRenderHelper.Lighten(top, 0.28f)))
-                using (var darkPen = new Pen(WindowsXPRenderHelper.Darken(bottom, 0.30f)))
-                {
-                    var right = rect.Right - 1;
-                    var bottomEdge = rect.Bottom - 1;
-                    graphics.DrawLine(lightPen, rect.Left, rect.Top, right, rect.Top);
-                    graphics.DrawLine(lightPen, rect.Left, rect.Top, rect.Left, bottomEdge);
-                    graphics.DrawLine(darkPen, right, rect.Top, right, bottomEdge);
-                    graphics.DrawLine(darkPen, rect.Left, bottomEdge, right, bottomEdge);
-                }
-            }
+            // XP's gradient fill is separate from its one-pixel edge treatment.
+            // Drawing a generic light/dark bevel here made panels and form surfaces
+            // look like buttons. The palette border pass owns the edge and its state.
+            using var brush = new LinearGradientBrush(rect, top, bottom, 90f);
+            graphics.FillRectangle(brush, rect);
         }
         finally
         {
