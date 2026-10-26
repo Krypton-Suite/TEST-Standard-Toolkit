@@ -1211,6 +1211,12 @@ namespace Krypton.Themes
         public Color ButtonBorder => Get("button.pushbutton.BorderColorHint");
         public Color ButtonHighlight => Get("button.pushbutton.AccentColorHint");
         public Color CaptionFill => Get("Window.Caption.FillColorHint");
+
+        /// <summary>Gets the upper colour of the active XP caption gradient when available.</summary>
+        public Color CaptionFill2 => TryGetColor("SysMetrics.GradientActiveCaption", out var color)
+            ? color
+            : Lighten(CaptionFill, 0.28f);
+
         public Color CaptionText => Color.White;
         public Color ToolTipFill => Get("Window.dialog.FillColor");
         public Color ToolTipText => Text;
