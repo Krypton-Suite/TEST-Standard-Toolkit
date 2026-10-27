@@ -126,7 +126,7 @@ public sealed class KryptonWindowsXPRenderer : KryptonProfessionalRenderer
     /// <inheritdoc />
     protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
     {
-        var bounds = e.AffectedBounds;
+        var bounds = new Rectangle(Point.Empty, e.Item.Size);
         if (bounds.Width <= 0 || bounds.Height <= 0)
         {
             return;
