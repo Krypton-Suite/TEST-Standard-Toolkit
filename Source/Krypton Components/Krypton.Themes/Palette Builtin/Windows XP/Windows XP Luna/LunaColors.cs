@@ -1180,7 +1180,7 @@ namespace Krypton.Themes
         public Color Text => Get("button.pushbutton.TextColor");
         public Color DisabledText => Get("button.pushbutton(disabled).TextColor");
         public Color GroupBoxText => Get("button.groupbox.TextColor");
-        public Color Control => Get("globals.EdgeFillColor");
+        public Color Control => TryGetColor("SysMetrics.Btnface", out var face) ? face : EdgeFill;
         public Color ControlDisabled => Get("edit.edittext(Disabled).FillColor");
         public Color EditFill => Get("edit.FillColor");
         public Color ControlBorder => Get("edit.BorderColor");
@@ -1217,7 +1217,22 @@ namespace Krypton.Themes
             ? color
             : Lighten(CaptionFill, 0.28f);
 
-        public Color CaptionText => Color.White;
+        public Color CaptionText => TryGetColor("SysMetrics.CaptionText", out var color) ? color : Color.White;
+
+        public Color InactiveCaptionText => TryGetColor("SysMetrics.InactiveCaptionText", out var color) ? color : CaptionText;
+
+        public Color InactiveCaptionFill => TryGetColor("SysMetrics.InactiveCaption", out var color) ? color : CaptionFill;
+
+        public Color InactiveCaptionFill2 => TryGetColor("SysMetrics.GradientInactiveCaption", out var color)
+            ? color
+            : Lighten(InactiveCaptionFill, 0.15f);
+
+        public Color Highlight => TryGetColor("SysMetrics.Highlight", out var color)
+            ? color
+            : TryGetColor("SysMetrics.MenuHilight", out color) ? color : ButtonTracking;
+
+        public Color HighlightText => TryGetColor("SysMetrics.HighlightText", out var color) ? color : Color.White;
+
         public Color ToolTipFill => Get("Window.dialog.FillColor");
         public Color ToolTipText => Text;
 

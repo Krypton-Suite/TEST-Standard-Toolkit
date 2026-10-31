@@ -8,11 +8,14 @@
 namespace Krypton.Themes;
 
 /// <summary>Windows XP Luna Silver (Metallic) palette.</summary>
-public sealed class PaletteWindowsXPLunaSilver : PaletteWindowsXPLunaBase
+public sealed class PaletteWindowsXPLunaSilver : PaletteWindowsXPLunaBase, IWindowsXPLunaScheme
 {
     /// <summary>Initialize a new instance of the <see cref="PaletteWindowsXPLunaSilver"/> class.</summary>
     public PaletteWindowsXPLunaSilver() => ThemeName = nameof(PaletteWindowsXPLunaSilver);
 
     /// <inheritdoc />
     protected override LunaPalette Luna => LunaColors.Silver;
+
+    /// <inheritdoc />
+    WindowsXPLunaScheme IWindowsXPLunaScheme.Scheme => WindowsXPLunaScheme.Silver;
 }

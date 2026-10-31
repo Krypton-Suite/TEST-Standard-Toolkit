@@ -8,7 +8,7 @@
 namespace Krypton.Themes;
 
 /// <summary>Windows XP Zune palette.</summary>
-public sealed class PaletteWindowsXPZune : PaletteWindowsXPRoyaleBase
+public sealed class PaletteWindowsXPZune : PaletteWindowsXPRoyaleBase, IWindowsXPSpriteTheme
 {
     /// <summary>Initialize a new instance of the <see cref="PaletteWindowsXPZune"/> class.</summary>
     public PaletteWindowsXPZune() => ThemeName = nameof(PaletteWindowsXPZune);
@@ -18,4 +18,7 @@ public sealed class PaletteWindowsXPZune : PaletteWindowsXPRoyaleBase
 
     /// <inheritdoc />
     protected override RoyalePalette Royale => WindowsXPZuneColors.Palette;
+
+    /// <inheritdoc />
+    WindowsXPSpriteTheme IWindowsXPSpriteTheme.Theme => WindowsXPSpriteTheme.Zune;
 }

@@ -225,6 +225,133 @@ public abstract class PaletteWindowsXPRoyaleBase : PaletteProfessionalSystem
     public override Color GetContentShortTextColor2(PaletteContentStyle style, PaletteState state) =>
         GetContentShortTextColor1(style, state);
 
+    /// <inheritdoc />
+    public override Image? GetBackImage(PaletteBackStyle style, PaletteState state)
+    {
+        if (CommonHelper.IsOverrideState(state))
+        {
+            return base.GetBackImage(style, state);
+        }
+
+        if (!TryGetSpriteTheme(out WindowsXPSpriteTheme theme))
+        {
+            return base.GetBackImage(style, state);
+        }
+
+        WindowsXPLunaPart? part = BackPart(style);
+        return part.HasValue
+            ? WindowsXPLunaArt.Sheet(theme, part.Value)
+            : base.GetBackImage(style, state);
+    }
+
+    /// <inheritdoc />
+    public override Image? GetBorderImage(PaletteBorderStyle style, PaletteState state)
+    {
+        if (CommonHelper.IsOverrideState(state))
+        {
+            return base.GetBorderImage(style, state);
+        }
+
+        return TryGetSpriteTheme(out WindowsXPSpriteTheme theme) && IsFormFrame(style)
+            ? WindowsXPLunaArt.Sheet(theme, WindowsXPLunaPart.FrameLeft)
+            : base.GetBorderImage(style, state);
+    }
+
+    /// <inheritdoc />
+    public override int GetBorderWidth(PaletteBorderStyle style, PaletteState state)
+    {
+        if (CommonHelper.IsOverrideState(state))
+        {
+            return -1;
+        }
+
+        if (!TryGetSpriteTheme(out WindowsXPSpriteTheme theme))
+        {
+            return base.GetBorderWidth(style, state);
+        }
+
+        if (IsFormFrame(style))
+        {
+            return WindowsXPLunaArt.FrameThicknessFor(theme);
+        }
+
+        if (style == PaletteBorderStyle.HeaderForm || IsSpriteBorder(style))
+        {
+            return 0;
+        }
+
+        return base.GetBorderWidth(style, state);
+    }
+
+    /// <inheritdoc />
+    public override Image? GetCheckBoxImage(bool enabled, CheckState checkState, bool tracking, bool pressed) =>
+        TryGetSpriteTheme(out WindowsXPSpriteTheme theme)
+            ? WindowsXPLunaArt.CheckBox(theme, enabled, checkState, tracking, pressed)
+            : base.GetCheckBoxImage(enabled, checkState, tracking, pressed);
+
+    /// <inheritdoc />
+    public override Image? GetRadioButtonImage(bool enabled, bool checkState, bool tracking, bool pressed) =>
+        TryGetSpriteTheme(out WindowsXPSpriteTheme theme)
+            ? WindowsXPLunaArt.Radio(theme, enabled, checkState, tracking, pressed)
+            : base.GetRadioButtonImage(enabled, checkState, tracking, pressed);
+
+    /// <inheritdoc />
+    public override Image? GetButtonSpecImage(PaletteButtonSpecStyle style, PaletteState state) =>
+        TryGetSpriteTheme(out WindowsXPSpriteTheme theme) && GlyphPart(style) is WindowsXPLunaPart part
+            ? WindowsXPLunaArt.Glyph(theme, part, state)
+            : base.GetButtonSpecImage(style, state);
+
+    private bool TryGetSpriteTheme(out WindowsXPSpriteTheme theme)
+    {
+        if (this is IWindowsXPSpriteTheme sprite)
+        {
+            theme = sprite.Theme;
+            return true;
+        }
+
+        theme = default;
+        return false;
+    }
+
+    private static WindowsXPLunaPart? BackPart(PaletteBackStyle style) => style switch
+    {
+        PaletteBackStyle.HeaderForm => WindowsXPLunaPart.Caption,
+        PaletteBackStyle.ButtonForm => WindowsXPLunaPart.CaptionButton,
+        PaletteBackStyle.ButtonFormClose => WindowsXPLunaPart.CloseButton,
+        PaletteBackStyle.ButtonInputControl => WindowsXPLunaPart.ComboButton,
+        PaletteBackStyle.ButtonStandalone or PaletteBackStyle.ButtonGallery or PaletteBackStyle.ButtonAlternate
+            or PaletteBackStyle.ButtonCommand or PaletteBackStyle.ButtonCluster
+            or PaletteBackStyle.ButtonNavigatorStack or PaletteBackStyle.ButtonNavigatorOverflow
+            or PaletteBackStyle.ButtonNavigatorMini or PaletteBackStyle.ButtonCalendarDay
+            or PaletteBackStyle.ButtonCustom1 or PaletteBackStyle.ButtonCustom2 or PaletteBackStyle.ButtonCustom3
+            => WindowsXPLunaPart.Button,
+        _ => null
+    };
+
+    private static bool IsFormFrame(PaletteBorderStyle style) =>
+        style is PaletteBorderStyle.FormMain or PaletteBorderStyle.FormCustom1
+            or PaletteBorderStyle.FormCustom2 or PaletteBorderStyle.FormCustom3;
+
+    private static bool IsSpriteBorder(PaletteBorderStyle style) =>
+        style is PaletteBorderStyle.ButtonStandalone or PaletteBorderStyle.ButtonGallery
+            or PaletteBorderStyle.ButtonAlternate or PaletteBorderStyle.ButtonCommand
+            or PaletteBorderStyle.ButtonCluster or PaletteBorderStyle.ButtonNavigatorStack
+            or PaletteBorderStyle.ButtonNavigatorOverflow or PaletteBorderStyle.ButtonNavigatorMini
+            or PaletteBorderStyle.ButtonCalendarDay or PaletteBorderStyle.ButtonCustom1
+            or PaletteBorderStyle.ButtonCustom2 or PaletteBorderStyle.ButtonCustom3
+            or PaletteBorderStyle.ButtonForm or PaletteBorderStyle.ButtonFormClose
+            or PaletteBorderStyle.ButtonInputControl or PaletteBorderStyle.ButtonListItem;
+
+    private static WindowsXPLunaPart? GlyphPart(PaletteButtonSpecStyle style) => style switch
+    {
+        PaletteButtonSpecStyle.FormMin => WindowsXPLunaPart.MinimizeGlyph,
+        PaletteButtonSpecStyle.FormMax => WindowsXPLunaPart.MaximizeGlyph,
+        PaletteButtonSpecStyle.FormRestore => WindowsXPLunaPart.RestoreGlyph,
+        PaletteButtonSpecStyle.FormClose => WindowsXPLunaPart.CloseGlyph,
+        PaletteButtonSpecStyle.FormHelp => WindowsXPLunaPart.HelpGlyph,
+        _ => null
+    };
+
     private Color GetButtonBackColor(PaletteState state) => state switch
     {
         PaletteState.Disabled => Royale.ControlDisabled,

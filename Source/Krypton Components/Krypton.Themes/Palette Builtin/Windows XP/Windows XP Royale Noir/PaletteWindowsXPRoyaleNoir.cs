@@ -8,7 +8,7 @@
 namespace Krypton.Themes;
 
 /// <summary>Windows XP Royale Noir palette.</summary>
-public sealed class PaletteWindowsXPRoyaleNoir : PaletteWindowsXPRoyaleBase
+public sealed class PaletteWindowsXPRoyaleNoir : PaletteWindowsXPRoyaleBase, IWindowsXPSpriteTheme
 {
     /// <summary>Initialize a new instance of the <see cref="PaletteWindowsXPRoyaleNoir"/> class.</summary>
     public PaletteWindowsXPRoyaleNoir() => ThemeName = nameof(PaletteWindowsXPRoyaleNoir);
@@ -18,4 +18,7 @@ public sealed class PaletteWindowsXPRoyaleNoir : PaletteWindowsXPRoyaleBase
 
     /// <inheritdoc />
     protected override RoyalePalette Royale => RoyaleNoirColors.Palette;
+
+    /// <inheritdoc />
+    WindowsXPSpriteTheme IWindowsXPSpriteTheme.Theme => WindowsXPSpriteTheme.RoyaleNoir;
 }

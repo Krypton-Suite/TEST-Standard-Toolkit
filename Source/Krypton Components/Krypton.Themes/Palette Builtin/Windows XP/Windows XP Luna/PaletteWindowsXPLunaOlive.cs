@@ -8,11 +8,14 @@
 namespace Krypton.Themes;
 
 /// <summary>Windows XP Luna Olive Green (HomeStead) palette.</summary>
-public sealed class PaletteWindowsXPLunaOlive : PaletteWindowsXPLunaBase
+public sealed class PaletteWindowsXPLunaOlive : PaletteWindowsXPLunaBase, IWindowsXPLunaScheme
 {
     /// <summary>Initialize a new instance of the <see cref="PaletteWindowsXPLunaOlive"/> class.</summary>
     public PaletteWindowsXPLunaOlive() => ThemeName = nameof(PaletteWindowsXPLunaOlive);
 
     /// <inheritdoc />
     protected override LunaPalette Luna => LunaColors.Olive;
+
+    /// <inheritdoc />
+    WindowsXPLunaScheme IWindowsXPLunaScheme.Scheme => WindowsXPLunaScheme.Olive;
 }

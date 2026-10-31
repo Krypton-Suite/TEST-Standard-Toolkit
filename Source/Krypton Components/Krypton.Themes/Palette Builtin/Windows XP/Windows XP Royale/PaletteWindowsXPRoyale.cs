@@ -8,11 +8,14 @@
 namespace Krypton.Themes;
 
 /// <summary>Windows XP Royale (Energy Blue) palette.</summary>
-public sealed class PaletteWindowsXPRoyale : PaletteWindowsXPRoyaleBase
+public sealed class PaletteWindowsXPRoyale : PaletteWindowsXPRoyaleBase, IWindowsXPSpriteTheme
 {
     /// <summary>Initialize a new instance of the <see cref="PaletteWindowsXPRoyale"/> class.</summary>
     public PaletteWindowsXPRoyale() => ThemeName = nameof(PaletteWindowsXPRoyale);
 
     /// <inheritdoc />
     protected override RoyalePalette Royale => RoyaleColors.EnergyBlue;
+
+    /// <inheritdoc />
+    WindowsXPSpriteTheme IWindowsXPSpriteTheme.Theme => WindowsXPSpriteTheme.Royale;
 }

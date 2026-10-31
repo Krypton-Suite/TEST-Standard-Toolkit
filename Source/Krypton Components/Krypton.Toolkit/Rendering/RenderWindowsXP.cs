@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
  *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), tobitege et al. 2026 - 2026. All rights reserved.
@@ -131,6 +131,11 @@ public class RenderWindowsXP : RenderStandard
             ThrowHelper.ThrowArgumentNullException(nameof(palette));
         }
 
+        if (context == null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(context));
+        }
+
         if (rect.Width <= 0 || rect.Height <= 0 ||
             palette.GetBorderWidth(state) <= 0 ||
             palette.GetBorderDraw(state) != InheritBool.True ||
@@ -143,8 +148,151 @@ public class RenderWindowsXP : RenderStandard
     }
 }
 
-/// <summary>Windows XP Luna renderer.</summary>
-public sealed class RenderWindowsXPLuna : RenderWindowsXP
+/// <summary>
+/// Windows XP renderer that 9-slices registered sprite sheets. Luna, Royale, Royale Noir, and Zune derive from it.
+/// </summary>
+public class RenderWindowsXPSprite : RenderWindowsXP
+{
+    /// <summary>
+    /// Initialize a new instance of the <see cref="RenderWindowsXPSprite"/> class.
+    /// </summary>
+    /// <param name="buttonSprite">Factory that returns the theme push-button sprite sheet.</param>
+    protected RenderWindowsXPSprite(Func<Bitmap?> buttonSprite)
+        : base(buttonSprite)
+    {
+    }
+
+    /// <inheritdoc />
+    public override ToolStripRenderer RenderToolStrip([DisallowNull] PaletteBase? colorPalette)
+    {
+        if (colorPalette == null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(colorPalette));
+        }
+
+        return new KryptonWindowsXPLunaRenderer(colorPalette.ColorTable);
+    }
+
+    /// <inheritdoc />
+    public override IDisposable? DrawBack(RenderContext context,
+        Rectangle rect,
+        GraphicsPath path,
+        IPaletteBack palette,
+        VisualOrientation orientation,
+        PaletteState state,
+        IDisposable? memento)
+    {
+        if (context == null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(context));
+        }
+
+        if (palette == null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(palette));
+        }
+
+        Image? backImage = palette.GetBackImage(state);
+        if (WindowsXPLunaArt.TryGet(backImage, out WindowsXPLunaSprite sprite) &&
+            sprite.Part != WindowsXPLunaPart.FrameLeft &&
+            sprite.Part != WindowsXPLunaPart.FrameRight &&
+            sprite.Part != WindowsXPLunaPart.FrameBottom)
+        {
+            if (!sprite.Chroma.IsEmpty)
+            {
+                Color fill = palette.GetBackColor1(state);
+                if (fill.IsEmpty)
+                {
+                    fill = palette.GetBackColor2(state);
+                }
+
+                if (!fill.IsEmpty)
+                {
+                    using var fillBrush = new SolidBrush(fill);
+                    context.Graphics.FillRectangle(fillBrush, rect);
+                }
+            }
+
+            WindowsXPLunaArt.Draw(context.Graphics, sprite, rect, state);
+            return memento;
+        }
+
+        return base.DrawBack(context, rect, path, palette, orientation, state, memento);
+    }
+
+    /// <inheritdoc />
+    public override void DrawBorder(RenderContext context,
+        Rectangle rect,
+        IPaletteBorder palette,
+        VisualOrientation orientation,
+        PaletteState state)
+    {
+        if (context == null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(context));
+        }
+
+        if (palette == null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(palette));
+        }
+
+        Image? borderImage = palette.GetBorderImage(state);
+        if (WindowsXPLunaArt.TryGet(borderImage, out WindowsXPLunaSprite frame) &&
+            frame.Part == WindowsXPLunaPart.FrameLeft)
+        {
+            WindowsXPLunaArt.DrawFrame(context.Graphics, rect, frame, state);
+            return;
+        }
+
+        base.DrawBorder(context, rect, palette, orientation, state);
+    }
+
+    /// <inheritdoc />
+    public override void DrawDropDownButton([DisallowNull] RenderContext context,
+        Rectangle displayRect,
+        [DisallowNull] IPaletteContent palette,
+        PaletteState state,
+        VisualOrientation orientation)
+    {
+        if (TryDrawLunaComboGlyph(context, displayRect, state))
+        {
+            return;
+        }
+
+        base.DrawDropDownButton(context, displayRect, palette, state, orientation);
+    }
+
+    /// <inheritdoc />
+    public override void DrawInputControlDropDownGlyph([DisallowNull] RenderContext context,
+        Rectangle cellRect,
+        [DisallowNull] IPaletteContent paletteContent,
+        PaletteState state)
+    {
+        if (TryDrawLunaComboGlyph(context, cellRect, state))
+        {
+            return;
+        }
+
+        base.DrawInputControlDropDownGlyph(context, cellRect, paletteContent, state);
+    }
+
+    private static bool TryDrawLunaComboGlyph(RenderContext context, Rectangle bounds, PaletteState state)
+    {
+        if (context?.Graphics == null || !WindowsXPLunaArt.TryGetTheme(context.Control, out WindowsXPSpriteTheme theme))
+        {
+            return false;
+        }
+
+        WindowsXPLunaArt.DrawComboGlyph(context.Graphics, bounds, theme, state);
+        return true;
+    }
+}
+
+/// <summary>
+/// Windows XP Luna renderer. Caption, frame, button, and combo chrome come from the Luna sprite sheets.
+/// </summary>
+public sealed class RenderWindowsXPLuna : RenderWindowsXPSprite
 {
     /// <summary>Initialize a new instance of the <see cref="RenderWindowsXPLuna"/> class.</summary>
     public RenderWindowsXPLuna()
@@ -154,7 +302,7 @@ public sealed class RenderWindowsXPLuna : RenderWindowsXP
 }
 
 /// <summary>Windows XP Royale renderer.</summary>
-public sealed class RenderWindowsXPRoyale : RenderWindowsXP
+public sealed class RenderWindowsXPRoyale : RenderWindowsXPSprite
 {
     /// <summary>Initialize a new instance of the <see cref="RenderWindowsXPRoyale"/> class.</summary>
     public RenderWindowsXPRoyale()
@@ -164,7 +312,7 @@ public sealed class RenderWindowsXPRoyale : RenderWindowsXP
 }
 
 /// <summary>Windows XP Royale Noir renderer.</summary>
-public sealed class RenderWindowsXPRoyaleNoir : RenderWindowsXP
+public sealed class RenderWindowsXPRoyaleNoir : RenderWindowsXPSprite
 {
     /// <summary>Initialize a new instance of the <see cref="RenderWindowsXPRoyaleNoir"/> class.</summary>
     public RenderWindowsXPRoyaleNoir()
@@ -174,7 +322,7 @@ public sealed class RenderWindowsXPRoyaleNoir : RenderWindowsXP
 }
 
 /// <summary>Windows XP Zune renderer.</summary>
-public sealed class RenderWindowsXPZune : RenderWindowsXP
+public sealed class RenderWindowsXPZune : RenderWindowsXPSprite
 {
     /// <summary>Initialize a new instance of the <see cref="RenderWindowsXPZune"/> class.</summary>
     public RenderWindowsXPZune()

@@ -1,4 +1,4 @@
-namespace TestForm
+﻿namespace TestForm
 {
     partial class WindowsXPThemesDemo
     {
@@ -26,6 +26,7 @@ namespace TestForm
             this.klblStatus = new Krypton.Toolkit.KryptonLabel();
             this.kbtnSample = new Krypton.Toolkit.KryptonButton();
             this.kchkSample = new Krypton.Toolkit.KryptonCheckBox();
+            this.krdoSample = new Krypton.Toolkit.KryptonRadioButton();
             this.ktxtSample = new Krypton.Toolkit.KryptonTextBox();
             this.kgrpSample = new Krypton.Toolkit.KryptonGroupBox();
             this.klblGroupBody = new Krypton.Toolkit.KryptonLabel();
@@ -48,6 +49,7 @@ namespace TestForm
             this.kryptonPanel1.Controls.Add(this.kgrpSample);
             this.kryptonPanel1.Controls.Add(this.kryptonProgressBar1);
             this.kryptonPanel1.Controls.Add(this.ktxtSample);
+            this.kryptonPanel1.Controls.Add(this.krdoSample);
             this.kryptonPanel1.Controls.Add(this.kchkSample);
             this.kryptonPanel1.Controls.Add(this.kbtnSample);
             this.kryptonPanel1.Controls.Add(this.klblStatus);
@@ -68,7 +70,7 @@ namespace TestForm
             this.klblInstructions.Size = new System.Drawing.Size(746, 40);
             this.klblInstructions.StateCommon.ShortText.MultiLine = Krypton.Toolkit.InheritBool.True;
             this.klblInstructions.TabIndex = 0;
-            this.klblInstructions.Values.Text = "Switch Windows XP Extra themes (Luna / Royale / Zune / Embedded). Check buttons, inputs, group box, progress bar, menu, and form chrome.";
+            this.klblInstructions.Values.Text = "Switch Windows XP Extra themes (Luna / Royale / Zune / Embedded). Check buttons, checks, radios, inputs, group box, progress bar, menu, and form chrome.";
             //
             // klblTheme
             //
@@ -111,6 +113,15 @@ namespace TestForm
             this.kchkSample.Size = new System.Drawing.Size(120, 20);
             this.kchkSample.TabIndex = 5;
             this.kchkSample.Values.Text = "Sample Check";
+            //
+            // krdoSample
+            //
+            this.krdoSample.Checked = true;
+            this.krdoSample.Location = new System.Drawing.Point(290, 144);
+            this.krdoSample.Name = "krdoSample";
+            this.krdoSample.Size = new System.Drawing.Size(130, 20);
+            this.krdoSample.TabIndex = 9;
+            this.krdoSample.Values.Text = "Sample Radio";
             //
             // ktxtSample
             //
@@ -210,6 +221,7 @@ namespace TestForm
         private Krypton.Toolkit.KryptonLabel klblStatus;
         private Krypton.Toolkit.KryptonButton kbtnSample;
         private Krypton.Toolkit.KryptonCheckBox kchkSample;
+        private Krypton.Toolkit.KryptonRadioButton krdoSample;
         private Krypton.Toolkit.KryptonTextBox ktxtSample;
         private Krypton.Toolkit.KryptonGroupBox kgrpSample;
         private Krypton.Toolkit.KryptonLabel klblGroupBody;

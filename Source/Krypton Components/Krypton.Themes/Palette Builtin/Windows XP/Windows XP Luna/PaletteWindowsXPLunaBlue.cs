@@ -8,11 +8,14 @@
 namespace Krypton.Themes;
 
 /// <summary>Windows XP Luna Blue (NormalColor) palette.</summary>
-public sealed class PaletteWindowsXPLunaBlue : PaletteWindowsXPLunaBase
+public sealed class PaletteWindowsXPLunaBlue : PaletteWindowsXPLunaBase, IWindowsXPLunaScheme
 {
     /// <summary>Initialize a new instance of the <see cref="PaletteWindowsXPLunaBlue"/> class.</summary>
     public PaletteWindowsXPLunaBlue() => ThemeName = nameof(PaletteWindowsXPLunaBlue);
 
     /// <inheritdoc />
     protected override LunaPalette Luna => LunaColors.Blue;
+
+    /// <inheritdoc />
+    WindowsXPLunaScheme IWindowsXPLunaScheme.Scheme => WindowsXPLunaScheme.Blue;
 }

@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
  *  Modifications by Peter Wagner (aka Wagnerp), Simon Coghlan (aka Smurf-IV), tobitege et al. 2026 - 2026. All rights reserved.
@@ -10,7 +10,7 @@ namespace Krypton.Toolkit;
 /// <summary>
 /// Bridges Windows XP theme renderers to the strongly typed bitmaps in <c>Krypton.Resources</c>.
 /// </summary>
-internal static class WindowsXPThemeResourceBridge
+internal static partial class WindowsXPThemeResourceBridge
 {
     internal static Bitmap? LunaButton => WindowsXPLunaImageResources.Button;
 
