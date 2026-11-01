@@ -164,13 +164,14 @@ namespace TestForm
             // 
             // btnDockTopRight
             // 
-            this.btnDockTopRight.Style = Krypton.Toolkit.PaletteButtonStyle.Standalone;
+            this.btnDockTopRight.Style = Krypton.Toolkit.PaletteButtonStyle.Form;
             this.btnDockTopRight.ToolTipBody = "Dock Top Right";
             this.btnDockTopRight.Type = Krypton.Toolkit.PaletteButtonSpecStyle.Next;
             this.btnDockTopRight.UniqueName = "9a67484dbca74819a23989ebf85abc7d";
             // 
             // btnRestoreSize
             // 
+            this.btnRestoreSize.Style = Krypton.Toolkit.PaletteButtonStyle.Form;
             this.btnRestoreSize.ToolTipBody = "Restore Default Size";
             this.btnRestoreSize.Type = Krypton.Toolkit.PaletteButtonSpecStyle.Undo;
             this.btnRestoreSize.UniqueName = "9a3ac5e81b8c43e3808e9ee37eb66bd7";

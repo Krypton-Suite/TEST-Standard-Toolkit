@@ -261,19 +261,6 @@ internal static class WindowsXPLunaArt
         DrawNineSlice(graphics, bottom, bottomSource,
             new Rectangle(bounds.Left, bounds.Bottom - bottomHeight, bounds.Width, bottomHeight),
             new Padding(2, 0, 2, 0), Color.Empty, punchTransparent: false);
-
-        // The header already paints the caption behind the icon, title, and buttons.
-        // Only the outer columns sit outside that header, so fill those from the caption sheet.
-        int edge = 4;
-        int sourceTop = row * captionHeight;
-        DrawNineSlice(graphics, caption,
-            new Rectangle(0, sourceTop, edge, captionHeight),
-            new Rectangle(bounds.Left, bounds.Top, edge, captionHeight),
-            Padding.Empty, MagentaKey, punchTransparent: false);
-        DrawNineSlice(graphics, caption,
-            new Rectangle(caption.Width - edge, sourceTop, edge, captionHeight),
-            new Rectangle(bounds.Right - edge, bounds.Top, edge, captionHeight),
-            Padding.Empty, MagentaKey, punchTransparent: false);
     }
 
     internal static void DrawComboGlyph(Graphics graphics, Rectangle bounds, WindowsXPLunaScheme scheme, PaletteState state) =>

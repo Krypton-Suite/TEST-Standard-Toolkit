@@ -47,6 +47,7 @@
 
 - Implemented, Windows XP visual-style Extra themes in `Krypton.Themes`: Luna Blue / Olive / Silver, Royale, Royale Noir, Zune, and Embedded, with a dedicated XP renderer in `Krypton.Toolkit` and typed bitmaps from `Krypton.Resources`.
   - To use, you will need to download the [Krypton.Standard.Toolkit](https://www.nuget.org/packages/Krypton.Standard.Toolkit) NuGet package (or reference `Krypton.Themes` alongside `Krypton.Toolkit`), so the Extra themes are discovered at runtime.
+  - Resolved, Windows XP sprite title bars no longer clip the icon, window text, button specs, or caption buttons. The caption paints the full title bar, including the gloss along the top.
   - Resolved, Windows XP sprite caption corners no longer bleed magenta, and Luna Blue progress uses the green chunk.
   - Resolved, Windows XP title-bar corners keep the caption curve. The side frame starts below the caption, so it no longer cuts through the corner or the close button.
   - Resolved, Luna Blue uses the blue window frame and rounded caption corners. The client sits against that frame instead of a gray bottom edge or an extra caption-coloured band.
