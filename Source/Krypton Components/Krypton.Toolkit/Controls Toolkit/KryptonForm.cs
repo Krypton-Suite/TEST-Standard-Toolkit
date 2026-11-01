@@ -2905,6 +2905,32 @@ public class KryptonForm : VisualForm,
 		return ret;
 	}
 
+	/// <summary>
+	/// Non-client inset used for layout. Sprite themes draw a frame thinner than the system padded border,
+	/// so the client starts at that frame instead of leaving a band of caption colour inside it.
+	/// </summary>
+	private Padding WindowChromeBorders()
+	{
+		if (FormBorderStyle == FormBorderStyle.None)
+		{
+			return Padding.Empty;
+		}
+
+		Padding borders = RealWindowBorders;
+		if (GetWindowState() == FormWindowState.Maximized || Renderer is not RenderWindowsXPSprite)
+		{
+			return borders;
+		}
+
+		int frame = StateCommon?.Border.GetBorderWidth(PaletteState.Normal) ?? 0;
+		if (frame <= 0 || frame >= borders.Left)
+		{
+			return borders;
+		}
+
+		return new Padding(frame, borders.Top, frame, frame);
+	}
+
 	/// <inheritdoc />
 	protected override bool OnWM_NCCALCSIZE(ref Message m)
 	{
@@ -2912,9 +2938,7 @@ public class KryptonForm : VisualForm,
 		if (m.WParam != IntPtr.Zero)
 		{
 			// FormBorderStyle.None must keep a zero non-client so no caption band or 3D edge remains.
-			Padding borders = FormBorderStyle == FormBorderStyle.None
-				? Padding.Empty
-				: RealWindowBorders;
+			Padding borders = WindowChromeBorders();
 
 			// If caption should be hidden, set top border to 0 to prevent white band
 			if (ShouldHideCaption())

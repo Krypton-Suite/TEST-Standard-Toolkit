@@ -1,4 +1,4 @@
-#region BSD License
+﻿#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -7,7 +7,8 @@
  */
 #endregion
 
-using Krypton.Utilities;
+using System.Security;
+using Krypton.Toolkit.Utilities;
 
 namespace TestForm;
 
@@ -26,6 +27,11 @@ public partial class BugReportingDialogTest : KryptonForm
         };
         
         LoadDefaultEmailConfig();
+
+        kwlblTestDescription.AutoSize = true;
+        kwlblTestDescription.MaximumSize = new Size(576, 0);
+        kwlblTestDescription.Text =
+            "Bug Reporting Dialog Test. Exception reports email the type and message only - not stack traces or the SMTP password.";
     }
 
     private void LoadDefaultEmailConfig()
@@ -135,7 +141,7 @@ public partial class BugReportingDialogTest : KryptonForm
 
         try
         {
-            throw new InvalidOperationException("This is a test exception for bug reporting.");
+            ThrowHelper.ThrowInvalidOperationException("This is a test exception for bug reporting.");
         }
         catch (Exception ex)
         {
@@ -159,7 +165,7 @@ public partial class BugReportingDialogTest : KryptonForm
 
         try
         {
-            throw new ArgumentOutOfRangeException("testParameter", 100, 
+            ThrowHelper.ThrowArgumentOutOfRangeException("testParameter", 100, 
                 "This is a test exception to demonstrate integrated bug reporting.");
         }
         catch (Exception ex)
@@ -240,6 +246,46 @@ public partial class BugReportingDialogTest : KryptonForm
         }
     }
 
+    private void kbtnCreateGitHubIssuePublic_Click(object sender, EventArgs e)
+    {
+        var secretKey = ktbSecretKey.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(secretKey))
+        {
+            _errorProvider.SetError(ktbSecretKey, "Secret key is required for GitHub issue reporting.");
+            return;
+        }
+        _errorProvider.SetError(ktbSecretKey, string.Empty);
+
+        var secureKey = CreateSecureString(secretKey);
+        var configPath = string.IsNullOrWhiteSpace(ktbConfigPath.Text) ? null : ktbConfigPath.Text.Trim();
+        var result = Krypton.Toolkit.Utilities.KryptonGitHubIssueReportDialog.Show(this, secureKey, configPath);
+        if (result == DialogResult.OK)
+        {
+            MessageBox.Show("Bug report created successfully!", "Success",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+    }
+
+    private void kbtnCreateGitHubIssueInternal_Click(object sender, EventArgs e)
+    {
+        var secretKey = ktbSecretKey.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(secretKey))
+        {
+            _errorProvider.SetError(ktbSecretKey, "Secret key is required for GitHub issue reporting.");
+            return;
+        }
+        _errorProvider.SetError(ktbSecretKey, string.Empty);
+
+        var secureKey = CreateSecureString(secretKey);
+        var configPath = string.IsNullOrWhiteSpace(ktbConfigPath.Text) ? null : ktbConfigPath.Text.Trim();
+        var result = Krypton.Toolkit.KryptonGitHubIssueReportDialog.Show(this, secureKey, configPath);
+        if (result == DialogResult.OK)
+        {
+            MessageBox.Show("Bug report created successfully!", "Success",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+    }
+
     private void kbtnClose_Click(object sender, EventArgs e)
     {
         Close();
@@ -260,6 +306,21 @@ public partial class BugReportingDialogTest : KryptonForm
         _errorProvider?.Clear();
         _errorProvider?.Dispose();
         base.OnFormClosed(e);
+    }
+
+    private static SecureString CreateSecureString(string? value)
+    {
+        var ss = new SecureString();
+        if (value != null)
+        {
+            foreach (var c in value)
+            {
+                ss.AppendChar(c);
+            }
+        }
+
+        ss.MakeReadOnly();
+        return ss;
     }
 }
 

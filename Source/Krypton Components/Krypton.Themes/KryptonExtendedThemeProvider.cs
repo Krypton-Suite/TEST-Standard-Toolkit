@@ -1,4 +1,4 @@
-﻿#region BSD License
+#region BSD License
 /*
  *
  *  New BSD 3-Clause License (https://github.com/Krypton-Suite/Standard-Toolkit/blob/master/LICENSE)
@@ -81,6 +81,13 @@ public sealed class KryptonExtendedThemeProvider : IKryptonThemeProvider
             Extra(PaletteMode.MaterialLimeGreenDarkRipple, KryptonThemeFamilies.LimeGreen, KryptonThemeChromeKind.Material, typeof(PaletteMaterialLimeGreenDarkRipple), () => new PaletteMaterialLimeGreenDarkRipple()),
             Extra(PaletteMode.RetroGreen, KryptonThemeFamilies.Retro, KryptonThemeChromeKind.Retro, typeof(PaletteRetroGreen), () => new PaletteRetroGreen()),
             Extra(PaletteMode.RetroBlue, KryptonThemeFamilies.Retro, KryptonThemeChromeKind.Retro, typeof(PaletteRetroBlue), () => new PaletteRetroBlue()),
+            Extra(PaletteMode.WindowsXPLunaBlue, KryptonThemeFamilies.WindowsXP, KryptonThemeChromeKind.WindowsXP, typeof(PaletteWindowsXPLunaBlue), () => new PaletteWindowsXPLunaBlue()),
+            Extra(PaletteMode.WindowsXPLunaOlive, KryptonThemeFamilies.WindowsXP, KryptonThemeChromeKind.WindowsXP, typeof(PaletteWindowsXPLunaOlive), () => new PaletteWindowsXPLunaOlive()),
+            Extra(PaletteMode.WindowsXPLunaSilver, KryptonThemeFamilies.WindowsXP, KryptonThemeChromeKind.WindowsXP, typeof(PaletteWindowsXPLunaSilver), () => new PaletteWindowsXPLunaSilver()),
+            Extra(PaletteMode.WindowsXPRoyale, KryptonThemeFamilies.WindowsXP, KryptonThemeChromeKind.WindowsXP, typeof(PaletteWindowsXPRoyale), () => new PaletteWindowsXPRoyale()),
+            Extra(PaletteMode.WindowsXPRoyaleNoir, KryptonThemeFamilies.WindowsXP, KryptonThemeChromeKind.WindowsXP, typeof(PaletteWindowsXPRoyaleNoir), () => new PaletteWindowsXPRoyaleNoir()),
+            Extra(PaletteMode.WindowsXPZune, KryptonThemeFamilies.WindowsXP, KryptonThemeChromeKind.WindowsXP, typeof(PaletteWindowsXPZune), () => new PaletteWindowsXPZune()),
+            Extra(PaletteMode.WindowsXPEmbedded, KryptonThemeFamilies.WindowsXP, KryptonThemeChromeKind.WindowsXP, typeof(PaletteWindowsXPEmbedded), () => new PaletteWindowsXPEmbedded()),
             Extra(PaletteMode.MacOSXAqua, KryptonThemeFamilies.MacOS, KryptonThemeChromeKind.MacOS, typeof(PaletteMacOSXAqua), () => new PaletteMacOSXAqua()),
             Extra(PaletteMode.MacOSLight, KryptonThemeFamilies.MacOS, KryptonThemeChromeKind.MacOS, typeof(PaletteMacOSLight), () => new PaletteMacOSLight()),
             Extra(PaletteMode.MacOSDark, KryptonThemeFamilies.MacOS, KryptonThemeChromeKind.MacOS, typeof(PaletteMacOSDark), () => new PaletteMacOSDark()),

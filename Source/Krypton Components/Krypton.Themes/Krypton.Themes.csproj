@@ -35,6 +35,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Palette Builtin\Windows XP Embedded\EmbeddedColors.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Embedded\PaletteWindowsXPEmbedded.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Luna\PaletteWindowsXPLunaBase.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Luna\PaletteWindowsXPLunaBlue.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Luna\PaletteWindowsXPLunaOlive.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Luna\PaletteWindowsXPLunaSilver.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Royale Noir\PaletteWindowsXPRoyaleNoir.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Royale Noir\RoyaleNoirColors.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Royale\PaletteWindowsXPRoyale.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Shared\WindowsXPStyleColorFactory.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Zune\PaletteWindowsXPZune.cs" />
+    <Compile Remove="Palette Builtin\Windows XP Zune\WindowsXPZuneColors.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     		<!-- Krypton.Resources: direct reference required (typed ResourceFiles accessors via InternalsVisibleTo); PrivateAssets so it is not a NuGet dependency (bundled via Krypton.Resources.Package.targets). -->
 		<ProjectReference Include="..\Krypton.Resources\Krypton.Resources.csproj" PrivateAssets="all" />
 		<ProjectReference Include="..\Krypton.Interop\Krypton.Interop.csproj" PrivateAssets="all" />
